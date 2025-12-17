@@ -1,0 +1,31 @@
+{
+  "name": "con-tech-backend",
+  "version": "1.0.0",
+  "description": "NestJS 9 backend for Con-Tech domain.",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "build": "nest build",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@nestjs/common": "^9.0.0",
+    "@nestjs/core": "^9.0.0",
+    "@nestjs/microservices": "^9.0.0",
+    "@prisma/client": "^6.0.0",
+    "prisma": "^6.0.0",
+    "amqp-connection-manager": "^4.2.0",
+    "amqplib": "^0.10.3",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^9.0.0",
+    "@nestjs/testing": "^9.0.0",
+    "jest": "^29.4.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}

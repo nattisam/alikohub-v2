@@ -1,0 +1,17 @@
+{
+  "name": "ui-libraries",
+  "version": "1.0.0",
+  "description": "React UI library based on MUI + Emotion.",
+  "type": "module",
+  "main": "src/index.js",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "@mui/material": "^5.15.0",
+    "@mui/icons-material": "^5.15.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0"
+  }
+}

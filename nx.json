@@ -1,0 +1,60 @@
+{
+  "workspaceLayout": {
+    "appsDir": "domains",
+    "libsDir": "libraries"
+  },
+  "projects": {
+    "academy-backend": {
+      "root": "domains/academy/backend",
+      "projectType": "application"
+    },
+    "con-tech-backend": {
+      "root": "domains/con-tech/backend",
+      "projectType": "application"
+    },
+    "api-gateway-service": {
+      "root": "domains/core-platform-services/api-gateway-service",
+      "projectType": "application"
+    },
+    "auth-service": {
+      "root": "domains/core-platform-services/auth-service",
+      "projectType": "application"
+    },
+    "careers-service": {
+      "root": "domains/core-platform-services/careers-service",
+      "projectType": "application"
+    },
+    "chat-service": {
+      "root": "domains/core-platform-services/chat-service",
+      "projectType": "application"
+    },
+    "file-upload-service": {
+      "root": "domains/core-platform-services/file-upload-service",
+      "projectType": "application"
+    },
+    "notification-service": {
+      "root": "domains/core-platform-services/notification-service",
+      "projectType": "application"
+    },
+    "payment-service": {
+      "root": "domains/core-platform-services/payment-service",
+      "projectType": "application"
+    },
+    "events-backend": {
+      "root": "domains/events/backend",
+      "projectType": "application"
+    },
+    "common-data-types": {
+      "root": "libraries/common-data-types",
+      "projectType": "library"
+    },
+    "common-utils": {
+      "root": "libraries/common-utils",
+      "projectType": "library"
+    },
+    "ui-libraries": {
+      "root": "libraries/ui-libraries",
+      "projectType": "library"
+    }
+  }
+}
