@@ -36,7 +36,19 @@ export class AuthService {
 			}
 		}
 
-		// 2. Create user in DB with firebaseId
+		// 2. Check if user already exists in DB
+		const existingUser = await this.userService.findByFirebaseId(firebaseUser.uid);
+		if (existingUser) {
+			// User already exists, generate token for existing user
+			const accessToken = await this.firebaseService.getAuth().createCustomToken(existingUser.firebaseId);
+			return {
+				message: 'User already exists, returning token',
+				user: existingUser,
+				accessToken
+			};
+		}
+
+		// 3. Create user in DB with firebaseId
 		const user = await this.userService.createUser({
 			email: dto.email,
 			firstname: dto.firstname,
@@ -47,7 +59,7 @@ export class AuthService {
 			firebaseId: firebaseUser.uid,
 		});
 
-		// 3. Generate Firebase custom token
+		// 4. Generate Firebase custom token
 		let accessToken = '';
 		try {
 			accessToken = await this.firebaseService.getAuth().createCustomToken(user.firebaseId);
@@ -57,7 +69,7 @@ export class AuthService {
 
 		return {
 			message: 'Subdomain user registered',
-			dto,
+			user,
 			accessToken
 		};
 	}
