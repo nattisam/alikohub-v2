@@ -1,0 +1,228 @@
+{
+  "health_classes": [
+    {
+      "id": 3,
+      "title": "Human Anatomy",
+      "description": "Explore the structure of the human body.",
+      "instructor": "Dr. Emily Carter",
+      "rating": 4.9,
+      "students": 2500,
+      "price": 19.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 5,
+      "title": "Introduction to Nursing",
+      "description": "Learn the fundamentals of nursing care.",
+      "instructor": "Dr. Sarah Johnson",
+      "rating": 4.7,
+      "students": 1500,
+      "price": 24.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 8,
+      "title": "Introduction to Public Health",
+      "description": "Understand the principles of public health and disease prevention.",
+      "instructor": "Dr. Maria Garcia",
+      "rating": 4.8,
+      "students": 1300,
+      "price": 14.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 9,
+      "title": "Medical Terminology",
+      "description": "Learn the language of medicine.",
+      "instructor": "Dr. David Chen",
+      "rating": 4.6,
+      "students": 1800,
+      "price": 9.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 10,
+      "title": "Nutrition and Dietetics",
+      "description": "Explore the science of food and nutrition.",
+      "instructor": "Dr. Susan White",
+      "rating": 4.7,
+      "students": 1600,
+      "price": 12.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    }
+  ],
+  "tech_classes": [
+    {
+      "id": 1,
+      "title": "Introduction to Python",
+      "description": "A beginner-friendly introduction to Python programming.",
+      "instructor": "John Doe",
+      "rating": 4.5,
+      "students": 1200,
+      "price": 19.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Data Science with R",
+      "description": "Learn data analysis and visualization using R.",
+      "instructor": "Jane Smith",
+      "rating": 4.8,
+      "students": 950,
+      "price": 29.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 6,
+      "title": "Web Development Bootcamp",
+      "description": "A comprehensive bootcamp covering front-end and back-end development.",
+      "instructor": "Chris Lee",
+      "rating": 4.6,
+      "students": 1800,
+      "price": 49.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 11,
+      "title": "Machine Learning",
+      "description": "Learn the fundamentals of machine learning and artificial intelligence.",
+      "instructor": "Dr. Michael Brown",
+      "rating": 4.9,
+      "students": 2200,
+      "price": 59.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 12,
+      "title": "Cybersecurity Fundamentals",
+      "description": "An introduction to the world of cybersecurity.",
+      "instructor": "Dr. Kevin White",
+      "rating": 4.7,
+      "students": 1900,
+      "price": 39.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    }
+  ],
+  "stem_classes": [
+    {
+      "id": 4,
+      "title": "Calculus I",
+      "description": "An introduction to differential calculus.",
+      "instructor": "Prof. Robert Brown",
+      "rating": 4.2,
+      "students": 800,
+      "price": 19.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 7,
+      "title": "Organic Chemistry",
+      "description": "Learn the structure, properties, and reactions of organic compounds.",
+      "instructor": "Dr. Michael Clark",
+      "rating": 4.4,
+      "students": 1100,
+      "price": 24.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 13,
+      "title": "Physics I",
+      "description": "An introduction to classical mechanics.",
+      "instructor": "Dr. Laura Green",
+      "rating": 4.3,
+      "students": 900,
+      "price": 22.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 14,
+      "title": "Introduction to Engineering",
+      "description": "Learn the fundamentals of engineering.",
+      "instructor": "Dr. David Lee",
+      "rating": 4.5,
+      "students": 1000,
+      "price": 34.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    }
+  ],
+  "trending_classes": [
+    {
+      "id": 11,
+      "title": "Machine Learning",
+      "description": "Learn the fundamentals of machine learning and artificial intelligence.",
+      "instructor": "Dr. Michael Brown",
+      "rating": 4.9,
+      "students": 2200,
+      "price": 59.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Human Anatomy",
+      "description": "Explore the structure of the human body.",
+      "instructor": "Dr. Emily Carter",
+      "rating": 4.9,
+      "students": 2500,
+      "price": 19.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 6,
+      "title": "Web Development Bootcamp",
+      "description": "A comprehensive bootcamp covering front-end and back-end development.",
+      "instructor": "Chris Lee",
+      "rating": 4.6,
+      "students": 1800,
+      "price": 49.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    },
+    {
+      "id": 14,
+      "title": "Introduction to Engineering",
+      "description": "Learn the fundamentals of engineering.",
+      "instructor": "Dr. David Lee",
+      "rating": 4.5,
+      "students": 1000,
+      "price": 34.99,
+      "thumbnail": "./assets/cardImage.jpg"
+    }
+  ],
+  "testimonies": [
+    {
+      "id": 1,
+      "image": "./src/assets/student1.png",
+      "testimony": "Receive step-by-step support choosing the right university.",
+      "name": "Abebe Kebede"
+    },
+    {
+      "id": 2,
+      "image": "./src/assets/student2.png",
+      "testimony": "Receive step-by-step support choosing the right university.",
+      "name": "Abebe Kebede"
+    },
+    {
+      "id": 3,
+      "image": "./src/assets/student3.png",
+      "testimony": "Receive step-by-step support choosing the right university.",
+      "name": "Abebe Kebede"
+    },
+    {
+      "id": 4,
+      "image": "./src/assets/student4.png",
+      "testimony": "Receive step-by-step support choosing the right university.",
+      "name": "Abebe Kebede"
+    },
+    {
+      "id": 5,
+      "image": "./src/assets/student1.png",
+      "testimony": "Receive step-by-step support choosing the right university.",
+      "name": "Abebe Kebede"
+    },
+    {
+      "id": 6,
+      "image": "./src/assets/student3.png",
+      "testimony": "Receive step-by-step support choosing the right university.",
+      "name": "Abebe Kebede"
+    }
+  ]
+}
