@@ -16,21 +16,11 @@ export class AuthController {
 		firstname: Joi.string().required(),
 		lastname: Joi.string().optional(),
 		password: Joi.string().min(6).optional(),
+		role: Joi.string().valid('USER', 'ADMIN', 'ACADEMY_ADMIN', 'ACADEMY_INSTRUCTOR', 'ACADEMY_STUDENT', 'CONSULTANCY_ADVISOR', 'CONSULTANCY_MANAGER', 'CONSULTANCY_CLIENT', 'CONTECH_DEVELOPER', 'CONTECH_DESIGNER', 'CONTECH_PROJECT_MANAGER', 'EVENTS_ORGANIZER', 'EVENTS_PARTICIPANT', 'EVENTS_SPONSOR').optional(),
 	})))
 	async register(@Body() dto: SignUpDto, @Res() res: Response) {
 		const result = await this.authService.register(dto);
 		return res.status(201).json(result);
-	}
-
-	@Post('register/subdomain')
-	async registerSubdomain(@Body() dto: any, @Res() res: Response) {
-		const result = await this.authService.registerSubdomain(dto);
-		return res.status(201).json(result);
-	}
-
-	@Post('test')
-	async test(@Body() dto: any, @Res() res: Response) {
-		return res.json({ message: 'Test endpoint works' });
 	}
 
 	@Post('login')

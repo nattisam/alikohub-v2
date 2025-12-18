@@ -18,19 +18,36 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
-    // Check global role
+    // Check global role first
     if (roles.includes(user.globalRole)) {
       return true;
     }
 
-    // Check subdomain roles (e.g., 'ACADEMY_ADMIN', 'CONSULTANCY_ADVISOR', etc.)
-    // Convention: role string starts with subdomain, e.g., 'ACADEMY_ADMIN', 'CONSULTANCY_ADVISOR'
+    // Check subdomain roles
     for (const requiredRole of roles) {
-      const [subdomain, ...roleParts] = requiredRole.split('_');
-      if (roleParts.length === 0) continue;
-      const subdomainKey = subdomain.toLowerCase() + 'User';
-      if (user[subdomainKey] && user[subdomainKey].role === roleParts.join('_')) {
-        return true;
+      if (requiredRole.startsWith('ACADEMY_') && user.academyUser) {
+        const subdomainRole = 'ACADEMY_' + user.academyUser.role;
+        if (subdomainRole === requiredRole) {
+          return true;
+        }
+      }
+      if (requiredRole.startsWith('CONSULTANCY_') && user.consultancyUser) {
+        const subdomainRole = 'CONSULTANCY_' + user.consultancyUser.role;
+        if (subdomainRole === requiredRole) {
+          return true;
+        }
+      }
+      if (requiredRole.startsWith('CONTECH_') && user.contechUser) {
+        const subdomainRole = 'CONTECH_' + user.contechUser.role;
+        if (subdomainRole === requiredRole) {
+          return true;
+        }
+      }
+      if (requiredRole.startsWith('EVENTS_') && user.eventsUser) {
+        const subdomainRole = 'EVENTS_' + user.eventsUser.role;
+        if (subdomainRole === requiredRole) {
+          return true;
+        }
       }
     }
 

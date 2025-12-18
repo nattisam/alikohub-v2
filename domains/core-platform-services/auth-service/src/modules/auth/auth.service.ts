@@ -14,11 +14,6 @@ export class AuthService {
 		private readonly argon2Service: Argon2Service,
 	) {}
 	async register(dto: SignUpDto) {
-		// Implement registration logic
-		return { message: 'User registered', dto };
-	}
-
-	async registerSubdomain(dto: any) {
 		// 1. Create Firebase user first
 		let firebaseUser;
 		try {
@@ -48,18 +43,74 @@ export class AuthService {
 			};
 		}
 
-		// 3. Create user in DB with firebaseId
+		// 3. Determine global role and subdomain
+		let globalRole = 'USER';
+		let subdomainData = {};
+
+		if (dto.role) {
+			// Handle subdomain roles
+			if (dto.role.startsWith('ACADEMY_')) {
+				globalRole = 'USER';
+				const academyRole = dto.role.replace('ACADEMY_', '');
+				subdomainData = {
+					academyUser: {
+						create: {
+							role: academyRole === 'ADMIN' ? 'ADMIN' : academyRole === 'INSTRUCTOR' ? 'INSTRUCTOR' : 'STUDENT',
+							status: 'ACTIVE',
+						}
+					}
+				};
+			} else if (dto.role.startsWith('CONSULTANCY_')) {
+				globalRole = 'USER';
+				const consultancyRole = dto.role.replace('CONSULTANCY_', '');
+				subdomainData = {
+					consultancyUser: {
+						create: {
+							role: consultancyRole === 'ADVISOR' ? 'ADVISOR' : consultancyRole === 'MANAGER' ? 'MANAGER' : 'CLIENT',
+							status: 'ACTIVE',
+						}
+					}
+				};
+			} else if (dto.role.startsWith('CONTECH_')) {
+				globalRole = 'USER';
+				const contechRole = dto.role.replace('CONTECH_', '');
+				subdomainData = {
+					contechUser: {
+						create: {
+							role: contechRole === 'DEVELOPER' ? 'DEVELOPER' : contechRole === 'DESIGNER' ? 'DESIGNER' : 'PROJECT_MANAGER',
+							status: 'ACTIVE',
+						}
+					}
+				};
+			} else if (dto.role.startsWith('EVENTS_')) {
+				globalRole = 'USER';
+				const eventsRole = dto.role.replace('EVENTS_', '');
+				subdomainData = {
+					eventsUser: {
+						create: {
+							role: eventsRole === 'ORGANIZER' ? 'ORGANIZER' : eventsRole === 'PARTICIPANT' ? 'PARTICIPANT' : 'SPONSOR',
+							status: 'ACTIVE',
+						}
+					}
+				};
+			} else if (dto.role === 'ADMIN') {
+				globalRole = 'ADMIN';
+			}
+		}
+
+		// 4. Create user in DB with firebaseId, global role, and subdomain data
 		const user = await this.userService.createUser({
 			email: dto.email,
 			firstname: dto.firstname,
 			lastname: dto.lastname,
 			password: dto.password ? await this.argon2Service.hash(dto.password) : undefined,
-			globalRole: 'USER',
+			globalRole: globalRole,
 			status: 'ACTIVE',
 			firebaseId: firebaseUser.uid,
+			...(Object.keys(subdomainData).length > 0 ? subdomainData : {})
 		});
 
-		// 4. Generate Firebase custom token
+		// 5. Generate Firebase custom token
 		let accessToken = '';
 		try {
 			accessToken = await this.firebaseService.getAuth().createCustomToken(user.firebaseId);
@@ -68,7 +119,7 @@ export class AuthService {
 		}
 
 		return {
-			message: 'Subdomain user registered',
+			message: 'User registered successfully',
 			user,
 			accessToken
 		};
