@@ -1,0 +1,151 @@
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int        @id @default(autoincrement())
+  firebaseId     String     @unique
+  firstname      String
+  lastname       String?
+  email          String     @unique
+  password       String?
+  globalRole     GlobalRole @default(USER)
+  profilePicture String?
+  bio            String?
+  status         String     @default("ACTIVE")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  application Application[]
+  consultancyUser ConsultancyUser?
+  academyUser AcademyUser?
+  contechUser ContechUser?
+  eventsUser EventsUser?
+  subdomainEnrollments SubdomainEnrollment[]
+}
+
+model Application {
+  id            Int    @id @default(autoincrement())
+  userId        String
+  user          User   @relation(fields: [userId], references: [firebaseId])
+  domain        String
+  requestedRole String
+  formData      Json
+  status        ApplicationStatus @default(PENDING)
+  reviewedBy    String?
+  reviewNotes   String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([userId, domain])
+}
+
+model SubdomainEnrollment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [firebaseId])
+  subdomain   String
+  role        String
+  enrolledAt  DateTime @default(now())
+  status      String   @default("ACTIVE")
+
+  @@unique([userId, subdomain])
+}
+
+model ConsultancyUser {
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  user            User        @relation(fields: [userId], references: [firebaseId])
+  role            ConsultancyRole
+  university      String?
+  country         String?
+  educationLevel  String?
+  specialization  String?
+  status          String      @default("ACTIVE")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model AcademyUser {
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  user            User        @relation(fields: [userId], references: [firebaseId])
+  role            AcademyRole
+  specialization  String?
+  enrolledCourses String[]
+  certifications  String[]
+  status          String      @default("ACTIVE")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model ContechUser {
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  user            User        @relation(fields: [userId], references: [firebaseId])
+  role            ContechRole
+  company         String?
+  projects        String[]
+  status          String      @default("ACTIVE")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model EventsUser {
+  id               String      @id @default(cuid())
+  userId           String      @unique
+  user             User        @relation(fields: [userId], references: [firebaseId])
+  role             EventsRole
+  company          String?
+  registeredEvents String[]
+  status           String      @default("ACTIVE")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+enum GlobalRole {
+  USER
+  ADMIN
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ConsultancyRole {
+  STUDENT
+  ADVISOR
+  PARTNER_INSTITUTION
+  CONSULTANCY_ADMIN
+}
+
+enum AcademyRole {
+  STUDENT
+  INSTRUCTOR
+  COURSE_MANAGER
+  ACADEMY_ADMIN
+}
+
+enum ContechRole {
+  CLIENT
+  CONTRACTOR
+  PROJECT_MANAGER
+  STAKEHOLDER
+  CONTECH_ADMIN
+}
+
+enum EventsRole {
+  ATTENDEE
+  ORGANIZER
+  SPONSOR
+  EVENTS_ADMIN
+}
