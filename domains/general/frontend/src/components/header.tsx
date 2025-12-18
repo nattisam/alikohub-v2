@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { NavbarProps } from "./Navbar";
 import { useEffect, useState } from "react";
 import Button from "../../../../../libraries/ui-libraries/components/Button";
-// import { useUser } from "../contexts/UserContext";
+import { useUser } from "../contexts/UserContext";
 
 type NavLink = {
   label: string;
