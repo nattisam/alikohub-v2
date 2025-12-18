@@ -1,0 +1,65 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import AuthLayout from '../../../../../libraries/ui-libraries/components/auth/AuthLayout';
+import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/AuthHeader';
+import LoginForm from '../../../../../libraries/ui-libraries/components/auth/LoginForm';
+import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
+import type { LoginFormData } from '../../../../../libraries/ui-libraries/components/auth/LoginForm';
+import { useUser } from '../hooks/useUser';
+
+const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { login, loginLoading, loginError, clearLoginError, currentUser } = useUser();
+
+  const handleLogin = async (data: LoginFormData) => {
+    try {
+      const success = await login(data.email, data.password);
+      
+      if (success) {
+        // Check user role and redirect accordingly
+        // Note: currentUser will be updated after login, but we need to fetch the profile
+        // to determine the correct redirect
+        
+        // For now, redirect to dashboard and let the DashboardLayout handle the redirect
+        navigate('/dashboard');
+      }
+      // Error handling is managed by the context (loginError state)
+    } catch (error) {
+      console.error('Login error:', error);
+      // Additional error handling if needed
+    }
+  };
+
+  const handleCloseErrorModal = () => {
+    clearLoginError();
+  };
+
+  const handleSwitchToSignup = () => {
+    navigate('/auth/signup');
+  };
+
+  return (
+    <>
+      <AuthLayout heroImage="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <AuthHeader />
+          <LoginForm
+            onSubmit={handleLogin}
+            onSwitchToSignup={handleSwitchToSignup}
+            loading={loginLoading}
+          />
+        </div>
+      </AuthLayout>
+      
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={!!loginError}
+        onClose={handleCloseErrorModal}
+        title="Login Failed"
+        message={loginError || undefined}
+      />
+    </>
+  );
+};
+
+export default LoginPage;

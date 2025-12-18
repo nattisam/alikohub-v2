@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { NavbarProps } from "./Navbar";
 import { useEffect, useState } from "react";
 import Button from "../../../../../libraries/ui-libraries/components/Button";
-import { useUser } from "../contexts/UserContext";
+import { useAuth } from "../contexts/AuthContext";
 
 type NavLink = {
   label: string;
@@ -49,7 +49,7 @@ const Header = ({
   textColor = "text-black",
   linkPosition = "justify-between",
   headerClassName = "",
-  homeHeaderButtonsClassName = " hidden lg:block md:block",
+  homeHeaderButtonsClassName = "hidden lg:block md:block",
   navbarProps,
   navBarClassName = "flex md:hidden lg:hidden",
   logoClassName = "",
@@ -59,10 +59,10 @@ const Header = ({
 }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-
-  // UI-only state (auth removed)
-  const isLoggedIn = false;
-  const isAdmin = false;
+  const { user, isAuthenticated, logout, loading } = useAuth();
+  
+  // Debug logging
+  console.log("Header auth state:", { user, isAuthenticated, loading });
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 50);
@@ -72,13 +72,23 @@ const Header = ({
 
   const handleSignUpClick = () => navigate("/auth/signup");
   const handleLoginClick = () => navigate("/auth/login");
-  const handleLogout = () => navigate("/");
   const handleAdminClick = () => navigate("/admin/careers");
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <>
       {showTopBar && (
-        <header className={`${topBarBg} hidden text-white lg:flex justify-between items-center px-4 py-2`}>
+        <header
+          className={`${topBarBg} hidden text-white lg:flex justify-between items-center px-4 py-2`}
+        >
           <nav className="flex gap-10 items-center">
             <Link to="/" className="flex items-center text-sm">
               <MdEmail className="mr-2" /> info@alikohub.com
@@ -101,8 +111,16 @@ const Header = ({
           isScrolled ? `${stickyBgScrolled} shadow-2xl` : stickyBgDefault
         }`}
       >
-        <div className={`max-w-[1300px] mx-auto flex items-center px-4 py-4 ${linkPosition}`}>
-          <img src={logoSrc} className={logoClassName || "h-12 lg:h-14"} />
+        <div
+          className={`max-w-[1300px] mx-auto flex items-center px-4 py-4 ${linkPosition}`}
+        >
+          <Link to="/">
+            <img
+              src={logoSrc}
+              alt="Logo"
+              className={logoClassName || "h-12 lg:h-14"}
+            />
+          </Link>
 
           <div className={`hidden md:flex ${navLinksContainerClassName}`}>
             {navLinks.map(({ label, scrollTo, link }) => (
@@ -116,25 +134,107 @@ const Header = ({
             ))}
           </div>
 
-          {/* Desktop buttons (UI only) */}
-          <div className="hidden md:flex gap-4">
-            <Button label="Login" onClick={handleLoginClick} variant="secondary" />
-            <Button label="Sign Up" onClick={handleSignUpClick} variant="primary" />
+          <div className="hidden md:flex items-center gap-4">
+            {loading ? (
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-medium">Loading...</span>
+              </div>
+            ) : isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-medium">
+                  Welcome, {user?.firstname}
+                </span>
+                <Button
+                  label="Logout"
+                  onClick={handleLogout}
+                  variant="secondary"
+                />
+                {user?.globalRole === "ADMIN" && (
+                  <Button
+                    label="Admin"
+                    onClick={handleAdminClick}
+                    variant="primary"
+                  />
+                )}
+              </div>
+            ) : (
+              <>
+                <Button
+                  label="Login"
+                  onClick={handleLoginClick}
+                  variant="secondary"
+                />
+                <Button
+                  label="Sign Up"
+                  onClick={handleSignUpClick}
+                  variant="primary"
+                />
+              </>
+            )}
           </div>
 
-          {/* Mobile */}
           <div className="md:hidden flex items-center gap-2">
-            <Button label="Login" onClick={handleLoginClick} variant="secondary" />
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Loading...</span>
+              </div>
+            ) : isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  Hi, {user?.firstname}
+                </span>
+                <Button
+                  label="Logout"
+                  onClick={handleLogout}
+                  variant="secondary"
+                  size="sm"
+                />
+              </div>
+            ) : (
+              <Button
+                label="Login"
+                onClick={handleLoginClick}
+                variant="secondary"
+                size="sm"
+              />
+            )}
             <Navbar
               navLinks={[
                 ...navLinks.map(({ label, scrollTo }) => ({
                   label,
                   onClick: () => {
                     if (!scrollTo) return;
-                    document.getElementById(scrollTo)?.scrollIntoView({ behavior: "smooth" });
+                    document
+                      .getElementById(scrollTo)
+                      ?.scrollIntoView({ behavior: "smooth" });
                   },
                 })),
-                { label: "Sign Up", onClick: handleSignUpClick, isButton: true },
+                ...(loading
+                  ? []
+                  : isAuthenticated
+                  ? [
+                      {
+                        label: "Logout",
+                        onClick: handleLogout,
+                        isButton: true,
+                      },
+                      ...(user?.globalRole === "ADMIN"
+                        ? [
+                            {
+                              label: "Admin",
+                              onClick: handleAdminClick,
+                              isButton: true,
+                            },
+                          ]
+                        : []),
+                    ]
+                  : [
+                      {
+                        label: "Sign Up",
+                        onClick: handleSignUpClick,
+                        isButton: true,
+                      },
+                    ]),
               ]}
               logoSrc="/AlikoLogo.svg"
               {...navbarProps}

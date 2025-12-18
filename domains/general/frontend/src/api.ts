@@ -1,17 +1,14 @@
 import axios from "axios";
 
 const backendPort = import.meta.env.VITE_BACKEND_PORT || 3000;
-const apiBaseURL =
-  import.meta.env.MODE === "development"
-    ? `http://localhost:${backendPort}/`
-    : "https://alikohub.com/api/";
+const apiBaseURL = `http://localhost:${backendPort}`;
 
 export const authApi = axios.create({
   baseURL: apiBaseURL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // This is important for cookies
+  withCredentials: true,
 });
 
 // Add interceptors to handle CORS

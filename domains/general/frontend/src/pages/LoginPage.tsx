@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthService } from "../services/auth.service";
+import { useAuth } from "../contexts/AuthContext";
 import type { LoginCredentials } from "../types";
 
 const GeneralLoginPage: React.FC = () => {
@@ -9,6 +9,7 @@ const GeneralLoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,16 +18,10 @@ const GeneralLoginPage: React.FC = () => {
 
     try {
       const credentials: LoginCredentials = { email, password };
-      const authService = AuthService.getInstance();
-      const user = await authService.login(credentials);
+      await authLogin(email, password);
 
-      // Redirect based on user role
-      if (user?.role === "admin") {
-        navigate("/admin"); // Redirect to admin dashboard for admin users
-      } else {
-        // Redirect to home for regular users
-        navigate("/");
-      }
+      // Redirect to home for regular users
+      navigate("/");
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.message || "Invalid email or password");

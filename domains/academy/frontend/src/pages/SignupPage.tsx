@@ -1,0 +1,66 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import AuthLayout from '../../../../../libraries/ui-libraries/components/auth/AuthLayout';
+import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/AuthHeader';
+import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
+import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
+import type { SignupFormData } from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
+import { useUser } from '../hooks/useUser';
+
+const SignupPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { register, signupLoading, signupError, clearSignupError } = useUser();
+
+  const handleSignup = async (data: SignupFormData) => {
+    try {
+      const success = await register({
+        firstname: data.firstName,
+        lastname: data.lastName,
+        email: data.email,
+        password: data.password,
+      });
+      
+      if (success) {
+        // Redirect to login page after successful signup
+        navigate('/auth/login');
+      }
+      // Error handling is managed by the context (signupError state)
+    } catch (error) {
+      console.error('Signup error:', error);
+      // Additional error handling if needed
+    }
+  };
+
+  const handleCloseErrorModal = () => {
+    clearSignupError();
+  };
+
+  const handleSwitchToLogin = () => {
+    navigate('/auth/login');
+  };
+
+  return (
+    <>
+      <AuthLayout heroImage="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <AuthHeader />
+          <SignupForm
+            onSubmit={handleSignup}
+            onSwitchToLogin={handleSwitchToLogin}
+            loading={signupLoading}
+          />
+        </div>
+      </AuthLayout>
+      
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={!!signupError}
+        onClose={handleCloseErrorModal}
+        title="Registration Failed"
+        message={signupError || undefined}
+      />
+    </>
+  );
+};
+
+export default SignupPage;

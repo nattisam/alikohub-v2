@@ -213,15 +213,12 @@ export class AuthService {
     return (
       user !== null &&
       user !== undefined &&
-      typeof user.firebaseId === "string" &&
+      typeof user.id === "number" &&
       typeof user.email === "string" &&
       typeof user.firstname === "string" &&
       typeof user.lastname === "string" &&
-      (typeof user.role === "string" ||
-        typeof user.globalRole === "string" ||
-        user.role === undefined) &&
-      typeof user.createdAt === "string" &&
-      typeof user.updatedAt === "string"
+      (user.globalRole === "USER" || user.globalRole === "ADMIN") &&
+      user.status === "ACTIVE"
     );
   }
 
