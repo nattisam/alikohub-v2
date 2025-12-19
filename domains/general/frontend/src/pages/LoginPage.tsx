@@ -17,14 +17,13 @@ const GeneralLoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const credentials: LoginCredentials = { email, password };
       await authLogin(email, password);
 
       // Redirect to home for regular users
       navigate("/");
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message || "Invalid email or password");
+      setError(err.response?.data?.message || err.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }

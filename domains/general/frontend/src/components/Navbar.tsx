@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MdMenu, MdClose } from "react-icons/md";
 import Button from "../../../../../libraries/ui-libraries/components/Button";
+import { useAuth } from "../contexts/AuthContext";
 
 type NavLink = {
   label: string;
@@ -19,13 +20,32 @@ export type NavbarProps = {
 };
 
 const Navbar = ({
-  navLinks,
+  navLinks = [],
   logoSrc = "/AlikoLogo.svg",
   menuIconClassName = "text-3xl text-black",
   closeIconClassName = "text-2xl",
-  drawerClassName = "fixed top-0 right-0 h-screen w-full max-w-xs bg-white text-black shadow-lg z-50 transition-opacity duration-300",
+  drawerClassName =
+    "fixed top-0 right-0 h-screen w-full max-w-xs bg-white text-black shadow-lg z-50 transition-opacity duration-300",
 }: NavbarProps) => {
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+
+  // 🔹 Logic only: extend navLinks, UI unchanged
+  const authLinks: NavLink[] = user
+    ? [
+        {
+          label: "Logout",
+          isButton: true,
+          onClick: () => {
+            logout();
+            setOpen(false);
+          },
+        },
+      ]
+    : [];
+
+  const finalNavLinks = [...(navLinks || []), ...authLinks];
+
   return (
     <>
       <button
@@ -50,25 +70,34 @@ const Navbar = ({
           </div>
 
           <ul className="flex flex-col space-y-4 p-6">
-            {navLinks.map(({ label, href, onClick, isButton, icon }, i) => (
-              <li key={label + i}>
-                {isButton ? (
-                  <Button
-                    label={label}
-                    onClick={onClick}
-                    icon={icon}
-                    iconPosition="right"
-                    variant="primary"
-                    className="w-full"
-                    ariaLabel={label}
-                  />
-                ) : (
-                  <a href={href} className="text-sm font-medium">
-                    {label}
-                  </a>
-                )}
-              </li>
-            ))}
+            {finalNavLinks.map(
+              ({ label, href, onClick, isButton, icon }, i) => (
+                <li key={label + i}>
+                  {isButton ? (
+                    <Button
+                      label={label}
+                      onClick={() => {
+                        onClick?.();
+                        setOpen(false);
+                      }}
+                      icon={icon}
+                      iconPosition="right"
+                      variant="primary"
+                      className="w-full"
+                      ariaLabel={label}
+                    />
+                  ) : (
+                    <a
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      className="text-sm font-medium"
+                    >
+                      {label}
+                    </a>
+                  )}
+                </li>
+              )
+            )}
           </ul>
         </div>
       )}

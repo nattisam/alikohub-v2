@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthService } from "../services/auth.service";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import type { SignupCredentials } from "../types";
 
 const GeneralSignupPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,18 +25,13 @@ const GeneralSignupPage: React.FC = () => {
         email,
         password,
       };
-      const authService = AuthService.getInstance();
-      const success = await authService.register(credentials);
-
-      if (success) {
-        // After successful registration, redirect to login page
-        navigate("/auth/login");
-      } else {
-        throw new Error("Registration failed. Please try again.");
-      }
+      await signup(credentials);
+      
+      // After successful registration, redirect to home page (user will be logged in)
+      navigate("/");
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(err.message || "Registration failed. Please try again.");
+      setError(err.response?.data?.message || err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -131,12 +127,12 @@ const GeneralSignupPage: React.FC = () => {
           </div>
         </form>
         <div className="text-sm text-center">
-          <a
-            href="/auth/login"
+          <Link
+            to="/auth/login"
             className="font-medium text-indigo-600 hover:text-indigo-500"
           >
             Already have an account? Sign in
-          </a>
+          </Link>
         </div>
       </div>
     </div>

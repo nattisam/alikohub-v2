@@ -17,9 +17,12 @@ import blur from "../assets/Blur.png";
 import blur2 from "../assets/blur1.png";
 import blur3 from "../assets/blur2.png";
 import Hero from "../components/hero.tsx";
+import { useAuth } from "../contexts/AuthContext";
+
 const HomePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const academyRef = useRef<HTMLDivElement>(null);
   const consultancyRef = useRef<HTMLDivElement>(null);
@@ -72,6 +75,7 @@ const HomePage = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [location.state, location.pathname, navigate]);
+  
   return (
     <>
       <Header currentSection={visbleSection} />

@@ -1,84 +1,134 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthService } from "../services/auth.service";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { authAPI } from '../services/api';
+import type { CurrentUser, LoginCredentials, SignupCredentials } from "../types.ts";
 
-type User = {
-  id: number;
-  email: string;
-  firstname: string;
-  lastname: string;
-  globalRole: "USER" | "ADMIN";
-  status: "ACTIVE" | "INACTIVE";
-};
+// Backend response structure
+interface AuthResponse {
+  user: CurrentUser;
+  firebaseCustomToken: string;
+}
 
-type AuthContextType = {
-  user: User | null;
+interface AuthContextType {
+  user: CurrentUser | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => void;
-  loading: boolean;
-};
+  updateUser: (user: CurrentUser) => void;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
+  // Check if user is authenticated on initial load
   useEffect(() => {
-    const verifySession = async () => {
+    const initializeAuth = async () => {
       try {
-        const authService = AuthService.getInstance();
-        const { user, verified } = await authService.verifySession();
-        if (verified && user) {
-          setUser(user);
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          setUser(JSON.parse(userData));
         }
       } catch (error) {
-        console.error("Session verification failed:", error);
+        // If there's an error, clear any invalid user data
+        localStorage.removeItem('user');
+        localStorage.removeItem('firebaseCustomToken');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    verifySession();
+    initializeAuth();
   }, []);
 
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginCredentials) => {
+      const response = await authAPI.login(credentials);
+      return response;
+    },
+    onSuccess: (data) => {
+      // Save user data and token to localStorage
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('firebaseCustomToken', data.firebaseCustomToken);
+      
+      // Update user state
+      setUser(data.user);
+    },
+  });
+
+  const signupMutation = useMutation({
+    mutationFn: async (credentials: SignupCredentials) => {
+      const response = await authAPI.register(credentials);
+      return response;
+    },
+    onSuccess: (data) => {
+      // Save user data and token to localStorage
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('firebaseCustomToken', data.firebaseCustomToken);
+      
+      // Update user state
+      setUser(data.user);
+    },
+  });
+
   const login = async (email: string, password: string) => {
-    const authService = AuthService.getInstance();
-    const user = await authService.login({ email, password });
-    setUser(user);
+    try {
+      const credentials: LoginCredentials = { email, password };
+      await loginMutation.mutateAsync(credentials);
+    } catch (error) {
+      // Re-throw to let the calling component handle the error
+      throw error;
+    }
   };
 
-  const logout = async () => {
-    console.log("AuthContext: Logging out");
-    const authService = AuthService.getInstance();
-    await authService.logout();
+  const signup = async (credentials: SignupCredentials) => {
+    try {
+      await signupMutation.mutateAsync(credentials);
+    } catch (error) {
+      // Re-throw to let the calling component handle the error
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    // Clear user data and token
+    localStorage.removeItem('user');
+    localStorage.removeItem('firebaseCustomToken');
+    
+    // Reset user state
     setUser(null);
-    console.log("AuthContext: User state cleared");
-    navigate("/");
+    
+    // Invalidate queries
+    queryClient.invalidateQueries();
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const updateUser = (updatedUser: CurrentUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    signup,
+    logout,
+    updateUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
