@@ -1,0 +1,48 @@
+import { Global, Module } from '@nestjs/common';
+import { PrismaModule } from './prisma/prisma.module';
+import { CoursesModule } from './courses/courses.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CohortsModule } from './cohorts/cohorts.module';
+import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { CourseModulesModule } from './course-modules/course-modules.module';
+import { LessonsModule } from './lessons/lessons.module';
+import { UserModule } from './user/user.module';
+import { ContentModule } from './content/content.module';
+import { ProgressAnalyticsModule } from './progress-and-analytics/progress-analytics.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { UserApplicationModule } from './user-application/user-application.module';
+import { TeachingScheduleModule } from './teaching-schedule/teaching-schedule.module';
+// import { APP_GUARD } from '@nestjs/core';
+// import { AcademyProfileGuard } from './auth/academy-profile.guard'; // Update import
+
+@Global()
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PrismaModule,
+    UserModule,
+    CoursesModule,
+    CohortsModule,
+    EnrollmentsModule,
+    CourseModulesModule,
+    LessonsModule,
+    ContentModule,
+    ProgressAnalyticsModule,
+    NotificationsModule,
+    UserApplicationModule,
+    TeachingScheduleModule
+  ],
+  providers: [
+    // Remove the global guard registration
+    /*
+    {
+      provide: APP_GUARD,
+      useClass: AcademyProfileGuard // Update to use AcademyProfileGuard
+    }
+    */
+  ]
+})
+export class AppModule { }
