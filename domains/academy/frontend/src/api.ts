@@ -4,7 +4,7 @@ import { enrollmentApi } from "./api/enrollmentApi";
 
 const env = import.meta.env.MODE as "development" | "production" | "test";
 
-const PORT = import.meta.env.VITE_API_PORT || 3000;
+const PORT = import.meta.env.VITE_API_PORT || 3006;
 
 // Choose academy base URL depending on environment
 const ACADEMY_BASE_URL =

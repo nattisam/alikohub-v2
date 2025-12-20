@@ -36,7 +36,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
     setIsProfileMenuOpen(!isProfileMenuOpen);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     console.log('AcademyHeader: handleLogout called');
     // Close the profile menu
     setIsProfileMenuOpen(false);

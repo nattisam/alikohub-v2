@@ -1,13 +1,19 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
 import { UserProvider } from "./context_providers/UserContextProvider";
-import './index.css'
-import App from './App.tsx'
+import { StudentCoursesProvider } from "./context_providers/StudentCourseContextProvider";
+import { InstructorCoursesProvider } from "./context_providers/InstructorCourseContextProvider";
+import App from "./App";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <UserProvider>
-    <App />
+      <StudentCoursesProvider>
+        <InstructorCoursesProvider>
+          <App />
+        </InstructorCoursesProvider>
+      </StudentCoursesProvider>
     </UserProvider>
-  </StrictMode>,
-)
+  </StrictMode>
+);

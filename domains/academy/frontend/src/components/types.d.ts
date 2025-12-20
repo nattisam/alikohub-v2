@@ -1,7 +1,1 @@
-export type {
-  Course,
-  ITeachingSchedule,
-  User,
-  Enrollment,
-  TestimonyCardProps,
-} from "./types.d.tsx";
+export type { Course, ITeachingSchedule, User, Enrollment } from "./types.d.tsx";

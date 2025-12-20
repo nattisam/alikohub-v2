@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from './hooks/useUser';
 import RoleSelectionModal from './components/RoleSelectionModal';
+import LoginPage from './Pages/LoginPage';
+import SignupPage from './Pages/SignupPage';
+import AcademyHomePage from './Pages/AcademyHomePage';
+import AcademyAboutPage from './Pages/AcademyAboutPage';
+import AcademyContactUsPage from './Pages/AcademyContactUsPage';
+import AcademyStudentDashboard from './Pages/AcademyStudentDashboard';
+import InstructorDashboard from './Pages/InstructorDashboard';
+import ProfilePage from './Pages/ProfilePage';
+import CoursesPage from './Pages/CoursesPage';
+import CourseDetailsPage from './Pages/CourseDetailsPage';
 import AcademyHeader from './components/AcademyHeader';
-import AcademyHomePage from './pages/AcademyHomePage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
+import EventDetailsPage from './Pages/EventDetailsPage'; // Import the new EventDetailsPage
 
 // Layout components
 const DefaultLayout = () => {
@@ -45,7 +53,7 @@ const PublicLayout = () => {
 
   return (
     <>
-      <AcademyHeader
+      <AcademyHeader 
         currentTab="/" 
         currentUser={currentUser || undefined}
         onSignUpClick={handleSignUpClick}
@@ -152,27 +160,27 @@ const DashboardLayout = () => {
 };
 
 // Create a wrapper component for the instructor dashboard that uses hooks safely
-// const InstructorDashboardWrapper = () => {
-//   const { currentUser } = useUser();
-//   const navigate = useNavigate();
+const InstructorDashboardWrapper = () => {
+  const { currentUser } = useUser();
+  const navigate = useNavigate();
 
-//   // If user is not logged in, redirect to login
-//   if (!currentUser) {
-//     return <Navigate to="/auth/login" replace />;
-//   }
+  // If user is not logged in, redirect to login
+  if (!currentUser) {
+    return <Navigate to="/auth/login" replace />;
+  }
 
-//   // If user hasn't selected a role, redirect to role selection
-//   if (!currentUser.hasSelectedRole) {
-//     return <Navigate to="/dashboard" replace />;
-//   }
+  // If user hasn't selected a role, redirect to role selection
+  if (!currentUser.hasSelectedRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-//   // If user is not an instructor or admin, redirect to student dashboard
-//   if (currentUser.academyRole !== 'INSTRUCTOR' && currentUser.academyRole !== 'ADMIN') {
-//     return <Navigate to="/dashboard" replace />;
-//   }
+  // If user is not an instructor or admin, redirect to student dashboard
+  if (currentUser.academyRole !== 'INSTRUCTOR' && currentUser.academyRole !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-//   return <InstructorDashboard />;
-// };
+  return <InstructorDashboard />;
+};
 
 function App() {
   return (
@@ -181,6 +189,11 @@ function App() {
         {/* Public routes */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<AcademyHomePage />} />
+          <Route path="/about" element={<AcademyAboutPage />} />
+          <Route path="/contact" element={<AcademyContactUsPage />} />
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:courseId" element={<CourseDetailsPage />} />
+          <Route path="/events/:eventId" element={<EventDetailsPage />} /> {/* Add the event details route */}
         </Route>
 
         {/* Authentication routes */}
@@ -190,12 +203,12 @@ function App() {
         </Route>
 
         {/* Dashboard routes (protected) */}
-        {/* <Route element={<DashboardLayout />}>
+        <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<AcademyStudentDashboard />} />
           <Route path="/dashboard/profile" element={<ProfilePage />} />
           <Route path="/instructor" element={<InstructorDashboardWrapper />} />
           <Route path="/instructor/profile" element={<ProfilePage />} />
-        </Route> */}
+        </Route>
 
         {/* Redirect all other routes to home */}
         <Route path="*" element={<Navigate to="/" replace />} />

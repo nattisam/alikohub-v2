@@ -22,14 +22,15 @@ const Testimonials = () => {
                 name={testimonial.name}
                 cardColor={colors[testimonial.id % 5]}
                 className={`${
-                  testimonial.id === 3 ||
-                  testimonial.id === 4 ||
-                  testimonial.id === 3 ||
-                  testimonial.id === 1
-                    ? "md:relative md:bottom-[-4rem] md:left-[2rem]"
-                    : ""
+                  (testimonial.id === 3 ||
+                    testimonial.id === 4 ||
+                    testimonial.id === 3 ||
+                    testimonial.id === 1) ?
+                  "md:relative md:bottom-[-4rem] md:left-[2rem]":""
                 } 
-                  ${testimonial.id % 2 === 0 ? "self-end" : ""}`}
+                  ${
+                    testimonial.id % 2 === 0 ? "self-end" : ""
+                  }`}
               />
             );
           })}
