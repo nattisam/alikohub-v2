@@ -1,0 +1,261 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContechProfile {
+  id              Int         @id @default(autoincrement())
+  userId          String      @unique
+  role            ContechRole @default(USER)
+  hasSelectedRole Boolean     @default(false)
+  bio             String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Project {
+  id           Int            @id @default(autoincrement())
+  name         String
+  subtitle     String?
+  inspectorId  String?
+  contractorId String
+  managerId    String?
+  site         String?
+  description  String?
+  status       ProjectStatus  @default(PLANNED)
+  startDate    DateTime?
+  endDate      DateTime?
+  budgetCents  Float?         @map("budget_cents")
+  progress     Float?         @default(0.0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  createdBy    String?
+  updatedBy    String?
+  metadata     Json?
+
+  // Relations
+  tasks         Task[]
+  milestones    Milestone[]
+  contracts     Contract[]
+  inspections   Inspection[]
+  clientReports ClientReport[]
+  comments      Comment[]
+
+  @@index([managerId])
+  @@index([inspectorId])
+  @@index([contractorId])
+  @@index([status])
+}
+
+model Task {
+  id          Int          @id @default(autoincrement())
+  projectId   Int
+  title       String?
+  description String
+  status      TaskStatus   @default(PENDING)
+  priority    TaskPriority @default(MEDIUM)
+  progress    Float?
+  deadline    DateTime?
+  assignedTo  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  metadata    Json?
+
+  // Relations
+  project     Project      @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+  @@index([assignedTo])
+}
+
+model Contract {
+  id           Int            @id @default(autoincrement())
+  projectId    Int
+  fileName     String
+  secureUrl    String
+  publicId     String         @unique
+  status       ContractStatus @default(DRAFT)
+  changeOrders Json?
+  rfis         Json?
+  uploadedAt   DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relations
+  project      Project        @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model Inspection {
+  id          Int                 @id @default(autoincrement())
+  projectId   Int
+  inspectorId String
+  checklist   ChecklistItem[]
+  photos      String[]
+  status      InspectionStatus   @default(PENDING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  createdBy   String?
+  updatedBy   String?
+  metadata    Json?
+
+  // Relations
+  project     Project            @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([inspectorId])
+  @@index([status])
+}
+
+model ChecklistItem {
+  id              Int                 @id @default(autoincrement())
+  itemDescription String
+  status          ChecklistItemStatus
+  comment         String?
+  inspectionId    Int
+  inspection      Inspection          @relation(fields: [inspectionId], references: [id])
+
+  @@index([inspectionId])
+}
+
+model ClientReport {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  title       String
+  summary     String
+  kpis        Json?
+  generatedAt DateTime  @default(now())
+  createdBy   String?
+  updatedBy   String?
+  metadata    Json?
+
+  // Relations
+  project     Project   @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([generatedAt])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  // Relations
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model Milestone {
+  id          Int               @id @default(autoincrement())
+  projectId   Int
+  title       String
+  description String?
+  status      MilestoneStatus   @default(PENDING)
+  dueDate     DateTime?
+  progress    Float?            @default(0.0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  project     Project           @relation(fields: [projectId], references: [id])
+  reviews     MilestoneReview[]
+
+  @@index([projectId])
+}
+
+model MilestoneReview {
+  id          Int              @id @default(autoincrement())
+  milestoneId Int
+  inspectorId String
+  status      MilestoneStatus
+  comments    String?
+  createdAt   DateTime         @default(now())
+  
+  milestone   Milestone        @relation(fields: [milestoneId], references: [id])
+
+  @@index([milestoneId])
+  @@index([inspectorId])
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  DELAYED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  BLOCKED
+  TODO
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  AMENDED
+  TERMINATED
+}
+
+enum InspectionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  SCHEDULED
+}
+
+enum ChecklistItemStatus {
+  PASS
+  FAIL
+  PENDING
+  NOT_APPLICABLE
+}
+
+enum ContechRole {
+  CLIENT
+  CONTRACTOR
+  PROJECT_MANAGER
+  ADMIN
+  USER
+}

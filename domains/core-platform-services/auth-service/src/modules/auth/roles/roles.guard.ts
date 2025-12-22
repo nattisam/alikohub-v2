@@ -13,6 +13,7 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
+    const tokenData = request.tokenData;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
@@ -23,7 +24,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    // Check subdomain roles
+    // Check subdomain roles from database user relationships
     for (const requiredRole of roles) {
       if (requiredRole.startsWith('ACADEMY_') && user.academyUser) {
         const subdomainRole = 'ACADEMY_' + user.academyUser.role;
@@ -47,6 +48,36 @@ export class RolesGuard implements CanActivate {
         const subdomainRole = 'EVENTS_' + user.eventsUser.role;
         if (subdomainRole === requiredRole) {
           return true;
+        }
+      }
+    }
+
+    // Check subdomain roles from JWT token data (fallback if database relationships not loaded)
+    if (tokenData) {
+      for (const requiredRole of roles) {
+        if (requiredRole.startsWith('ACADEMY_') && tokenData.academyRole) {
+          // Direct comparison since JWT token contains the full role name
+          if (tokenData.academyRole === requiredRole) {
+            return true;
+          }
+        }
+        if (requiredRole.startsWith('CONSULTANCY_') && tokenData.consultancyRole) {
+          // Direct comparison since JWT token contains the full role name
+          if (tokenData.consultancyRole === requiredRole) {
+            return true;
+          }
+        }
+        if (requiredRole.startsWith('CONTECH_') && tokenData.contechRole) {
+          // Direct comparison since JWT token contains the full role name
+          if (tokenData.contechRole === requiredRole) {
+            return true;
+          }
+        }
+        if (requiredRole.startsWith('EVENTS_') && tokenData.eventsRole) {
+          // Direct comparison since JWT token contains the full role name
+          if (tokenData.eventsRole === requiredRole) {
+            return true;
+          }
         }
       }
     }

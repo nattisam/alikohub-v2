@@ -1,11 +1,11 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { FirebaseService } from '../../firebase/firebase.service';
+import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
 	constructor(
-		private readonly firebaseService: FirebaseService,
+		private readonly jwtService: JwtService,
 		private readonly userService: UserService,
 	) {}
 
@@ -18,8 +18,8 @@ export class FirebaseAuthGuard implements CanActivate {
 		}
 
 		try {
-			// Verify Firebase ID token
-			const decodedToken = await this.firebaseService.getAuth().verifyIdToken(token);
+			// Verify JWT token
+			const decodedToken = this.jwtService.verify(token);
 			
 			// Get user from database with subdomain relationships
 			const user = await this.userService.findByFirebaseId(decodedToken.uid);
@@ -28,8 +28,9 @@ export class FirebaseAuthGuard implements CanActivate {
 				throw new UnauthorizedException('User not found');
 			}
 
-			// Attach user to request
+			// Attach user and token data to request
 			request.user = user;
+			request.tokenData = decodedToken;
 			return true;
 		} catch (error) {
 			throw new UnauthorizedException('Invalid token');

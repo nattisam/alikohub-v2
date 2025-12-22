@@ -15,6 +15,9 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
+import { AcademyStatusGuard, TeacherAccessGuard, StudentAccessGuard, AdminAccessGuard } from '../../common/guards/academy-status.guard';
+import { CourseAccessGuard, EnrollmentGuard } from '../../common/guards/enrollment.guard';
+import { AcademyRolesGuard, Roles, AcademyRole } from '../../common/guards/academy-roles.guard';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { UpdateCourseStatusDto } from './dto/update-course-status.dto';
@@ -38,9 +41,11 @@ export class CourseController {
 
   // Create a new course
   @Post()
+  @UseGuards(AuthGuard, TeacherAccessGuard)
   @ApiOperation({ summary: 'Create a new course' })
   @ApiResponse({ status: 201, description: 'Course created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 403, description: 'Teacher role required' })
   @ApiBody({ type: CreateCourseDto })
   createCourse(@Request() req: RequestWithUser, @Body() createCourseDto: CreateCourseDto) {
     const payload = {
@@ -59,19 +64,18 @@ export class CourseController {
     required: false,
     description: 'Query parameters (pagination, filters, etc.)',
   })
-  findAllCourses(@Request() req: RequestWithUser, @Query() query: any) {
-    const payload = {
-      query,
-      user: req.user,
-    };
+  findAllCourses(@Query() query: any) {
+    const payload = { query };
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
 
   // Get a course by ID
   @Get(':id')
+  @UseGuards(AuthGuard, CourseAccessGuard)
   @ApiOperation({ summary: 'Get a course by ID' })
   @ApiResponse({ status: 200, description: 'Course found' })
   @ApiResponse({ status: 404, description: 'Course not found' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiParam({ name: 'id', type: Number })
   findCourseById(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
     const payload = { id, user: req.user };
@@ -80,8 +84,10 @@ export class CourseController {
 
   // Update a course
   @Patch(':id')
+  @UseGuards(AuthGuard, EnrollmentGuard)
   @ApiOperation({ summary: 'Update a course' })
   @ApiResponse({ status: 200, description: 'Course updated successfully' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiParam({ name: 'id', type: Number })
   @ApiBody({ type: UpdateCourseDto })
   updateCourse(
@@ -99,8 +105,10 @@ export class CourseController {
 
   // Remove a course
   @Delete(':id')
+  @UseGuards(AuthGuard, EnrollmentGuard)
   @ApiOperation({ summary: 'Delete a course' })
   @ApiResponse({ status: 200, description: 'Course deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiParam({ name: 'id', type: Number })
   removeCourse(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
     const payload = {
@@ -112,8 +120,10 @@ export class CourseController {
 
   // Update course status
   @Patch(':id/status')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @ApiOperation({ summary: 'Update course status' })
   @ApiResponse({ status: 200, description: 'Course status updated' })
+  @ApiResponse({ status: 403, description: 'Admin role required' })
   @ApiParam({ name: 'id', type: Number })
   @ApiBody({ type: UpdateCourseStatusDto })
   updateCourseStatus(
@@ -152,5 +162,31 @@ export class CourseController {
       { cmd: 'assign_course_instructor' },
       payload,
     );
+  }
+
+  // Get courses by category
+  @Get('category/:category')
+  @ApiOperation({ summary: 'Get courses by category' })
+  @ApiResponse({ status: 200, description: 'List of courses by category' })
+  @ApiParam({ name: 'category', type: String })
+  getCoursesByCategory(
+    @Request() req: RequestWithUser,
+    @Param('category') category: string,
+  ) {
+    const payload = { category, user: req.user };
+    return this.academyClient.send({ cmd: 'get_courses_by_category' }, payload);
+  }
+
+  // Get courses by difficulty
+  @Get('difficulty/:difficulty')
+  @ApiOperation({ summary: 'Get courses by difficulty' })
+  @ApiResponse({ status: 200, description: 'List of courses by difficulty' })
+  @ApiParam({ name: 'difficulty', type: String })
+  getCoursesByDifficulty(
+    @Request() req: RequestWithUser,
+    @Param('difficulty') difficulty: string,
+  ) {
+    const payload = { difficulty, user: req.user };
+    return this.academyClient.send({ cmd: 'get_courses_by_difficulty' }, payload);
   }
 }

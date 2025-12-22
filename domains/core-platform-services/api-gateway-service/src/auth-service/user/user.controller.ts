@@ -1,9 +1,9 @@
 import { Controller, Get, Inject, UseGuards, Request, Body, Patch, Delete, Param, ForbiddenException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { AuthGuard } from '../../../common/guard/firebase_auth.guard';
-import { Roles } from '../../../common/roles/roles.decorator';
-import { RoleGuard } from '../../../common/roles/roles.guard';
-import { GlobalRole } from '../../../common/roles/roles.enum';
+import { AuthGuard } from '../../common/guard/firebase_auth.guard';
+import { Roles } from '../../common/roles/roles.decorator';
+import { RoleGuard } from '../../common/roles/roles.guard';
+import { GlobalRole } from '../../common/roles/roles.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 interface AuthenticatedRequest extends Request {
