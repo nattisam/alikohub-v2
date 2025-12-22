@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Inject } from '@nestjs/common';
-import { AuthGuard } from 'common/guard/firebase_auth.guard';
+import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 type AuthenticatedUser = {

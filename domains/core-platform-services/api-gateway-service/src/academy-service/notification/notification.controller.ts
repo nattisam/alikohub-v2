@@ -80,4 +80,16 @@ export class NotificationController {
     const payload = { id, user: req.user };
     return this.academyClient.send({ cmd: 'delete_notification' }, payload);
   }
+
+  // Get my notifications
+  @Get('my')
+  @ApiOperation({ summary: 'Get my notifications' })
+  @ApiResponse({ status: 200, description: 'List of user notifications' })
+  getMyNotifications(@Request() req: RequestWithUser) {
+    if (!req.user) {
+      throw new Error('User not authenticated');
+    }
+    const payload = { userId: req.user.firebaseId, user: req.user };
+    return this.academyClient.send({ cmd: 'get_my_notifications' }, payload);
+  }
 }

@@ -1,54 +1,104 @@
-
-import { Controller, Post, Body, Res, HttpCode, UsePipes } from '@nestjs/common';
+import { Controller, UsePipes, Logger } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
-import { SignUpDto, SignInDto, VerifyDto } from './dto';
-import { Response } from 'express';
+import { SignUpDto, SignInDto } from './dto';
+import { SelectRoleDto, TeacherApplicationDto } from './dto/academy-roles.dto';
 import * as Joi from 'joi';
 import { JoiValidationPipe } from '../validation.pipe';
 
-@Controller('auth')
+@Controller()
 export class AuthController {
+	private readonly logger = new Logger(AuthController.name);
 	constructor(private readonly authService: AuthService) {}
 
-
-	@Post('register')
+	@MessagePattern({ cmd: 'register' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required(),
 		firstname: Joi.string().required(),
 		lastname: Joi.string().optional(),
 		password: Joi.string().min(6).optional(),
 	})))
-	async register(@Body() dto: SignUpDto, @Res() res: Response) {
-		const result = await this.authService.register(dto);
-		return res.status(201).json(result);
+	async register(@Payload() dto: SignUpDto) {
+		return this.authService.register(dto);
 	}
 
-
-	@Post('login')
-	@HttpCode(200)
+	@MessagePattern({ cmd: 'login' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required(),
 		password: Joi.string().min(6).required(),
 	})))
-	async login(@Body() dto: SignInDto, @Res() res: Response) {
-		const result = await this.authService.login(dto);
-		return res.json(result);
+	async login(@Payload() dto: SignInDto) {
+		return this.authService.login(dto);
 	}
 
 
-	@Post('login/google')
-	@HttpCode(200)
+	@MessagePattern({ cmd: 'login_google' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		idToken: Joi.string().required(),
 	})))
-	async loginWithGoogle(@Body() body: { idToken: string }, @Res() res: Response) {
-		const result = await this.authService.loginWithGoogle(body.idToken);
-		return res.json(result);
+	async loginWithGoogle(@Payload() body: { idToken: string }) {
+		return this.authService.loginWithGoogle(body.idToken);
 	}
 
-	@Post('verify')
-	async verify(@Body() dto: VerifyDto, @Res() res: Response) {
-		const result = await this.authService.verify(dto.token);
-		return res.json(result);
+	@MessagePattern({ cmd: 'verify' })
+	async verify(@Payload() payload: { type: 'cookie' | 'token'; value: string }) {
+		return this.authService.verifyAuth(payload);
 	}
+
+	@MessagePattern({ cmd: 'create_session' })
+	async createSession(@Payload() data: { idToken: string; expiresIn?: number }) {
+		return this.authService.createSessionCookie(data.idToken, data.expiresIn);
+	}
+
+	// Academy-specific message patterns
+	@MessagePattern({ cmd: 'select_academy_role' })
+	async handleSelectRole(@Payload() data: SelectRoleDto) {
+		try {
+			return await this.authService.selectAcademyRole(data.userId, data.role);
+		} catch (error) {
+			this.logger.error(`Error in select_academy_role: ${error.message}`, error.stack);
+			throw error;
+		}
+	}
+
+	@MessagePattern({ cmd: 'apply_teacher_role' })
+	async handleTeacherApplication(@Payload() data: TeacherApplicationDto) {
+		try {
+			return await this.authService.applyForTeacherRole(data);
+		} catch (error) {
+			this.logger.error(`Error in apply_teacher_role: ${error.message}`, error.stack);
+			throw error;
+		}
+	}
+
+	@MessagePattern({ cmd: 'get_teacher_applications' })
+	async handleGetTeacherApplications() {
+		return this.authService.getTeacherApplications();
+	}
+
+	@MessagePattern({ cmd: 'approve_teacher_application' })
+	async handleApproveTeacher(@Payload() data: { applicationId: string }) {
+		return this.authService.approveTeacherApplication(data.applicationId);
+	}
+
+	@MessagePattern({ cmd: 'reject_teacher_application' })
+	async handleRejectTeacher(@Payload() data: { applicationId: string }) {
+		return this.authService.rejectTeacherApplication(data.applicationId);
+	}
+
+	@MessagePattern({ cmd: 'switch_role' })
+	async handleSwitchRole(@Payload() data: { userId: string; newRole: string }) {
+		try {
+			return await this.authService.switchRole(data.userId, data.newRole);
+		} catch (error) {
+			this.logger.error(`Error in switch_role: ${error.message}`, error.stack);
+			throw error;
+		}
+	}
+
+	@MessagePattern({ cmd: 'get_user_academy_status' })
+	async handleGetUserStatus(@Payload() data: { userId: string }) {
+		return this.authService.getUserAcademyStatus(data.userId);
+	}
+
 }

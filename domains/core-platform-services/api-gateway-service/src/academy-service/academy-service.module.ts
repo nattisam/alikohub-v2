@@ -10,7 +10,6 @@ import { NotificationModule } from 'src/academy-service/notification/notificatio
 import { ProgressAndAnalyticsModule } from 'src/academy-service/progress-and-analytics/progress-and-analytics.module';
 import { TeachingScheduleModule } from 'src/academy-service/teaching-schedule/teaching-schedule.module';
 import { AcademyController } from './academy-service.controller';
-import { RouterModule } from '@nestjs/core';
 import { FileUploadModule } from './file-upload/file-upload.module';
 
 @Module({
@@ -26,24 +25,6 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     ProgressAndAnalyticsModule,
     TeachingScheduleModule,
     FileUploadModule,
-    RouterModule.register([
-      {
-        path: '',
-        module: AcademyServiceModule,
-        children: [
-          { path: '/', module: AcademyProfileModule },
-          { path: '/', module: CourseModule },
-          { path: '/', module: CourseModuleModule },
-          { path: '/', module: CohortModule },
-          { path: '/', module: ContentModule },
-          { path: '/', module: EnrollmentModule },
-          { path: '/', module: LessonModule },
-          { path: '/', module: NotificationModule },
-          { path: '/', module: ProgressAndAnalyticsModule },
-          { path: '/', module: TeachingScheduleModule },
-        ],
-      },
-    ]),
   ],
   controllers: [AcademyController],
 })

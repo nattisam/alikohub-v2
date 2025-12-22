@@ -29,21 +29,29 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    // 1. Extract the session cookie instead of the Bearer token
+    // 1. Extract the session cookie or Bearer token
     const sessionCookie = request.cookies?.session;
+    const authHeader = request.headers.authorization;
+    
+    let type: 'cookie' | 'jwt' = 'cookie';
+    let value: string | null = sessionCookie;
 
-    if (!sessionCookie) {
-      throw new UnauthorizedException('Session cookie not provided');
+    if (!sessionCookie && authHeader && authHeader.startsWith('Bearer ')) {
+      type = 'jwt';
+      value = authHeader.split(' ')[1];
+    }
+
+    if (!value) {
+      throw new UnauthorizedException('No authentication provided (cookie or token)');
     }
 
     try {
       // 2. Delegate verification to the auth-service
-      //    This sends a message and waits for the response.
       const authResponse = await firstValueFrom(
         this.authClient
           .send(
-            { cmd: 'verify' }, // The message pattern in your auth-service
-            { type: 'cookie', value: sessionCookie }, // The payload
+            { cmd: 'verify' },
+            { type, value },
           )
           .pipe(
             timeout(5000), // Timeout after 5 seconds

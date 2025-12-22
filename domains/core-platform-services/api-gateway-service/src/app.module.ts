@@ -6,6 +6,9 @@ import { RpcExceptionFilter } from './filters/rpc-exception.filter';
 import { UserModule } from './auth-service/user/user.module';
 import { AcademyServiceModule } from './academy-service';
 
+import { ConTechServiceModule } from './contech-service/contech-service.module';
+import { EventsServiceModule } from './events-service/events-service.module';
+
 @Global()
 @Module({
   imports: [
@@ -74,6 +77,8 @@ import { AcademyServiceModule } from './academy-service';
     ]),
     UserModule,
     AcademyServiceModule,
+    ConTechServiceModule,
+    EventsServiceModule,
   ],
   providers: [
     {

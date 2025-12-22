@@ -15,6 +15,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
+import { StudentAccessGuard, AdminAccessGuard } from '../../common/guards/academy-status.guard';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import {
   ApiTags,
@@ -152,5 +153,43 @@ export class EnrollmentController {
       { cmd: 'find_enrollments_by_user' },
       payload,
     );
+  }
+
+  // Get enrollments by course
+  @Get('course/:courseId')
+  @ApiOperation({ summary: 'Get enrollments by course' })
+  @ApiResponse({ status: 200, description: 'List of enrollments for a course' })
+  @ApiParam({ name: 'courseId', type: Number })
+  getEnrollmentsByCourse(
+    @Request() req: RequestWithUser,
+    @Param('courseId', ParseIntPipe) courseId: number,
+  ) {
+    const payload = { courseId, user: req.user };
+    return this.academyClient.send({ cmd: 'get_enrollments_by_course' }, payload);
+  }
+
+  // Get enrollments by cohort
+  @Get('cohort/:cohortId')
+  @ApiOperation({ summary: 'Get enrollments by cohort' })
+  @ApiResponse({ status: 200, description: 'List of enrollments for a cohort' })
+  @ApiParam({ name: 'cohortId', type: Number })
+  getEnrollmentsByCohort(
+    @Request() req: RequestWithUser,
+    @Param('cohortId', ParseIntPipe) cohortId: number,
+  ) {
+    const payload = { cohortId, user: req.user };
+    return this.academyClient.send({ cmd: 'get_enrollments_by_cohort' }, payload);
+  }
+
+  // Get my enrollments
+  @Get('my')
+  @ApiOperation({ summary: 'Get my enrollments' })
+  @ApiResponse({ status: 200, description: 'List of user enrollments' })
+  getMyEnrollments(@Request() req: RequestWithUser) {
+    if (!req.user) {
+      throw new Error('User not authenticated');
+    }
+    const payload = { userId: req.user.firebaseId, user: req.user };
+    return this.academyClient.send({ cmd: 'get_my_enrollments' }, payload);
   }
 }

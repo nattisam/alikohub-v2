@@ -114,4 +114,17 @@ export class CohortController {
     };
       return this.academyClient.send({ cmd: 'remove_cohort' }, payload);
   }
+
+  // Get cohorts by course
+  @Get('course/:courseId')
+  @ApiOperation({ summary: 'Get cohorts by course' })
+  @ApiResponse({ status: 200, description: 'List of cohorts for a course' })
+  @ApiParam({ name: 'courseId', type: Number })
+  getCohortsByCourse(
+    @Request() req: RequestWithUser,
+    @Param('courseId', ParseIntPipe) courseId: number,
+  ) {
+    const payload = { courseId, user: req.user };
+    return this.academyClient.send({ cmd: 'get_cohorts_by_course' }, payload);
+  }
 }

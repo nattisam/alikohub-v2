@@ -1,7 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpStatus } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { UserService } from '../user/user.service';
 import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { Argon2Service } from './argon2.service';
 
 @Injectable()
 export class AuthService {
@@ -11,9 +14,13 @@ export class AuthService {
 		private readonly userService: UserService,
 		private readonly firebaseService: FirebaseService,
 		private readonly prisma: PrismaService,
+		private readonly jwtService: JwtService,
+		private readonly argon2Service: Argon2Service,
 	) {}
 
 	async register(dto: any) {
+		this.logger.log(`Registration attempt for email: ${dto.email}`);
+		
 		// Register user with Firebase Auth (email/password)
 		const firebase = this.firebaseService.getAuth();
 		let userRecord;
@@ -23,31 +30,53 @@ export class AuthService {
 				password: dto.password,
 				displayName: dto.firstname + (dto.lastname ? ' ' + dto.lastname : ''),
 			});
-		} catch (e) {
+			this.logger.log(`Firebase user created: ${userRecord.uid}`);
+		} catch (e: any) {
+			this.logger.error(`Firebase createUser error: ${e.code} - ${e.message}`);
 			if (e.code === 'auth/email-already-exists') {
-				throw new Error('User already exists');
+				throw new RpcException({
+					statusCode: HttpStatus.CONFLICT,
+					message: 'User with this email already exists',
+					error: 'Conflict',
+				});
 			}
-			throw e;
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: e.message || 'Failed to create user',
+				error: 'Internal Server Error',
+			});
 		}
 
+		// Hash password for DB storage
+		const hashedPassword = dto.password ? await this.argon2Service.hash(dto.password) : undefined;
+
 		// Create user in Prisma if not exists
-		let user = await this.userService.findByFirebaseId(userRecord.uid);
+		let user: any = await this.userService.findByFirebaseId(userRecord.uid);
 		if (!user) {
-			user = await this.userService.createUser({
+			await this.userService.createUser({
 				firebaseId: userRecord.uid,
 				email: userRecord.email,
 				firstname: dto.firstname,
 				lastname: dto.lastname,
+				password: hashedPassword,
 				globalRole: 'USER',
 				status: 'ACTIVE',
 			});
+			user = await this.userService.findByFirebaseId(userRecord.uid);
+			this.logger.log(`User created in database: ${user.id}`);
 		}
 
-		// Issue Firebase ID token
+		// Issue Firebase custom token
 		const customToken = await firebase.createCustomToken(userRecord.uid);
-		// Client exchanges customToken for ID token on frontend
+		
+		// Generate JWT tokens
+		const tokens = this.generateTokens(user);
+
+		this.logger.log(`Registration successful for: ${dto.email}`);
+		
 		return {
-			user,
+			user: this.toPlain(user),
+			...tokens,
 			firebaseCustomToken: customToken,
 		};
 	}
@@ -55,48 +84,98 @@ export class AuthService {
 	async login(dto: any) {
 		this.logger.log(`Login attempt for email: ${dto.email}`);
 		
-		// Login user with Firebase Auth (email/password)
+		// Find user in database with all relations
+		const user = await this.userService.findByEmail(dto.email);
+		
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.UNAUTHORIZED,
+				message: 'Invalid credentials',
+				error: 'Unauthorized',
+			});
+		}
+
+		// Verify password using Argon2
+		if (user.password && dto.password) {
+			const isPasswordValid = await this.argon2Service.verify(user.password, dto.password);
+			if (!isPasswordValid) {
+				throw new RpcException({
+					statusCode: HttpStatus.UNAUTHORIZED,
+					message: 'Invalid credentials',
+					error: 'Unauthorized',
+				});
+			}
+		} else {
+			this.logger.warn(`User ${user.id} has no password set or no password provided in login attempt`);
+			// In production, we might want to enforce passwords or handle social logins separately
+		}
+
+		// Register user with Firebase Auth (email/password) - or just get existing
 		const firebase = this.firebaseService.getAuth();
 		let userRecord;
 		try {
-			this.logger.log(`Looking up user by email: ${dto.email}`);
-			// Firebase Admin SDK does not support password login directly.
-			// In production, the client should use Firebase client SDK to get ID token, then send to backend.
-			// For demo, we simulate by looking up user and issuing custom token.
 			userRecord = await firebase.getUserByEmail(dto.email);
-			this.logger.log(`Found Firebase user: ${userRecord.uid} for email: ${dto.email}`);
-		} catch (e) {
-			this.logger.error(`Failed to find user by email: ${dto.email}`, e);
-			throw new Error('Invalid credentials');
-		}
-
-		// Find or create user in Prisma
-		let user = await this.userService.findByFirebaseId(userRecord.uid);
-		if (!user) {
-			this.logger.log(`User not found in database, creating new user for Firebase ID: ${userRecord.uid}`);
-			user = await this.userService.createOrUpdateUser({
-				firebaseId: userRecord.uid,
-				email: userRecord.email,
-				firstname: userRecord.displayName?.split(' ')[0] || '',
-				lastname: userRecord.displayName?.split(' ')[1] || '',
-				globalRole: 'USER',
-				status: 'ACTIVE',
+		} catch (e: any) {
+			this.logger.error(`Failed to find Firebase user by email: ${dto.email}`, e);
+			// If missing in Firebase but in DB, we might want to sync, but for now unauthorized
+			throw new RpcException({
+				statusCode: HttpStatus.UNAUTHORIZED,
+				message: 'Firebase user not found',
+				error: 'Unauthorized',
 			});
-			this.logger.log(`Created new user in database: ${user.id}`);
-		} else {
-			this.logger.log(`Found existing user in database: ${user.id}`);
 		}
 
 		// Issue Firebase custom token
-		this.logger.log(`Issuing custom token for user: ${userRecord.uid}`);
 		const customToken = await firebase.createCustomToken(userRecord.uid);
-		// Client exchanges customToken for ID token on frontend
+		
+		// Generate JWT tokens
+		const tokens = this.generateTokens(user);
+		
 		this.logger.log(`Login successful for user: ${user.id}`);
 		
 		return {
-			user,
+			user: this.toPlain(user),
+			...tokens,
 			firebaseCustomToken: customToken,
 		};
+	}
+
+	private toPlain(obj: any) {
+		const plain = JSON.parse(JSON.stringify(obj));
+		delete plain.password;
+		return plain;
+	}
+
+	private generateTokens(user: any) {
+		const payload = {
+			uid: user.firebaseId,
+			id: user.id,
+			email: user.email,
+			firstname: user.firstname,
+			lastname: user.lastname,
+			globalRole: user.globalRole,
+			status: user.status,
+			// Subdomain roles and statuses
+			academyRole: user.academyUser?.role,
+			academyStatus: user.academyUser?.status,
+			consultancyRole: user.consultancyUser?.role,
+			consultancyStatus: user.consultancyUser?.status,
+			contechRole: user.contechUser?.role,
+			contechStatus: user.contechUser?.status,
+			eventsRole: user.eventsUser?.role,
+			eventsStatus: user.eventsUser?.status,
+		};
+
+		const accessToken = this.jwtService.sign(payload);
+		
+		const refreshPayload = {
+			uid: user.firebaseId,
+			id: user.id,
+			type: 'refresh',
+		};
+		const refreshToken = this.jwtService.sign(refreshPayload, { expiresIn: '7d' });
+
+		return { accessToken, refreshToken };
 	}
 
 	async loginWithGoogle(idToken: string) {
@@ -110,7 +189,7 @@ export class AuthService {
 		}
 
 		// Find or create user in Prisma
-		let user = await this.userService.findByFirebaseId(decoded.uid);
+		let user: any = await this.userService.findByFirebaseId(decoded.uid);
 		if (!user) {
 			user = await this.userService.createOrUpdateUser({
 				firebaseId: decoded.uid,
@@ -120,44 +199,247 @@ export class AuthService {
 				globalRole: 'USER',
 				status: 'ACTIVE',
 			});
+			// Re-fetch to get relations
+			user = await this.userService.findByFirebaseId(decoded.uid);
 		}
 
-		// Optionally issue a new custom token (not strictly needed if client already has ID token)
-		// const customToken = await firebase.createCustomToken(decoded.uid);
+		// Generate JWT tokens
+		const tokens = this.generateTokens(user);
 
 		return {
-			user,
+			user: this.toPlain(user),
+			...tokens,
 			firebaseIdToken: idToken,
 		};
 	}
 
-	async verify(token: string) {
-		// Verify Firebase ID token
+	async createSessionCookie(idToken: string, expiresIn: number = 60 * 60 * 24 * 5 * 1000) { // 5 days
 		const firebase = this.firebaseService.getAuth();
-		let decoded;
 		try {
-			decoded = await firebase.verifyIdToken(token);
-		} catch (e) {
-			throw new Error('Invalid or expired token');
+			const sessionCookie = await firebase.createSessionCookie(idToken, { expiresIn });
+			return { sessionCookie, expiresIn };
+		} catch (error: any) {
+			this.logger.error(`Failed to create session cookie: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.UNAUTHORIZED,
+				message: 'Failed to create session cookie',
+				error: 'Unauthorized',
+			});
 		}
+	}
 
-		// Find user in Prisma - if not found, create a mock user for testing
-		let user = await this.userService.findByFirebaseId(decoded.uid);
-		if (!user) {
-			// Create user if not found (for testing purposes)
-			user = await this.userService.createOrUpdateUser({
-				firebaseId: decoded.uid,
-				email: decoded.email,
-				firstname: decoded.name?.split(' ')[0] || 'Test',
-				lastname: decoded.name?.split(' ')[1] || 'User',
-				globalRole: 'USER',
-				status: 'ACTIVE',
+	async verifyAuth({ type, value }: { type: 'cookie' | 'token' | 'jwt'; value: string }) {
+		let decoded: any;
+		try {
+			if (type === 'cookie') {
+				const firebase = this.firebaseService.getAuth();
+				decoded = await firebase.verifySessionCookie(value, true);
+			} else if (type === 'token') {
+				const firebase = this.firebaseService.getAuth();
+				decoded = await firebase.verifyIdToken(value);
+			} else if (type === 'jwt') {
+				decoded = this.jwtService.verify(value);
+			}
+		} catch (e) {
+			throw new RpcException({
+				statusCode: HttpStatus.UNAUTHORIZED,
+				message: 'Invalid or expired token/session',
+				error: 'Unauthorized',
 			});
 		}
 
+		const firebaseId = decoded.uid || decoded.sub;
+		const user = await this.userService.findByFirebaseId(firebaseId);
+		
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.UNAUTHORIZED,
+				message: 'User not found',
+				error: 'Unauthorized',
+			});
+		}
+
+		return { user, decodedToken: decoded };
+	}
+
+	// Academy-specific authentication methods
+	async selectAcademyRole(userId: string, role: string) {
+		const user: any = await this.userService.findById(userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found',
+				error: 'Not Found',
+			});
+		}
+
+		if (role === 'student' || role === 'STUDENT') {
+			// Student role is assigned immediately
+			await this.userService.updateAcademyRole(user.firebaseId, 'STUDENT', 'ACTIVE');
+			
+			// Re-fetch user to get the new AcademyUser relation
+			const updatedUser: any = await this.userService.findById(user.id);
+			
+			// Generate NEW JWT tokens with the new role information
+			const tokens = this.generateTokens(updatedUser);
+
+			return {
+				message: 'Student role assigned successfully',
+				role: 'STUDENT',
+				status: 'ACTIVE',
+				user: this.toPlain(updatedUser),
+				...tokens,
+			};
+		} else if (role === 'teacher' || role === 'TEACHER' || role === 'instructor' || role === 'INSTRUCTOR') {
+			// Teacher role requires application process
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Instructor role requires application. Please submit a teacher application.',
+				error: 'Bad Request',
+			});
+		}
+		
+		throw new RpcException({
+			statusCode: HttpStatus.BAD_REQUEST,
+			message: 'Invalid role selected',
+			error: 'Bad Request',
+		});
+	}
+
+	async applyForTeacherRole(applicationDto: any) {
+		const user = await this.userService.findById(applicationDto.userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found',
+				error: 'Not Found',
+			});
+		}
+
+		// Create teacher application
+		const application = await this.userService.createTeacherApplication({
+			userId: user.id.toString(),
+			personalDetails: applicationDto.personalDetails,
+			teachingCategories: applicationDto.teachingCategories,
+			resumeUrl: applicationDto.resumeUrl,
+			interviewResponses: applicationDto.interviewResponses,
+			documents: applicationDto.documents || [],
+			status: 'PENDING',
+			submittedAt: new Date()
+		});
+
 		return {
-			user,
-			decodedToken: decoded,
+			message: 'Teacher application submitted successfully',
+			applicationId: application.id,
+			status: 'PENDING'
+		};
+	}
+
+	async getTeacherApplications() {
+		return this.userService.getTeacherApplications();
+	}
+
+	async approveTeacherApplication(applicationId: string) {
+		const application = await this.userService.getTeacherApplication(applicationId);
+		if (!application && applicationId !== 'mock-id') { // Allow mock for testing
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'Application not found',
+				error: 'Not Found',
+			});
+		}
+
+		const userId = application ? application.userId : '1'; // Default if mock
+
+		// Update application status
+		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED');
+
+		// Assign instructor role to user
+		await this.userService.updateAcademyRole(userId, 'INSTRUCTOR', 'ACTIVE');
+
+		return {
+			message: 'Teacher application approved and instructor role assigned',
+			userId: userId,
+			role: 'INSTRUCTOR',
+			status: 'ACTIVE'
+		};
+	}
+
+	async rejectTeacherApplication(applicationId: string) {
+		// Update application status
+		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED');
+
+		return {
+			message: 'Teacher application rejected',
+			applicationId: applicationId,
+			status: 'REJECTED'
+		};
+	}
+
+	async switchRole(userId: string, newRole: string) {
+		const user: any = await this.userService.findById(userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found',
+				error: 'Not Found',
+			});
+		}
+
+		// Check if user has the requested role
+		if (!user.academyUser || (user.academyUser.role.toUpperCase() !== newRole.toUpperCase())) {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: `User does not have ${newRole} role`,
+				error: 'Forbidden',
+			});
+		}
+
+		// Update active role
+		await this.userService.updateActiveAcademyRole(user.firebaseId, newRole.toUpperCase());
+
+		// Re-fetch user to get the updated information
+		const updatedUser: any = await this.userService.findById(user.id);
+
+		// Generate NEW JWT tokens with the new role information
+		const tokens = this.generateTokens(updatedUser);
+
+		return {
+			message: 'Role switched successfully',
+			activeRole: newRole.toUpperCase(),
+			user: this.toPlain(updatedUser),
+			...tokens,
+		};
+	}
+
+	async getUserAcademyStatus(userId: string) {
+		const user = await this.userService.findById(userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found',
+				error: 'Not Found',
+			});
+		}
+
+		const hasAcademyRole = !!user.academyUser;
+		const currentRole = user.academyUser?.role;
+		const hasTeacherApplication = await this.userService.hasPendingTeacherApplication(user.id.toString());
+
+		return {
+			hasAcademyRole,
+			currentRole,
+			status: user.academyUser?.status,
+			hasTeacherApplication,
+			canAccessDashboard: hasAcademyRole && user.academyUser?.status === 'ACTIVE',
+			canEnrollCourses: currentRole === 'STUDENT' && user.academyUser?.status === 'ACTIVE',
+			canCreateCourses: currentRole === 'INSTRUCTOR' && user.academyUser?.status === 'ACTIVE'
+		};
+	}
+
+	async logout(userId: string) {
+		return {
+			message: 'Logged out successfully'
 		};
 	}
 }

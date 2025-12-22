@@ -44,4 +44,14 @@ export class AuthController {
 		const result = await this.authService.loginWithGoogle(body.idToken);
 		return res.json(result);
 	}
+
+	@Post('refresh')
+	@HttpCode(200)
+	@UsePipes(new JoiValidationPipe(Joi.object({
+		refreshToken: Joi.string().required(),
+	})))
+	async refreshTokens(@Body() body: { refreshToken: string }, @Res() res: Response) {
+		const result = await this.authService.refreshTokens(body.refreshToken);
+		return res.json(result);
+	}
 }
