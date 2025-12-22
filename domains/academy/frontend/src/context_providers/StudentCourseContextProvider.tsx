@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import type { Course } from "../components/types.d";
 import { StudentCourseContext } from "../contexts/StudentCoursesContext";
-import { UserContext } from "../contexts/UserContext";
+import { useAuth } from "../contexts/AuthContext";
 import { enrollmentApi } from "../api/enrollmentApi";
 import { courseApi } from "../api/courseApi";
 
@@ -47,8 +47,7 @@ const convertEnrollmentCourseToCourse = (enrollmentCourse: any): Course => {
 export const StudentCoursesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const userContext = useContext(UserContext);
-  const currentUser = userContext?.currentUser;
+  const { user: currentUser } = useAuth();
   const [trendingCourses, setTrendingCourses] = useState<Course[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);

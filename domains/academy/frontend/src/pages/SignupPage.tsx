@@ -5,34 +5,30 @@ import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/Au
 import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
 import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
 import type { SignupFormData } from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
-import { useUser } from '../hooks/useUser';
+import { useAuth } from '../contexts/AuthContext';
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { register, signupLoading, signupError, clearSignupError } = useUser();
+  const { signup, isLoading: signupLoading, loginError: signupError, logout } = useAuth();
 
   const handleSignup = async (data: SignupFormData) => {
     try {
-      const success = await register({
+      await signup({
         firstname: data.firstName,
         lastname: data.lastName,
         email: data.email,
         password: data.password,
       });
-      
-      if (success) {
-        // Redirect to login page after successful signup
-        navigate('/auth/login');
-      }
-      // Error handling is managed by the context (signupError state)
+      // Redirect back to the home page after signup
+      navigate('/');
     } catch (error) {
       console.error('Signup error:', error);
-      // Additional error handling if needed
+      // Error handling is managed by the context (signupError state)
     }
   };
 
   const handleCloseErrorModal = () => {
-    clearSignupError();
+    logout(); // Clear any error state
   };
 
   const handleSwitchToLogin = () => {

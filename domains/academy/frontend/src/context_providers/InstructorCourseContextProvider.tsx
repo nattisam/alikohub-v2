@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import type { Course, ITeachingSchedule } from "../components/types.d";
 import { InstructorCourseContext } from "../contexts/InstructorCourseContext";
 import { academyApi } from "../api";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 
 export const InstructorCoursesProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const [creatingCourse, setCreatingCourse] = useState({
     loading: false,
     error: false,

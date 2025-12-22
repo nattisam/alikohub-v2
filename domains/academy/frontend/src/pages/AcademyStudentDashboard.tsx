@@ -1,7 +1,8 @@
 import ContinueLearning from "../components/ContinueLearning";
 import QuickActions from "../components/QuickActions";
 import SidebarStats from "../components/SidebarStats";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
+import RoleSelectionModal from "../components/RoleSelectionModal";
 import { useState, useEffect } from "react";
 import { progressApi } from "../api/progressApi";
 import { enrollmentApi } from "../api/enrollmentApi";
@@ -13,7 +14,56 @@ import StudentProgressTracker from "../components/StudentProgressTracker";
 import StudentModuleView from "../components/StudentModuleView";
 
 const AcademyStudentDashboard = () => {
-  const currentUser = useUser().currentUser;
+  const { user: currentUser, isLoading } = useAuth();
+  console.log('AcademyStudentDashboard: Rendering with currentUser:', currentUser, 'isLoading:', isLoading);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+
+  // If user is loading, show loading indicator
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, redirect to login
+  console.log('AcademyStudentDashboard: Checking navigation - currentUser:', currentUser);
+  if (!currentUser) {
+    console.log('AcademyStudentDashboard: Redirecting to login');
+    window.location.href = '/auth/login';
+    return null;
+  }
+
+  // If user hasn't selected a role yet, show role selection modal
+  console.log('AcademyStudentDashboard: Checking role - academyRole:', currentUser.academyRole);
+  if (!currentUser.academyRole) {
+    // Show role selection modal
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
+            <p className="text-gray-600 mb-6">
+              To access the student dashboard, please select the Student role.
+            </p>
+            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not a student, redirect to appropriate dashboard
+  console.log('AcademyStudentDashboard: Checking role permissions - role:', currentUser.academyRole);
+  if (currentUser.academyRole !== 'STUDENT') {
+    console.log('AcademyStudentDashboard: Redirecting to instructor dashboard');
+    window.location.href = '/instructor';
+    return null;
+  }
   const [stats, setStats] = useState({
     enrolledCourses: 0,
     completedCourses: 0,

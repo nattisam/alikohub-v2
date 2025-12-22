@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { courseApi } from "../api/courseApi";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 
 const CourseCRUDTest: React.FC = () => {
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const [testResults, setTestResults] = useState<string[]>([]);
   const [courseId, setCourseId] = useState<number | null>(null);
   const [moduleId, setModuleId] = useState<number | null>(null);

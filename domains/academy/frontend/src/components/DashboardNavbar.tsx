@@ -3,7 +3,7 @@ import { FaCircleUser } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import type React from "react";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import type { Language } from "./types.d";
 
 interface DashboardNavbarProps {
@@ -11,7 +11,7 @@ interface DashboardNavbarProps {
    onAvatarCLick:()=>void;
 }
 const DashboardNavbar:React.FC<DashboardNavbarProps> = ({onNotifications, onAvatarCLick}) => {
-  const {language, setLanguage } = useUser()
+  const [language, setLanguage] = useState<Language>("En");
   return (
     <header className="bg-white shadow">
       <button>

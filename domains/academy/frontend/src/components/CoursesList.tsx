@@ -1,5 +1,5 @@
 import { useStudentCourses } from "../hooks/useStudentCourses";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import CourseCard from "./StudentCourseCard";
 import type { Course } from "./types.d";
@@ -13,7 +13,7 @@ const CoursesList = ({
 }) => {
   const cardWidth = window.innerWidth / 4;
   const { enrollCourse } = useStudentCourses();
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
   // Ensure courses is an array

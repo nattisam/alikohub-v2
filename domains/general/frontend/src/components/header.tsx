@@ -95,7 +95,6 @@ const Header = ({
 
   const updatedNavLinks = getNavLinks();
 
-
   return (
     <>
       {showTopBar && (
@@ -158,7 +157,8 @@ const Header = ({
                 to={link ? link : "/"}
                 state={scrollTo ? { scrollTo } : undefined}
                 className={`text-2xl font-semibold ${navLinksClassName} mx-10 hover:underline hover:decoration-4 hover:decoration-neutral-700 ${
-                  currentSection === scrollTo || currentSection === link?.slice(1)
+                  currentSection === scrollTo ||
+                  currentSection === link?.slice(1)
                     ? "underline underline-offset-8 decoration-4 decoration-neutral-950"
                     : ""
                 }`}
@@ -179,6 +179,9 @@ const Header = ({
                     ariaLabel="Admin Panel"
                   />
                 )}
+                <span className="hidden lg:block md:block text-sm font-medium">
+                  Welcome, {user?.firstname || "User"}
+                </span>
                 <Button
                   label="Logout"
                   onClick={handleLogout}
@@ -200,7 +203,6 @@ const Header = ({
                   label="Sign Up"
                   onClick={handleSignUpClick}
                   variant="primary"
-
                   className={`${homeHeaderButtonsClassName} w-32 items-end hidden lg:block md:block`}
                   ariaLabel="Sign Up"
                 />
@@ -221,6 +223,9 @@ const Header = ({
                     ariaLabel="Admin Panel"
                   />
                 )}
+                <span className="text-sm font-medium md:hidden lg:hidden">
+                  Welcome, {user?.firstname || "User"}
+                </span>
                 <Button
                   label="Logout"
                   onClick={handleLogout}

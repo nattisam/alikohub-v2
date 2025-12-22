@@ -1,12 +1,12 @@
 import TrendingCourseCard from "./TrendingCourseCard";
 import type { Course } from "./types.d";
 import { useStudentCourses } from "../hooks/useStudentCourses";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const TrendingCourses = ({ courses }: { courses: Course[] }) => {
   const { enrollCourse } = useStudentCourses();
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
   // Ensure courses is an array

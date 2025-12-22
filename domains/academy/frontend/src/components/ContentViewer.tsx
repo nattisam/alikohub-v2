@@ -3,7 +3,7 @@ import { FaFilePdf, FaVideo, FaFileAlt, FaQuestionCircle, FaTasks, FaBook } from
 import { academyApi } from "../api";
 import { progressApi } from "../api/progressApi";
 import type { LessonContent } from "./types.d.tsx";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ContentViewerProps {
   lessonId: number;
@@ -17,7 +17,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ lessonId, moduleId, onClo
   const [loading, setLoading] = useState(!preloadedContents);
   const [error, setError] = useState("");
   const [activeContentIndex, setActiveContentIndex] = useState(0);
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const [contentProgress, setContentProgress] = useState<Record<number, string>>({});
   const [lessonProgress, setLessonProgress] = useState<number>(0);
 

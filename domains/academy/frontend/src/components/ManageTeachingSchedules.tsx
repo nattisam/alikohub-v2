@@ -3,7 +3,7 @@ import { FaPlus, FaTrash, FaEdit, FaCalendarAlt, FaClock } from "react-icons/fa"
 import { teachingScheduleApi } from "../api/teachingScheduleApi";
 import { courseApi } from "../api/courseApi"; // Add course API import
 import type { TeachingSchedule as ApiTeachingSchedule } from "../api/teachingScheduleApi";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ManageTeachingSchedulesProps {
   className?: string;
@@ -19,7 +19,7 @@ const ManageTeachingSchedules: React.FC<ManageTeachingSchedulesProps> = ({ class
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ApiTeachingSchedule | null>(null);
-  const user = useUser().currentUser;
+  const { user } = useAuth();
 
   // Fetch schedules based on context (instructor or course)
   const fetchData = useCallback(async () => {

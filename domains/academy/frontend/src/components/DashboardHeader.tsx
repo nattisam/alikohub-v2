@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaSearch, FaChevronDown, FaBars, FaUser } from "react-icons/fa";
 import avatarProfile from "../assets/student2.png";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import type { Language } from "./types.d";
 import { FiMenu } from "react-icons/fi";
 
@@ -26,7 +26,7 @@ const DashboardHeader: React.FC<HeaderProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { language, setLanguage } = useUser();
+  const [language, setLanguage] = useState<Language>("En");
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 50);

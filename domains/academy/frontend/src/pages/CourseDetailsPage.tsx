@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { academyApi } from "../api";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import type { Course, Enrollment } from "../components/types.d";
 import { FaStar, FaUsers, FaClock, FaTag, FaDollarSign, FaBook, FaUser, FaPlay, FaFilePdf, FaVideo } from "react-icons/fa";
 
@@ -11,8 +11,12 @@ const CourseDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrolling, setEnrolling] = useState(false);
-  const { currentUser } = useUser();
+  const { user: currentUser, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Check if user has selected a role
+  const hasRole = currentUser?.academyRole !== undefined;
+  const isStudent = currentUser?.academyRole === 'STUDENT';
   
   // Check if user is already enrolled
   // Since the Course type doesn't include enrollments, we'll need to fetch them separately
@@ -62,6 +66,18 @@ const CourseDetailsPage: React.FC = () => {
   const handleEnroll = async () => {
     if (!currentUser) {
       navigate("/auth/login");
+      return;
+    }
+
+    // Check if user has selected a role
+    if (!hasRole) {
+      alert("Please select a role before enrolling in courses.");
+      return;
+    }
+
+    // Check if user is a student
+    if (!isStudent) {
+      alert("Only students can enroll in courses. Please select the student role.");
       return;
     }
 
@@ -271,6 +287,14 @@ const CourseDetailsPage: React.FC = () => {
                     className="w-full bg-green-600 text-white py-3 rounded-md font-medium cursor-not-allowed"
                   >
                     Already Enrolled
+                  </button>
+                ) : !hasRole ? (
+                  // User hasn't selected a role yet
+                  <button
+                    onClick={() => alert("Please select a role before enrolling in courses.")}
+                    className="w-full bg-yellow-500 text-white py-3 rounded-md hover:bg-yellow-600 transition-colors font-medium"
+                  >
+                    Select Role to Enroll
                   </button>
                 ) : currentUser?.academyRole === 'INSTRUCTOR' || currentUser?.academyRole === 'ADMIN' ? (
                   <button

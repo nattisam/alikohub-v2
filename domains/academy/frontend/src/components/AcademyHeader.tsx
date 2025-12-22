@@ -1,15 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import { FaUser, FaChalkboardTeacher, FaGraduationCap, FaSignOutAlt, FaBars, FaTimes, FaBook } from "react-icons/fa";
 import logo from "../assets/logo.svg";
-import type { ExtendedUser } from "../contexts/UserContext";
 
 interface AcademyHeaderProps {
   currentTab: string;
-  currentUser?: ExtendedUser;
+  currentUser?: any; // Using any for now to avoid complex type definitions
   onSignUpClick?: () => void;
-  onUserAvatarClick?: () => void;
   onLogout?: () => void;
   onLogoutComplete?: () => void;
 }
@@ -18,28 +16,24 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   currentTab,
   currentUser,
   onSignUpClick,
-  onUserAvatarClick,
   onLogout,
   onLogoutComplete,
 }) => {
+  console.log('AcademyHeader: Rendering with props:', { currentTab, currentUser, onSignUpClick, onLogout, onLogoutComplete });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useUser();
+  const { logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const toggleProfileMenu = () => {
-    setIsProfileMenuOpen(!isProfileMenuOpen);
-  };
+
 
   const handleLogout = () => {
     console.log('AcademyHeader: handleLogout called');
-    // Close the profile menu
-    setIsProfileMenuOpen(false);
     
     // Call the logout function from context
     logout();
@@ -58,26 +52,14 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
     }
   };
 
-  const handleProfileClick = () => {
-    // Close the profile menu
-    setIsProfileMenuOpen(false);
-    
-    // Navigate to the appropriate profile page based on user role
-    if (currentUser?.academyRole === 'INSTRUCTOR' || currentUser?.academyRole === 'ADMIN') {
-      navigate("/instructor/profile");
-    } else {
-      navigate("/dashboard/profile");
-    }
+
+
+  const handleChooseRoleClick = () => {
+    // Navigate to dashboard where role selection will be shown
+    navigate("/dashboard");
   };
 
-  const handleDashboardClick = () => {
-    // Navigate to the appropriate dashboard based on user role
-    if (currentUser?.academyRole === 'INSTRUCTOR' || currentUser?.academyRole === 'ADMIN') {
-      navigate("/instructor");
-    } else {
-      navigate("/dashboard");
-    }
-  };
+
 
   return (
     <header className="bg-white shadow-md fixed w-full top-0 z-50">
@@ -130,13 +112,34 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
           {/* User Actions */}
           <div className="flex items-center">
             {currentUser ? (
-              <div className="relative">
-                <button
-                  onClick={toggleProfileMenu}
-                  className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  aria-expanded="false"
-                  aria-haspopup="true"
-                >
+              <div className="flex items-center space-x-4">
+                {/* User Info and Role */}
+                <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
+                  {/* Role Selector */}
+                  <div className="relative" ref={roleDropdownRef}>
+                    {currentUser.academyRole ? (
+                      <div className="flex items-center space-x-1 text-sm font-medium text-gray-700">
+                        <span>
+                          Role: {currentUser.academyRole === "STUDENT" && "Student"}
+                          {(currentUser.academyRole === "INSTRUCTOR" || currentUser.academyRole === "ADMIN") && "Instructor"}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-700">Role: Not selected</span>
+                        <button 
+                          onClick={handleChooseRoleClick}
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-600 rounded-md"
+                        >
+                          Choose role
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                              
+                {/* User Avatar and Name */}
+                <div className="flex items-center space-x-2">
                   {currentUser.profilePicture ? (
                     <img
                       className="h-8 w-8 rounded-full"
@@ -148,39 +151,21 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                       <FaUser className="h-4 w-4 text-gray-600" />
                     </div>
                   )}
-                  <span className="ml-2 hidden md:block text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700">
                     {currentUser.firstname}
                   </span>
-                </button>
+                </div>
+                              
 
-                {/* Profile Dropdown */}
-                {isProfileMenuOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <button
-                      onClick={handleDashboardClick}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FaChalkboardTeacher className="inline mr-2" />
-                      {currentUser.academyRole === 'INSTRUCTOR' || currentUser.academyRole === 'ADMIN' 
-                        ? "Instructor Dashboard" 
-                        : "Student Dashboard"}
-                    </button>
-                    <button
-                      onClick={handleProfileClick}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FaUser className="inline mr-2" />
-                      Your Profile
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FaSignOutAlt className="inline mr-2" />
-                      Sign out
-                    </button>
-                  </div>
-                )}
+                
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-gray-700"
+                  title="Sign out"
+                >
+                  <FaSignOutAlt className="h-5 w-5" />
+                </button>
               </div>
             ) : (
               <div className="flex space-x-4">
@@ -252,26 +237,52 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
               </Link>
               {currentUser && (
                 <>
-                  <button
-                    onClick={handleDashboardClick}
-                    className="w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
-                  >
-                    {currentUser.academyRole === 'INSTRUCTOR' || currentUser.academyRole === 'ADMIN' 
-                      ? "Instructor Dashboard" 
-                      : "Student Dashboard"}
-                  </button>
-                  <button
-                    onClick={handleProfileClick}
-                    className="w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
-                  >
-                    Your Profile
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
-                  >
-                    Sign out
-                  </button>
+                  <div className="px-3 py-2 border-t border-gray-200 mt-2">
+                    {/* Mobile Role Selector */}
+                    <div className="mb-3 relative" ref={roleDropdownRef}>
+                      {currentUser.academyRole ? (
+                        <div className="text-sm font-medium text-gray-700">
+                          Role: {currentUser.academyRole.toLowerCase()}
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium text-gray-700">Role: Not selected</span>
+                          <button 
+                            onClick={handleChooseRoleClick}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-600 rounded-md"
+                          >
+                            Choose role
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* User Avatar and Name */}
+                    <div className="flex items-center space-x-2 mb-3">
+                      {currentUser.profilePicture ? (
+                        <img
+                          className="h-8 w-8 rounded-full"
+                          src={currentUser.profilePicture}
+                          alt="Profile"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                          <FaUser className="h-4 w-4 text-gray-600" />
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-gray-700">
+                        {currentUser.firstname}
+                      </span>
+                    </div>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left text-gray-700 hover:bg-gray-50 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+                    >
+                      <FaSignOutAlt className="inline mr-2" />
+                      Sign out
+                    </button>
+                  </div>
                 </>
               )}
               {!currentUser && (

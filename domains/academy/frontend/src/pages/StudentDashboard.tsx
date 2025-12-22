@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import { academyApi } from "../api";
 import type { Course } from "../components/types.d";
 import StudentCourseCard from "../components/StudentCourseCard";
@@ -7,7 +7,7 @@ import StudentProgressTracker from "../components/StudentProgressTracker";
 import { FaBook, FaChartLine, FaGraduationCap, FaBookReader } from "react-icons/fa";
 
 const StudentDashboard: React.FC = () => {
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

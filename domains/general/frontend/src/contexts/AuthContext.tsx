@@ -17,6 +17,7 @@ interface AuthContextType {
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => void;
   updateUser: (user: CurrentUser) => void;
+  selectRole: (role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,8 +32,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       try {
         const userData = localStorage.getItem('user');
-        if (userData) {
-          setUser(JSON.parse(userData));
+        const token = localStorage.getItem('firebaseCustomToken');
+        
+        // If we have both user data and a token, verify the token
+        if (userData && token) {
+          // Verify token with auth service
+          try {
+            const response = await authAPI.verifyToken(token);
+            if (response.user) {
+              setUser(response.user);
+            } else {
+              // Token is invalid, clear storage
+              localStorage.removeItem('user');
+              localStorage.removeItem('firebaseCustomToken');
+            }
+          } catch (error) {
+            // Verification failed, clear storage
+            localStorage.removeItem('user');
+            localStorage.removeItem('firebaseCustomToken');
+          }
+        } else if (userData) {
+          // We have user data but no token, clear storage
+          localStorage.removeItem('user');
         }
       } catch (error) {
         // If there's an error, clear any invalid user data
@@ -112,6 +133,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
+  const selectRole = (role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN') => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        academyRole: role
+      };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -120,6 +152,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signup,
     logout,
     updateUser,
+    selectRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

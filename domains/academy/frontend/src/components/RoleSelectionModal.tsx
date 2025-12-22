@@ -1,24 +1,28 @@
 import React, { useState } from "react";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import type { AcademyRole } from "../contexts/UserContext";
+
+export type AcademyRole = "STUDENT" | "INSTRUCTOR" | "ADMIN";
 
 interface RoleSelectionModalProps {
   onClose: () => void;
 }
 
 const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
-  const { selectRole, currentUser } = useUser();
+  const { user: currentUser, selectRole } = useAuth();
+  console.log('RoleSelectionModal: Rendering with currentUser:', currentUser);
   const [selectedRole, setSelectedRole] = useState<AcademyRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleRoleSelect = async (role: AcademyRole) => {
+    console.log('RoleSelectionModal: handleRoleSelect called with role:', role);
     setSelectedRole(role);
   };
 
   const handleSubmit = async () => {
+    console.log('RoleSelectionModal: handleSubmit called with selectedRole:', selectedRole);
     if (!selectedRole) {
       setError("Please select a role");
       return;
@@ -27,20 +31,13 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Update the user's role in the auth context
+      console.log('RoleSelectionModal: Calling selectRole with:', selectedRole);
       await selectRole(selectedRole);
       
-      // Redirect to the appropriate dashboard based on selected role
-      if (selectedRole === "INSTRUCTOR") {
-        navigate("/instructor");
-      } else if (selectedRole === "ADMIN") {
-        // For now, redirect admins to student dashboard too, can be changed later
-        navigate("/dashboard");
-      } else {
-        // Default to student dashboard
-        navigate("/dashboard");
-      }
-      
-      // Close the modal after navigation
+      // Close the modal and let the app continue
+      console.log('RoleSelectionModal: Calling onClose');
       onClose();
     } catch (err) {
       setError("Failed to select role. Please try again.");

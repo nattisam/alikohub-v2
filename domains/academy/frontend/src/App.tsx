@@ -1,27 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useUser } from './hooks/useUser';
-import RoleSelectionModal from './components/RoleSelectionModal';
-import LoginPage from './Pages/LoginPage';
-import SignupPage from './Pages/SignupPage';
-import AcademyHomePage from './Pages/AcademyHomePage';
-import AcademyAboutPage from './Pages/AcademyAboutPage';
-import AcademyContactUsPage from './Pages/AcademyContactUsPage';
-import AcademyStudentDashboard from './Pages/AcademyStudentDashboard';
-import InstructorDashboard from './Pages/InstructorDashboard';
-import ProfilePage from './Pages/ProfilePage';
-import CoursesPage from './Pages/CoursesPage';
-import CourseDetailsPage from './Pages/CourseDetailsPage';
-import AcademyHeader from './components/AcademyHeader';
-import EventDetailsPage from './Pages/EventDetailsPage'; // Import the new EventDetailsPage
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext";
+
+import LoginPage from "./Pages/LoginPage";
+import SignupPage from "./Pages/SignupPage";
+import AcademyHomePage from "./Pages/AcademyHomePage";
+import AcademyAboutPage from "./Pages/AcademyAboutPage";
+import AcademyContactUsPage from "./Pages/AcademyContactUsPage";
+import AcademyStudentDashboard from "./Pages/AcademyStudentDashboard";
+import InstructorDashboard from "./Pages/InstructorDashboard";
+import CoursesPage from "./Pages/CoursesPage";
+import CourseDetailsPage from "./Pages/CourseDetailsPage";
+import AcademyHeader from "./components/AcademyHeader";
+import EventDetailsPage from "./Pages/EventDetailsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Layout components
 const DefaultLayout = () => {
-  return (
-    <>
-      <Outlet />
-    </>
-  );
+  return <Outlet />;
 };
 
 const AuthLayout = () => {
@@ -33,28 +37,31 @@ const AuthLayout = () => {
 };
 
 const PublicLayout = () => {
-  const { currentUser, logout } = useUser();
+  const { user: currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignUpClick = () => {
     navigate("/auth/signup");
   };
 
   const handleLogout = () => {
-    console.log('App.tsx: PublicLayout handleLogout called');
+    console.log("App.tsx: PublicLayout handleLogout called");
     logout();
-    console.log('App.tsx: PublicLayout logout function completed');
+    console.log("App.tsx: PublicLayout logout function completed");
   };
 
   const handleLogoutComplete = () => {
-    console.log('App.tsx: PublicLayout handleLogoutComplete called, navigating to home');
+    console.log(
+      "App.tsx: PublicLayout handleLogoutComplete called, navigating to home"
+    );
     navigate("/");
   };
 
   return (
     <>
-      <AcademyHeader 
-        currentTab="/" 
+      <AcademyHeader
+        currentTab={location.pathname}
         currentUser={currentUser || undefined}
         onSignUpClick={handleSignUpClick}
         onLogout={handleLogout}
@@ -66,89 +73,33 @@ const PublicLayout = () => {
 };
 
 const DashboardLayout = () => {
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [tab, setTab] = useState<"overview" | "profile">("overview");
-  const { currentUser, logout } = useUser();
-  const location = useLocation();
+  const { user: currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignUpClick = () => {
     navigate("/auth/signup");
   };
 
-  const handleUserAvatarClick = () => {
-    // Navigate to user profile or dashboard
-    navigate("/dashboard");
-  };
-
   const handleLogout = () => {
-    console.log('App.tsx: DashboardLayout handleLogout called');
+    console.log("App.tsx: DashboardLayout handleLogout called");
     logout();
-    console.log('App.tsx: DashboardLayout logout function completed');
+    console.log("App.tsx: DashboardLayout logout function completed");
   };
 
   const handleLogoutComplete = () => {
-    console.log('App.tsx: DashboardLayout handleLogoutComplete called, navigating to home');
+    console.log(
+      "App.tsx: DashboardLayout handleLogoutComplete called, navigating to home"
+    );
     navigate("/");
   };
 
-  // If user is not logged in, redirect to login (except for public routes)
-  if (!currentUser && !['/', '/about', '/contact', '/courses', '/courses/:courseId'].includes(location.pathname)) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
-  // Check if we need to redirect instructors to their dashboard
-  if (currentUser && currentUser.hasSelectedRole && 
-      (currentUser.academyRole === 'INSTRUCTOR' || currentUser.academyRole === 'ADMIN') &&
-      location.pathname === '/dashboard') {
-    return <Navigate to="/instructor" replace />;
-  }
-
-  // Check if we need to show the role selection modal
-  // Show the modal if the user is logged in but hasn't selected a role yet
-  const shouldShowRoleModal = currentUser && !currentUser.hasSelectedRole;
-
-  // If user hasn't selected a role and is on a dashboard route, show role selection modal
-  const handleModalClose = () => {
-    // Instead of just hiding the modal, we should check if the user has selected a role
-    // If they have, redirect them appropriately
-    if (currentUser && currentUser.hasSelectedRole) {
-      if (currentUser.academyRole === 'INSTRUCTOR' || currentUser.academyRole === 'ADMIN') {
-        navigate("/instructor");
-      } else {
-        navigate("/dashboard");
-      }
-    }
-    setShowRoleModal(false);
-  };
-
-  if (shouldShowRoleModal) {
-    return (
-      <>
-        <AcademyHeader 
-          currentTab={location.pathname} 
-          currentUser={currentUser || undefined}
-          onSignUpClick={handleSignUpClick}
-          onUserAvatarClick={handleUserAvatarClick}
-          onLogout={handleLogout}
-          onLogoutComplete={handleLogoutComplete}
-        />
-        <RoleSelectionModal onClose={handleModalClose} />
-        <div className="min-h-screen bg-gray-50 pt-16">
-          <Outlet />
-        </div>
-      </>
-    );
-  }
-
-  // If user has selected a role or is on a public route, show normal layout
   return (
     <div className="min-h-screen bg-gray-50">
-      <AcademyHeader 
-        currentTab={location.pathname} 
+      <AcademyHeader
+        currentTab={location.pathname}
         currentUser={currentUser || undefined}
         onSignUpClick={handleSignUpClick}
-        onUserAvatarClick={handleUserAvatarClick}
         onLogout={handleLogout}
         onLogoutComplete={handleLogoutComplete}
       />
@@ -159,41 +110,18 @@ const DashboardLayout = () => {
   );
 };
 
-// Create a wrapper component for the instructor dashboard that uses hooks safely
-const InstructorDashboardWrapper = () => {
-  const { currentUser } = useUser();
-  const navigate = useNavigate();
-
-  // If user is not logged in, redirect to login
-  if (!currentUser) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
-  // If user hasn't selected a role, redirect to role selection
-  if (!currentUser.hasSelectedRole) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // If user is not an instructor or admin, redirect to student dashboard
-  if (currentUser.academyRole !== 'INSTRUCTOR' && currentUser.academyRole !== 'ADMIN') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <InstructorDashboard />;
-};
-
 function App() {
   return (
     <Router>
       <Routes>
         {/* Public routes */}
-        <Route element={<PublicLayout />}>
+        <Route element={<PublicLayout />}> 
           <Route path="/" element={<AcademyHomePage />} />
           <Route path="/about" element={<AcademyAboutPage />} />
           <Route path="/contact" element={<AcademyContactUsPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailsPage />} />
-          <Route path="/events/:eventId" element={<EventDetailsPage />} /> {/* Add the event details route */}
+          <Route path="/events/:eventId" element={<EventDetailsPage />} />
         </Route>
 
         {/* Authentication routes */}
@@ -202,12 +130,40 @@ function App() {
           <Route path="/auth/signup" element={<SignupPage />} />
         </Route>
 
-        {/* Dashboard routes (protected) */}
+        {/* Student dashboard routes */}
+        <Route element={<DashboardLayout />}> 
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requiredRole="STUDENT">
+                <AcademyStudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Instructor dashboard routes */}
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<AcademyStudentDashboard />} />
-          <Route path="/dashboard/profile" element={<ProfilePage />} />
-          <Route path="/instructor" element={<InstructorDashboardWrapper />} />
-          <Route path="/instructor/profile" element={<ProfilePage />} />
+          <Route
+            path="/instructor"
+            element={
+              <ProtectedRoute requiredRole="INSTRUCTOR">
+                <InstructorDashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Admin dashboard routes */}
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <div>Admin Dashboard (To be implemented)</div>
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* Redirect all other routes to home */}

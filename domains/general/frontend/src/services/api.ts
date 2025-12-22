@@ -12,10 +12,9 @@ export const authAPI = {
     return data;
   },
 
-  getCurrentUser: async () => {
-    // This would need to be implemented based on how the backend verifies tokens
-    // For now, we'll return a mock user or handle this differently
-    throw new Error('Not implemented - would require token verification');
+  verifyToken: async (token) => {
+    const { data } = await apiClient.post('/auth/verify', { token });
+    return data;
   },
 
   // Note: Profile update and password change would need separate endpoints

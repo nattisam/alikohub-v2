@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { academyApi } from "../api";
+import { useAuth } from "../contexts/AuthContext";
 import type { Course } from "../components/types.d";
 import { FaBook, FaStar, FaUsers, FaClock, FaTag, FaDollarSign, FaUser } from "react-icons/fa";
 
 const CoursesPage: React.FC = () => {
+  const { user: currentUser, isLoading: authLoading } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,6 +14,10 @@ const CoursesPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [searchParams] = useSearchParams();
+
+  // Check if user has selected a role
+  const hasRole = currentUser?.academyRole !== undefined;
+  const isStudent = currentUser?.academyRole === 'STUDENT';
 
   // Fetch all courses
   useEffect(() => {

@@ -1,13 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useUser } from '../hooks/useUser';
-import { authApi, academyApi } from '../api'; // Import both APIs
+import { useAuth } from '../contexts/AuthContext';
+import RoleSelectionModal from '../components/RoleSelectionModal';
+import { authAPI } from '../services/api';
+import { academyApi } from '../api'; // Import academy API
 import { FaUser, FaCamera, FaSave, FaTimes, FaEdit } from 'react-icons/fa';
 
 const ProfilePage = () => {
-  const { currentUser, setCurrentUser } = useUser();
+  const { user: currentUser, updateUser, isLoading } = useAuth();
+  console.log('ProfilePage: Rendering with currentUser:', currentUser, 'isLoading:', isLoading);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // If user is loading, show loading indicator
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, redirect to login
+  console.log('ProfilePage: Checking navigation - currentUser:', currentUser);
+  if (!currentUser) {
+    console.log('ProfilePage: Redirecting to login');
+    window.location.href = '/auth/login';
+    return null;
+  }
+
+  // If user hasn't selected a role yet, show role selection modal
+  console.log('ProfilePage: Checking role - academyRole:', currentUser.academyRole);
+  if (!currentUser.academyRole) {
+    // We need to show the role selection modal
+    // For now, we'll just show a message directing them to select a role
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
+            <p className="text-gray-600 mb-6">
+              To access your profile, please select a role.
+            </p>
+            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+          </div>
+        </div>
+      </div>
+    );
+  }
   const [formData, setFormData] = useState({
     firstname: '',
     lastname: '',
@@ -68,7 +111,7 @@ const ProfilePage = () => {
           
           if (updateResponse.data) {
             // Update the current user context
-            setCurrentUser({
+            updateUser({
               ...currentUser,
               profilePicture: result.url
             });
@@ -109,7 +152,7 @@ const ProfilePage = () => {
       
       if (response.data) {
         // Update the current user context
-        setCurrentUser({
+        updateUser({
           ...currentUser,
           ...updateData
         });

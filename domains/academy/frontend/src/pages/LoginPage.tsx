@@ -5,33 +5,25 @@ import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/Au
 import LoginForm from '../../../../../libraries/ui-libraries/components/auth/LoginForm';
 import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
 import type { LoginFormData } from '../../../../../libraries/ui-libraries/components/auth/LoginForm';
-import { useUser } from '../hooks/useUser';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loginLoading, loginError, clearLoginError, currentUser } = useUser();
+  const { login, isLoading: loginLoading, loginError, logout } = useAuth();
 
   const handleLogin = async (data: LoginFormData) => {
     try {
-      const success = await login(data.email, data.password);
-      
-      if (success) {
-        // Check user role and redirect accordingly
-        // Note: currentUser will be updated after login, but we need to fetch the profile
-        // to determine the correct redirect
-        
-        // For now, redirect to dashboard and let the DashboardLayout handle the redirect
-        navigate('/dashboard');
-      }
-      // Error handling is managed by the context (loginError state)
-    } catch (error) {
+      await login(data.email, data.password);
+      // Redirect back to the home page after login
+      navigate('/');
+    } catch (error: any) {
       console.error('Login error:', error);
-      // Additional error handling if needed
+      // Error handling is managed by the context (loginError state)
     }
   };
 
   const handleCloseErrorModal = () => {
-    clearLoginError();
+    logout(); // Clear any error state
   };
 
   const handleSwitchToSignup = () => {

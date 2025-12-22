@@ -8,13 +8,13 @@ import Testimonials from "../components/Testimonials.tsx";
 import CourseStats from "../components/CourseStats.tsx"; // New import
 import { FaSearch, FaBook } from "react-icons/fa";
 import { useStudentCourses } from "../hooks/useStudentCourses";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useCourses } from "../hooks/useCourses"; // New import
 
 const AcademyHomePage = () => {
   const { trendingCourses, courses } = useStudentCourses();
-  const { currentUser } = useUser();
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
   // Use the new custom hook for course fetching

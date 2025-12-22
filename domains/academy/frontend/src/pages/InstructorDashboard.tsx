@@ -6,7 +6,7 @@ import type { Course } from "../components/types.d";
 import type { Instructor } from "../components/types.d.tsx"; // Separate import for Instructor
 import CreateCourseForm from "../components/CreateCourseForm";
 import { useInstructorCourses } from "../hooks/useInstructorCourses";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 import EditCourseForm from "../components/EditCourseForm";
 import CourseView from "../components/CourseView";
 import TeachingSchedule from "../components/TeachingSchedules";
@@ -15,14 +15,15 @@ import profilePic1 from "../assets/profilePic1.png"
 import profilePic2 from "../assets/profilePic2.png"
 import ConfirmationModal from "../components/ConfirmationModal";
 import { academyApi } from "../api";
-import type { ExtendedUser } from "../contexts/UserContext";
+
 import InstructorCourseCard from "../components/InstructorCourseCard";
 import { FaPlus, FaChalkboardTeacher, FaComments, FaBell, FaChartBar, FaBook, FaUsers } from "react-icons/fa";
 import ManageTeachingSchedules from "../components/ManageTeachingSchedules";
 import CourseAnalytics from "../components/CourseAnalytics"; // Added import
+import RoleSelectionModal from "../components/RoleSelectionModal";
 
 const Dashboard: React.FC = () => {
-  const userContext = useUser();
+  const userContext = useAuth();
   const currentUser = userContext.currentUser;
   const { courses, updateCourse, removeCourse, creatingCourse, removingCourse } = useInstructorCourses();
   const [creatingCourseForm, setCreatingCourseForm] = useState(false);
@@ -89,6 +90,30 @@ const Dashboard: React.FC = () => {
     rating: 0
   });
   const [loadingStats, setLoadingStats] = useState(true);
+
+  // If user hasn't selected a role yet, show role selection modal
+  if (currentUser && !currentUser.academyRole) {
+    // Show role selection modal
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
+            <p className="text-gray-600 mb-6">
+              To access the instructor dashboard, please select the Instructor role.
+            </p>
+            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not an instructor or admin, redirect to appropriate dashboard
+  if (currentUser && currentUser.academyRole === 'STUDENT') {
+    window.location.href = '/dashboard';
+    return null;
+  }
 
   // Fetch instructor stats
   useEffect(() => {
@@ -176,7 +201,7 @@ const Dashboard: React.FC = () => {
           <div className="lg:col-span-1">
             <UserProfileCard
               name={`${currentUser?.firstname} ${currentUser?.lastname}`}
-              title={(currentUser as ExtendedUser as Instructor)?.title}
+              title={(currentUser as Instructor)?.title}
               certifications={["AWS Certified"]}
               className="bg-white p-6 rounded-2xl shadow-lg h-full border border-gray-100"
               experience={instructorStats.experience}

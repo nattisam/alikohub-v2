@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaPlay, FaVideo, FaChalkboardTeacher, FaComments, FaFileAlt, FaClock, FaTrash } from "react-icons/fa";
 import { teachingScheduleApi } from "../api/teachingScheduleApi";
 import type { TeachingSchedule as ApiTeachingSchedule } from "../api/teachingScheduleApi";
-import { useUser } from "../hooks/useUser";
+import { useAuth } from "../contexts/AuthContext";
 
 interface TeachingScheduleProps {
   className: string;
@@ -15,7 +15,7 @@ const TeachingSchedule: React.FC<TeachingScheduleProps> = ({ className, onAddSes
   const [schedules, setSchedules] = useState<ApiTeachingSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const user = useUser().currentUser;
+  const user = useAuth().user;
 
   // Fetch schedules based on context (instructor or course)
   useEffect(() => {
