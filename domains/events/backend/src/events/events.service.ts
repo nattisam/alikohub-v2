@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { winstonLogger } from '../logger';
 
 @Injectable()
 export class EventsService {
@@ -9,23 +10,11 @@ export class EventsService {
 
     async create(createEventDto: CreateEventDto) {
         // Log the incoming DTO for debugging
-        console.log('Creating event with DTO:', JSON.stringify(createEventDto, null, 2));
-        console.log('DTO type:', typeof createEventDto);
-        console.log('DTO keys:', Object.keys(createEventDto));
-        
-        // Check if the DTO has the expected properties
-        if (!createEventDto.hasOwnProperty('title') || 
-            !createEventDto.hasOwnProperty('description') || 
-            !createEventDto.hasOwnProperty('date') || 
-            !createEventDto.hasOwnProperty('time') || 
-            !createEventDto.hasOwnProperty('location')) {
-            console.error('DTO missing expected properties. Received:', createEventDto);
-            throw new Error('Missing required fields for event creation');
-        }
+        winstonLogger.info('Creating event with DTO: ' + JSON.stringify(createEventDto, null, 2));
         
         // Ensure all required fields are present and not empty
         if (!createEventDto.title || !createEventDto.description || !createEventDto.date || !createEventDto.time || !createEventDto.location) {
-            console.error('DTO has empty required fields. Received:', createEventDto);
+            winstonLogger.error('DTO has empty required fields. Received: ' + JSON.stringify(createEventDto));
             throw new Error('Missing required fields for event creation');
         }
         

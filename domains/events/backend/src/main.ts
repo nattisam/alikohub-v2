@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
+import { AppLogger } from './logger';
 
 async function bootstrap() {
     const app = await NestFactory.createMicroservice(AppModule, {
@@ -9,6 +10,7 @@ async function bootstrap() {
             host: process.env.EVENTS_SERVICE_HOST || 'localhost',
             port: parseInt(process.env.EVENTS_SERVICE_PORT, 10) || 3004,
         },
+        logger: new AppLogger(),
     });
     await app.listen();
 }

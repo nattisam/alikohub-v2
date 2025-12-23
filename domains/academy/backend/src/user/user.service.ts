@@ -15,6 +15,7 @@ export type AuthenticatedUser = {
 };
 
 // Add this interface
+// Update type definition
 export type AcademyUserProfile = {
   id: number;
   userId: string;
@@ -24,6 +25,7 @@ export type AcademyUserProfile = {
   expertise?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
+  user?: any; // Enriched User Info
 };
 
 @Injectable()
@@ -35,22 +37,18 @@ export class UserService {
     private prisma: PrismaService,
   ) { }
 
-  /**
-   * Calls the auth-service to fetch a single user's public profile by their ID.
-   * This corresponds to the `{ cmd: 'get_user_by_id' }` message pattern.
-   *
-   * @param userId The Firebase UID of the user to fetch.
-   * @returns The user object or null if not found.
-   */
+  // ... (getUserById / getUsersByIds methods remain same) ...
   async getUserById(userId: string) {
     try {
+      this.logger.log(`Fetching user details for: ${userId} from Auth Service`);
       const payload = {
-        idToFetch: userId,
+        firebaseId: userId,
       };
 
       const user = await firstValueFrom(
-        this.authClient.send({ cmd: 'get_user_by_id' }, payload),
+        this.authClient.send({ cmd: 'get_user_profile' }, payload),
       );
+      this.logger.log(`Received user details for ${userId}: ${JSON.stringify(user)}`);
       return user;
     } catch (error) {
       this.logger.error(`Failed to fetch user ${userId}`, error);
@@ -58,14 +56,6 @@ export class UserService {
     }
   }
 
-  /**
-   * Calls the auth-service to fetch multiple user profiles by their IDs.
-   * This corresponds to the `{ cmd: 'get_users_by_ids' }` message pattern.
-   * This is much more efficient for fetching data for lists.
-   *
-   * @param userIds An array of Firebase UIDs.
-   * @returns An array of user objects.
-   */
   async getUsersByIds(userIds: string[]) {
     try {
       // The payload is simple: an object with a 'userIds' property
@@ -90,7 +80,7 @@ export class UserService {
       const roleToAssign =
         user.globalRole === GlobalRole.ADMIN
           ? AcademyRole.ADMIN
-          : AcademyRole.STUDENT;
+          : AcademyRole.USER;
       profile = await this.prisma.academyProfile.create({
         data: {
           userId: user.firebaseId,
@@ -99,6 +89,9 @@ export class UserService {
         },
       });
     }
+
+    // Fetch user details from Auth Service
+    const authUser = await this.getUserById(user.firebaseId);
 
     // Return the profile, ensuring hasSelectedRole is properly set
     return {
@@ -110,6 +103,7 @@ export class UserService {
       expertise: profile.expertise,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
+      user: authUser, // Attach the user details
     };
   }
 

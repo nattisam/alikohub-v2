@@ -46,14 +46,19 @@ model Update {
 }
 
 // Add User model for role persistence
-model User {
-  id        String   @id
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model EventsProfile {
+  id               String   @id
+  role             Role     @default(USER)
+  company          String?
+  registeredEvents String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 enum Role {
   USER
+  ATTENDEE
   ORGANIZER
+  SPONSOR
+  ADMIN
 }

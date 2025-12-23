@@ -16,18 +16,18 @@ export class EnrollmentGuard implements CanActivate {
     const userRole = user.academyRole.toUpperCase();
 
     // Academy admin can access everything
-    if (userRole === 'ACADEMY_ADMIN') {
+    if (userRole === 'ADMIN') {
       return true;
     }
 
     // For now, we'll implement basic role-based access
     // In a full implementation, you would check course ownership/enrollment via microservice
-    if (userRole === 'TEACHER') {
+    if (userRole === 'INSTRUCTOR' || userRole === 'TEACHER') {
       // Teachers can access their own courses (simplified check)
       return true;
     }
 
-    if (userRole === 'STUDENT') {
+    if (userRole === 'STUDENT' || userRole === 'USER') {
       // Students can access enrolled courses (simplified check)
       return true;
     }
@@ -50,12 +50,12 @@ export class CourseAccessGuard implements CanActivate {
     const userRole = user.academyRole.toUpperCase();
 
     // Academy admin can access everything
-    if (userRole === 'ACADEMY_ADMIN') {
+    if (userRole === 'ADMIN') {
       return true;
     }
 
     // Teachers and students can access courses with appropriate permissions
-    if (userRole === 'TEACHER' || userRole === 'STUDENT') {
+    if (userRole === 'INSTRUCTOR' || userRole === 'TEACHER' || userRole === 'STUDENT' || userRole === 'USER') {
       return true;
     }
 

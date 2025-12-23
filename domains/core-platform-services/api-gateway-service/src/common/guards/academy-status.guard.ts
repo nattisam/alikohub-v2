@@ -34,7 +34,7 @@ export class StudentAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    if (!user.academyRole || user.academyRole.toUpperCase() !== 'STUDENT') {
+    if (!user.academyRole || (user.academyRole.toUpperCase() !== 'STUDENT' && user.academyRole.toUpperCase() !== 'USER')) {
       throw new ForbiddenException('Access denied: Student role required');
     }
 
@@ -79,7 +79,7 @@ export class AdminAccessGuard implements CanActivate {
     }
 
     // Check if user is global admin or academy admin
-    const isAdmin = user.globalRole === 'ADMIN' || user.academyRole === 'ACADEMY_ADMIN';
+    const isAdmin = user.globalRole === 'ADMIN' || user.academyRole === 'ADMIN' || user.academyRole === 'ACADEMY_ADMIN';
     
     if (!isAdmin) {
       throw new ForbiddenException('Access denied: Admin role required');

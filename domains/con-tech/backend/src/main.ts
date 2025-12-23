@@ -3,13 +3,15 @@ import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
-import { ContechProfileGuard } from './auth/ContechProfile.guard';
 import { ConTechProfileGuard } from './auth';
+import { AppLogger } from './logger';
 
 dotenv.config();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new AppLogger(),
+  });
   const PORT = process.env.PORT || 3002;
   const configService = app.get(ConfigService);
 

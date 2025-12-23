@@ -1,10 +1,11 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { Injectable, Logger, HttpStatus, Inject } from '@nestjs/common';
+import { RpcException, ClientProxy } from '@nestjs/microservices';
 import { UserService } from '../user/user.service';
 import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
+import { AcademyRole, ContechRole, EventsRole, GlobalRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,9 @@ export class AuthService {
 		private readonly prisma: PrismaService,
 		private readonly jwtService: JwtService,
 		private readonly argon2Service: Argon2Service,
+		@Inject('ACADEMY_SERVICE') private readonly academyClient: ClientProxy,
+		@Inject('CONTECH_SERVICE') private readonly contechClient: ClientProxy,
+		@Inject('EVENTS_SERVICE') private readonly eventsClient: ClientProxy,
 	) {}
 
 	async register(dto: any) {
@@ -59,11 +63,49 @@ export class AuthService {
 				firstname: dto.firstname,
 				lastname: dto.lastname,
 				password: hashedPassword,
-				globalRole: 'USER',
+				globalRole: GlobalRole.USER,
 				status: 'ACTIVE',
 			});
+
+            // Create local AcademyUser record with default USER role
+            await this.prisma.academyUser.create({
+                data: {
+                    userId: userRecord.uid,
+                    role: AcademyRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
+            // Create local ContechUser record with default USER role
+            await this.prisma.contechUser.create({
+                data: {
+                    userId: userRecord.uid,
+                    role: ContechRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
+            // Create local EventsUser record with default USER role
+            await this.prisma.eventsUser.create({
+                data: {
+                    userId: userRecord.uid,
+                    role: EventsRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
 			user = await this.userService.findByFirebaseId(userRecord.uid);
 			this.logger.log(`User created in database: ${user.id}`);
+			
+			// Emit user_created event to all services
+			const eventPayload = {
+				userId: user.firebaseId,
+				email: user.email,
+				role: 'USER'
+			};
+			this.academyClient.emit('user_created', eventPayload);
+			this.contechClient.emit('user_created', eventPayload);
+			this.eventsClient.emit('user_created', eventPayload);
 		}
 
 		// Issue Firebase custom token
@@ -196,11 +238,49 @@ export class AuthService {
 				email: decoded.email,
 				firstname: decoded.name?.split(' ')[0] || '',
 				lastname: decoded.name?.split(' ')[1] || '',
-				globalRole: 'USER',
+				globalRole: GlobalRole.USER,
 				status: 'ACTIVE',
 			});
+            
+            // Create local AcademyUser record with default USER role
+            await this.prisma.academyUser.create({
+                data: {
+                    userId: decoded.uid,
+                    role: AcademyRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
+            // Create local ContechUser record with default USER role
+            await this.prisma.contechUser.create({
+                data: {
+                    userId: decoded.uid,
+                    role: ContechRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
+            // Create local EventsUser record with default USER role
+            await this.prisma.eventsUser.create({
+                data: {
+                    userId: decoded.uid,
+                    role: EventsRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
 			// Re-fetch to get relations
 			user = await this.userService.findByFirebaseId(decoded.uid);
+			
+			// Emit user_created event to all services
+			const eventPayload = {
+				userId: user.firebaseId,
+				email: user.email,
+				role: 'USER'
+			};
+			this.academyClient.emit('user_created', eventPayload);
+			this.contechClient.emit('user_created', eventPayload);
+			this.eventsClient.emit('user_created', eventPayload);
 		}
 
 		// Generate JWT tokens

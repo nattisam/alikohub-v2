@@ -1,5 +1,5 @@
 import { Controller, UseGuards } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, EventPattern } from '@nestjs/microservices';
 import { UserService, AuthenticatedUser, ConTechUserProfile } from './user.service';
 import { ConTechProfileGuard } from '../auth';
 import { ContechRole } from '@prisma/client';
@@ -24,18 +24,25 @@ export class UserController {
         return await this.userService.updateProfile(payload.user.firebaseId, payload.updateData);
     }
 
-    // New method for role selection
     @MessagePattern({ cmd: 'select_contech_role' })
     async selectRole(@Payload() payload: { userId: string; role: ContechRole }) {
-        console.log('selectRole called in UserController with payload:', payload);
-        console.log('typeof payload.role:', typeof payload.role);
-        console.log('payload.role value:', payload.role);
-        console.log('ContechRole enum:', ContechRole);
-
-        // Check if the role is a valid enum value
-        const isValidRole = Object.values(ContechRole).includes(payload.role);
-        console.log('Is valid role:', isValidRole);
-
         return await this.userService.selectRole(payload.userId, payload.role);
+    }
+
+    @EventPattern('user_created')
+    async handleUserCreated(@Payload() payload: { userId: string; email: string; role: string }) {
+        try {
+            const authenticatedUser: AuthenticatedUser = {
+                firebaseId: payload.userId,
+                email: payload.email,
+                firstName: '',
+                lastName: '',
+                role: payload.role,
+                status: 'ACTIVE'
+            };
+            await this.userService.getOrCreateProfile(authenticatedUser);
+        } catch (error) {
+            console.error(`Failed to handle user_created event for user: ${payload.userId}`, error);
+        }
     }
 }

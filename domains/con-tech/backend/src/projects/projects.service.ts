@@ -4,11 +4,13 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectStatus } from '@prisma/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
+import { winstonLogger } from '../logger';
 
 type FindAllQuery = {
   page?: number;
@@ -26,57 +28,67 @@ export class ProjectsService {
   ) {}
 
   async create(dto: CreateProjectDto, user: AuthenticatedUser) {
-    const contechProfile = await this.userService.getOrCreateProfile(user);
+    winstonLogger.info(`Creating project: ${dto.name} for user: ${user.firebaseId}`);
+    try {
+      const contechProfile = await this.userService.getOrCreateProfile(user);
+      winstonLogger.info(`User profile role: ${contechProfile.role}`);
 
-    // Only PROJECT_MANAGER and ADMIN can create projects
-    if (
-      contechProfile.role !== 'PROJECT_MANAGER' &&
-      contechProfile.role !== 'ADMIN'
-    ) {
-      throw new ForbiddenException(
-        'You do not have permission to create projects.',
-      );
+      // Only PROJECT_MANAGER and ADMIN can create projects
+      if (
+        contechProfile.role !== 'PROJECT_MANAGER' &&
+        contechProfile.role !== 'ADMIN'
+      ) {
+        winstonLogger.warn(`User ${user.firebaseId} with role ${contechProfile.role} tried to create a project`);
+        throw new RpcException('You do not have permission to create projects.');
+      }
+
+      // Check if project with same name exists for this manager
+      const existingProject = await this.prisma.project.findFirst({
+        where: {
+          name: dto.name,
+          managerId: user.firebaseId,
+        },
+      });
+
+      if (existingProject) {
+        throw new RpcException('You already have a project with this name');
+      }
+
+      const result = await this.prisma.project.create({
+        data: {
+          ...dto,
+          contractorId: user.firebaseId,
+          inspectorId: user.firebaseId,
+          managerId: user.firebaseId,
+          budgetCents: dto.budget ? dto.budget * 100 : null, // Convert to cents
+          endDate: dto.endDate ? new Date(dto.endDate) : null,
+          startDate: new Date(dto.startDate),
+          createdBy: user.firebaseId,
+          updatedBy: user.firebaseId,
+        },
+      });
+      winstonLogger.info(`Project created successfully: ${result.id}`);
+      return result;
+    } catch (error) {
+      winstonLogger.error(`Failed to create project: ${error.message} - ${error.stack}`);
+      throw error;
     }
-
-    // Check if project with same name exists for this manager
-    const existingProject = await this.prisma.project.findFirst({
-      where: {
-        name: dto.name,
-        managerId: user.firebaseId,
-      },
-    });
-
-    if (existingProject) {
-      throw new BadRequestException(
-        'You already have a project with this name',
-      );
-    }
-
-    return await this.prisma.project.create({
-      data: {
-        ...dto,
-        contractorId: user.firebaseId,
-        inspectorId: user.firebaseId,
-        budgetCents: dto.budget ? dto.budget * 100 : null, // Convert to cents
-        endDate: dto.endDate ? new Date(dto.endDate) : null,
-        startDate: new Date(dto.startDate),
-        createdBy: user.firebaseId,
-        updatedBy: user.firebaseId,
-      },
-    });
   }
+
   async getContracrors(){
     return this.prisma.contechProfile.findMany({
       where: {role: 'CONTRACTOR'},
       select: {userId: true}
     })
   }
+
   async getInspectors(){
     return this.prisma.contechProfile.findMany({
       where: {role: 'PROJECT_MANAGER'},
       select: {userId: true}
     })
   }
+
   async findAll(query: FindAllQuery) {
     const page = query.page || 1;
     const pageSize = Math.min(query.pageSize || 10, 50);

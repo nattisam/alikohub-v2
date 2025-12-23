@@ -20,6 +20,8 @@ model ContechProfile {
   role            ContechRole @default(USER)
   hasSelectedRole Boolean     @default(false)
   bio             String?
+  company         String?
+  projects        String[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -253,9 +255,10 @@ enum ChecklistItemStatus {
 }
 
 enum ContechRole {
+  USER
   CLIENT
   CONTRACTOR
   PROJECT_MANAGER
+  STAKEHOLDER
   ADMIN
-  USER
 }
