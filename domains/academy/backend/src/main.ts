@@ -14,8 +14,8 @@ async function bootstrap() {
   // Get ConfigService if needed
   const configService = app.get(ConfigService);
 
-  // Use PORT from env or default 3000
-  const PORT = parseInt(process.env.PORT as string) || 3000;
+  // Use PORT from env or default 3005
+  const PORT = parseInt(process.env.PORT as string) || 3005;
 
   // Connect TCP microservice
   app.connectMicroservice({
@@ -27,16 +27,21 @@ async function bootstrap() {
   });
 
   // (Optional) RabbitMQ connection example
-  /*
-  app.connectMicroservice({
-    transport: Transport.RMQ,
-    options: {
-      urls: [configService.get<string>('RABBITMQ_URL')],
-      queue: 'application_queue',
-      noAck: true,
-    },
-  });
-  */
+  // const rmqUrl = configService.get<string>('RABBITMQ_URL');
+  // if (rmqUrl) {
+  //   app.connectMicroservice({
+  //     transport: Transport.RMQ,
+  //     options: {
+  //       urls: [rmqUrl],
+  //       queue: 'application_queue',
+  //       noAck: true,
+  //     },
+  //   });
+  //   console.log(`Academy microservice connecting to RabbitMQ at ${rmqUrl}`);
+  // } else {
+  //   console.warn('RABBITMQ_URL not found in environment, skipping RabbitMQ connection');
+  // }
+  
 
   // Apply global guard
   app.useGlobalGuards(app.get(AcademyProfileGuard));

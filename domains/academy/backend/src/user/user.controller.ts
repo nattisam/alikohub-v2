@@ -1,5 +1,5 @@
 import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, EventPattern } from '@nestjs/microservices';
 import { UserService, AuthenticatedUser, AcademyUserProfile } from './user.service';
 import { AcademyRole } from '@prisma/client';
 
@@ -39,6 +39,22 @@ export class UserController {
         } catch (error) {
             this.logger.error(`Role selection failed for user: ${userId}`, error);
             throw error;
+        }
+    }
+
+    @EventPattern('user_created')
+    async handleUserCreated(@Payload() payload: { userId: string; email: string; role: string }) {
+        this.logger.log(`Received user_created event for user: ${payload.userId}`);
+        try {
+            // Mapping global role to AcademyRole defaults if needed, though getOrCreateProfile handles it
+            const authenticatedUser: AuthenticatedUser = {
+                firebaseId: payload.userId,
+                globalRole: payload.role === 'ADMIN' ? 'ADMIN' as any : 'USER' as any
+            };
+            await this.userService.getOrCreateProfile(authenticatedUser);
+            this.logger.log(`Academy profile ensured for user: ${payload.userId}`);
+        } catch (error) {
+            this.logger.error(`Failed to handle user_created event for user: ${payload.userId}`, error);
         }
     }
 }

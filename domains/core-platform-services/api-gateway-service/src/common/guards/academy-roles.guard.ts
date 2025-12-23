@@ -2,9 +2,11 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 export enum AcademyRole {
+  USER = 'USER',
   STUDENT = 'STUDENT',
-  TEACHER = 'TEACHER',
-  ACADEMY_ADMIN = 'ACADEMY_ADMIN',
+  INSTRUCTOR = 'INSTRUCTOR',
+  TEACHER = 'TEACHER', // Keep for backward compatibility if needed
+  ADMIN = 'ADMIN',
 }
 
 export const ROLES_KEY = 'roles';
@@ -40,10 +42,16 @@ export class AcademyRolesGuard implements CanActivate {
     }
 
     const userRole = user.academyRole.toUpperCase();
-    const hasRole = requiredRoles.some(role => role === userRole);
+    
+    // Support both INSTRUCTOR and TEACHER naming during transition
+    const effectiveRoles = [userRole];
+    if (userRole === 'INSTRUCTOR') effectiveRoles.push('TEACHER');
+    if (userRole === 'TEACHER') effectiveRoles.push('INSTRUCTOR');
+
+    const hasRole = requiredRoles.some(role => effectiveRoles.includes(role));
 
     // Academy admin can access everything
-    if (userRole === AcademyRole.ACADEMY_ADMIN) {
+    if (userRole === AcademyRole.ADMIN || userRole === 'ADMIN' || userRole === 'ACADEMY_ADMIN') {
       return true;
     }
 

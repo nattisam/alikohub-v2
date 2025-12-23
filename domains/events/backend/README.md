@@ -38,7 +38,7 @@ DATABASE_PASSWORD=your_password
 DATABASE_NAME=events_db
 
 EVENTS_SERVICE_HOST=localhost
-EVENTS_SERVICE_PORT=3004
+EVENTS_SERVICE_PORT=3003
 ```
 
 **Note:** Replace `your_username` and `your_password` with your actual PostgreSQL credentials.

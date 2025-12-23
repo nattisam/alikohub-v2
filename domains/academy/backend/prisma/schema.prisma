@@ -11,11 +11,13 @@ datasource db {
 model AcademyProfile {
   id              Int         @id @default(autoincrement())
   userId          String      @unique
-  role            AcademyRole @default(STUDENT)
+  role            AcademyRole @default(USER)
   hasSelectedRole Boolean     @default(false) // Add this field
 
-  bio       String?
-  expertise String[]
+  bio            String?
+  expertise      String[]
+  specialization String?
+  certifications String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,7 +208,9 @@ enum CourseStatus {
 }
 
 enum AcademyRole {
+  USER
   STUDENT
   INSTRUCTOR
+  COURSE_MANAGER
   ADMIN
 }
