@@ -30,4 +30,12 @@ export class UserController {
 	async deleteProfile(@Payload() data: { firebaseId: string }) {
 		return this.userService.deleteProfile(data.firebaseId);
 	}
+
+	@MessagePattern({ cmd: 'get_users_by_ids' })
+	async getUsersByIds(@Payload() data: { userIds: string[] }) {
+		const users = await Promise.all(
+			data.userIds.map(id => this.userService.findByFirebaseId(id))
+		);
+		return users.filter(u => u !== null);
+	}
 }

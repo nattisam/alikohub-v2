@@ -14,7 +14,7 @@ export class LessonsService {
   constructor(private prisma: PrismaService, private userService: UserService) { }
 
   async create(dto: CreateLessonDto, user: AuthenticatedUser) {
-    const { dueDate, moduleId, contents, ...rest } = dto;
+    const { title, type, dueDate, maxScore, moduleId, contents } = dto;
     const academyProfile = await this.userService.getOrCreateProfile(user)
 
     // Fetch the module and its parent course for the ownership check
@@ -34,7 +34,9 @@ export class LessonsService {
 
     return await this.prisma.lesson.create({
       data: {
-        ...rest,
+        title,
+        type,
+        maxScore,
         dueDate: dueDate ? new Date(dueDate) : null,
         module: { connect: { id: moduleId } },
         ...(contents && contents.length > 0 ? { contents: { create: contents } } : {}),

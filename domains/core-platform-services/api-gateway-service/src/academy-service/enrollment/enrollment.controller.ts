@@ -74,7 +74,7 @@ export class EnrollmentController {
     }
 
     const payload = {
-      createEnrollmentDto,
+      dto: createEnrollmentDto,
       user: req.user,
     };
 
@@ -165,23 +165,11 @@ export class EnrollmentController {
     @Param('courseId', ParseIntPipe) courseId: number,
   ) {
     const payload = { courseId, user: req.user };
-    return this.academyClient.send({ cmd: 'get_enrollments_by_course' }, payload);
+    // Assuming backend will support this or redirecting to general find
+    return this.academyClient.send({ cmd: 'find_enrollments_by_course' }, payload);
   }
 
-  // Get enrollments by cohort
-  @Get('cohort/:cohortId')
-  @ApiOperation({ summary: 'Get enrollments by cohort' })
-  @ApiResponse({ status: 200, description: 'List of enrollments for a cohort' })
-  @ApiParam({ name: 'cohortId', type: Number })
-  getEnrollmentsByCohort(
-    @Request() req: RequestWithUser,
-    @Param('cohortId', ParseIntPipe) cohortId: number,
-  ) {
-    const payload = { cohortId, user: req.user };
-    return this.academyClient.send({ cmd: 'get_enrollments_by_cohort' }, payload);
-  }
-
-  // Get my enrollments
+  // Get my enrollments (alternative path)
   @Get('my')
   @ApiOperation({ summary: 'Get my enrollments' })
   @ApiResponse({ status: 200, description: 'List of user enrollments' })
@@ -189,7 +177,7 @@ export class EnrollmentController {
     if (!req.user) {
       throw new Error('User not authenticated');
     }
-    const payload = { userId: req.user.firebaseId, user: req.user };
-    return this.academyClient.send({ cmd: 'get_my_enrollments' }, payload);
+    const payload = { user: req.user };
+    return this.academyClient.send({ cmd: 'find_my_enrollments' }, payload);
   }
 }
