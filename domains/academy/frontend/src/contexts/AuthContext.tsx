@@ -45,14 +45,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         console.log("AuthContext: Starting authentication initialization");
         const userData = localStorage.getItem("user");
         const token = localStorage.getItem("firebaseCustomToken");
-
+  
         console.log(
           "AuthContext: Found userData:",
           userData,
           "and token:",
           token
         );
-
+  
         // If we have both user data and a token, verify the token
         if (userData && token) {
           console.log(
@@ -94,29 +94,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 academyProfile: response.user.academyUser || undefined
               };
               
-              // If we have a stored user with a role, use it immediately
+              // If we have a stored user with a role, fetch fresh data and merge
               if (storedUser?.academyRole && storedUser?.hasSelectedRole) {
-                console.log("AuthContext: Using stored role from localStorage:", {
-                  role: storedUser.academyRole,
-                  hasSelectedRole: storedUser.hasSelectedRole
-                });
-                
-                // Update the user state with stored role info
-                const updatedUser = {
-                  ...transformedUser,
-                  academyRole: storedUser.academyRole,
-                  hasSelectedRole: true,
-                  academyProfile: {
-                    ...transformedUser.academyProfile,
-                    ...storedUser.academyProfile,
-                    hasSelectedRole: true,
-                    role: storedUser.academyRole
-                  }
-                };
-                
-                setUser(updatedUser);
-                setIsLoading(false);
-                return; // Skip the rest of the initialization
+                console.log("AuthContext: User had previously selected role, fetching fresh academy profile");
+                                
+                // Fetch the academy profile to get the latest role information
+                try {
+                  const academyProfile = await academyAPI.getProfile();
+                  console.log("AuthContext: Academy profile fetched on initialization:", academyProfile);
+                                  
+                  // Merge the fresh academy profile with the transformed user
+                  const mergedUser = {
+                    ...transformedUser,
+                    academyRole: academyProfile.role || storedUser.academyRole,
+                    hasSelectedRole: academyProfile.hasSelectedRole || storedUser.hasSelectedRole,
+                    academyProfile: {
+                      ...transformedUser.academyProfile,
+                      ...academyProfile
+                    }
+                  };
+                                  
+                  console.log("AuthContext: Merged user data with academy profile:", mergedUser);
+                  setUser(mergedUser);
+                  localStorage.setItem("user", JSON.stringify(mergedUser));
+                  setIsLoading(false);
+                  return; // Skip the rest of the initialization
+                } catch (profileError) {
+                  console.error("AuthContext: Failed to fetch academy profile on init, using stored data:", profileError);
+                                  
+                  // Fall back to using stored user data
+                  const fallbackUser = {
+                    ...transformedUser,
+                    academyRole: storedUser.academyRole,
+                    hasSelectedRole: storedUser.hasSelectedRole,
+                    academyProfile: {
+                      ...transformedUser.academyProfile,
+                      ...storedUser.academyProfile,
+                      hasSelectedRole: storedUser.hasSelectedRole,
+                      role: storedUser.academyRole
+                    }
+                  };
+                                  
+                  setUser(fallbackUser);
+                  localStorage.setItem("user", JSON.stringify(fallbackUser));
+                  setIsLoading(false);
+                  return; // Skip the rest of the initialization
+                }
               }
               
               // If no stored role, fetch the academy profile
@@ -151,6 +174,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 console.log("AuthContext: Merged user data:", mergedUser);
                 console.log("AuthContext: Setting user state with merged data");
                 setUser(mergedUser);
+                // Also save to localStorage to persist the academy profile data
+                localStorage.setItem("user", JSON.stringify(mergedUser));
               } catch (profileError) {
                 console.error(
                   "AuthContext: Failed to fetch academy profile:",
@@ -159,16 +184,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 
                 // Check if it's a 404 error (API not found)
                 const isNotFound = profileError?.response?.status === 404;
-                
-                // Transform auth service response to match expected structure
-                const transformedUser = {
-                  ...response.user,
-                  // Flatten academyUser data if it exists
-                  academyRole: response.user.academyUser?.role,
-                  hasSelectedRole: response.user.academyUser?.hasSelectedRole,
-                  // Move academyUser to academyProfile to match expected structure
-                  academyProfile: response.user.academyUser || undefined
-                };
                 
                 // If it's a 404, we should still allow the user to proceed but mark that we couldn't fetch profile
                 if (isNotFound) {
@@ -184,6 +199,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                   };
                   
                   setUser(fallbackUser);
+                  localStorage.setItem("user", JSON.stringify(fallbackUser));
                 } else {
                   // For other errors, try to use localStorage data
                   let localStorageUserData = {};
@@ -224,6 +240,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                   console.log("AuthContext: Merged user data:", mergedUser);
                   console.log("AuthContext: Setting user state with merged data");
                   setUser(mergedUser);
+                  localStorage.setItem("user", JSON.stringify(mergedUser));
                 }
               }
             } else {
@@ -257,11 +274,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             }
           }
         } else if (userData) {
-          // We have user data but no token, clear storage
+          // We have user data but no token
+          // This can happen during role selection or page transitions
+          // Don't clear storage immediately, let the auth flow continue
           console.log(
-            "AuthContext: Have user data but no token, clearing storage"
+            "AuthContext: Have user data but no token, continuing with existing data"
           );
-          localStorage.removeItem("user");
+          try {
+            const localStorageUserData = JSON.parse(userData);
+            console.log(
+              "AuthContext: Using existing localStorage user data:",
+              localStorageUserData
+            );
+            setUser(localStorageUserData);
+          } catch (parseError) {
+            console.error(
+              "AuthContext: Could not parse existing user data:",
+              parseError
+            );
+          }
         } else {
           console.log(
             "AuthContext: No user data or token found, user is not authenticated"
@@ -289,6 +320,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       return response;
     },
     onSuccess: async (data) => {
+      console.log('AuthContext: Login mutation successful, processing response');
       // Transform auth service response to match expected structure
       const transformedUser = {
         ...data.user,
@@ -299,9 +331,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         academyProfile: data.user.academyUser || undefined
       };
       
-      // Save transformed user data and token to localStorage
-      localStorage.setItem("user", JSON.stringify(transformedUser));
+      // Save transformed user data and token to localStorage BEFORE making other API calls
+      // Use accessToken for API authentication, firebaseCustomToken for Firebase SDK
+      localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
+      localStorage.setItem("user", JSON.stringify(transformedUser));
+
+      // Small delay to ensure localStorage is updated before making API calls
+      // This helps ensure the interceptor picks up the token
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       // Fetch the academy profile to get the latest role information
       try {
@@ -374,6 +412,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         } else {
           // For other errors, still use the transformed user data
           setUser(transformedUser);
+          localStorage.setItem("user", JSON.stringify(transformedUser));
         }
       }
     },
@@ -395,9 +434,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         academyProfile: data.user.academyUser || undefined
       };
       
-      // Save transformed user data and token to localStorage
-      localStorage.setItem("user", JSON.stringify(transformedUser));
+      // Save transformed user data and token to localStorage BEFORE making other API calls
+      // Use accessToken for API authentication, firebaseCustomToken for Firebase SDK
+      localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
+      localStorage.setItem("user", JSON.stringify(transformedUser));
+
+      // Small delay to ensure localStorage is updated before making API calls
+      // This helps ensure the interceptor picks up the token
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       // Fetch the academy profile to get the latest role information
       try {
@@ -467,6 +512,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         } else {
           // For other errors, still use the transformed user data
           setUser(transformedUser);
+          localStorage.setItem("user", JSON.stringify(transformedUser));
         }
       }
     },
@@ -500,16 +546,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const signup = async (credentials: SignupCredentials) => {
     try {
       await signupMutation.mutateAsync(credentials);
-    } catch (error) {
-      // Re-throw to let the calling component handle the error
-      throw error;
+    } catch (error: any) {
+      // Handle specific error cases for better UX
+      if (error?.response?.status === 409) {
+        throw new Error('An account with this email already exists. Please try logging in instead.');
+      } else if (error?.response?.status === 400) {
+        throw new Error('Invalid registration data. Please check your information and try again.');
+      } else {
+        throw new Error('Registration failed. Please try again later.');
+      }
     }
   };
 
   const logout = () => {
     console.log("AuthContext: logout called");
-    // Clear user data and token
+    // Clear user data and tokens
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("firebaseCustomToken");
 
     // Reset user state

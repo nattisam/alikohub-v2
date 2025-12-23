@@ -36,18 +36,22 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
     console.log('AcademyHeader: handleLogout called');
     
     // Call the logout function from context
+    console.log('AcademyHeader: Calling logout from auth context');
     logout();
     
     // Call the onLogout callback if provided
     if (onLogout) {
+      console.log('AcademyHeader: Calling onLogout callback');
       onLogout();
     }
     
     // Navigate to home page
+    console.log('AcademyHeader: Navigating to home page');
     navigate("/");
     
     // Call the onLogoutComplete callback if provided
     if (onLogoutComplete) {
+      console.log('AcademyHeader: Calling onLogoutComplete callback');
       onLogoutComplete();
     }
   };

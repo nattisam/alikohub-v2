@@ -2,10 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../../../../libraries/ui-libraries/components/auth/AuthLayout';
 import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/AuthHeader';
-import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
 import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
 import type { SignupFormData } from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
 import { useAuth } from '../contexts/AuthContext';
+import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();

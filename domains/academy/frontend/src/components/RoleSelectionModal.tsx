@@ -36,7 +36,17 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
       console.log('RoleSelectionModal: Calling selectRole with:', selectedRole);
       await selectRole(selectedRole);
       
-      // Close the modal and let the app continue
+      // Navigate to the appropriate dashboard based on selected role
+      console.log('RoleSelectionModal: Navigating to dashboard for role:', selectedRole);
+      if (selectedRole === "STUDENT") {
+        navigate("/dashboard");
+      } else if (selectedRole === "INSTRUCTOR") {
+        navigate("/instructor");
+      } else if (selectedRole === "ADMIN") {
+        navigate("/admin");
+      }
+      
+      // Close the modal
       console.log('RoleSelectionModal: Calling onClose');
       onClose();
     } catch (err) {
@@ -107,7 +117,13 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
 
         <div className="flex justify-end space-x-3">
           <button
-            onClick={onClose}
+            onClick={() => {
+              // If user cancels, log them out
+              console.log('RoleSelectionModal: User cancelled role selection, logging out');
+              // We don't have access to logout function directly here, but the cancel button
+              // should just close the modal and let the protected route handle navigation
+              onClose();
+            }}
             disabled={loading}
             className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
           >
