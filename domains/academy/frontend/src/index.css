@@ -9,7 +9,7 @@
   border-radius: 20px;
 }
 
-@keyframes wiggle {
+/* @keyframes wiggle {
   0% {
     transform: translate(0) rotate(0deg);
   }
@@ -67,4 +67,4 @@
 
 .d {
   border: inset 1px grey;
-}
+} */

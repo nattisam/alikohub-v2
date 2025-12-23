@@ -121,11 +121,12 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                 <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
                   {/* Role Selector */}
                   <div className="relative" ref={roleDropdownRef}>
-                    {currentUser.academyRole ? (
+                    {currentUser.hasSelectedRole ? (
                       <div className="flex items-center space-x-1 text-sm font-medium text-gray-700">
                         <span>
                           Role: {currentUser.academyRole === "STUDENT" && "Student"}
-                          {(currentUser.academyRole === "INSTRUCTOR" || currentUser.academyRole === "ADMIN") && "Instructor"}
+                          {currentUser.academyRole === "INSTRUCTOR" && "Instructor"}
+                          {currentUser.academyRole === "ADMIN" && "Admin"}
                         </span>
                       </div>
                     ) : (
@@ -244,9 +245,9 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                   <div className="px-3 py-2 border-t border-gray-200 mt-2">
                     {/* Mobile Role Selector */}
                     <div className="mb-3 relative" ref={roleDropdownRef}>
-                      {currentUser.academyRole ? (
+                      {currentUser.hasSelectedRole ? (
                         <div className="text-sm font-medium text-gray-700">
-                          Role: {currentUser.academyRole.toLowerCase()}
+                          Role: {currentUser.academyRole === "STUDENT" ? "Student" : currentUser.academyRole === "INSTRUCTOR" ? "Instructor" : "Admin"}
                         </div>
                       ) : (
                         <div className="flex items-center space-x-2">

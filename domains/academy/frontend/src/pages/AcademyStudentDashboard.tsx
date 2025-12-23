@@ -39,8 +39,8 @@ const AcademyStudentDashboard = () => {
   }
 
   // If user hasn't selected a role yet, show role selection modal
-  console.log('AcademyStudentDashboard: Checking role - academyRole:', currentUser.academyRole);
-  if (!currentUser.academyRole) {
+  console.log('AcademyStudentDashboard: Checking role - hasSelectedRole:', currentUser.hasSelectedRole);
+  if (!currentUser.hasSelectedRole) {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">

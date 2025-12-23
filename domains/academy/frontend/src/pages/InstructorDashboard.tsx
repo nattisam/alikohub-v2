@@ -92,7 +92,7 @@ const Dashboard: React.FC = () => {
   const [loadingStats, setLoadingStats] = useState(true);
 
   // If user hasn't selected a role yet, show role selection modal
-  if (currentUser && !currentUser.academyRole) {
+  if (currentUser && !currentUser.hasSelectedRole) {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
