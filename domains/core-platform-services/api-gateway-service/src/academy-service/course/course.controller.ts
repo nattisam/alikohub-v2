@@ -64,8 +64,8 @@ export class CourseController {
     required: false,
     description: 'Query parameters (pagination, filters, etc.)',
   })
-  findAllCourses(@Query() query: any) {
-    const payload = { query };
+  findAllCourses(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = { query, user: req.user };
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
 
@@ -173,8 +173,8 @@ export class CourseController {
     @Request() req: RequestWithUser,
     @Param('category') category: string,
   ) {
-    const payload = { category, user: req.user };
-    return this.academyClient.send({ cmd: 'get_courses_by_category' }, payload);
+    const payload = { category, user: req.user, query: { category } };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
 
   // Get courses by difficulty
@@ -186,7 +186,7 @@ export class CourseController {
     @Request() req: RequestWithUser,
     @Param('difficulty') difficulty: string,
   ) {
-    const payload = { difficulty, user: req.user };
-    return this.academyClient.send({ cmd: 'get_courses_by_difficulty' }, payload);
+    const payload = { difficulty, user: req.user, query: { difficulty } };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
 }

@@ -14,8 +14,8 @@ export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) { }
 
   @MessagePattern({ cmd: 'create_enrollment' })
-  async create(@Payload() payload: { createEnrollmentDto: CreateEnrollmentDto; user: AuthenticatedUser }) {
-    return await this.enrollmentsService.create(payload.createEnrollmentDto, payload.user);
+  async create(@Payload() payload: { dto: CreateEnrollmentDto; user: AuthenticatedUser }) {
+    return await this.enrollmentsService.create(payload.dto, payload.user);
   }
 
   @MessagePattern({ cmd: "find_all_enrollments" })
@@ -45,5 +45,10 @@ export class EnrollmentsController {
   @MessagePattern({ cmd: 'find_my_enrollments' })
   async findMyEnrollments(@Payload() payload: { user: AuthenticatedUser }) {
     return await this.enrollmentsService.findMyEnrollments(payload.user);
+  }
+
+  @MessagePattern({ cmd: 'find_enrollments_by_course' })
+  async findEnrollmentsByCourse(@Payload() payload: { courseId: number; user: AuthenticatedUser }) {
+    return await this.enrollmentsService.findByCourse(payload.courseId, payload.user);
   }
 }

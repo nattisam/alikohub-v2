@@ -34,70 +34,35 @@ export class CourseModulesService {
   }
 
   async findAllByCourse(courseId: number, user: AuthenticatedUser) {
-    console.log(`=== Authorization Check for Course Modules ===`);
+    console.log(`=== Accessing Course Modules ===`);
     console.log(`User ID: ${user.firebaseId}`);
     console.log(`Course ID: ${courseId}`);
 
-    // AUTHORIZATION: To view modules, user must be enrolled, the instructor, or an admin.
-    const academyProfile = await this.userService.getOrCreateProfile(user)
-    console.log(`User academy profile:`, academyProfile);
-
+    // AUTHORIZATION: We now allow all users to view course modules (the curriculum).
+    // This allows prospective students to see what the course covers.
+    // Lesson CONTENT is still protected in the LessonsService.
+    
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
-    console.log(`Course found:`, course);
-
     if (!course) throw new NotFoundException('Course not found');
 
-    const isInstructor = course.instructorId === user.firebaseId;
-    const isAdmin = academyProfile.role === 'ADMIN';
-    let isEnrolled = false;
-
-    console.log(`Initial check - Is instructor: ${isInstructor}, Is admin: ${isAdmin}`);
-
-    if (!isInstructor && !isAdmin) {
-      console.log(`Checking enrollment for user ${user.firebaseId}`);
-
-      // Check for direct course enrollment (no cohort)
-      const directEnrollment = await this.prisma.enrollment.findFirst({
-        where: {
-          userId: user.firebaseId,
-          courseId: courseId,
-          cohortId: null // Direct enrollment without cohort
-        },
-      });
-
-      console.log(`Direct enrollment query result:`, directEnrollment);
-
-      if (directEnrollment) {
-        isEnrolled = true;
-        console.log(`User is directly enrolled in course`);
-      } else {
-        // Check for cohort-based enrollment
-        const cohortEnrollment = await this.prisma.enrollment.findFirst({
-          where: {
-            userId: user.firebaseId,
-            cohort: { courseId: courseId }
-          },
-        });
-
-        console.log(`Cohort enrollment query result:`, cohortEnrollment);
-        if (cohortEnrollment) {
-          isEnrolled = true;
-          console.log(`User is enrolled in course through cohort`);
-        }
-      }
-    }
-
-    console.log(`Final authorization - Is instructor: ${isInstructor}, Is admin: ${isAdmin}, Is enrolled: ${isEnrolled}`);
-
-    if (!isInstructor && !isAdmin && !isEnrolled) {
-      console.log(`ACCESS DENIED: User ${user.firebaseId} is not authorized to view modules for course ${courseId}`);
-      throw new ForbiddenException('You must be enrolled in this course to view its modules.');
-    }
-
-    console.log(`ACCESS GRANTED: User ${user.firebaseId} is authorized to view modules for course ${courseId}`);
+    console.log(`ACCESS GRANTED: User ${user.firebaseId} viewing curriculum for course ${courseId}`);
     return await this.prisma.module.findMany({
       where: { courseId },
-      include: { lessons: true },
+      include: { 
+        lessons: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            maxScore: true,
+            dueDate: true,
+            createdAt: true,
+            updatedAt: true,
+            // Exclude content for public view
+          },
+          orderBy: { createdAt: 'asc' }
+        }
+      },
       orderBy: { createdAt: 'asc' },
     });
   }

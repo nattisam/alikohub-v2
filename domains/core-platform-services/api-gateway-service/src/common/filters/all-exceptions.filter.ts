@@ -34,6 +34,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = responseObj.error || error;
         details = responseObj.details || null;
       }
+    } else if (exception && typeof exception === 'object' && ('status' in (exception as any) || 'statusCode' in (exception as any))) {
+      // Handle serialized exceptions from microservices
+      const exceptionObj = exception as any;
+      status = exceptionObj.status || exceptionObj.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
+      message = (Array.isArray(exceptionObj.message) ? exceptionObj.message[0] : exceptionObj.message) || message;
+      error = exceptionObj.error || error;
     } else if (exception instanceof Error) {
       message = exception.message;
       

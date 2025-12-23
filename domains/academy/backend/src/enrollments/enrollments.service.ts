@@ -59,9 +59,19 @@ export class EnrollmentsService {
 
     this.logger.log(`User ID to enroll: ${userIdToEnroll}`);
 
-    const userIdToEnrollExists = await this.userService.getUserById(userIdToEnroll);
-    if (!userIdToEnrollExists) {
-      throw new BadRequestException(`User with ID ${userIdToEnroll} does not exist.`);
+    // Check if the user has an academy profile (more reliable than auth service check)
+    const userProfile = await this.prisma.academyProfile.findUnique({
+      where: { userId: userIdToEnroll }
+    });
+    
+    if (!userProfile) {
+      // Try to fetch from auth service and create profile if exists there
+      const authUser = await this.userService.getUserById(userIdToEnroll);
+      if (!authUser) {
+        throw new BadRequestException(`User with ID ${userIdToEnroll} does not have an academy profile. They must access the academy first.`);
+      }
+      // User exists in auth but not in academy - this shouldn't happen in normal flow
+      this.logger.warn(`User ${userIdToEnroll} exists in auth but has no academy profile`);
     }
 
     // Validate that the course exists and is published
@@ -282,5 +292,31 @@ export class EnrollmentsService {
         course: enrollment.course,
       };
     });
+  }
+
+  async findByCourse(courseId: number, user: AuthenticatedUser) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+    });
+    if (!course) throw new NotFoundException('Course not found');
+
+    const isInstructor = course.instructorId === user.firebaseId;
+    const isAdmin = academyProfile.role === 'ADMIN';
+
+    if (!isInstructor && !isAdmin) {
+      throw new ForbiddenException('You do not have permission to view enrollments for this course.');
+    }
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { courseId },
+    });
+    const userIds = [...new Set(enrollments.map((e) => e.userId))];
+    if (userIds.length === 0) return [];
+    const users = await this.userService.getUsersByIds(userIds);
+    return enrollments.map((enrollment) => ({
+      ...enrollment,
+      user: users.find((u) => u.firebaseId === enrollment.userId) || null,
+    }));
   }
 }

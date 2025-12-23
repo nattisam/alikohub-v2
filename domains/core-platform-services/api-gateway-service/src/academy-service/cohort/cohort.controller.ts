@@ -60,7 +60,7 @@ export class CohortController {
   })
   findAllCohorts(
     @Request() req: RequestWithUser,
-    @Query('courseId', ParseIntPipe) courseId?: number,
+    @Query('courseId', new ParseIntPipe({ optional: true })) courseId?: number,
   ) {
     const payload = { courseId, user: req.user };
     return this.academyClient.send({ cmd: 'find_all_cohorts' }, payload);
