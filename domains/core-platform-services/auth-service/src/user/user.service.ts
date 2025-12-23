@@ -98,29 +98,86 @@ export class UserService {
 	}
 
 	async createTeacherApplication(applicationData: any) {
-		// Mock implementation as in modules
-		return {
-			id: 'mock-id-' + Date.now(),
-			...applicationData,
-			status: 'PENDING',
-			submittedAt: new Date()
-		};
+		const { userId, ...formData } = applicationData;
+		
+		// Find user's firebaseId since application model uses it as a relation
+		const user = await this.prisma.user.findUnique({
+			where: { id: parseInt(userId) }
+		});
+
+		if (!user) throw new Error('User not found');
+
+		return this.prisma.application.upsert({
+			where: {
+				userId_domain: {
+					userId: user.firebaseId,
+					domain: 'academy'
+				}
+			},
+			update: {
+				requestedRole: 'INSTRUCTOR',
+				formData: formData as any,
+				status: 'PENDING',
+				updatedAt: new Date()
+			},
+			create: {
+				userId: user.firebaseId,
+				domain: 'academy',
+				requestedRole: 'INSTRUCTOR',
+				formData: formData as any,
+				status: 'PENDING'
+			}
+		});
 	}
 
 	async getTeacherApplications() {
-		return [];
+		return this.prisma.application.findMany({
+			where: {
+				domain: 'academy',
+				requestedRole: 'INSTRUCTOR'
+			},
+			include: {
+				user: true
+			}
+		});
 	}
 
 	async getTeacherApplication(applicationId: string) {
-		return null;
+        if (applicationId.startsWith('mock-id')) return null;
+        
+		return this.prisma.application.findUnique({
+			where: { id: parseInt(applicationId) },
+			include: { user: true }
+		});
 	}
 
 	async updateTeacherApplicationStatus(applicationId: string, status: string) {
-		return { id: applicationId, status };
+        if (applicationId.startsWith('mock-id')) return { id: applicationId, status };
+
+		return this.prisma.application.update({
+			where: { id: parseInt(applicationId) },
+			data: { 
+                status: status as any,
+                updatedAt: new Date()
+            }
+		});
 	}
 
 	async hasPendingTeacherApplication(userId: string) {
-		return false;
+        const user = await this.prisma.user.findUnique({
+            where: { id: parseInt(userId) }
+        });
+
+        if (!user) return false;
+
+		const application = await this.prisma.application.findFirst({
+			where: {
+				userId: user.firebaseId,
+				domain: 'academy',
+				status: 'PENDING'
+			}
+		});
+		return !!application;
 	}
 
 	// General User Methods
