@@ -7,6 +7,13 @@ export interface CurrentUser {
   globalRole?: string;
   academyRole?: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
   hasSelectedRole?: boolean;
+  availableRoles?: ('STUDENT' | 'INSTRUCTOR' | 'ADMIN')[];
+  currentRole?: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+  roleStatus?: {
+    instructor: 'active' | 'pending' | 'rejected';
+    applicationDate?: string;
+    approvalDate?: string;
+  };
   academyProfile?: {
     id: number;
     userId: string;

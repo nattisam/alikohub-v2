@@ -14,7 +14,7 @@ import AddTeachingSessionSchedule from "../components/AddTeachingSessionSchedule
 import profilePic1 from "../assets/profilePic1.png"
 import profilePic2 from "../assets/profilePic2.png"
 import ConfirmationModal from "../components/ConfirmationModal";
-import { academyApi } from "../api";
+import { academyAPI } from "../services/api";
 
 import InstructorCourseCard from "../components/InstructorCourseCard";
 import { FaPlus, FaChalkboardTeacher, FaComments, FaBell, FaChartBar, FaBook, FaUsers } from "react-icons/fa";
@@ -23,8 +23,7 @@ import CourseAnalytics from "../components/CourseAnalytics"; // Added import
 import RoleSelectionModal from "../components/RoleSelectionModal";
 
 const Dashboard: React.FC = () => {
-  const userContext = useAuth();
-  const currentUser = userContext.currentUser;
+  const { user: currentUser, refreshProfile } = useAuth();
   const { courses, updateCourse, removeCourse, creatingCourse, removingCourse } = useInstructorCourses();
   const [creatingCourseForm, setCreatingCourseForm] = useState(false);
   const [viewingCourse, setViewingCourse] = useState<null | Course>(null);
@@ -60,7 +59,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await academyApi.get("/notifications/me");
+        const response = await academyAPI.get("/notifications/me");
         // For now, we'll just log the notifications and keep using mock data
         // In a real implementation, we would transform these notifications into messages
         console.log("Real notifications:", response.data);
@@ -109,10 +108,48 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // If user is not an instructor or admin, redirect to appropriate dashboard
-  if (currentUser && currentUser.academyRole === 'STUDENT') {
-    window.location.href = '/dashboard';
-    return null;
+  // Check if user is an instructor but their application is pending or rejected
+  if (currentUser && currentUser.currentRole === 'INSTRUCTOR' && 
+      (currentUser.roleStatus?.instructor === 'pending' || currentUser.roleStatus?.instructor === 'rejected')) {
+    // Show pending/rejected message
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              {currentUser.roleStatus?.instructor === 'pending' ? 'Instructor Application Pending' : 'Instructor Application Rejected'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {currentUser.roleStatus?.instructor === 'pending' 
+                ? 'Your instructor application is currently under review. You will be notified once a decision is made.'
+                : 'Your instructor application has been rejected. Please contact support for more information.'}
+            </p>
+            <button 
+              onClick={() => {
+                // Refresh profile to check if status has changed
+                if (refreshProfile) {
+                  refreshProfile();
+                }
+              }}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Refresh Status
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If user has selected a role but it's not instructor, redirect to appropriate dashboard
+  if (currentUser && currentUser.currentRole && currentUser.currentRole !== 'INSTRUCTOR') {
+    if (currentUser.currentRole === 'STUDENT') {
+      window.location.href = '/student-dashboard';
+      return null;
+    } else if (currentUser.currentRole === 'ADMIN') {
+      window.location.href = '/admin';
+      return null;
+    }
   }
 
   // Fetch instructor stats
@@ -120,7 +157,7 @@ const Dashboard: React.FC = () => {
     const fetchInstructorStats = async () => {
       try {
         setLoadingStats(true);
-        const response = await academyApi.get("/progress/instructor/stats");
+        const response = await academyAPI.get("/progress/instructor/stats");
         setInstructorStats({
           experience: response.data.yearsOfExperience || 10,
           courses: response.data.totalCourses || courses.length,
@@ -154,7 +191,7 @@ const Dashboard: React.FC = () => {
 
   const handleMarkAsRead = async (id: number) => {
     try {
-      await academyApi.patch(`/notifications/${id}/read`);
+      await academyAPI.patch(`/notifications/${id}/read`);
       // In a real implementation, we would update the UI to reflect the read status
       console.log(`Message ${id} marked as read`);
     } catch (error) {
@@ -180,7 +217,7 @@ const Dashboard: React.FC = () => {
   };
 
   // Check if user has the required role for CRUD operations
-  const canPerformCRUD = currentUser?.academyRole === 'INSTRUCTOR' || currentUser?.academyRole === 'ADMIN';
+  const canPerformCRUD = (currentUser?.academyRole === 'INSTRUCTOR' && currentUser?.roleStatus?.instructor === 'active') || currentUser?.academyRole === 'ADMIN';
 
   // Dummy functions for when CRUD is not allowed
   const dummyFunction = () => {};

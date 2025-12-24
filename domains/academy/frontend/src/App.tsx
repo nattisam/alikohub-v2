@@ -22,6 +22,9 @@ import CourseDetailsPage from "./Pages/CourseDetailsPage";
 import AcademyHeader from "./components/AcademyHeader";
 import EventDetailsPage from "./Pages/EventDetailsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardRouter from "./components/DashboardRouter";
+import ProfilePage from "./Pages/ProfilePage";
+import SettingsPage from "./Pages/SettingsPage";
 
 // Layout components
 const DefaultLayout = () => {
@@ -37,7 +40,7 @@ const AuthLayout = () => {
 };
 
 const PublicLayout = () => {
-  const { user: currentUser, logout } = useAuth();
+  const { user: currentUser, logout, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,6 +61,28 @@ const PublicLayout = () => {
     navigate("/");
   };
 
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <>
+        <header className="bg-white shadow-md fixed w-full top-0 z-50">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex-shrink-0 flex items-center">
+                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+              <div className="flex space-x-4">
+                <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <Outlet />
+      </>
+    );
+  }
+
   return (
     <>
       <AcademyHeader
@@ -73,7 +98,7 @@ const PublicLayout = () => {
 };
 
 const DashboardLayout = () => {
-  const { user: currentUser, logout } = useAuth();
+  const { user: currentUser, logout, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -93,6 +118,30 @@ const DashboardLayout = () => {
     );
     navigate("/");
   };
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-md fixed w-full top-0 z-50">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex-shrink-0 flex items-center">
+                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+              <div className="flex space-x-4">
+                <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div className="pt-16">
+          <Outlet />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,10 +179,13 @@ function App() {
           <Route path="/auth/signup" element={<SignupPage />} />
         </Route>
 
+        {/* Smart dashboard router - redirects based on role */}
+        <Route path="/dashboard" element={<DashboardRouter />} />
+
         {/* Student dashboard routes */}
         <Route element={<DashboardLayout />}> 
           <Route
-            path="/dashboard"
+            path="/student-dashboard"
             element={
               <ProtectedRoute requiredRole="STUDENT">
                 <AcademyStudentDashboard />
@@ -161,6 +213,28 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <div>Admin Dashboard (To be implemented)</div>
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Profile and Settings routes */}
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+        <Route element={<DashboardLayout />}>
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

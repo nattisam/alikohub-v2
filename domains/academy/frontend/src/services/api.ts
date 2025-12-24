@@ -46,8 +46,18 @@ export const academyAPI = {
     return data;
   },
   
+  switchRole: async (role) => {
+    const { data } = await apiClient.post('/auth/switch-role', { role });
+    return data;
+  },
+  
   getProfile: async () => {
     const { data } = await apiClient.get('/academy/profile');
+    return data;
+  },
+  
+  applyTeacher: async (applicationData) => {
+    const { data } = await apiClient.post('/auth/academy/apply-teacher', applicationData);
     return data;
   },
 };

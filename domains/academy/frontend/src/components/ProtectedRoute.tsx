@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredRole = "STUDENT" 
+  requiredRole 
 }) => {
   const { user: currentUser, isLoading } = useAuth();
   const location = useLocation();
@@ -42,10 +42,24 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       </div>
     );
   }
+  
+  // Check if user has pending or rejected instructor application but is trying to access instructor-only resources
+  if (requiredRole === "INSTRUCTOR" && 
+      (currentUser.roleStatus?.instructor === "pending" || currentUser.roleStatus?.instructor === "rejected")) {
+    // Don't allow access to instructor dashboard if application is pending or rejected
+    return <Navigate to="/" replace state={{ from: location }} />;
+  }
 
-  // If user doesn't have the required role, redirect to appropriate dashboard
-  if (requiredRole === "INSTRUCTOR" && currentUser.academyRole === "STUDENT") {
-    return <Navigate to="/dashboard" replace />;
+  // If a required role is specified, check if user has it
+  if (requiredRole && currentUser) {
+    const hasRequiredRole = currentUser.currentRole === requiredRole || 
+                           currentUser.academyRole === requiredRole ||
+                           currentUser.availableRoles?.includes(requiredRole);
+    
+    if (!hasRequiredRole) {
+      // Redirect to home if user doesn't have required role
+      return <Navigate to="/" replace state={{ from: location }} />;
+    }
   }
 
   // If user is an admin, allow access to all routes
@@ -53,8 +67,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <>{children}</>;
   }
 
+  // If no required role is specified, allow access to authenticated users who have selected a role
+  if (!requiredRole && currentUser.hasSelectedRole) {
+    return <>{children}</>;
+  }
+
   // If user has the required role, render the children
-  if (currentUser.academyRole === requiredRole) {
+  if (requiredRole && (currentUser.currentRole === requiredRole || 
+      currentUser.academyRole === requiredRole ||
+      currentUser.availableRoles?.includes(requiredRole))) {
     return <>{children}</>;
   }
 

@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { FaUser, FaChalkboardTeacher, FaGraduationCap, FaSignOutAlt, FaBars, FaTimes, FaBook } from "react-icons/fa";
+import { FaUser, FaChalkboardTeacher, FaGraduationCap, FaSignOutAlt, FaBars, FaTimes, FaBook, FaCaretDown, FaSpinner, FaCog, FaTachometerAlt } from "react-icons/fa";
 import logo from "../assets/logo.svg";
 
 interface AcademyHeaderProps {
@@ -19,50 +19,64 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   onLogout,
   onLogoutComplete,
 }) => {
-  console.log('AcademyHeader: Rendering with props:', { currentTab, currentUser, onSignUpClick, onLogout, onLogoutComplete });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const roleDropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, switchRole, isRoleSwitching, refreshProfile } = useAuth();
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
+        setIsRoleDropdownOpen(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
 
-
   const handleLogout = () => {
-    console.log('AcademyHeader: handleLogout called');
     
     // Call the logout function from context
-    console.log('AcademyHeader: Calling logout from auth context');
     logout();
     
     // Call the onLogout callback if provided
     if (onLogout) {
-      console.log('AcademyHeader: Calling onLogout callback');
       onLogout();
     }
     
     // Navigate to home page
-    console.log('AcademyHeader: Navigating to home page');
     navigate("/");
     
     // Call the onLogoutComplete callback if provided
     if (onLogoutComplete) {
-      console.log('AcademyHeader: Calling onLogoutComplete callback');
       onLogoutComplete();
     }
   };
 
 
 
-  const handleChooseRoleClick = () => {
-    // Navigate to dashboard where role selection will be shown
-    navigate("/dashboard");
+  const handleRoleChange = (role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN') => {
+    if (currentUser) {
+      switchRole(role);
+      setIsRoleDropdownOpen(false);
+    }
   };
-
 
 
   return (
@@ -124,53 +138,176 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                     {currentUser.hasSelectedRole ? (
                       <div className="flex items-center space-x-1 text-sm font-medium text-gray-700">
                         <span>
-                          Role: {currentUser.academyRole === "STUDENT" && "Student"}
-                          {currentUser.academyRole === "INSTRUCTOR" && "Instructor"}
-                          {currentUser.academyRole === "ADMIN" && "Admin"}
+                          Role: {(currentUser.currentRole || currentUser.academyRole) === "STUDENT" && "Student"}
+                          {(currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" && "Instructor"}
+                          {(currentUser.currentRole || currentUser.academyRole) === "ADMIN" && "Admin"}
                         </span>
+                        {/* Show indicator if instructor role is pending or rejected */}
+                        {(currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" && 
+                         currentUser.roleStatus?.instructor === "pending" && (
+                          <span className="inline-block ml-1 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                            Pending
+                          </span>
+                        )}
+                        {(currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" && 
+                         currentUser.roleStatus?.instructor === "rejected" && (
+                          <span className="inline-block ml-1 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                            Rejected
+                          </span>
+                        )}
+                        {(currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" && 
+                         currentUser.roleStatus?.instructor === "pending" && (
+                          <button 
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (refreshProfile) {
+                                await refreshProfile();
+                              }
+                            }}
+                            className="ml-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-0.5 rounded transition-colors"
+                          >
+                            Refresh
+                          </button>
+                        )}
+                        {currentUser.availableRoles && currentUser.availableRoles.length > 1 && (
+                          <>
+                            <button 
+                              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                              className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none"
+                              aria-label="Role selector"
+                            >
+                              <FaCaretDown className="ml-1" />
+                            </button>
+                            
+                            {isRoleDropdownOpen && (
+                              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                {currentUser.availableRoles.map((role) => {
+                                  // Don't show instructor role in dropdown if status is rejected
+                                  if (role === "INSTRUCTOR" && currentUser.roleStatus?.instructor === "rejected") {
+                                    return null;
+                                  }
+                                  
+                                  return (
+                                    <button
+                                      key={role}
+                                      onClick={() => handleRoleChange(role)}
+                                      disabled={isRoleSwitching || (role === "INSTRUCTOR" && currentUser.roleStatus?.instructor !== "active")}
+                                      className={`block w-full text-left px-4 py-2 text-sm ${currentUser.currentRole === role ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-100'} ${(isRoleSwitching || (role === "INSTRUCTOR" && currentUser.roleStatus?.instructor !== "active")) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                      {role === "STUDENT" && "Student"}
+                                      {role === "INSTRUCTOR" && (
+                                        <span className="flex justify-between items-center w-full">
+                                          <span>
+                                            Instructor 
+                                            {currentUser.roleStatus?.instructor === "pending" && " (Pending)"}
+                                            {currentUser.roleStatus?.instructor === "rejected" && " (Rejected)"}
+                                          </span>
+                                          {currentUser.roleStatus?.instructor === "pending" && (
+                                            <button 
+                                              onClick={async (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (refreshProfile) {
+                                                  await refreshProfile();
+                                                }
+                                              }}
+                                              className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-0.5 rounded transition-colors ml-2"
+                                            >
+                                              Refresh
+                                            </button>
+                                          )}
+                                        </span>
+                                      )}
+                                      {role === "ADMIN" && "Admin"}
+                                      {isRoleSwitching && currentUser.currentRole === role && (
+                                        <span className="ml-2">
+                                          <FaSpinner className="inline animate-spin text-xs" />
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        )}
+
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-700">Role: Not selected</span>
-                        <button 
-                          onClick={handleChooseRoleClick}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-600 rounded-md"
-                        >
-                          Choose role
-                        </button>
-                      </div>
+                      <Link
+                        to="/dashboard"
+                        className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition-colors"
+                      >
+                        Choose Role
+                      </Link>
                     )}
                   </div>
                 </div>
-                              
-                {/* User Avatar and Name */}
-                <div className="flex items-center space-x-2">
-                  {currentUser.profilePicture ? (
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src={currentUser.profilePicture}
-                      alt="Profile"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <FaUser className="h-4 w-4 text-gray-600" />
+                                
+                                {/* User Avatar Dropdown */}
+                <div className="relative" ref={profileDropdownRef}>
+                  <button
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
+                  >
+                    {currentUser.profilePicture ? (
+                      <img
+                        className="h-8 w-8 rounded-full"
+                        src={currentUser.profilePicture}
+                        alt="Profile"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <FaUser className="h-4 w-4 text-gray-600" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-gray-700">
+                      {currentUser.firstname}
+                    </span>
+                    <FaCaretDown className="text-gray-500" />
+                  </button>
+                  
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FaTachometerAlt className="mr-3 text-gray-500" />
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FaUser className="mr-3 text-gray-500" />
+                        Profile
+                      </Link>
+                      <Link
+                        to="/settings"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FaCog className="mr-3 text-gray-500" />
+                        Settings
+                      </Link>
+                      <hr className="my-1 border-gray-200" />
+                      <button
+                        onClick={() => {
+                          setIsProfileDropdownOpen(false);
+                          handleLogout();
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        <FaSignOutAlt className="mr-3" />
+                        Sign out
+                      </button>
                     </div>
                   )}
-                  <span className="text-sm font-medium text-gray-700">
-                    {currentUser.firstname}
-                  </span>
                 </div>
-                              
-
-                
-                {/* Logout Button */}
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-gray-700"
-                  title="Sign out"
-                >
-                  <FaSignOutAlt className="h-5 w-5" />
-                </button>
               </div>
             ) : (
               <div className="flex space-x-4">
@@ -247,18 +384,100 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                     <div className="mb-3 relative" ref={roleDropdownRef}>
                       {currentUser.hasSelectedRole ? (
                         <div className="text-sm font-medium text-gray-700">
-                          Role: {currentUser.academyRole === "STUDENT" ? "Student" : currentUser.academyRole === "INSTRUCTOR" ? "Instructor" : "Admin"}
+                          Role: {(currentUser.currentRole || currentUser.academyRole) === "STUDENT" ? "Student" : (currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" ? "Instructor" : "Admin"}
+                          {/* Show indicator if instructor role is pending */}
+                          {(currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" && 
+                           currentUser.roleStatus?.instructor === "pending" && (
+                            <span className="inline-block ml-1 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                              Pending
+                            </span>
+                          )}
+                          {(currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" && 
+                           currentUser.roleStatus?.instructor === "pending" && (
+                            <button 
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (refreshProfile) {
+                                  await refreshProfile();
+                                }
+                              }}
+                              className="ml-2 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-0.5 rounded transition-colors"
+                            >
+                              Refresh
+                            </button>
+                          )}
+                          {currentUser.availableRoles && currentUser.availableRoles.length > 1 && (
+                            <>
+                              <button 
+                                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                                className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none ml-2"
+                                aria-label="Role selector"
+                              >
+                                <FaCaretDown className="ml-1" />
+                              </button>
+                              
+                              {isRoleDropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                  {currentUser.availableRoles.map((role) => {
+                                    // Don't show instructor role in dropdown if status is rejected
+                                    if (role === "INSTRUCTOR" && currentUser.roleStatus?.instructor === "rejected") {
+                                      return null;
+                                    }
+                                    
+                                    return (
+                                      <button
+                                        key={role}
+                                        onClick={() => handleRoleChange(role)}
+                                        disabled={isRoleSwitching || (role === "INSTRUCTOR" && currentUser.roleStatus?.instructor !== "active")}
+                                        className={`block w-full text-left px-4 py-2 text-sm ${currentUser.currentRole === role ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-100'} ${(isRoleSwitching || (role === "INSTRUCTOR" && currentUser.roleStatus?.instructor !== "active")) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                      >
+                                        {role === "STUDENT" && "Student"}
+                                        {role === "INSTRUCTOR" && (
+                                          <span className="flex justify-between items-center w-full">
+                                            <span>
+                                              Instructor 
+                                              {currentUser.roleStatus?.instructor === "pending" && " (Pending)"}
+                                              {currentUser.roleStatus?.instructor === "rejected" && " (Rejected)"}
+                                            </span>
+                                            {currentUser.roleStatus?.instructor === "pending" && (
+                                              <button 
+                                                onClick={async (e) => {
+                                                  e.preventDefault();
+                                                  e.stopPropagation();
+                                                  if (refreshProfile) {
+                                                    await refreshProfile();
+                                                  }
+                                                }}
+                                                className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-0.5 rounded transition-colors ml-2"
+                                              >
+                                                Refresh
+                                              </button>
+                                            )}
+                                          </span>
+                                        )}
+                                        {role === "ADMIN" && "Admin"}
+                                        {isRoleSwitching && currentUser.currentRole === role && (
+                                          <span className="ml-2">
+                                            <FaSpinner className="inline animate-spin text-xs" />
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          )}
+
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-gray-700">Role: Not selected</span>
-                          <button 
-                            onClick={handleChooseRoleClick}
-                            className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-600 rounded-md"
-                          >
-                            Choose role
-                          </button>
-                        </div>
+                        <Link
+                          to="/dashboard"
+                          className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition-colors inline-block"
+                        >
+                          Choose Role
+                        </Link>
                       )}
                     </div>
                     

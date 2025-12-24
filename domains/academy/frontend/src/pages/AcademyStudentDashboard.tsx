@@ -1,6 +1,7 @@
 import ContinueLearning from "../components/ContinueLearning";
 import QuickActions from "../components/QuickActions";
 import SidebarStats from "../components/SidebarStats";
+import DashboardSidebar from "../components/DashboardSidebar";
 import { useAuth } from "../contexts/AuthContext";
 import RoleSelectionModal from "../components/RoleSelectionModal";
 import { useState, useEffect } from "react";
@@ -57,12 +58,15 @@ const AcademyStudentDashboard = () => {
     );
   }
 
-  // If user is not a student, redirect to appropriate dashboard
-  console.log('AcademyStudentDashboard: Checking role permissions - role:', currentUser.academyRole);
-  if (currentUser.academyRole !== 'STUDENT') {
-    console.log('AcademyStudentDashboard: Redirecting to instructor dashboard');
-    window.location.href = '/instructor';
-    return null;
+  // If user has selected a role but it's not student, redirect to appropriate dashboard
+  if (currentUser.currentRole && currentUser.currentRole !== 'STUDENT') {
+    if (currentUser.currentRole === 'INSTRUCTOR') {
+      window.location.href = '/instructor';
+      return null;
+    } else if (currentUser.currentRole === 'ADMIN') {
+      window.location.href = '/admin';
+      return null;
+    }
   }
   const [stats, setStats] = useState({
     enrolledCourses: 0,
@@ -157,49 +161,59 @@ const AcademyStudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="px-4 md:px-8 py-6">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Welcome back, {currentUser?.firstname}!
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Continue your learning journey and track your progress
-          </p>
-        </div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-3xl font-bold text-blue-600">{stats.enrolledCourses}</div>
-            <div className="text-gray-600 mt-1">Enrolled Courses</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-3xl font-bold text-green-600">{stats.completedCourses}</div>
-            <div className="text-gray-600 mt-1">Completed Courses</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-3xl font-bold text-yellow-600">{stats.certificates}</div>
-            <div className="text-gray-600 mt-1">Certificates</div>
-          </div>
-        </div>
-
         <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 flex flex-col">
-            <QuickActions />
-            <ContinueLearning 
-              key={refreshKey} // Add key to force re-render when enrollment changes
-              onviewProgress={handleViewProgress} 
-              onViewCourseContent={handleViewCourseContent} 
-            />
-            <AllCourses 
-              className="mt-6" 
-              onViewCourseContent={handleViewCourseContent} 
-              onEnrollmentComplete={handleEnrollmentComplete}
-            />
+          {/* Left Sidebar - Navigation */}
+          <div className="w-full lg:w-64 flex-shrink-0">
+            <DashboardSidebar />
           </div>
 
-          <div className="w-full lg:w-80">
-            <SidebarStats className="w-full" />
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Welcome Section */}
+            <div className="mb-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Welcome back, {currentUser?.firstname}!
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Continue your learning journey and track your progress
+              </p>
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="text-3xl font-bold text-blue-600">{stats.enrolledCourses}</div>
+                <div className="text-gray-600 mt-1">Enrolled Courses</div>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="text-3xl font-bold text-green-600">{stats.completedCourses}</div>
+                <div className="text-gray-600 mt-1">Completed Courses</div>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="text-3xl font-bold text-yellow-600">{stats.certificates}</div>
+                <div className="text-gray-600 mt-1">Certificates</div>
+              </div>
+            </div>
+
+            <div className="flex flex-col xl:flex-row gap-6">
+              <div className="flex-1 flex flex-col">
+                <QuickActions />
+                <ContinueLearning 
+                  key={refreshKey}
+                  onviewProgress={handleViewProgress} 
+                  onViewCourseContent={handleViewCourseContent} 
+                />
+                <AllCourses 
+                  className="mt-6" 
+                  onViewCourseContent={handleViewCourseContent} 
+                  onEnrollmentComplete={handleEnrollmentComplete}
+                />
+              </div>
+
+              <div className="w-full xl:w-80">
+                <SidebarStats className="w-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
