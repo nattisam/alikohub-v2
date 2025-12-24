@@ -371,6 +371,17 @@ export class AuthService {
 				...tokens,
 			};
 		} else if (role === 'teacher' || role === 'TEACHER' || role === 'instructor' || role === 'INSTRUCTOR') {
+			// Check if user already has approved instructor role
+			if (user.academyUser && user.academyUser.role === 'INSTRUCTOR' && user.academyUser.status === 'ACTIVE') {
+				// User already has approved instructor role
+				return {
+					message: 'Instructor role already assigned',
+					role: 'INSTRUCTOR',
+					status: 'ACTIVE',
+					user: this.toPlain(user),
+				};
+			}
+			
 			// Teacher role requires application process
 			throw new RpcException({
 				statusCode: HttpStatus.BAD_REQUEST,

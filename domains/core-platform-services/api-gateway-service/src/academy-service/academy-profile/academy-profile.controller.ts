@@ -83,10 +83,10 @@ export class AcademyProfileController {
     }
   }
 
-  // New endpoint for role selection
+  // Delegate role selection to auth-service
   @Post('select-role')
   @ApiOperation({
-    summary: 'Select academy role (STUDENT / INSTRUCTOR / ADMIN)',
+    summary: 'Select academy role (student / teacher)',
   })
   @ApiBody({
     schema: {
@@ -94,8 +94,8 @@ export class AcademyProfileController {
       properties: {
         role: {
           type: 'string',
-          enum: ['STUDENT', 'INSTRUCTOR', 'ADMIN'],
-          example: 'STUDENT',
+          enum: ['student', 'teacher'],
+          example: 'student',
         },
       },
       required: ['role'],
@@ -103,32 +103,32 @@ export class AcademyProfileController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Academy role selected successfully',
+    description: 'Role selection processed successfully',
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid role provided',
+    description: 'Invalid role or validation failed',
   })
   @ApiResponse({
     status: 500,
-    description: 'Failed to select role',
+    description: 'Failed to process role selection',
   })
   async selectRole(@Request() req: RequestWithUser, @Body() body: { role: string }) {
-    const role = body.role;
-
-    let academyRole: AcademyRole;
-    switch (role) {
-      case 'STUDENT':
-        academyRole = AcademyRole.STUDENT;
+    // Convert role format for academy backend
+    let academyRole: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+    switch (body.role.toLowerCase()) {
+      case 'student':
+        academyRole = 'STUDENT';
         break;
-      case 'INSTRUCTOR':
-        academyRole = AcademyRole.INSTRUCTOR;
+      case 'teacher':
+      case 'instructor':
+        academyRole = 'INSTRUCTOR';
         break;
-      case 'ADMIN':
-        academyRole = AcademyRole.ADMIN;
+      case 'admin':
+        academyRole = 'ADMIN';
         break;
       default:
-        throw new BadRequestException('Invalid role provided');
+        throw new BadRequestException('Invalid role provided. Use student, teacher, or admin.');
     }
 
     const payload = {
@@ -141,7 +141,7 @@ export class AcademyProfileController {
       return await lastValueFrom(
         this.academyClient.send({ cmd: 'select_academy_role' }, payload),
       );
-    } catch (error) {
+    } catch (error: any) {
       const errMsg = error instanceof Error ? error.message : String(error);
       throw new InternalServerErrorException(
         'Failed to select role: ' + errMsg,
