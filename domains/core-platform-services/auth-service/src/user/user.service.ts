@@ -93,7 +93,9 @@ export class UserService {
 	async updateActiveAcademyRole(firebaseId: string, activeRole: string) {
 		return this.prisma.academyUser.update({
 			where: { userId: firebaseId },
-			data: { role: activeRole as any },
+			data: { 
+				role: activeRole as any
+			},
 		});
 	}
 

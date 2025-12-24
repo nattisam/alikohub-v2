@@ -74,18 +74,32 @@ model Cohort {
 }
 
 model Enrollment {
-  id         Int      @id @default(autoincrement())
-  userId     String // ID from auth service
-  cohortId   Int?
-  courseId   Int?
-  enrolledAt DateTime @default(now())
-  progress   Float    @default(0.0)
+  id            Int             @id @default(autoincrement())
+  userId        String // ID from auth service
+  cohortId      Int?
+  courseId      Int?
+  enrolledAt    DateTime        @default(now())
+  progress      Float           @default(0.0)
+  enrollmentType EnrollmentType @default(FREE)
+  paymentStatus PaymentStatus   @default(COMPLETED)
 
   cohort  Cohort?        @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   course  Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
   profile AcademyProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@unique([userId, cohortId, courseId])
+}
+
+enum EnrollmentType {
+  FREE
+  PAID
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
 }
 
 model Module {

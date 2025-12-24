@@ -93,6 +93,23 @@ export class UserService {
     // Fetch user details from Auth Service
     const authUser = await this.getUserById(user.firebaseId);
 
+    // Check if academy profile needs synchronization with auth service data
+    if (authUser && authUser.academyUser && authUser.academyUser.role !== profile.role) {
+      // Sync academy profile with auth service role
+      await this.prisma.academyProfile.update({
+        where: { userId: profile.userId },
+        data: {
+          role: authUser.academyUser.role,
+          hasSelectedRole: true
+        },
+      });
+      
+      // Re-fetch the updated profile
+      profile = await this.prisma.academyProfile.findUnique({
+        where: { userId: user.firebaseId }
+      });
+    }
+
     // Return the profile, ensuring hasSelectedRole is properly set
     return {
       id: profile.id,

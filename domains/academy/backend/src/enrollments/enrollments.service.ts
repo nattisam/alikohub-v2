@@ -123,19 +123,28 @@ export class EnrollmentsService {
       console.log("Enrollment Service - Processing direct course enrollment (no cohort)");
     }
 
+    // --- FREE vs PAID Placeholder Logic ---
+    const isPaid = course.price && course.price > 0;
+    const enrollmentType = isPaid ? 'PAID' : 'FREE';
+    const paymentStatus = isPaid ? 'PENDING' : 'COMPLETED';
+
     try {
       console.log("Enrollment Service - Creating enrollment record with:", {
         userId: userIdToEnroll,
         cohortId: cohortId, // This can be null for direct course enrollment
-        courseId: dto.courseId
+        courseId: dto.courseId,
+        enrollmentType: enrollmentType,
+        paymentStatus: paymentStatus
       });
 
       const enrollment = await this.prisma.enrollment.create({
         data: {
           userId: userIdToEnroll,
-          cohortId: cohortId, // This can be null for direct course enrollment
-          courseId: dto.courseId
-        },
+          cohortId: cohortId, 
+          courseId: dto.courseId,
+          enrollmentType: enrollmentType,
+          paymentStatus: paymentStatus
+        } as any,
       });
 
       this.logger.log(`Enrollment created successfully: ${JSON.stringify(enrollment)}`);
