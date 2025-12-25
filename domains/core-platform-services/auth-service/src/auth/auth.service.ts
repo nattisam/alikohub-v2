@@ -199,6 +199,7 @@ export class AuthService {
 			status: user.status,
 			// Subdomain roles and statuses
 			academyRole: user.academyUser?.role,
+			academyActiveRole: user.academyUser?.activeRole || user.academyUser?.role,
 			academyStatus: user.academyUser?.status,
 			consultancyRole: user.consultancyUser?.role,
 			consultancyStatus: user.consultancyUser?.status,

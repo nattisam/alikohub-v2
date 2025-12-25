@@ -10,9 +10,9 @@ export class AcademyStatusGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Extract academy role and status from nested structure
-    const academyRole = user.academyUser?.role;
-    const academyStatus = user.academyUser?.status;
+    // Use activeRole from JWT for role switching support
+    const academyRole = user.academyActiveRole || user.academyUser?.role;
+    const academyStatus = user.academyStatus || user.academyUser?.status;
 
     // Check if user has any academy role
     if (!academyRole) {
@@ -38,9 +38,9 @@ export class StudentAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Extract academy role and status from nested structure
-    const academyRole = user.academyUser?.role;
-    const academyStatus = user.academyUser?.status;
+    // Use activeRole from JWT for role switching support
+    const academyRole = user.academyActiveRole || user.academyUser?.role;
+    const academyStatus = user.academyStatus || user.academyUser?.status;
 
     if (!academyRole || (academyRole.toUpperCase() !== 'STUDENT' && academyRole.toUpperCase() !== 'USER')) {
       throw new ForbiddenException('Access denied: Student role required');
@@ -64,9 +64,9 @@ export class TeacherAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Extract academy role and status from nested structure
-    const academyRole = user.academyUser?.role;
-    const academyStatus = user.academyUser?.status;
+    // Use activeRole from JWT for role switching support
+    const academyRole = user.academyActiveRole || user.academyUser?.role;
+    const academyStatus = user.academyStatus || user.academyUser?.status;
 
     if (!academyRole || (academyRole.toUpperCase() !== 'INSTRUCTOR' && academyRole.toUpperCase() !== 'TEACHER')) {
       throw new ForbiddenException('Access denied: Instructor role required');
@@ -90,8 +90,8 @@ export class AdminAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Extract academy role from nested structure
-    const academyRole = user.academyUser?.role;
+    // Use activeRole from JWT for role switching support
+    const academyRole = user.academyActiveRole || user.academyUser?.role;
 
     // Check if user is global admin or academy admin
     const isAdmin = user.globalRole === 'ADMIN' || academyRole === 'ADMIN' || academyRole === 'ACADEMY_ADMIN';

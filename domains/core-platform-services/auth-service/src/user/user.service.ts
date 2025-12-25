@@ -94,7 +94,7 @@ export class UserService {
 		return this.prisma.academyUser.update({
 			where: { userId: firebaseId },
 			data: { 
-				role: activeRole as any
+				activeRole: activeRole as any
 			},
 		});
 	}
