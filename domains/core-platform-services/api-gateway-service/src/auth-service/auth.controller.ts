@@ -144,28 +144,6 @@ export class AuthController {
     );
   }
 
-  @Post('academy/switch-role')
-  @UseGuards(AuthGuard)
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Switch academy role' })
-  async switchRole(@Request() req: any, @Body() switchRoleDto: any) {
-    // Inject userId from authenticated user
-    const payload = { 
-      userId: req.user.uid || req.user.id,
-      newRole: switchRoleDto.role 
-    };
-    
-    return firstValueFrom(
-      this.authClient.send({ cmd: 'switch_role' }, payload).pipe(
-        timeout(10000),
-        catchError(error => {
-          this.handleError(error, 'Switch Academy Role');
-          return throwError(() => error);
-        }),
-      )
-    );
-  }
-
   @Post('academy/approve-teacher/:applicationId')
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
