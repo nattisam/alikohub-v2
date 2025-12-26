@@ -33,8 +33,9 @@ export class UserController {
         this.logger.log(`userId: ${userId}, role: ${role}`);
 
         try {
+            this.logger.log(`Calling userService.selectRole for user: ${userId}, role: ${role}`);
             const result = await this.userService.selectRole(userId, role);
-            this.logger.log(`Role selection successful for user: ${userId}`);
+            this.logger.log(`Role selection successful for user: ${userId}, result: ${JSON.stringify(result)}`);
             return result;
         } catch (error) {
             this.logger.error(`Role selection failed for user: ${userId}`, error);
@@ -55,6 +56,18 @@ export class UserController {
             this.logger.log(`Academy profile ensured for user: ${payload.userId}`);
         } catch (error) {
             this.logger.error(`Failed to handle user_created event for user: ${payload.userId}`, error);
+        }
+    }
+    
+    @EventPattern('user_role_selected')
+    async handleUserRoleSelected(@Payload() payload: { userId: string; role: string; hasSelectedRole: boolean }) {
+        this.logger.log(`Received user_role_selected event for user: ${payload.userId}, role: ${payload.role}, hasSelectedRole: ${payload.hasSelectedRole}`);
+        try {
+            // Update the academy profile with the selected role
+            await this.userService.selectRole(payload.userId, payload.role as AcademyRole);
+            this.logger.log(`Updated academy profile for user: ${payload.userId} with role: ${payload.role}`);
+        } catch (error) {
+            this.logger.error(`Failed to handle user_role_selected event for user: ${payload.userId}`, error);
         }
     }
 }

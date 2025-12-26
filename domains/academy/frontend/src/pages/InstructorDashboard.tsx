@@ -23,8 +23,21 @@ import CourseAnalytics from "../components/CourseAnalytics"; // Added import
 import RoleSelectionModal from "../components/RoleSelectionModal";
 
 const Dashboard: React.FC = () => {
-  const { user: currentUser, refreshProfile } = useAuth();
+  const { user: currentUser, refreshProfile, refetchCurrentUser } = useAuth();
+  const navigate = useNavigate();
   const { courses, updateCourse, removeCourse, creatingCourse, removingCourse } = useInstructorCourses();
+  
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const activeRole = currentUser.academyUser?.activeRole;
+
+    if (activeRole === "INSTRUCTOR") {
+      return; // allowed
+    }
+
+    navigate("/academy/select-role");
+  }, [currentUser, navigate]);
   const [creatingCourseForm, setCreatingCourseForm] = useState(false);
   const [viewingCourse, setViewingCourse] = useState<null | Course>(null);
   const [editingCourse, setEditingCourse] = useState({
@@ -90,8 +103,12 @@ const Dashboard: React.FC = () => {
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
+  // Check the active role from the user's academyUser
+  const activeRole = currentUser?.academyUser?.activeRole;
+  const hasSelectedRole = !!activeRole && activeRole !== "USER";
+  
   // If user hasn't selected a role yet, show role selection modal
-  if (currentUser && !currentUser.hasSelectedRole) {
+  if (currentUser && !hasSelectedRole) {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -141,16 +158,7 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // If user has selected a role but it's not instructor, redirect to appropriate dashboard
-  if (currentUser && currentUser.currentRole && currentUser.currentRole !== 'INSTRUCTOR') {
-    if (currentUser.currentRole === 'STUDENT') {
-      window.location.href = '/student-dashboard';
-      return null;
-    } else if (currentUser.currentRole === 'ADMIN') {
-      window.location.href = '/admin';
-      return null;
-    }
-  }
+
 
   // Fetch instructor stats
   useEffect(() => {

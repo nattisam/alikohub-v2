@@ -42,17 +42,62 @@ export const authAPI = {
 // Academy API
 export const academyAPI = {
   selectRole: async (role) => {
-    const { data } = await apiClient.post('/academy/profile/select-role', { role });
-    return data;
+    // Convert frontend role format to backend format
+    // Frontend sends: 'STUDENT', 'INSTRUCTOR', 'ADMIN'
+    // Backend expects: 'student', 'teacher', 'admin'
+    let backendRole;
+    switch (role.toUpperCase()) {
+      case 'STUDENT':
+        backendRole = 'student';
+        break;
+      case 'INSTRUCTOR':
+      case 'TEACHER':
+        backendRole = 'teacher';
+        break;
+      case 'ADMIN':
+        backendRole = 'admin';
+        break;
+      default:
+        backendRole = role.toLowerCase();
+    }
+    
+    console.log('Sending role selection request to backend:', { role: backendRole });
+    try {
+      const response = await apiClient.post('/auth/academy/select-role', { role: backendRole });
+      console.log('Role selection response from backend:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in role selection API call:', error);
+      throw error;
+    }
   },
   
   switchRole: async (role) => {
-    const { data } = await apiClient.post('/auth/switch-role', { role });
+    // Convert frontend role format to backend format
+    // Frontend sends: 'STUDENT', 'INSTRUCTOR', 'ADMIN'
+    // Backend expects: 'student', 'teacher', 'admin'
+    let backendRole;
+    switch (role.toUpperCase()) {
+      case 'STUDENT':
+        backendRole = 'student';
+        break;
+      case 'INSTRUCTOR':
+      case 'TEACHER':
+        backendRole = 'teacher';
+        break;
+      case 'ADMIN':
+        backendRole = 'admin';
+        break;
+      default:
+        backendRole = role.toLowerCase();
+    }
+    
+    const { data } = await apiClient.post('/auth/academy/switch-role', { role: backendRole });
     return data;
   },
   
   getProfile: async () => {
-    const { data } = await apiClient.get('/academy/profile');
+    const { data } = await apiClient.get('/users/profile');
     return data;
   },
   

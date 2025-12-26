@@ -135,7 +135,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                 <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
                   {/* Role Selector */}
                   <div className="relative" ref={roleDropdownRef}>
-                    {currentUser.hasSelectedRole ? (
+                    {(currentUser.hasSelectedRole && (currentUser.currentRole || currentUser.academyRole) !== "USER") ? (
                       <div className="flex items-center space-x-1 text-sm font-medium text-gray-700">
                         <span>
                           Role: {(currentUser.currentRole || currentUser.academyRole) === "STUDENT" && "Student"}
@@ -382,7 +382,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                   <div className="px-3 py-2 border-t border-gray-200 mt-2">
                     {/* Mobile Role Selector */}
                     <div className="mb-3 relative" ref={roleDropdownRef}>
-                      {currentUser.hasSelectedRole ? (
+                      {(currentUser.hasSelectedRole && (currentUser.currentRole || currentUser.academyRole) !== "USER") ? (
                         <div className="text-sm font-medium text-gray-700">
                           Role: {(currentUser.currentRole || currentUser.academyRole) === "STUDENT" ? "Student" : (currentUser.currentRole || currentUser.academyRole) === "INSTRUCTOR" ? "Instructor" : "Admin"}
                           {/* Show indicator if instructor role is pending */}

@@ -32,6 +32,7 @@ interface AuthContextType {
   addRole: (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => Promise<void>;
   switchRole: (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => void;
   refreshProfile: () => Promise<CurrentUser | null>;
+  refetchCurrentUser: () => Promise<void>;
   applyAsInstructor: (applicationData: any) => Promise<void>;
 }
 
@@ -69,8 +70,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
               // Transform auth service response to match expected structure
               const transformedUser = {
                 ...response.user,
+                // Preserve the original academyUser object
+                academyUser: response.user.academyUser,
                 // Flatten academyUser data if it exists
                 academyRole: response.user.academyUser?.role,
+                academyActiveRole: response.user.academyUser?.activeRole, // Use activeRole from backend
                 hasSelectedRole: response.user.academyUser?.hasSelectedRole,
                 // Add role status information if it exists
                 roleStatus: response.user.roleStatus || {
@@ -86,13 +90,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 const academyProfile = await academyAPI.getProfile();
                 
                 // Backend profile is the source of truth for role and hasSelectedRole
+                // If the user has a role in academyProfile and it's not null/undefined, they have selected a role
                 const effectiveRole = academyProfile.role;
-                const hasSelectedRole = academyProfile.hasSelectedRole;
+                const hasSelectedRole = academyProfile.hasSelectedRole ||
+                                      (academyProfile.role && academyProfile.role !== null && academyProfile.role !== undefined);
                 
                 const mergedUser = {
                   ...transformedUser,
                   academyRole: effectiveRole,
-                  currentRole: effectiveRole,
+                  academyActiveRole: academyProfile.activeRole, // Use activeRole from backend
                   availableRoles: effectiveRole ? [effectiveRole] : [],
                   hasSelectedRole: hasSelectedRole,
                   roleStatus: {
@@ -117,8 +123,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                   // Fall back to using stored user data
                   const fallbackUser = {
                     ...transformedUser,
+                    academyUser: {
+                      ...transformedUser.academyUser,
+                      ...storedUser.academyUser,
+                      role: storedUser.academyRole,
+                      activeRole: storedUser.academyActiveRole, // Use activeRole from stored data
+                      hasSelectedRole: storedUser.hasSelectedRole
+                    },
                     academyRole: storedUser.academyRole,
-                    currentRole: storedUser.currentRole || storedUser.academyRole,
+                    academyActiveRole: storedUser.academyActiveRole, // Use activeRole from stored data
                     availableRoles: storedUser.availableRoles || (storedUser.academyRole ? [storedUser.academyRole] : []),
                     hasSelectedRole: storedUser.hasSelectedRole,
                     roleStatus: {
@@ -153,10 +166,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             // Try to use existing data
             try {
               const localStorageUserData = JSON.parse(userData);
-              // Ensure currentRole is set from academyRole if not present
+              // Use activeRole from backend instead of currentRole
               const userWithRole = {
                 ...localStorageUserData,
-                currentRole: localStorageUserData.currentRole || localStorageUserData.academyRole,
+                academyActiveRole: localStorageUserData.academyActiveRole || localStorageUserData.academyRole,
                 availableRoles: localStorageUserData.availableRoles || (localStorageUserData.academyRole ? [localStorageUserData.academyRole] : [])
               };
               setUser(userWithRole);
@@ -174,10 +187,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           // Don't clear storage immediately, let the auth flow continue
           try {
             const localStorageUserData = JSON.parse(userData);
-            // Ensure currentRole is set from academyRole if not present
+            // Use activeRole from backend instead of currentRole
             const userWithRole = {
               ...localStorageUserData,
-              currentRole: localStorageUserData.currentRole || localStorageUserData.academyRole,
+              academyActiveRole: localStorageUserData.academyActiveRole || localStorageUserData.academyRole,
               availableRoles: localStorageUserData.availableRoles || (localStorageUserData.academyRole ? [localStorageUserData.academyRole] : [])
             };
             setUser(userWithRole);
@@ -210,6 +223,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       // Transform auth service response to match expected structure
       const transformedUser = {
         ...data.user,
+        // Preserve the original academyUser object
+        academyUser: data.user.academyUser,
         // Flatten academyUser data if it exists
         academyRole: data.user.academyUser?.role,
         hasSelectedRole: data.user.academyUser?.hasSelectedRole,
@@ -245,10 +260,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           console.error("AuthContext: Error parsing localStorage user data:", e);
         }
         
-        // Priority: 1. Check if academy profile says user has selected role, 2. Check localStorage
+        // Priority: 1. Check if academy profile says user has selected role, 2. Check localStorage, 3. Determine based on role presence
+        // If the user has a role in academyProfile and it's not null/undefined, they have selected a role
         const hasSelectedRole = academyProfile.hasSelectedRole || 
                               (parsedLocalStorageData?.hasSelectedRole === true) ||
-                              (transformedUser.academyProfile?.hasSelectedRole === true);
+                              (transformedUser.academyProfile?.hasSelectedRole === true) ||
+                              (academyProfile.role && academyProfile.role !== null && academyProfile.role !== undefined);
         
         // Use the academy profile role if the user has already selected it
         // Otherwise, preserve role from localStorage if available
@@ -259,7 +276,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const updatedUser = {
           ...transformedUser,
           academyRole: effectiveRole,
-          currentRole: effectiveRole,
+          academyActiveRole: academyProfile.activeRole, // Use activeRole from backend
           availableRoles: effectiveRole ? [effectiveRole] : [],
           hasSelectedRole,
           roleStatus: {
@@ -291,6 +308,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           const fallbackUser = {
             ...transformedUser,
             // We don't have academy role data, so we'll rely on localStorage or prompt for role selection
+            academyUser: transformedUser.academyUser,
             academyRole: transformedUser.academyRole || null,
             hasSelectedRole: transformedUser.hasSelectedRole || false,
             roleStatus: transformedUser.roleStatus || {
@@ -319,6 +337,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       // Transform auth service response to match expected structure
       const transformedUser = {
         ...data.user,
+        // Preserve the original academyUser object
+        academyUser: data.user.academyUser,
         // Flatten academyUser data if it exists
         academyRole: data.user.academyUser?.role,
         hasSelectedRole: data.user.academyUser?.hasSelectedRole,
@@ -355,8 +375,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         
         // For new users, hasSelectedRole should be false, so we preserve the default role
         // But also check if user had previously selected a role in localStorage
+        // If the user has a role in academyProfile and it's not null/undefined, they have selected a role
         const hasSelectedRole = academyProfile.hasSelectedRole || 
-                              (parsedLocalStorageData?.hasSelectedRole === true);
+                              (parsedLocalStorageData?.hasSelectedRole === true) ||
+                              (academyProfile.role && academyProfile.role !== null && academyProfile.role !== undefined);
         
         const effectiveRole = hasSelectedRole ? 
           (academyProfile.role || parsedLocalStorageData?.academyRole || transformedUser.academyRole) :
@@ -365,7 +387,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const updatedUser = {
           ...transformedUser,
           academyRole: effectiveRole,
-          currentRole: effectiveRole,
+          academyActiveRole: academyProfile.activeRole, // Use activeRole from backend
           availableRoles: effectiveRole ? [effectiveRole] : [],
           hasSelectedRole: hasSelectedRole,
           roleStatus: {
@@ -397,6 +419,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           const fallbackUser = {
             ...transformedUser,
             // We don't have academy role data, so we'll rely on localStorage or prompt for role selection
+            academyUser: transformedUser.academyUser,
             academyRole: transformedUser.academyRole || null,
             hasSelectedRole: transformedUser.hasSelectedRole || false,
             roleStatus: transformedUser.roleStatus || {
@@ -471,8 +494,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // Update the user with the new role
         const updatedUser = {
           ...user,
+          // Update the user's academyUser object to reflect the selected role
+          academyUser: {
+            ...user.academyUser,
+            role: role,
+            activeRole: role, // Set the active role to the selected role
+            hasSelectedRole: true,
+          },
           availableRoles: [...new Set([...(user.availableRoles || []), role])], // Add role to available roles
-          currentRole: user.currentRole || role, // Set as current role if no current role
+          academyActiveRole: role, // Update the active role in the main user object
           academyRole: role, // Set as current academy role
           hasSelectedRole: true,
           roleStatus: {
@@ -497,8 +527,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // Even if backend fails, still update the frontend state
         const updatedUser = {
           ...user,
+          // Update the user's academyUser object to reflect the selected role
+          academyUser: {
+            ...user.academyUser,
+            role: role,
+            activeRole: role, // Set the active role to the selected role
+            hasSelectedRole: true,
+          },
           availableRoles: [...new Set([...(user.availableRoles || []), role])], // Add role to available roles
-          currentRole: user.currentRole || role, // Set as current role if no current role
+          academyActiveRole: role, // Update the active role in the main user object
           academyRole: role, // Set as current academy role
           hasSelectedRole: true,
           roleStatus: {
@@ -532,7 +569,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // Update the user with the new role
         const updatedUser = {
           ...user,
-          currentRole: role,
+          // Update the user's academyUser object to reflect the switched role
+          academyUser: {
+            ...user.academyUser,
+            role: role,
+            activeRole: role, // Set active role to the switched role
+          },
+          academyActiveRole: role, // Update active role in main user object
           academyRole: role, // Update current academy role
           roleStatus: {
             ...user.roleStatus,
@@ -568,7 +611,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // Fallback: update the role in frontend only
         const updatedUser = {
           ...user,
-          currentRole: role,
+          // Update the user's academyUser object to reflect the switched role
+          academyUser: {
+            ...user.academyUser,
+            role: role,
+            activeRole: role, // Set active role to the switched role
+          },
+          academyActiveRole: role, // Update active role in main user object
           academyRole: role, // Update current academy role
           roleStatus: {
             ...user.roleStatus,
@@ -584,6 +633,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
+        
+        // Update tokens with the new JWT if available
+        if (response?.accessToken) {
+          localStorage.setItem("accessToken", response.accessToken);
+        }
         
         // Navigate to the appropriate dashboard based on the new role
         if (role === "STUDENT") {
@@ -601,59 +655,124 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const selectRole = async (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => {
     if (user) {
-      try {
-        const response = await academyAPI.selectRole(role);
-        
-        // Fetch the latest academy profile to get the most up-to-date role information
-        const academyProfile = await academyAPI.getProfile();
-        
-        // Create updated user with role and hasSelectedRole set to true
+      // For instructor role, we need to handle application process
+      if (role === "INSTRUCTOR") {
+        // Don't call the API immediately, let the application modal handle it
+        // Just update the frontend state to indicate the user wants to become an instructor
+        // But don't mark as pending yet - only mark as pending after form submission
         const updatedUser = {
           ...user,
-          academyRole: role,
-          currentRole: role, // Set as current role
-          hasSelectedRole: true, // Mark that user has selected a role
+          pendingRole: role, // Mark that user wants to be instructor
           roleStatus: {
             ...user.roleStatus,
-            // Get instructor status from backend - if role is INSTRUCTOR and hasSelectedRole is true, mark as active (approved)
-            instructor: role === 'INSTRUCTOR' ? (academyProfile.hasSelectedRole && academyProfile.role === 'INSTRUCTOR' ? 'active' : (user.roleStatus?.instructor || 'pending')) : (user.roleStatus?.instructor || 'pending')
-          },
-          availableRoles: [...new Set([...(user.availableRoles || []), role])], // Add role to available roles
-          academyProfile: {
-            ...user.academyProfile,
-            ...academyProfile,
-            role: role,
-            updatedAt: new Date().toISOString()
-          },
-          updatedAt: new Date().toISOString()
-        };
-        
-        setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-      } catch (error) {
-        // Fetch the latest academy profile to get the most up-to-date role information
-        const academyProfile = await academyAPI.getProfile();
-        
-        // Even if backend fails, still update the frontend state
-        const updatedUser = {
-          ...user,
-          academyRole: role,
-          currentRole: role, // Set as current role
-          hasSelectedRole: true, // Mark that user has selected a role
-          roleStatus: {
-            ...user.roleStatus,
-            // Get instructor status from backend - if role is INSTRUCTOR and hasSelectedRole is true, mark as active (approved)
-            instructor: role === 'INSTRUCTOR' ? (academyProfile.hasSelectedRole && academyProfile.role === 'INSTRUCTOR' ? 'active' : (user.roleStatus?.instructor || 'pending')) : (user.roleStatus?.instructor || 'pending')
-          },
-          availableRoles: [...new Set([...(user.availableRoles || []), role])], // Add role to available roles
-          academyProfile: {
-            ...user.academyProfile,
-            ...academyProfile,
-            role: role
+            instructor: 'not_applied' // Mark that user hasn't applied yet
           }
         };
+        
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
+        
+        // Return a special response to indicate instructor application is needed
+        return { success: false, error: 'INSTRUCTOR_APPLICATION_REQUIRED' };
+      } else {
+        try {
+          const response = await academyAPI.selectRole(role);
+          
+          // If the backend returns new tokens after role selection, update them
+          if (response.accessToken) {
+            localStorage.setItem("accessToken", response.accessToken);
+          }
+          if (response.firebaseCustomToken) {
+            localStorage.setItem("firebaseCustomToken", response.firebaseCustomToken);
+          }
+          
+          // Fetch the latest academy profile to get the most up-to-date role information
+          const academyProfile = await academyAPI.getProfile();
+          
+          // Create updated user with role and hasSelectedRole set to true
+          // Use the selected role as the source of truth, not what's returned from the auth response
+          const updatedUser = {
+            ...user,
+            // Update the user's academyUser object to reflect the selected role
+            academyUser: {
+              ...user.academyUser,
+              role: role,
+              activeRole: role, // Set the active role
+              hasSelectedRole: true,
+            },
+            // Remove manual role state setters - derive from user.academyUser.activeRole
+            roleStatus: {
+              ...user.roleStatus,
+              // Get instructor status from backend - if role is INSTRUCTOR and hasSelectedRole is true, mark as active (approved)
+              instructor: role === 'INSTRUCTOR' ? (academyProfile.hasSelectedRole && academyProfile.role === 'INSTRUCTOR' ? 'active' : (user.roleStatus?.instructor || 'pending')) : (user.roleStatus?.instructor || 'pending')
+            },
+            availableRoles: [...new Set([...(user.availableRoles || []), role])], // Add role to available roles
+            academyProfile: {
+              ...user.academyProfile,
+              ...academyProfile,
+              role: role,
+              hasSelectedRole: true,
+              updatedAt: new Date().toISOString()
+            },
+            academyActiveRole: role, // Update the active role in the main user object
+            updatedAt: new Date().toISOString()
+          };
+          
+          setUser(updatedUser);
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch (error) {
+          // Fetch the latest academy profile to get the most up-to-date role information
+          const academyProfile = await academyAPI.getProfile();
+          
+          // Even if backend fails, still update the frontend state
+          // For instructor role, don't set hasSelectedRole to true
+          if (role === 'INSTRUCTOR') {
+            // For instructor role, we need to handle application process
+            // But don't mark as pending yet - only mark as pending after form submission
+            const updatedUser = {
+              ...user,
+              pendingRole: role, // Mark that user wants to be instructor
+              roleStatus: {
+                ...user.roleStatus,
+                instructor: 'not_applied' // Mark that user hasn't applied yet
+              }
+            };
+                      
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+                      
+            // Return a special response to indicate instructor application is needed
+            return { success: false, error: 'INSTRUCTOR_APPLICATION_REQUIRED' };
+          } else {
+            const updatedUser = {
+              ...user,
+              // Update the user's academyUser object to reflect the selected role
+              academyUser: {
+                ...user.academyUser,
+                role: role,
+                activeRole: role, // Set the active role
+                hasSelectedRole: true,
+              },
+              // Remove manual role state setters - derive from user.academyUser.activeRole
+              roleStatus: {
+                ...user.roleStatus,
+                // Get instructor status from backend - if role is INSTRUCTOR and hasSelectedRole is true, mark as active (approved)
+                instructor: role === 'INSTRUCTOR' ? (academyProfile.hasSelectedRole && academyProfile.role === 'INSTRUCTOR' ? 'active' : (user.roleStatus?.instructor || 'pending')) : (user.roleStatus?.instructor || 'pending')
+              },
+              availableRoles: [...new Set([...(user.availableRoles || []), role])], // Add role to available roles
+              academyProfile: {
+                ...user.academyProfile,
+                ...academyProfile,
+                role: role,
+                hasSelectedRole: true
+              },
+              academyActiveRole: role, // Update the active role in the main user object
+            };
+                    
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
+        }
       }
     }
   };
@@ -665,8 +784,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const academyProfile = await academyAPI.getProfile();
         
         // Backend profile is the source of truth for role and hasSelectedRole
+        // If the user has a role in academyProfile and it's not null/undefined, they have selected a role
         const effectiveRole = academyProfile.role;
-        const hasSelectedRole = academyProfile.hasSelectedRole;
+        const hasSelectedRole = academyProfile.hasSelectedRole ||
+                              (academyProfile.role && academyProfile.role !== null && academyProfile.role !== undefined);
         
         // Get current user data from localStorage to preserve other properties
         const localStorageUserData = localStorage.getItem("user");
@@ -695,8 +816,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         
         const updatedUser = {
           ...user,
+          // Update the user's academyUser object to reflect the refreshed profile
+          academyUser: {
+            ...user.academyUser,
+            role: effectiveRole,
+            activeRole: academyProfile.activeRole || effectiveRole, // Use activeRole from backend, fallback to effectiveRole
+            hasSelectedRole,
+          },
           academyRole: effectiveRole,
-          currentRole: effectiveRole,
+          academyActiveRole: academyProfile.activeRole || effectiveRole, // Use activeRole from backend, fallback to effectiveRole
           hasSelectedRole: hasSelectedRole,
           // Update available roles to include all roles from backend
           availableRoles: [...new Set([...(user.availableRoles || []), ...backendRoles])],
@@ -710,7 +838,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             ...academyProfile,
             hasSelectedRole,
             role: effectiveRole
-          }
+          },
+          // Preserve pendingRole if it existed before
+          pendingRole: user?.pendingRole
         };
         
         // Update user state and localStorage
@@ -739,8 +869,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // Update the user with the new role status
         const updatedUser = {
           ...user,
+          // Update the user's academyUser object to reflect the updated profile
+          academyUser: {
+            ...user.academyUser,
+            ...academyProfile
+          },
           // Add instructor to available roles if not already there
           availableRoles: user.availableRoles?.includes('INSTRUCTOR') ? user.availableRoles : [...(user.availableRoles || []), 'INSTRUCTOR'],
+          // Remove pending role since application is submitted
+          pendingRole: undefined,
           roleStatus: {
             ...user.roleStatus,
             // Set instructor status based on backend response
@@ -763,6 +900,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           
           const updatedUser = {
             ...user,
+            // Update the user's academyUser object to reflect the updated profile
+            academyUser: {
+              ...user.academyUser,
+              ...academyProfile
+            },
+            // Remove pending role since application is submitted
+            pendingRole: undefined,
             roleStatus: {
               ...user.roleStatus,
               instructor: academyProfile.role === 'INSTRUCTOR' && academyProfile.hasSelectedRole ? 'active' : (user.roleStatus?.instructor || 'pending')
@@ -782,6 +926,79 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const refetchCurrentUser = async () => {
+    if (user) {
+      try {
+        // Get the current token from localStorage
+        const token = localStorage.getItem("firebaseCustomToken");
+        
+        if (token) {
+          // Verify token with auth service to get updated user data
+          const response = await authAPI.verifyToken(token);
+          
+          if (response.user) {
+            // Fetch the latest academy profile to get the most up-to-date role information
+            const academyProfile = await academyAPI.getProfile();
+            
+            // Transform auth service response to match expected structure
+            const transformedUser = {
+              ...response.user,
+              // Preserve the original academyUser object
+              academyUser: response.user.academyUser,
+              // Flatten academyUser data if it exists
+              academyRole: response.user.academyUser?.role,
+              academyActiveRole: response.user.academyUser?.activeRole, // Use activeRole from backend
+              hasSelectedRole: response.user.academyUser?.hasSelectedRole,
+              // Add role status information if it exists
+              roleStatus: response.user.roleStatus || {
+                instructor: 'active', // Default status
+              },
+              // Move academyUser to academyProfile to match expected structure
+              academyProfile: response.user.academyUser || undefined
+            };
+            
+            // Backend profile is the source of truth for role and hasSelectedRole
+            const effectiveRole = academyProfile.role;
+            const hasSelectedRole = academyProfile.hasSelectedRole ||
+                                  (academyProfile.role && academyProfile.role !== null && academyProfile.role !== undefined);
+            
+            const updatedUser = {
+              ...transformedUser,
+              academyUser: {
+                ...transformedUser.academyUser,
+                ...academyProfile,
+                role: academyProfile.role,
+                activeRole: academyProfile.activeRole || effectiveRole, // Use activeRole from backend, fallback to effectiveRole
+                hasSelectedRole,
+              },
+              academyRole: effectiveRole,
+              academyActiveRole: academyProfile.activeRole || effectiveRole, // Use activeRole from backend, fallback to effectiveRole
+              hasSelectedRole,
+              roleStatus: {
+                ...transformedUser.roleStatus,
+                // If role is INSTRUCTOR and hasSelectedRole is true, mark as active (approved)
+                instructor: effectiveRole === 'INSTRUCTOR' && hasSelectedRole ? 'active' : (transformedUser.roleStatus?.instructor || 'pending')
+              },
+              availableRoles: effectiveRole ? [effectiveRole] : [],
+              academyProfile: {
+                ...transformedUser.academyProfile,
+                ...academyProfile
+              },
+              // Preserve pendingRole if it existed before
+              pendingRole: user?.pendingRole
+            };
+            
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to refetch current user:', error);
+        // Don't throw error, just log it
+      }
+    }
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -795,6 +1012,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     addRole,
     switchRole,
     refreshProfile,
+    refetchCurrentUser,
     applyAsInstructor,
   };
 

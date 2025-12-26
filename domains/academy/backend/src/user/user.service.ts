@@ -126,29 +126,38 @@ export class UserService {
 
   // Add this new method for role selection
   async selectRole(userId: string, role: AcademyRole) {
+    this.logger.log(`selectRole called for userId: ${userId}, role: ${role}`);
     try {
       const existingProfile = await this.prisma.academyProfile.findUnique({
         where: { userId }
       });
 
+      this.logger.log(`Found existing profile: ${!!existingProfile}`);
+
       if (existingProfile) {
         // Update the profile with the selected role and mark hasSelectedRole as true
-        return await this.prisma.academyProfile.update({
+        this.logger.log(`Updating existing profile for user: ${userId}, new role: ${role}`);
+        const result = await this.prisma.academyProfile.update({
           where: { userId },
           data: {
             role: role,
             hasSelectedRole: true
           },
         });
+        this.logger.log(`Updated profile result: ${JSON.stringify(result)}`);
+        return result;
       } else {
         // Create a new profile with the selected role
-        return await this.prisma.academyProfile.create({
+        this.logger.log(`Creating new profile for user: ${userId}, role: ${role}`);
+        const result = await this.prisma.academyProfile.create({
           data: {
             userId: userId,
             role: role,
             hasSelectedRole: true
           },
         });
+        this.logger.log(`Created profile result: ${JSON.stringify(result)}`);
+        return result;
       }
     } catch (error) {
       this.logger.error('Error in selectRole:', error);

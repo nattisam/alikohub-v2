@@ -4,6 +4,7 @@ import SidebarStats from "../components/SidebarStats";
 import DashboardSidebar from "../components/DashboardSidebar";
 import { useAuth } from "../contexts/AuthContext";
 import RoleSelectionModal from "../components/RoleSelectionModal";
+import TeacherApplicationModal from "../components/TeacherApplicationModal";
 import { useState, useEffect } from "react";
 import { progressApi } from "../api/progressApi";
 import { enrollmentApi } from "../api/enrollmentApi";
@@ -13,11 +14,44 @@ import type { Course } from "../components/types.d.tsx";
 import AllCourses from "../components/AllCourses";
 import StudentProgressTracker from "../components/StudentProgressTracker";
 import StudentModuleView from "../components/StudentModuleView";
+import { useNavigate } from "react-router-dom";
 
 const AcademyStudentDashboard = () => {
-  const { user: currentUser, isLoading } = useAuth();
+  const { user: currentUser, isLoading, refetchCurrentUser } = useAuth();
+  const navigate = useNavigate();
   console.log('AcademyStudentDashboard: Rendering with currentUser:', currentUser, 'isLoading:', isLoading);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Check if user has selected a role and it's appropriate for student dashboard
+    const userRole = currentUser.academyRole || currentUser.currentRole || currentUser.academyUser?.role;
+    const hasSelectedRole = currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole;
+    const academyUserRole = currentUser.academyUser?.role;
+    
+    // Check if user wants to apply as instructor
+    const pendingRole = currentUser.pendingRole;
+    const instructorStatus = currentUser.roleStatus?.instructor;
+
+    // If user has selected STUDENT role, allow access to student dashboard
+    if (hasSelectedRole && academyUserRole === "STUDENT") {
+      return; // allowed
+    }
+    
+    // If user wants to apply as instructor, allow access to see the application modal, but only if not already a student
+    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && academyUserRole !== 'STUDENT') {
+      return; // allowed to see application modal
+    }
+
+    // If user is ADMIN, also allow access
+    if (userRole === "ADMIN" || academyUserRole === "ADMIN") {
+      return; // allowed
+    }
+
+    // Redirect to role selection if user hasn't selected a role yet
+    navigate("/dashboard"); // Use dashboard router to redirect appropriately
+  }, [currentUser, navigate]);
 
   // If user is loading, show loading indicator
   if (isLoading) {
@@ -39,9 +73,20 @@ const AcademyStudentDashboard = () => {
     return null;
   }
 
-  // If user hasn't selected a role yet, show role selection modal
-  console.log('AcademyStudentDashboard: Checking role - hasSelectedRole:', currentUser.hasSelectedRole);
-  if (!currentUser.hasSelectedRole) {
+  // Check if user has selected a role and it's appropriate for student dashboard
+  const userRole = currentUser?.academyRole || currentUser?.currentRole || currentUser?.academyUser?.role;
+  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (userRole === "STUDENT" || userRole === "INSTRUCTOR" || userRole === "ADMIN");
+  
+  // Check if user wants to apply as instructor
+  const pendingRole = currentUser?.pendingRole;
+  const instructorStatus = currentUser?.roleStatus?.instructor;
+  
+  // Check if user has selected a role based on academyUser role
+  const academyUserRole = currentUser?.academyUser?.role;
+  
+  // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
+  console.log('AcademyStudentDashboard: Checking role - academyUserRole:', academyUserRole, 'hasSelectedRole:', hasSelectedRole);
+  if (!hasSelectedRole || academyUserRole === 'USER') {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -58,16 +103,16 @@ const AcademyStudentDashboard = () => {
     );
   }
 
-  // If user has selected a role but it's not student, redirect to appropriate dashboard
-  if (currentUser.currentRole && currentUser.currentRole !== 'STUDENT') {
-    if (currentUser.currentRole === 'INSTRUCTOR') {
-      window.location.href = '/instructor';
-      return null;
-    } else if (currentUser.currentRole === 'ADMIN') {
-      window.location.href = '/admin';
-      return null;
-    }
+  // Only show the instructor application modal if the user is not already a student
+  // If user is a student, show the student dashboard even if there was a previous instructor intent
+  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && academyUserRole !== 'STUDENT') {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <TeacherApplicationModal standalone={true} />
+      </div>
+    );
   }
+
   const [stats, setStats] = useState({
     enrolledCourses: 0,
     completedCourses: 0,

@@ -1,48 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import RoleSelectionModal from './RoleSelectionModal';
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+  allowedRoles: string[];
+  fallbackPath?: string;
 }
 
 const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ 
   children, 
-  requiredRole 
+  allowedRoles, 
+  fallbackPath = "/" 
 }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const [showRoleModal, setShowRoleModal] = useState(false);
+  const { user: currentUser, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Check if user needs to select a role
-  useEffect(() => {
-    if (isAuthenticated && !isLoading && user) {
-      const hasSelectedRole = user.hasSelectedRole || user.academyProfile?.hasSelectedRole;
-      const hasRole = !!user.academyRole;
-      
-      // Show role selection if user hasn't selected a role yet
-      if (!hasSelectedRole || !hasRole) {
-        // Check if we're already on the role selection page to avoid infinite loop
-        if (!location.pathname.includes('/select-role')) {
-          setShowRoleModal(true);
-        }
-      }
-    }
-  }, [isAuthenticated, isLoading, user, location.pathname]);
-
-  const handleRoleSelected = () => {
-    setShowRoleModal(false);
-    // Redirect to dashboard based on selected role
-    if (user?.academyRole) {
-      navigate(`/${user.academyRole.toLowerCase()}/dashboard`);
-    } else {
-      navigate('/');
-    }
-  };
-
+  // If we're still loading, show a loading indicator
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -59,27 +33,25 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // If user needs to select a role, show the role selection modal
-  const needsRoleSelection = !user.hasSelectedRole && !user.academyRole;
-  if (needsRoleSelection) {
-    return (
-      <RoleSelectionModal 
-        onClose={() => {
-          // If user closes modal without selecting a role, redirect to home
-          navigate('/');
-        }}
-        onRoleSelected={handleRoleSelected}
-      />
-    );
+  // If user is authenticated but doesn't have a role selected, redirect to role selection
+  if (isAuthenticated && (!currentUser || !currentUser.hasSelectedRole)) {
+    return <Navigate to="/auth/role-selection" state={{ from: location }} replace />;
   }
 
-  // If role is required but user doesn't have it, show unauthorized
-  if (requiredRole && user.academyRole !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
+  // Check if user has any of the allowed roles
+  const hasAllowedRole = allowedRoles.some(role => 
+    currentUser?.academyRole === role || 
+    currentUser?.academyActiveRole === role ||
+    currentUser?.availableRoles?.includes(role)
+  );
+
+  // If user doesn't have any of the allowed roles, redirect to fallback path
+  if (!hasAllowedRole) {
+    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  // If user has the required role (or no role required), render the children
-  return <>{children}</>;
+  // If user has an allowed role, render the children
+  return <>{children};
 };
 
 export default RoleProtectedRoute;

@@ -5,8 +5,9 @@ import { academyAPI } from "../services/api";
 import { FaCheckCircle } from "react-icons/fa";
 
 interface TeacherApplicationModalProps {
-  onClose: () => void;
-  onSuccess: () => void;
+  onClose?: () => void;
+  onSuccess?: () => void;
+  standalone?: boolean; // If true, handle navigation internally
 }
 
 interface TeacherApplicationData {
@@ -26,7 +27,8 @@ interface TeacherApplicationData {
 
 const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({ 
   onClose, 
-  onSuccess 
+  onSuccess,
+  standalone = false
 }) => {
   const navigate = useNavigate();
   const { user: currentUser, selectRole, updateUser } = useAuth();
@@ -120,6 +122,8 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
       if (currentUser) {
         const updatedUser = {
           ...currentUser,
+          // Remove pendingRole since application is now submitted
+          pendingRole: undefined,
           roleStatus: {
             ...currentUser.roleStatus,
             instructor: 'pending',
@@ -134,10 +138,13 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
       // Show success message
       setSubmitted(true);
       
-      // Redirect to home after 3 seconds
+      // Redirect based on standalone mode
       setTimeout(() => {
-        navigate('/');
-        onSuccess();
+        if (standalone) {
+          navigate('/');
+        } else {
+          onSuccess?.();
+        }
       }, 3000);
     } catch (err: any) {
       console.error("Error applying for teacher role:", err);

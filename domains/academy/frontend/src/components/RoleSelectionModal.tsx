@@ -1,166 +1,214 @@
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import TeacherApplicationModal from "./TeacherApplicationModal";
-
-export type AcademyRole = "STUDENT" | "INSTRUCTOR" | "ADMIN";
+import { useAuth } from "../contexts/AuthContext";
 
 interface RoleSelectionModalProps {
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
-  const { user: currentUser, selectRole } = useAuth();
-  console.log('RoleSelectionModal: Rendering with currentUser:', currentUser);
-  const [selectedRole, setSelectedRole] = useState<AcademyRole | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showTeacherApplication, setShowTeacherApplication] = useState(false);
+  const { user, selectRole, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleRoleSelect = async (role: AcademyRole) => {
-    console.log('RoleSelectionModal: handleRoleSelect called with role:', role);
+  const handleRoleSelect = (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => {
     setSelectedRole(role);
+    setError("");
   };
 
-  const handleSubmit = async () => {
-    console.log('RoleSelectionModal: handleSubmit called with selectedRole:', selectedRole);
+  const handleSubmitRole = async () => {
     if (!selectedRole) {
-      setError("Please select a role");
+      setError("Please select a role first.");
       return;
     }
-
-    // If instructor is selected, show the application modal instead of selecting the role directly
-    if (selectedRole === "INSTRUCTOR") {
-      setShowTeacherApplication(true);
-      return;
-    }
-
+    
+    setError("");
+    setIsSubmitting(true);
+    
     try {
-      setLoading(true);
-      setError(null);
+      const result = await selectRole(selectedRole as "STUDENT" | "INSTRUCTOR" | "ADMIN");
       
-      // Update the user's role in the auth context
-      console.log('RoleSelectionModal: Calling selectRole with:', selectedRole);
-      await selectRole(selectedRole);
-      
-      // Navigate to the appropriate dashboard based on selected role
-      console.log('RoleSelectionModal: Navigating to dashboard for role:', selectedRole);
-      if (selectedRole === "STUDENT") {
-        navigate("/dashboard");
-      } else if (selectedRole === "INSTRUCTOR") {
-        navigate("/instructor");
-      } else if (selectedRole === "ADMIN") {
-        navigate("/admin");
+      // Check if this is the special instructor application response
+      if (result && result.error === 'INSTRUCTOR_APPLICATION_REQUIRED') {
+        // Don't close the modal, let the parent component handle showing the application modal
+        setError("");
+        setIsSubmitting(false);
+        
+        // Close this modal and let parent handle instructor application
+        if (onClose) {
+          onClose();
+        }
+        
+        // Navigate to dashboard where instructor application modal will appear
+        navigate('/dashboard');
+        return;
       }
       
-      // Close the modal
-      console.log('RoleSelectionModal: Calling onClose');
-      onClose();
-    } catch (err) {
+      // Navigate based on selected role
+      switch (selectedRole) {
+        case "STUDENT":
+          navigate("/dashboard");
+          break;
+        case "INSTRUCTOR":
+          // For instructor, we need to show the application modal instead of navigating
+          // The error thrown in AuthContext will be caught and handled here
+          setError("INSTRUCTOR_APPLICATION_REQUIRED");
+          break;
+        case "ADMIN":
+          navigate("/admin");
+          break;
+        default:
+          navigate("/");
+      }
+      
+      // Close the modal if provided
+      if (onClose) {
+        onClose();
+      }
+    } catch (err: any) {
+      console.error("Error selecting role:", err);
+      
       setError("Failed to select role. Please try again.");
-      console.error(err);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
+
+  // If user already has a role, don't show the modal
+  if (user?.hasSelectedRole) {
+    return null;
+  }
+
   return (
-    <>
-      {!showTeacherApplication ? (
-        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-scroll mx-auto  z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
-            <p className="text-gray-600 mb-6">
-              Welcome! Please select your role in the Academy platform to continue.
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Role</h2>
+            <p className="text-gray-600">
+              Choose the role you want to use in the academy platform
             </p>
-            
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
-                {error}
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Student Role Card */}
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                selectedRole === "STUDENT" 
+                  ? "border-blue-500 bg-blue-50" 
+                  : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+              }`}
+              onClick={() => handleRoleSelect("STUDENT")}
+            >
+              <div className="flex items-center">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3">
+                  {selectedRole === "STUDENT" && (
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Student</h3>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Access courses, assignments, and learning materials
+                  </p>
+                </div>
               </div>
-            )}
-
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={() => handleRoleSelect("STUDENT")}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  selectedRole === "STUDENT"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-blue-300"
-                }`}
-              >
-                <div className="font-medium text-gray-900">Student</div>
-                <div className="text-sm text-gray-600">
-                  Enroll in courses, complete assignments, and earn certificates
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleRoleSelect("INSTRUCTOR")}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  selectedRole === "INSTRUCTOR"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-blue-300"
-                }`}
-              >
-                <div className="font-medium text-gray-900">Instructor</div>
-                <div className="text-sm text-gray-600">
-                  Create and manage courses, assignments, and track student progress
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleRoleSelect("ADMIN")}
-                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                  selectedRole === "ADMIN"
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-blue-300"
-                }`}
-              >
-                <div className="font-medium text-gray-900">Admin</div>
-                <div className="text-sm text-gray-600">
-                  Manage the platform, users, courses, and system configurations
-                </div>
-              </button>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  // If user cancels, log them out
-                  console.log('RoleSelectionModal: User cancelled role selection, logging out');
-                  // We don't have access to logout function directly here, but the cancel button
-                  // should just close the modal and let the protected route handle navigation
-                  onClose();
-                }}
-                disabled={loading}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !selectedRole}
-                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              >
-                {loading ? "Saving..." : "Continue"}
-              </button>
+            {/* Instructor Role Card */}
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                selectedRole === "INSTRUCTOR" 
+                  ? "border-blue-500 bg-blue-50" 
+                  : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+              }`}
+              onClick={() => handleRoleSelect("INSTRUCTOR")}
+            >
+              <div className="flex items-center">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3">
+                  {selectedRole === "INSTRUCTOR" && (
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Instructor</h3>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Create and manage courses, grade assignments
+                  </p>
+                  {user?.roleStatus?.instructor === "pending" && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                      Application Pending
+                    </span>
+                  )}
+                  {user?.roleStatus?.instructor === "rejected" && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                      Application Rejected
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Role Card */}
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                selectedRole === "ADMIN" 
+                  ? "border-blue-500 bg-blue-50" 
+                  : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
+              }`}
+              onClick={() => handleRoleSelect("ADMIN")}
+            >
+              <div className="flex items-center">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3">
+                  {selectedRole === "ADMIN" && (
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800">Administrator</h3>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Manage users, courses, and platform settings
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+
+          <div className="mt-6">
+            <button
+              onClick={handleSubmitRole}
+              disabled={!selectedRole || isSubmitting || authLoading}
+              className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
+                !selectedRole || isSubmitting || authLoading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {isSubmitting || authLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Processing...
+                </div>
+              ) : (
+                "Confirm Role Selection"
+              )}
+            </button>
+          </div>
+
+          <div className="mt-4 text-center text-sm text-gray-500">
+            <p>You can change your role later in your profile settings.</p>
+          </div>
         </div>
-      ) : (
-        <TeacherApplicationModal 
-          onClose={() => setShowTeacherApplication(false)} 
-          onSuccess={() => {
-            // After successful application, close the modal and navigate to instructor dashboard
-            setShowTeacherApplication(false);
-            onClose();
-            navigate('/instructor');
-          }} 
-        />
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 

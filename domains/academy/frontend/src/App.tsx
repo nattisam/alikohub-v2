@@ -23,6 +23,7 @@ import AcademyHeader from "./components/AcademyHeader";
 import EventDetailsPage from "./Pages/EventDetailsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardRouter from "./components/DashboardRouter";
+import TeacherApplicationModal from "./components/TeacherApplicationModal";
 import ProfilePage from "./Pages/ProfilePage";
 import SettingsPage from "./Pages/SettingsPage";
 

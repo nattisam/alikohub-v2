@@ -1,34 +1,104 @@
+// User interfaces matching backend response structure
+export interface AcademyUser {
+  id: string;
+  userId: string;
+  role: string;
+  activeRole?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConsultancyUser {
+  id: string;
+  userId: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConTechUser {
+  id: string;
+  userId: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EventsUser {
+  id: string;
+  userId: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendUser {
+  id: number;
+  firebaseId: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  globalRole: string;
+  profilePicture: string | null;
+  bio: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  academyUser: AcademyUser | null;
+  consultancyUser: ConsultancyUser | null;
+  contechUser: ConTechUser | null;
+  eventsUser: EventsUser | null;
+}
+
+export interface LoginResponse {
+  user: BackendUser;
+  accessToken: string;
+  refreshToken: string;
+  firebaseCustomToken: string;
+}
+
+// Frontend CurrentUser interface adapted for frontend use
 export interface CurrentUser {
+  id: number;
   firebaseId: string;
   email: string;
   firstname: string;
   lastname: string;
-  role?: string;
   globalRole?: string;
-  academyRole?: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+  academyRole?: string;
+  academyActiveRole?: string;
+  academyStatus?: string;
+  contechRole?: string;
+  contechStatus?: string;
+  eventsRole?: string;
+  eventsStatus?: string;
+  profilePicture?: string | null;
+  bio?: string | null;
+  status?: string;
+  createdAt: string;
+  updatedAt: string;
   hasSelectedRole?: boolean;
-  availableRoles?: ('STUDENT' | 'INSTRUCTOR' | 'ADMIN')[];
-  currentRole?: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+  availableRoles?: string[];
+  currentRole?: string;
   roleStatus?: {
     instructor: 'active' | 'pending' | 'rejected';
     applicationDate?: string;
     approvalDate?: string;
   };
   academyProfile?: {
-    id: number;
+    id: string;
     userId: string;
-    role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+    role: string;
     hasSelectedRole: boolean;
     bio?: string | null;
     expertise?: string[] | null;
     createdAt: string;
     updatedAt: string;
   };
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
-  profilePicture?: string;
-  bio?: string;
   [key: string]: any; // Allow additional properties
 }
 

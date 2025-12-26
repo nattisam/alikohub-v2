@@ -27,8 +27,8 @@ const DashboardRouter: React.FC = () => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // If user hasn't selected a role yet, show role selection modal
-  if (!currentUser.hasSelectedRole) {
+  // If user hasn't selected a role yet (still has USER role), show role selection modal
+  if (!currentUser.hasSelectedRole || (currentUser.currentRole === "USER" || currentUser.academyRole === "USER")) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
         <RoleSelectionModal onClose={() => {}} />
@@ -38,15 +38,32 @@ const DashboardRouter: React.FC = () => {
 
   // Get the user's effective role
   const userRole = currentUser.currentRole || currentUser.academyRole;
+  
+  // Check if user wants to apply as instructor
+  const pendingRole = currentUser.pendingRole;
+  
+  // Check instructor status
+  const instructorStatus = currentUser.roleStatus?.instructor;
 
   // Redirect based on role
   switch (userRole) {
     case "INSTRUCTOR":
-      return <Navigate to="/instructor" replace />;
+      // If user has been approved as instructor, send to instructor dashboard
+      if (instructorStatus === 'active' || instructorStatus === 'approved') {
+        return <Navigate to="/instructor" replace />;
+      }
+      // Otherwise, they might have applied and are pending
+      return <Navigate to="/instructor/pending" replace />;
     case "ADMIN":
       return <Navigate to="/admin" replace />;
     case "STUDENT":
     default:
+      // Check if user wants to apply as instructor
+      if (pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') {
+        // If user has pending instructor application, redirect to the student dashboard
+        // The student dashboard will show the instructor application modal
+        return <Navigate to="/student-dashboard" replace />;
+      }
       return <Navigate to="/student-dashboard" replace />;
   }
 };
