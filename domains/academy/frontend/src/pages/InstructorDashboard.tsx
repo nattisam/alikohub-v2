@@ -21,12 +21,12 @@ import { FaPlus, FaChalkboardTeacher, FaComments, FaBell, FaChartBar, FaBook, Fa
 import ManageTeachingSchedules from "../components/ManageTeachingSchedules";
 import CourseAnalytics from "../components/CourseAnalytics"; // Added import
 import RoleSelectionModal from "../components/RoleSelectionModal";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard: React.FC = () => {
   const { user: currentUser, refreshProfile, refetchCurrentUser } = useAuth();
   const navigate = useNavigate();
   const { courses, updateCourse, removeCourse, creatingCourse, removingCourse } = useInstructorCourses();
-  
   useEffect(() => {
     if (!currentUser) return;
 
@@ -69,15 +69,19 @@ const Dashboard: React.FC = () => {
   ]);
 
   // Fetch real notifications/messages
+  const [notifications, setNotifications] = useState([]);
+  
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const response = await academyAPI.get("/notifications/me");
-        // For now, we'll just log the notifications and keep using mock data
-        // In a real implementation, we would transform these notifications into messages
+        // Set the actual notifications
+        setNotifications(response.data);
         console.log("Real notifications:", response.data);
       } catch (error) {
         console.error("Error fetching messages:", error);
+        // Fallback to empty array if API fails
+        setNotifications([]);
       }
     };
 
@@ -85,7 +89,6 @@ const Dashboard: React.FC = () => {
       fetchMessages();
     }
   }, [currentUser]);
-  const notifications = userContext.notifications;
   const [showAddSessionForm, setShowAddSessionForm] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -105,7 +108,7 @@ const Dashboard: React.FC = () => {
 
   // Check the active role from the user's academyUser
   const activeRole = currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = !!activeRole && activeRole !== "USER";
+  const hasSelectedRole = currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
   
   // If user hasn't selected a role yet, show role selection modal
   if (currentUser && !hasSelectedRole) {
@@ -126,7 +129,8 @@ const Dashboard: React.FC = () => {
   }
 
   // Check if user is an instructor but their application is pending or rejected
-  if (currentUser && currentUser.currentRole === 'INSTRUCTOR' && 
+  if (currentUser && 
+      (currentUser.currentRole === 'INSTRUCTOR' || currentUser.academyRole === 'INSTRUCTOR') && 
       (currentUser.roleStatus?.instructor === 'pending' || currentUser.roleStatus?.instructor === 'rejected')) {
     // Show pending/rejected message
     return (

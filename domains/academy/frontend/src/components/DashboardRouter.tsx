@@ -1,7 +1,6 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import RoleSelectionModal from "./RoleSelectionModal";
 
 /**
  * Smart dashboard router that redirects users to the appropriate dashboard
@@ -27,17 +26,16 @@ const DashboardRouter: React.FC = () => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // If user hasn't selected a role yet (still has USER role), show role selection modal
-  if (!currentUser.hasSelectedRole || (currentUser.currentRole === "USER" || currentUser.academyRole === "USER")) {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <RoleSelectionModal onClose={() => {}} />
-      </div>
-    );
+  // If user hasn't selected a role yet (using hasSelectedRole as the primary indicator), redirect to role selection page
+  // According to the experience lesson, always check hasSelectedRole instead of academyRole
+  const hasSelectedRole = currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole;
+  
+  if (!hasSelectedRole) {
+    return <Navigate to="/role" replace />;
   }
 
-  // Get the user's effective role
-  const userRole = currentUser.currentRole || currentUser.academyRole;
+  // Get the user's active role (the role they're currently using)
+  const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
   
   // Check if user wants to apply as instructor
   const pendingRole = currentUser.pendingRole;
@@ -45,15 +43,11 @@ const DashboardRouter: React.FC = () => {
   // Check instructor status
   const instructorStatus = currentUser.roleStatus?.instructor;
 
-  // Redirect based on role
-  switch (userRole) {
+  // Redirect based on active role
+  switch (activeRole) {
     case "INSTRUCTOR":
-      // If user has been approved as instructor, send to instructor dashboard
-      if (instructorStatus === 'active' || instructorStatus === 'approved') {
-        return <Navigate to="/instructor" replace />;
-      }
-      // Otherwise, they might have applied and are pending
-      return <Navigate to="/instructor/pending" replace />;
+      // If user has active instructor role, send to instructor dashboard
+      return <Navigate to="/instructor" replace />;
     case "ADMIN":
       return <Navigate to="/admin" replace />;
     case "STUDENT":

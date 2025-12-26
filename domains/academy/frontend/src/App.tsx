@@ -23,9 +23,11 @@ import AcademyHeader from "./components/AcademyHeader";
 import EventDetailsPage from "./Pages/EventDetailsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardRouter from "./components/DashboardRouter";
+import RolesPage from "./Pages/RolesPage";
 import TeacherApplicationModal from "./components/TeacherApplicationModal";
 import ProfilePage from "./Pages/ProfilePage";
 import SettingsPage from "./Pages/SettingsPage";
+
 
 // Layout components
 const DefaultLayout = () => {
@@ -182,6 +184,9 @@ function App() {
 
         {/* Smart dashboard router - redirects based on role */}
         <Route path="/dashboard" element={<DashboardRouter />} />
+        
+        {/* Role selection page */}
+        <Route path="/role" element={<RolesPage />} />
 
         {/* Student dashboard routes */}
         <Route element={<DashboardLayout />}> 

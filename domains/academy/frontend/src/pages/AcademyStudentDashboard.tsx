@@ -29,28 +29,29 @@ const AcademyStudentDashboard = () => {
     const userRole = currentUser.academyRole || currentUser.currentRole || currentUser.academyUser?.role;
     const hasSelectedRole = currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole;
     const academyUserRole = currentUser.academyUser?.role;
+    const activeRole = currentUser.academyUser?.activeRole;
     
     // Check if user wants to apply as instructor
     const pendingRole = currentUser.pendingRole;
     const instructorStatus = currentUser.roleStatus?.instructor;
 
-    // If user has selected STUDENT role, allow access to student dashboard
-    if (hasSelectedRole && academyUserRole === "STUDENT") {
+    // If user has active STUDENT role, allow access to student dashboard
+    if (activeRole === "STUDENT") {
       return; // allowed
     }
     
     // If user wants to apply as instructor, allow access to see the application modal, but only if not already a student
-    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && academyUserRole !== 'STUDENT') {
+    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
       return; // allowed to see application modal
     }
 
     // If user is ADMIN, also allow access
-    if (userRole === "ADMIN" || academyUserRole === "ADMIN") {
+    if (userRole === "ADMIN" || activeRole === "ADMIN") {
       return; // allowed
     }
 
     // Redirect to role selection if user hasn't selected a role yet
-    navigate("/dashboard"); // Use dashboard router to redirect appropriately
+    navigate("/role"); // Redirect to role selection page
   }, [currentUser, navigate]);
 
   // If user is loading, show loading indicator
@@ -96,7 +97,7 @@ const AcademyStudentDashboard = () => {
             <p className="text-gray-600 mb-6">
               To access the student dashboard, please select the Student role.
             </p>
-            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+            <RoleSelectionModal onClose={() => navigate('/role')} />
           </div>
         </div>
       </div>
@@ -105,7 +106,7 @@ const AcademyStudentDashboard = () => {
 
   // Only show the instructor application modal if the user is not already a student
   // If user is a student, show the student dashboard even if there was a previous instructor intent
-  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && academyUserRole !== 'STUDENT') {
+  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
         <TeacherApplicationModal standalone={true} />

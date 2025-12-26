@@ -33,7 +33,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If user hasn't selected a role yet, redirect to role selection page
   if (currentUser && !(currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
-    return <Navigate to="/auth/role-selection" state={{ from: location }} replace />;
+    return <Navigate to="/role" state={{ from: location }} replace />;
   }
 
   // Check if user has pending or rejected instructor application but is trying to access instructor-only resources
@@ -46,15 +46,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If a required role is specified, check if user has it
   if (requiredRole && currentUser) {
     // Check various role properties to determine if user has required role
-    // Consider main role if activeRole is still USER (default)
+    // Active role should be the primary check
     const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
     const mainRole = currentUser.academyRole || currentUser.academyUser?.role;
     
     const hasRequiredRole = (activeRole === requiredRole) || 
-                           (mainRole === requiredRole && activeRole === 'USER') || // If main role is correct but activeRole still default
-                           (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')) || // User can access instructor application
-                           (currentUser.currentRole === requiredRole) ||
-                           (currentUser.availableRoles?.includes(requiredRole));
+                           (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application
     
     if (!hasRequiredRole) {
       // Redirect to home if user doesn't have required role
@@ -64,9 +61,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If user is an admin, allow access to all routes
   const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-  const mainRole = currentUser.academyRole || currentUser.academyUser?.role;
   
-  if ((activeRole === "ADMIN") || (mainRole === "ADMIN" && activeRole === 'USER')) {
+  if (activeRole === "ADMIN") {
     return <>{children}</>;
 
   }
@@ -79,13 +75,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If user has the required role, render the children
   if (requiredRole && currentUser) {
     const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-    const mainRole = currentUser.academyRole || currentUser.academyUser?.role;
     
     const hasRequiredRole = (activeRole === requiredRole) || 
-                           (mainRole === requiredRole && activeRole === 'USER') || // If main role is correct but activeRole still default
-                           (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')) || // User can access instructor application
-                           (currentUser.currentRole === requiredRole) ||
-                           (currentUser.availableRoles?.includes(requiredRole));
+                           (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application
     
     if (hasRequiredRole) {
       return <>{children}</>;

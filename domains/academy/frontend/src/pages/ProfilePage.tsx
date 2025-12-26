@@ -1,16 +1,55 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import RoleSelectionModal from '../components/RoleSelectionModal';
-import { authAPI } from '../services/api';
-import { academyApi } from '../api'; // Import academy API
-import { FaUser, FaCamera, FaSave, FaTimes, FaEdit } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import RoleSelectionModal from "../components/RoleSelectionModal";
+import { authAPI, academyAPI } from "../services/api"; // Import both auth and academy APIs
+import {
+  FaUser,
+  FaCamera,
+  FaSave,
+  FaTimes,
+  FaEdit,
+  FaExchangeAlt,
+} from "react-icons/fa";
 
 const ProfilePage = () => {
-  const { user: currentUser, updateUser, isLoading } = useAuth();
-  console.log('ProfilePage: Rendering with currentUser:', currentUser, 'isLoading:', isLoading);
+  const {
+    user: currentUser,
+    updateUser,
+    isLoading,
+    switchRole,
+    isRoleSwitching,
+  } = useAuth();
+  console.log(
+    "ProfilePage: Rendering with currentUser:",
+    currentUser,
+    "isLoading:",
+    isLoading
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
+  const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => {
+    if (currentUser) {
+      try {
+        console.log("ProfilePage: Attempting to switch role to:", role);
+
+        // Call the switchRole function from AuthContext
+        await switchRole(role);
+
+        // Close the dropdown after role switch
+        setIsRoleDropdownOpen(false);
+
+        console.log("ProfilePage: Role switched successfully");
+      } catch (error) {
+        console.error("Failed to switch role:", error);
+
+        // Close the dropdown even if there's an error
+        setIsRoleDropdownOpen(false);
+      }
+    }
+  };
 
   // If user is loading, show loading indicator
   if (isLoading) {
@@ -25,102 +64,115 @@ const ProfilePage = () => {
   }
 
   // If user is not logged in, redirect to login
-  console.log('ProfilePage: Checking navigation - currentUser:', currentUser);
+  console.log("ProfilePage: Checking navigation - currentUser:", currentUser);
   if (!currentUser) {
-    console.log('ProfilePage: Redirecting to login');
-    window.location.href = '/auth/login';
+    console.log("ProfilePage: Redirecting to login");
+    window.location.href = "/auth/login";
     return null;
   }
 
-  // If user hasn't selected a role yet, show role selection modal
-  console.log('ProfilePage: Checking role - academyRole:', currentUser.academyRole);
-  if (!currentUser.academyRole) {
+  // Allow users with globalRole USER to access their profile
+  // If user hasn't selected a role yet and doesn't have globalRole USER, show role selection modal
+  console.log(
+    "ProfilePage: Checking role - academyRole:",
+    currentUser.academyRole,
+    "globalRole:",
+    currentUser.globalRole
+  );
+  if (!currentUser.academyRole && currentUser.globalRole !== "USER") {
     // We need to show the role selection modal
     // For now, we'll just show a message directing them to select a role
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Select Your Role
+            </h2>
             <p className="text-gray-600 mb-6">
               To access your profile, please select a role.
             </p>
-            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+            <RoleSelectionModal onClose={() => (window.location.href = "/")} />
           </div>
         </div>
       </div>
     );
   }
   const [formData, setFormData] = useState({
-    firstname: '',
-    lastname: '',
-    email: '',
-    bio: '',
-    title: '', // For instructors
+    firstname: "",
+    lastname: "",
+    email: "",
+    bio: "",
+    title: "", // For instructors
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (currentUser) {
       setFormData({
-        firstname: currentUser.firstname || '',
-        lastname: currentUser.lastname || '',
-        email: currentUser.email || '',
-        bio: currentUser.bio || '',
-        title: (currentUser as any).title || '', // For instructors
+        firstname: currentUser.firstname || "",
+        lastname: currentUser.lastname || "",
+        email: currentUser.email || "",
+        bio: currentUser.bio || "",
+        title: (currentUser as any).title || "", // For instructors
       });
     }
   }, [currentUser]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && currentUser) {
       const file = e.target.files[0];
-      
+
       // Create FormData object to send the file
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append("file", file);
+
       try {
         setUploading(true);
-        
+
         // Upload the file to our file upload service through the API gateway
         // Use axios instead of fetch for consistency
-        const response = await academyApi.post('/upload/image', formData, {
+        const response = await academyAPI.post("/upload/image", formData, {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         });
-        
+
         if (response.data) {
           const result = response.data;
-          
+
           // Update the user's profile picture in the backend
-          console.log('Updating user profile with URL:', result.url);
-          console.log('User ID:', currentUser.firebaseId);
-          const updateResponse = await authApi.patch(`/users/${currentUser.firebaseId}`, {
-            profilePicture: result.url
-          });
-          
+          console.log("Updating user profile with URL:", result.url);
+          console.log("User ID:", currentUser.firebaseId);
+          const updateResponse = await authAPI.patch(
+            `/users/${currentUser.firebaseId}`,
+            {
+              profilePicture: result.url,
+            }
+          );
+
           if (updateResponse.data) {
             // Update the current user context
             updateUser({
               ...currentUser,
-              profilePicture: result.url
+              profilePicture: result.url,
             });
           }
         } else {
-          console.error('File upload failed');
+          console.error("File upload failed");
         }
       } catch (error) {
-        console.error('Error uploading file:', error);
+        console.error("Error uploading file:", error);
       } finally {
         setUploading(false);
       }
@@ -130,37 +182,45 @@ const ProfilePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Update user profile in the backend
       const updateData: any = {
         firstname: formData.firstname,
         lastname: formData.lastname,
         bio: formData.bio,
       };
-      
+
       // Include title for instructors
-      if (currentUser.academyRole === 'INSTRUCTOR' || currentUser.academyRole === 'ADMIN') {
+      if (
+        currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
+        currentUser.academyRole === "INSTRUCTOR" ||
+        currentUser.academyUser?.activeRole === "ADMIN" ||
+        currentUser.academyRole === "ADMIN"
+      ) {
         updateData.title = formData.title;
       }
-      
-      console.log('Updating user profile with data:', updateData);
-      console.log('User ID:', currentUser.firebaseId);
-      const response = await authApi.patch(`/users/${currentUser.firebaseId}`, updateData);
-      
+
+      console.log("Updating user profile with data:", updateData);
+      console.log("User ID:", currentUser.firebaseId);
+      const response = await authAPI.patch(
+        `/users/${currentUser.firebaseId}`,
+        updateData
+      );
+
       if (response.data) {
         // Update the current user context
         updateUser({
           ...currentUser,
-          ...updateData
+          ...updateData,
         });
-        
+
         setIsEditing(false);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
     } finally {
       setLoading(false);
     }
@@ -177,8 +237,12 @@ const ProfilePage = () => {
       <div className="flex justify-center items-center h-full">
         <div className="text-center">
           <FaUser className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No user data</h3>
-          <p className="mt-1 text-sm text-gray-500">Please log in to view your profile.</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            No user data
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Please log in to view your profile.
+          </p>
         </div>
       </div>
     );
@@ -188,11 +252,69 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">User Profile</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application information.</p>
+          <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                User Profile
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                Personal details and application information.
+              </p>
+            </div>
+            {/* Role Switching Dropdown - Show if user has available roles different from active role */}
+            {currentUser?.availableRoles &&
+              (currentUser.availableRoles.length > 1 ||
+                (currentUser.availableRoles.length === 1 &&
+                  currentUser.availableRoles[0] !==
+                    (currentUser.academyUser?.activeRole ||
+                      currentUser.academyActiveRole ||
+                      "USER"))) && (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                    disabled={isRoleSwitching}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    <FaExchangeAlt className="mr-2 h-4 w-4" />
+                    Switch Role
+                    {isRoleSwitching && (
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
+                    )}
+                  </button>
+
+                  {isRoleDropdownOpen && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div className="py-1" role="menu">
+                        {currentUser.availableRoles
+                          .filter((role) =>
+                            ["STUDENT", "INSTRUCTOR", "ADMIN"].includes(role)
+                          ) // Only show valid academy roles
+                          .map((role) => (
+                            <button
+                              key={role}
+                              onClick={() =>
+                                handleRoleChange(
+                                  role as "STUDENT" | "INSTRUCTOR" | "ADMIN"
+                                )
+                              }
+                              className={`block px-4 py-2 text-sm w-full text-left ${
+                                (currentUser.academyUser?.activeRole ||
+                                  currentUser.academyActiveRole) === role
+                                  ? "bg-blue-100 text-blue-900"
+                                  : "text-gray-700 hover:bg-gray-100"
+                              }`}
+                              role="menuitem"
+                            >
+                              {role.charAt(0).toUpperCase() + role.slice(1)}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
           </div>
-          
+
           <div className="border-t border-gray-200">
             <div className="px-4 py-5 sm:px-6">
               {/* Profile Picture Section */}
@@ -231,8 +353,11 @@ const ProfilePage = () => {
                 <h2 className="mt-4 text-xl font-bold text-gray-900">
                   {currentUser.firstname} {currentUser.lastname}
                 </h2>
-                {currentUser.academyRole === 'INSTRUCTOR' && (
-                  <p className="text-gray-600">{(currentUser as any).title || 'Instructor'}</p>
+                {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
+                  currentUser.academyRole === "INSTRUCTOR") && (
+                  <p className="text-gray-600">
+                    {(currentUser as any).title || "Instructor"}
+                  </p>
                 )}
               </div>
 
@@ -241,7 +366,10 @@ const ProfilePage = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div className="sm:col-span-3">
-                      <label htmlFor="firstname" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="firstname"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         First name
                       </label>
                       <input
@@ -255,7 +383,10 @@ const ProfilePage = () => {
                     </div>
 
                     <div className="sm:col-span-3">
-                      <label htmlFor="lastname" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="lastname"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Last name
                       </label>
                       <input
@@ -269,7 +400,10 @@ const ProfilePage = () => {
                     </div>
 
                     <div className="sm:col-span-6">
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Email address
                       </label>
                       <input
@@ -282,9 +416,12 @@ const ProfilePage = () => {
                       />
                     </div>
 
-                    {currentUser.academyRole === 'INSTRUCTOR' && (
+                    {currentUser.academyRole === "INSTRUCTOR" && (
                       <div className="sm:col-span-6">
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="title"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Title
                         </label>
                         <input
@@ -299,7 +436,10 @@ const ProfilePage = () => {
                     )}
 
                     <div className="sm:col-span-6">
-                      <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="bio"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Bio
                       </label>
                       <textarea
@@ -344,31 +484,40 @@ const ProfilePage = () => {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 gap-y-4 gap-x-6 sm:grid-cols-2">
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Full name</dt>
+                      <dt className="text-sm font-medium text-gray-500">
+                        Full name
+                      </dt>
                       <dd className="mt-1 text-sm text-gray-900">
                         {currentUser.firstname} {currentUser.lastname}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Email address</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{currentUser.email}</dd>
+                      <dt className="text-sm font-medium text-gray-500">
+                        Email address
+                      </dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {currentUser.email}
+                      </dd>
                     </div>
-                    {currentUser.academyRole === 'INSTRUCTOR' && (
+                    {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
+                      currentUser.academyRole === "INSTRUCTOR") && (
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Title</dt>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Title
+                        </dt>
                         <dd className="mt-1 text-sm text-gray-900">
-                          {(currentUser as any).title || 'Not provided'}
+                          {(currentUser as any).title || "Not provided"}
                         </dd>
                       </div>
                     )}
                     <div className="sm:col-span-2">
                       <dt className="text-sm font-medium text-gray-500">Bio</dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        {currentUser.bio || 'No bio provided'}
+                        {currentUser.bio || "No bio provided"}
                       </dd>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end">
                     <button
                       type="button"

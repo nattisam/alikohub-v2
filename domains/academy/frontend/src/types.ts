@@ -65,10 +65,52 @@ export interface LoginResponse {
 export interface CurrentUser {
   id: number;
   firebaseId: string;
-  email: string;
   firstname: string;
   lastname: string;
-  globalRole?: string;
+  email: string;
+  globalRole: string;
+  profilePicture: string | null;
+  bio: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  academyUser: {
+    id: string;
+    userId: string;
+    role: string;
+    activeRole: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  consultancyUser: {
+    id: string;
+    userId: string;
+    role: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  contechUser: {
+    id: string;
+    userId: string;
+    role: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  eventsUser: {
+    id: string;
+    userId: string;
+    role: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  // Additional frontend-specific properties
+  hasSelectedRole?: boolean;
+  availableRoles?: string[];
+  currentRole?: string;
   academyRole?: string;
   academyActiveRole?: string;
   academyStatus?: string;
@@ -76,14 +118,6 @@ export interface CurrentUser {
   contechStatus?: string;
   eventsRole?: string;
   eventsStatus?: string;
-  profilePicture?: string | null;
-  bio?: string | null;
-  status?: string;
-  createdAt: string;
-  updatedAt: string;
-  hasSelectedRole?: boolean;
-  availableRoles?: string[];
-  currentRole?: string;
   roleStatus?: {
     instructor: 'active' | 'pending' | 'rejected';
     applicationDate?: string;

@@ -92,7 +92,9 @@ export const academyAPI = {
         backendRole = role.toLowerCase();
     }
     
-    const { data } = await apiClient.post('/auth/academy/switch-role', { role: backendRole });
+    console.log('Making switch role request:', { newRole: backendRole });
+    const { data } = await apiClient.post('/auth/academy/switch-role', { newRole: backendRole });
+    console.log('Switch role response data:', data);
     return data;
   },
   
