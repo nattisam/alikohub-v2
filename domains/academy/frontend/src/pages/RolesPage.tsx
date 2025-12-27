@@ -25,21 +25,8 @@ export default function RolesPage() {
     return null;
   }
 
-  // If user has already selected a role, redirect them to dashboard
-  const hasSelectedRole = currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
-  
-  if (hasSelectedRole) {
-    // Redirect to appropriate dashboard based on selected role
-    if (currentUser?.academyRole === 'INSTRUCTOR' || currentUser?.currentRole === 'INSTRUCTOR') {
-      navigate('/instructor');
-    } else if (currentUser?.academyRole === 'ADMIN' || currentUser?.currentRole === 'ADMIN') {
-      navigate('/admin');
-    } else {
-      // Default to student dashboard
-      navigate('/student-dashboard');
-    }
-    return null;
-  }
+  // Allow users to access this page to select additional roles
+  // Don't redirect users who have already selected a role, let them use the modal
   
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
@@ -50,6 +37,7 @@ export default function RolesPage() {
               // After role selection, redirect to dashboard
               navigate('/dashboard');
             }} 
+            allowAdditionalRoles={true}
           />
         </div>
       </div>

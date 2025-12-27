@@ -7,7 +7,15 @@ interface RoleSelectionModalProps {
   onClose?: () => void;
 }
 
-const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
+interface RoleSelectionModalProps {
+  onClose?: () => void;
+  allowAdditionalRoles?: boolean; // If true, show modal even if user has already selected a role
+}
+
+const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ 
+  onClose, 
+  allowAdditionalRoles = false // Default to false to maintain existing behavior
+}) => {
   const { user, selectRole, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<string>("");
@@ -60,7 +68,8 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
   // According to the experience lesson, we should use hasSelectedRole to control role selection visibility
   const hasSelectedRole = user?.hasSelectedRole || user?.academyUser?.hasSelectedRole;
   
-  if (hasSelectedRole) {
+  // Only return null if user has selected a role AND we're not allowing additional roles
+  if (hasSelectedRole && !allowAdditionalRoles) {
     return null;
   }
 

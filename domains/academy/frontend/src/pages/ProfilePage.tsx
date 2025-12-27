@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import RoleSelectionModal from "../components/RoleSelectionModal";
 import { authAPI, academyAPI } from "../services/api"; // Import both auth and academy APIs
 import {
@@ -9,6 +10,7 @@ import {
   FaTimes,
   FaEdit,
   FaExchangeAlt,
+  FaUserPlus,
 } from "react-icons/fa";
 
 const ProfilePage = () => {
@@ -19,6 +21,8 @@ const ProfilePage = () => {
     switchRole,
     isRoleSwitching,
   } = useAuth();
+  
+  const navigate = useNavigate();
   console.log(
     "ProfilePage: Rendering with currentUser:",
     currentUser,
@@ -48,6 +52,21 @@ const ProfilePage = () => {
         // Close the dropdown even if there's an error
         setIsRoleDropdownOpen(false);
       }
+    }
+  };
+  
+  const handleChooseRole = () => {
+    console.log("ProfilePage: Navigating to role selection page");
+    navigate('/role');
+  };
+  
+  const handleRefreshProfile = async () => {
+    console.log("ProfilePage: Refreshing profile data");
+    try {
+      await refreshProfile();
+      console.log("ProfilePage: Profile data refreshed successfully");
+    } catch (error) {
+      console.error("ProfilePage: Error refreshing profile", error);
     }
   };
 
@@ -261,14 +280,8 @@ const ProfilePage = () => {
                 Personal details and application information.
               </p>
             </div>
-            {/* Role Switching Dropdown - Show if user has available roles different from active role */}
-            {currentUser?.availableRoles &&
-              (currentUser.availableRoles.length > 1 ||
-                (currentUser.availableRoles.length === 1 &&
-                  currentUser.availableRoles[0] !==
-                    (currentUser.academyUser?.activeRole ||
-                      currentUser.academyActiveRole ||
-                      "USER"))) && (
+            {/* Role Switching Dropdown - Show if user has any available roles */}
+            {currentUser?.availableRoles && currentUser.availableRoles.length > 0 && (
                 <div className="relative">
                   <button
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
@@ -313,6 +326,14 @@ const ProfilePage = () => {
                   )}
                 </div>
               )}
+              {/* Button to navigate to role selection page to choose additional roles */}
+              <button
+                onClick={handleChooseRole}
+                className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <FaUserPlus className="mr-2 h-4 w-4" />
+                Choose Role
+              </button>
           </div>
 
           <div className="border-t border-gray-200">

@@ -43,9 +43,12 @@ const buildUser = (user: any): CurrentUser => {
 
     hasSelectedRole: academyUser?.role && academyUser.role !== 'USER',
 
+    // Include INSTRUCTOR in availableRoles if user has applied and been approved
+    // Include INSTRUCTOR if the user has an approved instructor application status
     availableRoles: [
       'STUDENT',
-      ...(academyUser?.role === 'INSTRUCTOR' ? ['INSTRUCTOR'] : []),
+      // Include INSTRUCTOR if user's role is INSTRUCTOR or if they have an approved instructor application
+      ...((academyUser?.role === 'INSTRUCTOR' || user.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
       ...(user.globalRole === 'ADMIN' ? ['ADMIN'] : []),
     ],
   };
@@ -157,10 +160,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     // Use the user data from the response which contains the updated role information
     const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
-    // When selecting a role for the first time, also set it as the active role
+    
+    // When selecting a role for the first time, also set it as the active role by calling switchRole
     const updated = buildUser(updatedUserFromResponse);
-
+    
+    // Update the user in context
     updateUser(updated);
+    
+    // After selecting a role, automatically switch to that role to make it the active role
+    try {
+      await academyAPI.switchRole(role);
+      // Refresh the user data after switching
+      const switchedUserResponse = await academyAPI.getProfile();
+      const switchedUser = buildUser(switchedUserResponse);
+      updateUser(switchedUser);
+    } catch (error) {
+      console.error('Error switching to selected role:', error);
+      // If switch fails, still update with the selected role data
+      updateUser(updated);
+    }
 
     // Don't redirect automatically - user needs to switch role manually
   };
@@ -177,7 +195,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         localStorage.setItem("accessToken", res.accessToken);
 
       // Use the user data from the response which contains the updated active role
-      const updatedUserFromResponse = res.user;
+      const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
       console.log(
         "Updated user from response after switch:",
         updatedUserFromResponse
@@ -201,7 +219,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const refreshProfile = async () => {
     if (!user) return null;
     const profile = await academyAPI.getProfile();
-    const updated = buildUser(user);
+    const updated = buildUser(profile);
     updateUser(updated);
     return updated;
   };
@@ -209,6 +227,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const applyAsInstructor = async (data: any) => {
     if (!user) return;
     await academyAPI.applyTeacher(data);
+    // Refresh profile to get updated role status
     await refreshProfile();
   };
 

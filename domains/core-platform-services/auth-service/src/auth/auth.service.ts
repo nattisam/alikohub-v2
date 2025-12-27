@@ -309,6 +309,24 @@ export class AuthService {
 		}
 	}
 
+	// Helper method to convert frontend role format to backend role format
+	private convertToBackendRole(frontendRole: string): string {
+		switch (frontendRole.toUpperCase()) {
+			case 'STUDENT':
+				return 'STUDENT';
+			case 'INSTRUCTOR':
+			case 'TEACHER':
+				return 'INSTRUCTOR';
+			case 'ADMIN':
+				return 'ADMIN';
+			case 'USER':
+			default:
+				return 'USER';
+		}
+	}
+
+
+
 	async verifyAuth({ type, value }: { type: 'cookie' | 'token' | 'jwt'; value: string }) {
 		let decoded: any;
 		try {
@@ -478,8 +496,11 @@ export class AuthService {
 			});
 		}
 
+		// Convert the incoming role to backend format for comparison
+		const backendRole = this.convertToBackendRole(newRole);
+
 		// Check if user has the requested role
-		if (!user.academyUser || (user.academyUser.role.toUpperCase() !== newRole.toUpperCase())) {
+		if (!user.academyUser || (user.academyUser.role.toUpperCase() !== backendRole)) {
 			throw new RpcException({
 				statusCode: HttpStatus.FORBIDDEN,
 				message: `User does not have ${newRole} role`,
@@ -487,8 +508,8 @@ export class AuthService {
 			});
 		}
 
-		// Update active role
-		await this.userService.updateActiveAcademyRole(user.firebaseId, newRole.toUpperCase());
+		// Update active role using the backend role format
+		await this.userService.updateActiveAcademyRole(user.firebaseId, backendRole);
 
 		// Re-fetch user to get the updated information
 		const updatedUser: any = await this.userService.findById(user.id);
@@ -498,7 +519,7 @@ export class AuthService {
 
 		return {
 			message: 'Role switched successfully',
-			activeRole: newRole.toUpperCase(),
+			activeRole: backendRole,
 			user: this.toPlain(updatedUser),
 			...tokens,
 		};

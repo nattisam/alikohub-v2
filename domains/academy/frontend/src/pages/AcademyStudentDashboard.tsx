@@ -29,7 +29,7 @@ const AcademyStudentDashboard = () => {
     const userRole = currentUser.academyRole || currentUser.currentRole || currentUser.academyUser?.role;
     const hasSelectedRole = currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole;
     const academyUserRole = currentUser.academyUser?.role;
-    const activeRole = currentUser.academyUser?.activeRole;
+    const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
     
     // Check if user wants to apply as instructor
     const pendingRole = currentUser.pendingRole;
@@ -76,7 +76,8 @@ const AcademyStudentDashboard = () => {
 
   // Check if user has selected a role and it's appropriate for student dashboard
   const userRole = currentUser?.academyRole || currentUser?.currentRole || currentUser?.academyUser?.role;
-  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (userRole === "STUDENT" || userRole === "INSTRUCTOR" || userRole === "ADMIN");
+  const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR" || activeRole === "ADMIN");
   
   // Check if user wants to apply as instructor
   const pendingRole = currentUser?.pendingRole;
@@ -86,8 +87,8 @@ const AcademyStudentDashboard = () => {
   const academyUserRole = currentUser?.academyUser?.role;
   
   // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
-  console.log('AcademyStudentDashboard: Checking role - academyUserRole:', academyUserRole, 'hasSelectedRole:', hasSelectedRole);
-  if (!hasSelectedRole || academyUserRole === 'USER') {
+  console.log('AcademyStudentDashboard: Checking role - activeRole:', activeRole, 'hasSelectedRole:', hasSelectedRole);
+  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR' && activeRole !== 'ADMIN')) {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
