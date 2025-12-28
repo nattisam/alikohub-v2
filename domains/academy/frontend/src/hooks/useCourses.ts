@@ -36,11 +36,19 @@ export const useCourses = () => {
         
         setCategories(uniqueCategories);
         
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch courses:", error);
-        setError("Failed to load courses. Please try again later.");
-        // Fallback to default categories if API fails
-        setCategories(["Technology", "STEM", "Health"]);
+        
+        // Check if it's a 401 error (unauthorized)
+        if (error?.response?.status === 401) {
+          setError("Please log in to view courses.");
+          // Fallback to default categories if not authenticated
+          setCategories(["Technology", "STEM", "Health"]);
+        } else {
+          setError("Failed to load courses. Please try again later.");
+          // Fallback to default categories if API fails
+          setCategories(["Technology", "STEM", "Health"]);
+        }
       } finally {
         setLoading(false);
       }

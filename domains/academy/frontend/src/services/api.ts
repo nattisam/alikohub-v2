@@ -12,7 +12,7 @@ export const authAPI = {
     return data;
   },
 
-  verifyToken: async (firebaseCustomToken) => {
+  verifyToken: async (token) => {
     const { data } = await apiClient.post('/auth/verify', { token: firebaseCustomToken });
     return data;
   },

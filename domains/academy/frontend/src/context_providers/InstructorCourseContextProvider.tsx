@@ -31,38 +31,45 @@ export const InstructorCoursesProvider: React.FC<{
   // Fetch teaching schedules from backend
   const fetchTeachingSchedules = async () => {
     try {
-      const response = await academyApi.get("/teaching-schedules/instructor");
+      const response = await academyApi.get("/academy/teaching-schedules/instructor");
       setTeachingSchedules(response.data);
     } catch (error) {
       console.error("Error fetching teaching schedules:", error);
-      // Fallback to mock data if API fails
-      const mockSchedules: ITeachingSchedule[] = [
-        {
-          title: "AWS Fundamentals",
-          startTime: "2025-09-19T04:45:00.000z",
-          endTime: "2025-09-19T08:45:00.000z",
-          type: "Live",
-        },
-        {
-          title: "Cloud Security",
-          startTime: "2025-09-19T06:45:00.000z",
-          endTime: "2025-09-19T08:45:00.000z",
-          type: "Q&A",
-        },
-        {
-          title: "DevOps Essentials",
-          startTime: "2025-09-20T06:45:00.000z",
-          endTime: "2025-09-20T08:45:00.000z",
-          type: "Recording",
-        },
-        {
-          title: "DevOps Essentials",
-          startTime: "2025-09-21T06:45:00.000z",
-          endTime: "2025-09-21T08:45:00.000z",
-          type: "Recording",
-        },
-      ];
-      setTeachingSchedules(mockSchedules);
+      // Fallback to empty array for non-instructors, mock data for others
+      // Check if it's a 403/401 error which indicates user doesn't have permission
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+        // User doesn't have permission (not an instructor), set empty array
+        setTeachingSchedules([]);
+      } else {
+        // Other error, fallback to mock data
+        const mockSchedules: ITeachingSchedule[] = [
+          {
+            title: "AWS Fundamentals",
+            startTime: "2025-09-19T04:45:00.000z",
+            endTime: "2025-09-19T08:45:00.000z",
+            type: "Live",
+          },
+          {
+            title: "Cloud Security",
+            startTime: "2025-09-19T06:45:00.000z",
+            endTime: "2025-09-19T08:45:00.000z",
+            type: "Q&A",
+          },
+          {
+            title: "DevOps Essentials",
+            startTime: "2025-09-20T06:45:00.000z",
+            endTime: "2025-09-20T08:45:00.000z",
+            type: "Recording",
+          },
+          {
+            title: "DevOps Essentials",
+            startTime: "2025-09-21T06:45:00.000z",
+            endTime: "2025-09-21T08:45:00.000z",
+            type: "Recording",
+          },
+        ];
+        setTeachingSchedules(mockSchedules);
+      }
     }
   };
 
@@ -79,7 +86,7 @@ export const InstructorCoursesProvider: React.FC<{
       
       if (currentUser.academyRole === 'INSTRUCTOR') {
         // Fetch courses where the current user is the instructor
-        response = await academyApi.get("/courses", {
+        response = await academyApi.get("/academy/courses", {
           params: { instructorId: currentUser.firebaseId }
         });
       } else if (currentUser.academyRole === 'ADMIN') {
@@ -214,11 +221,15 @@ export const InstructorCoursesProvider: React.FC<{
     }
   };
 
-  // Load data when component mounts or user changes
+  // Load data when component mounts or user changes - only for instructors and admins
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && (currentUser.academyRole === 'INSTRUCTOR' || currentUser.academyRole === 'ADMIN')) {
       fetchCourses();
       fetchTeachingSchedules();
+    } else {
+      // For non-instructors, set empty arrays to prevent errors
+      setCourses([]);
+      setTeachingSchedules([]);
     }
   }, [currentUser]);
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { academyApi } from "../api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Course } from "../components/types.d";
 import { FaBook, FaStar, FaUsers, FaClock, FaTag, FaDollarSign, FaUser } from "react-icons/fa";
+import { courseApi } from "../api/courseApi";
 
 const CoursesPage: React.FC = () => {
   const { user: currentUser, isLoading: authLoading } = useAuth();
@@ -19,27 +19,36 @@ const CoursesPage: React.FC = () => {
   const hasRole = currentUser?.academyRole !== undefined;
   const isStudent = currentUser?.academyRole === 'STUDENT';
 
-  // Fetch all courses
+  // Fetch all published courses (requires authentication)
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const response = await academyApi.get("/courses");
+        
+        const response = await courseApi.getPublishedCourses();
         console.log("Courses API Response:", response.data);
         
         // Handle different response formats
         const coursesData = response.data.items || response.data;
         setCourses(Array.isArray(coursesData) ? coursesData : []);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching courses:", err);
-        setError("Failed to load courses. Please try again later.");
+        
+        // Check if it's a 401 error (unauthorized)
+        if (err?.response?.status === 401) {
+          // For 401 errors, we still try to continue but with empty courses
+          // This allows the page to render without showing login prompts
+          setCourses([]);
+        } else {
+          setError("Failed to load courses. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchCourses();
-  }, []);
+  }, [currentUser]);
 
   // Set category from URL params if available
   useEffect(() => {
@@ -97,6 +106,7 @@ const CoursesPage: React.FC = () => {
   }
 
   if (error) {
+    // Show a general error message without login prompts
     return (
       <div className="min-h-screen bg-gray-50 pt-20">
         <div className="container mx-auto px-4 py-8">
@@ -302,7 +312,7 @@ const CoursesPage: React.FC = () => {
 
                   {/* Action Button */}
                   <Link
-                    to={`/courses/${course.id}`}
+                    to={`/academy/courses/${course.id}`}
                     className="w-full bg-blue-600 text-white text-center py-2 rounded-md hover:bg-blue-700 transition-colors block font-medium"
                   >
                     View Details

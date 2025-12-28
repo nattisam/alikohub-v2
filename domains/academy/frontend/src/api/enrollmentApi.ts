@@ -42,30 +42,30 @@ export const enrollmentApi = {
   // Create a new enrollment
   createEnrollment: (data: CreateEnrollmentDto) => {
     console.log("Enrollment API - Sending data:", data);
-    return academyApi.post<Enrollment>("/enrollment", data);
+    return academyApi.post<Enrollment>("/academy/enrollment", data);
   },
 
   // Get all enrollments for the current user
   getMyEnrollments: () =>
-    academyApi.get<EnrollmentWithCourse[]>("/enrollment/me"),
+    academyApi.get<EnrollmentWithCourse[]>("/academy/enrollment/me"),
 
   // Get all enrolled courses for the current user (simplified)
   getMyCourses: () =>
-    academyApi.get<Course[]>("/enrollments/my-courses"),
+    academyApi.get<Course[]>("/academy/enrollments/my-courses"),
 
   // Get all enrollments (admin only)
   getAllEnrollments: () =>
-    academyApi.get<Enrollment[]>("/enrollment"),
+    academyApi.get<Enrollment[]>("/academy/enrollment"),
 
   // Get enrollments by cohort
   getEnrollmentsByCohort: (cohortId: number) =>
-    academyApi.get<Enrollment[]>(`/enrollment/cohort/${cohortId}`),
+    academyApi.get<Enrollment[]>(`/academy/enrollment/cohort/${cohortId}`),
 
   // Get enrollments by user ID
   getEnrollmentsByUserId: (userId: string) =>
-    academyApi.get<EnrollmentWithCourse[]>(`/enrollment/user/${userId}`),
+    academyApi.get<EnrollmentWithCourse[]>(`/academy/enrollment/user/${userId}`),
 
   // Delete an enrollment
   deleteEnrollment: (id: number) =>
-    academyApi.delete(`/enrollment/${id}`),
+    academyApi.delete(`/academy/enrollment/${id}`),
 };

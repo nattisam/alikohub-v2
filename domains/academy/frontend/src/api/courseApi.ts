@@ -1,23 +1,42 @@
 import { academyApi } from "../api";
 import { enrollmentApi } from "./enrollmentApi";
+import axios from "axios";
+
+// Since backend requires auth for all course endpoints, we'll use the regular academyApi
+const publicAcademyApi = academyApi;
 
 // Course APIs
 export const courseApi = {
-  // Courses
+  // Public method to get published courses - requires authentication
+  getPublishedCourses: async (params?: any) => {
+    try {
+      // Fetch only published courses - requires authentication
+      const response = await academyApi.get("/academy/courses", { 
+        params: { ...params, status: "PUBLISHED" } 
+      });
+      return response;
+    } catch (error) {
+      console.error("API Error fetching published courses:", error);
+      throw error;
+    }
+  },
+  
+  // Courses (authenticated)
   getCourses: async (params?: any) => {
     try {
-      const response = await academyApi.get("/courses", { params });
-      console.log("Raw API Response:", response);
+      // All course endpoints require authentication in the backend
+      // Use the authenticated API for all requests
+      const response = await academyApi.get("/academy/courses", { params });
       return response;
     } catch (error) {
       console.error("API Error:", error);
       throw error;
     }
   },
-  getCourse: (id: number) => academyApi.get(`/courses/${id}`),
-  createCourse: (data: any) => academyApi.post("/courses", data),
-  updateCourse: (id: number, data: any) => academyApi.patch(`/courses/${id}`, data),
-  deleteCourse: (id: number) => academyApi.delete(`/courses/${id}`),
+  getCourse: (id: number) => academyApi.get(`academy/courses/${id}`),
+  createCourse: (data: any) => academyApi.post("academy/courses", data),
+  updateCourse: (id: number, data: any) => academyApi.patch(`academy/courses/${id}`, data),
+  deleteCourse: (id: number) => academyApi.delete(`academy/courses/${id}`),
 
   // Modules
   getModules: (courseId: number) => academyApi.get(`/modules/course/${courseId}`),

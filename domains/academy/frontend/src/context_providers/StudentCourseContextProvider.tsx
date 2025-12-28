@@ -111,7 +111,14 @@ export const StudentCoursesProvider: React.FC<{ children: React.ReactNode }> = (
       setEnrolledCourses(coursesData);
     } catch (e) {
       console.error("Failed to fetch enrolled courses:", e);
-      setEnrolledCourses([]);
+      // Check if it's a 403/401 error which indicates user doesn't have permission
+      if (e?.response?.status === 403 || e?.response?.status === 401) {
+        // User doesn't have permission to access enrollments, set empty array
+        setEnrolledCourses([]);
+      } else {
+        // Other error, set empty array
+        setEnrolledCourses([]);
+      }
     }
   };
   
@@ -128,17 +135,23 @@ export const StudentCoursesProvider: React.FC<{ children: React.ReactNode }> = (
   
   const getTrendingCourses = async (): Promise<void> => {
     try {
-      // For now, we'll use the regular courses endpoint as trending courses
+      // For now, we'll use the public courses endpoint as trending courses
       // In a real implementation, this would be a separate endpoint
       // Only fetch published courses for trending
-      const response = await courseApi.getCourses({ status: "PUBLISHED" });
+      const response = await courseApi.getPublishedCourses({ status: "PUBLISHED" });
       // Handle either { items: Course[] } or Course[]
       const payload = (response.data && response.data.items) ? response.data.items : response.data;
       const coursesData = Array.isArray(payload) ? payload : [];
       setTrendingCourses(coursesData.slice(0, 5));
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to fetch trending courses:", e);
-      setTrendingCourses([]);
+      // Check if it's a 401 error (unauthorized)
+      if (e?.response?.status === 401) {
+        // User not authenticated, set empty array
+        setTrendingCourses([]);
+      } else {
+        setTrendingCourses([]);
+      }
     }
   };
 
@@ -146,13 +159,19 @@ export const StudentCoursesProvider: React.FC<{ children: React.ReactNode }> = (
     const fetchCourses = async () => {
       try {
         // Only fetch published courses for the homepage
-        const response = await courseApi.getCourses({ status: "PUBLISHED" });
+        const response = await courseApi.getPublishedCourses({ status: "PUBLISHED" });
         // Handle either { items: Course[] } or Course[]
         const payload = (response.data && response.data.items) ? response.data.items : response.data;
         setCourses(Array.isArray(payload) ? payload : []);
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to fetch courses:", e);
-        setCourses([]);
+        // Check if it's a 401 error (unauthorized)
+        if (e?.response?.status === 401) {
+          // User not authenticated, set empty array
+          setCourses([]);
+        } else {
+          setCourses([]);
+        }
       }
     };
     
