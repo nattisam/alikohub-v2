@@ -478,11 +478,44 @@ export class AuthService {
 			});
 		}
 
-		// Check if user has the requested role
-		if (!user.academyUser || (user.academyUser.role.toUpperCase() !== newRole.toUpperCase())) {
+		// Role hierarchy definition
+		const ROLE_HIERARCHY: { [key: string]: number } = {
+			'ADMIN': 4,
+			'ACADEMY_ADMIN': 4,
+			'COURSE_MANAGER': 3,
+			'INSTRUCTOR': 2,
+			'TEACHER': 2,
+			'STUDENT': 1,
+			'USER': 0
+		};
+
+		// Check if user has the requested role (or a higher one)
+		const userRole = user.academyUser?.role?.toUpperCase();
+		const targetRole = newRole.toUpperCase();
+		
+		if (!user.academyUser) {
 			throw new RpcException({
 				statusCode: HttpStatus.FORBIDDEN,
-				message: `User does not have ${newRole} role`,
+				message: `User is not enrolled in Academy`,
+				error: 'Forbidden',
+			});
+		}
+
+		const userRoleLevel = ROLE_HIERARCHY[userRole] || 0;
+		const targetRoleLevel = ROLE_HIERARCHY[targetRole];
+
+		if (targetRoleLevel === undefined) {
+             throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: `Invalid role: ${newRole}`,
+				error: 'Bad Request',
+			});
+        }
+
+		if (userRoleLevel < targetRoleLevel) {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: `User does not have permission to switch to ${newRole} role. Current role: ${userRole}`,
 				error: 'Forbidden',
 			});
 		}
@@ -533,5 +566,89 @@ export class AuthService {
 		return {
 			message: 'Logged out successfully'
 		};
+	}
+
+	async syncContechUser(userId: string) {
+		const user = await this.userService.findByFirebaseId(userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found in Auth Service',
+				error: 'Not Found',
+			});
+		}
+
+		let contechUser = await this.prisma.contechUser.findUnique({
+			where: { userId: user.firebaseId },
+		});
+
+		if (!contechUser) {
+			contechUser = await this.prisma.contechUser.create({
+				data: {
+					userId: user.firebaseId,
+					role: ContechRole.USER,
+					status: 'ACTIVE',
+				}
+			});
+			this.logger.log(`Created missing ContechUser record for user: ${user.firebaseId}`);
+		}
+
+		return contechUser;
+	}
+
+	async syncEventsUser(userId: string) {
+		const user = await this.userService.findByFirebaseId(userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found in Auth Service',
+				error: 'Not Found',
+			});
+		}
+
+		let eventsUser = await this.prisma.eventsUser.findUnique({
+			where: { userId: user.firebaseId },
+		});
+
+		if (!eventsUser) {
+			eventsUser = await this.prisma.eventsUser.create({
+				data: {
+					userId: user.firebaseId,
+					role: EventsRole.USER,
+					status: 'ACTIVE',
+				}
+			});
+			this.logger.log(`Created missing EventsUser record for user: ${user.firebaseId}`);
+		}
+
+		return eventsUser;
+	}
+
+	async syncAcademyUser(userId: string) {
+		const user = await this.userService.findByFirebaseId(userId);
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found in Auth Service',
+				error: 'Not Found',
+			});
+		}
+
+		let academyUser = await this.prisma.academyUser.findUnique({
+			where: { userId: user.firebaseId },
+		});
+
+		if (!academyUser) {
+			academyUser = await this.prisma.academyUser.create({
+				data: {
+					userId: user.firebaseId,
+					role: AcademyRole.USER,
+					status: 'ACTIVE',
+				}
+			});
+			this.logger.log(`Created missing AcademyUser record for user: ${user.firebaseId}`);
+		}
+
+		return academyUser;
 	}
 }
