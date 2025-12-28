@@ -24,59 +24,32 @@ import EventDetailsPage from "./Pages/EventDetailsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardRouter from "./components/DashboardRouter";
 import RolesPage from "./Pages/RolesPage";
-import TeacherApplicationModal from "./components/TeacherApplicationModal";
 import ProfilePage from "./Pages/ProfilePage";
 import SettingsPage from "./Pages/SettingsPage";
 
-
-// Layout components
-const DefaultLayout = () => {
-  return <Outlet />;
-};
-
-const AuthLayout = () => {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <Outlet />
-    </div>
-  );
-};
+// -------------------- Layouts --------------------
 
 const PublicLayout = () => {
   const { user: currentUser, logout, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSignUpClick = () => {
-    navigate("/auth/signup");
-  };
+  const handleSignUpClick = () => navigate("/auth/signup");
 
-  const handleLogout = () => {
-    console.log("App.tsx: PublicLayout handleLogout called");
-    logout();
-    console.log("App.tsx: PublicLayout logout function completed");
-  };
+  const handleLogout = () => logout();
 
-  const handleLogoutComplete = () => {
-    console.log(
-      "App.tsx: PublicLayout handleLogoutComplete called, navigating to home"
-    );
-    navigate("/");
-  };
+  const handleLogoutComplete = () => navigate("/");
 
-  // Show loading state while checking auth
   if (isLoading) {
     return (
       <>
         <header className="bg-white shadow-md fixed w-full top-0 z-50">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center h-16">
-              <div className="flex-shrink-0 flex items-center">
-                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
-              </div>
+              <div className="h-8 w-24 bg-gray-200 animate-pulse rounded" />
               <div className="flex space-x-4">
-                <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
-                <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-16 bg-gray-200 animate-pulse rounded" />
+                <div className="h-8 w-20 bg-gray-200 animate-pulse rounded" />
               </div>
             </div>
           </div>
@@ -105,36 +78,16 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSignUpClick = () => {
-    navigate("/auth/signup");
-  };
-
-  const handleLogout = () => {
-    console.log("App.tsx: DashboardLayout handleLogout called");
-    logout();
-    console.log("App.tsx: DashboardLayout logout function completed");
-  };
-
-  const handleLogoutComplete = () => {
-    console.log(
-      "App.tsx: DashboardLayout handleLogoutComplete called, navigating to home"
-    );
-    navigate("/");
-  };
-
-  // Show loading state while checking auth
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow-md fixed w-full top-0 z-50">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center h-16">
-              <div className="flex-shrink-0 flex items-center">
-                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded"></div>
-              </div>
+              <div className="h-8 w-24 bg-gray-200 animate-pulse rounded" />
               <div className="flex space-x-4">
-                <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
-                <div className="h-8 w-20 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-8 w-16 bg-gray-200 animate-pulse rounded" />
+                <div className="h-8 w-20 bg-gray-200 animate-pulse rounded" />
               </div>
             </div>
           </div>
@@ -151,9 +104,9 @@ const DashboardLayout = () => {
       <AcademyHeader
         currentTab={location.pathname}
         currentUser={currentUser || undefined}
-        onSignUpClick={handleSignUpClick}
-        onLogout={handleLogout}
-        onLogoutComplete={handleLogoutComplete}
+        onSignUpClick={() => navigate("/auth/signup")}
+        onLogout={logout}
+        onLogoutComplete={() => navigate("/")}
       />
       <div className="pt-16">
         <Outlet />
@@ -162,12 +115,14 @@ const DashboardLayout = () => {
   );
 };
 
+// -------------------- App --------------------
+
 function App() {
   return (
     <Router>
       <Routes>
         {/* Public routes */}
-        <Route element={<PublicLayout />}> 
+        <Route element={<PublicLayout />}>
           <Route path="/" element={<AcademyHomePage />} />
           <Route path="/about" element={<AcademyAboutPage />} />
           <Route path="/contact" element={<AcademyContactUsPage />} />
@@ -176,20 +131,18 @@ function App() {
           <Route path="/events/:eventId" element={<EventDetailsPage />} />
         </Route>
 
-        {/* Authentication routes */}
-        <Route element={<AuthLayout />}>
-          <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/auth/signup" element={<SignupPage />} />
-        </Route>
+        {/* Auth routes — NO wrapper */}
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/signup" element={<SignupPage />} />
 
-        {/* Smart dashboard router - redirects based on role */}
+        {/* Smart dashboard router */}
         <Route path="/dashboard" element={<DashboardRouter />} />
-        
-        {/* Role selection page */}
+
+        {/* Role selection */}
         <Route path="/role" element={<RolesPage />} />
 
-        {/* Student dashboard routes */}
-        <Route element={<DashboardLayout />}> 
+        {/* Student dashboard */}
+        <Route element={<DashboardLayout />}>
           <Route
             path="/student-dashboard"
             element={
@@ -200,7 +153,7 @@ function App() {
           />
         </Route>
 
-        {/* Instructor dashboard routes */}
+        {/* Instructor dashboard */}
         <Route element={<DashboardLayout />}>
           <Route
             path="/instructor"
@@ -212,7 +165,7 @@ function App() {
           />
         </Route>
 
-        {/* Admin dashboard routes */}
+        {/* Admin dashboard */}
         <Route element={<DashboardLayout />}>
           <Route
             path="/admin"
@@ -224,7 +177,7 @@ function App() {
           />
         </Route>
 
-        {/* Profile and Settings routes */}
+        {/* Profile & settings */}
         <Route element={<DashboardLayout />}>
           <Route
             path="/profile"
@@ -234,8 +187,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-        </Route>
-        <Route element={<DashboardLayout />}>
           <Route
             path="/settings"
             element={
@@ -246,7 +197,7 @@ function App() {
           />
         </Route>
 
-        {/* Redirect all other routes to home */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

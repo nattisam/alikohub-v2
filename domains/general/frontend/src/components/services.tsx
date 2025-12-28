@@ -36,6 +36,16 @@ const Services = ({
           reverse
           align="left"
           refProp={academyRef}
+          onClick={() => {
+            // Navigate to the academy subdomain based on environment
+            if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+              // For local development, use port 5173 for the academy frontend
+              window.open("http://localhost:4200", "_blank");
+            } else {
+              // For production, use the subdomain
+              window.open("https://academy.alikohub.com", "_blank");
+            }
+          }}
         />
 
         <ServiceBlock

@@ -164,7 +164,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
               </>
             ) : (
               <div className="flex space-x-4">
-                <Link to="/auth/login" className="text-sm font-medium">
+                <Link to="/auth/login" className="text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-md">
                   Login
                 </Link>
                 <button

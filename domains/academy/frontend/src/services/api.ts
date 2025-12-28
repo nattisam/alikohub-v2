@@ -14,7 +14,7 @@ export const authAPI = {
   },
 
   verifyToken: async (token) => {
-    const { data } = await apiClient.post('/auth/verify', { token });
+    const { data } = await apiClient.post('/auth/verify', { type: 'token', value: token });
     
     // Normalize roles in the response
     if (data.user) {

@@ -33,7 +33,7 @@ export const courseApi = {
       throw error;
     }
   },
-  getCourse: (id: number) => academyApi.get(`academy/courses/${id}`),
+  getCourse: (id: number) => academyApi.get(`/academy/courses/${id}`),
   createCourse: (data: any) => academyApi.post("academy/courses", data),
   updateCourse: (id: number, data: any) => academyApi.patch(`academy/courses/${id}`, data),
   deleteCourse: (id: number) => academyApi.delete(`academy/courses/${id}`),
