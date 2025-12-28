@@ -1,4 +1,5 @@
 import apiClient from '../lib/api';
+import { normalizeUserRoles, denormalizeRole } from '../utils/role-normalizer';
 
 // Auth API
 export const authAPI = {
@@ -13,7 +14,13 @@ export const authAPI = {
   },
 
   verifyToken: async (token) => {
-    const { data } = await apiClient.post('/auth/verify', { token: firebaseCustomToken });
+    const { data } = await apiClient.post('/auth/verify', { token });
+    
+    // Normalize roles in the response
+    if (data.user) {
+      data.user = normalizeUserRoles(data.user);
+    }
+    
     return data;
   },
 
@@ -42,29 +49,18 @@ export const authAPI = {
 // Academy API
 export const academyAPI = {
   selectRole: async (role) => {
-    // Convert frontend role format to backend format
-    // Frontend sends: 'STUDENT', 'INSTRUCTOR', 'ADMIN'
-    // Backend expects: 'student', 'teacher', 'admin'
-    let backendRole;
-    switch (role.toUpperCase()) {
-      case 'STUDENT':
-        backendRole = 'student';
-        break;
-      case 'INSTRUCTOR':
-      case 'TEACHER':
-        backendRole = 'teacher';
-        break;
-      case 'ADMIN':
-        backendRole = 'admin';
-        break;
-      default:
-        backendRole = role.toLowerCase();
-    }
+    const backendRole = denormalizeRole(role);
     
     console.log('Sending role selection request to backend:', { role: backendRole });
     try {
       const response = await apiClient.post('/auth/academy/select-role', { role: backendRole });
       console.log('Role selection response from backend:', response.data);
+      
+      // Normalize roles in the response
+      if (response.data.user) {
+        response.data.user = normalizeUserRoles(response.data.user);
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error in role selection API call:', error);
@@ -73,33 +69,28 @@ export const academyAPI = {
   },
   
   switchRole: async (role) => {
-    // Convert frontend role format to backend format
-    // Frontend sends: 'STUDENT', 'INSTRUCTOR', 'ADMIN'
-    // Backend expects: 'student', 'teacher', 'admin'
-    let backendRole;
-    switch (role.toUpperCase()) {
-      case 'STUDENT':
-        backendRole = 'student';
-        break;
-      case 'INSTRUCTOR':
-      case 'TEACHER':
-        backendRole = 'teacher';
-        break;
-      case 'ADMIN':
-        backendRole = 'admin';
-        break;
-      default:
-        backendRole = role.toLowerCase();
-    }
+    const backendRole = denormalizeRole(role);
     
     console.log('Making switch role request:', { newRole: backendRole });
     const { data } = await apiClient.post('/auth/academy/switch-role', { newRole: backendRole });
     console.log('Switch role response data:', data);
+    
+    // Normalize roles in the response
+    if (data.user) {
+      data.user = normalizeUserRoles(data.user);
+    }
+    
     return data;
   },
   
   getProfile: async () => {
     const { data } = await apiClient.get('/users/profile');
+    
+    // Normalize roles in the response
+    if (data.user) {
+      data.user = normalizeUserRoles(data.user);
+    }
+    
     return data;
   },
   

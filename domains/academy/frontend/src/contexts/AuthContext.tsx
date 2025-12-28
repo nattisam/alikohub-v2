@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authAPI, academyAPI } from "../services/api";
+import { normalizeUserRoles } from "../utils/role-normalizer";
 import type {
   CurrentUser,
   LoginCredentials,
@@ -33,13 +34,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const buildUser = (user: any): CurrentUser => {
-  const academyUser = user.academyUser;
+  // Normalize roles first
+  const normalizedUser = normalizeUserRoles(user);
+  const academyUser = normalizedUser.academyUser;
 
   return {
-    ...user,
+    ...normalizedUser,
     academyUser,
     academyRole: academyUser?.role ?? 'USER',
-    academyActiveRole: academyUser?.activeRole ?? academyUser?.role ?? 'USER',
+    academyActiveRole: normalizedUser.academyActiveRole ?? academyUser?.activeRole ?? academyUser?.role ?? 'USER',
 
     hasSelectedRole: academyUser?.role && academyUser.role !== 'USER',
 
@@ -48,8 +51,8 @@ const buildUser = (user: any): CurrentUser => {
     availableRoles: [
       'STUDENT',
       // Include INSTRUCTOR if user's role is INSTRUCTOR or if they have an approved instructor application
-      ...((academyUser?.role === 'INSTRUCTOR' || user.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
-      ...(user.globalRole === 'ADMIN' ? ['ADMIN'] : []),
+      ...((academyUser?.role === 'INSTRUCTOR' || normalizedUser.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
+      ...(normalizedUser.globalRole === 'ADMIN' ? ['ADMIN'] : []),
     ],
   };
 };
