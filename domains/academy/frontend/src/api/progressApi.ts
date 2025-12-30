@@ -61,31 +61,44 @@ export interface StudentProgress {
 // Progress Tracking APIs
 export const progressApi = {
   // Get student dashboard data with progress information
-  getStudentDashboard: () => academyApi.get<CourseProgress[]>("/progress/dashboard"),
+  getStudentDashboard: () =>
+    academyApi.get<CourseProgress[]>("/academy/progress/dashboard"),
 
   // Get overall analytics data
-  getOverallAnalytics: () => academyApi.get<OverallStats>("/progress/analytics/overall"),
+  getOverallAnalytics: () =>
+    academyApi.get<OverallStats>("/academy/progress/analytics/overall"),
 
   // Get student stats for sidebar
-  getStudentStats: () => academyApi.get<OverallStats>("/progress/analytics/student"),
+  getStudentStats: () =>
+    academyApi.get<OverallStats>("/academy/progress/analytics/student"),
 
   // Get instructor statistics
-  getInstructorStats: () => academyApi.get<InstructorStats>("/progress/instructor/stats"),
+  getInstructorStats: () =>
+    academyApi.get<InstructorStats>("/academy/progress/instructor/stats"),
 
   // Get course progress details
-  getCourseProgress: (courseId: number) => academyApi.get<CourseProgress>(`/progress/course/${courseId}`),
+  getCourseProgress: (courseId: number) =>
+    academyApi.get<CourseProgress>(`/academy/progress/course/${courseId}`),
 
   // Update progress for a specific lesson/content
-  updateProgress: (data: { courseId: number; moduleId?: number; lessonId?: number; progress: number }) =>
-    academyApi.post("/progress/update", data),
+  updateProgress: (data: {
+    courseId: number;
+    moduleId?: number;
+    lessonId?: number;
+    progress: number;
+  }) => academyApi.post("/academy/progress/update", data),
 
   // Get detailed student progress for a course
   getDetailedStudentProgress: (courseId: number, studentId: string) =>
-    academyApi.get<ProgressModule[]>(`/progress/course/${courseId}/user/${studentId}`),
+    academyApi.get<ProgressModule[]>(
+      `/academy/progress/course/${courseId}/user/${studentId}`
+    ),
 
   // Get all students progress for a course (instructor view)
   getCourseStudentsProgress: (courseId: number) =>
-    academyApi.get<StudentProgress[]>(`/progress/course/${courseId}/students`),
+    academyApi.get<StudentProgress[]>(
+      `/academy/progress/course/${courseId}/students`
+    ),
 
   // Update content progress
   updateContentProgress: (
@@ -95,8 +108,9 @@ export const progressApi = {
     contentId: number,
     status: string,
     score?: number
-  ) => academyApi.post(
-    `/progress/course/${courseId}/module/${moduleId}/lesson/${lessonId}/content/${contentId}`,
-    { status, score }
-  ),
+  ) =>
+    academyApi.post(
+      `/academy/progress/course/${courseId}/module/${moduleId}/lesson/${lessonId}/content/${contentId}`,
+      { status, score }
+    ),
 };

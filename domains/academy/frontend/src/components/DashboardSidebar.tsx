@@ -16,12 +16,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ className = '' }) =
                         userRole === 'ADMIN' ? '/admin' : '/student-dashboard';
   
   const menuItems = [
-    { path: dashboardPath, label: 'Dashboard', icon: FaTachometerAlt },
-    { path: `${dashboardPath}/courses`, label: 'My Courses', icon: FaBook },
-    { path: `${dashboardPath}/progress`, label: 'Progress', icon: FaChartLine },
-    { path: `${dashboardPath}/certificates`, label: 'Certificates', icon: FaCertificate },
-    { path: '/profile', label: 'Profile', icon: FaUser },
-    { path: '/settings', label: 'Settings', icon: FaCog },
+    { path: "", label: 'Dashboard', icon: FaTachometerAlt },
+    { path: '/student-dashboard/courses', label: 'My Courses', icon: FaBook },
+    { path: '/student-dashboard/courses/progress', label: 'Progress', icon: FaChartLine },
+    { path: '/student-dashboard/courses/certificates', label: 'Certificates', icon: FaCertificate },
+    { path: '/student-dashboard/profile', label: 'Profile', icon: FaUser },
+    { path: '/student-dashboard/settings', label: 'Settings', icon: FaCog },
   ];
 
   const isActive = (path: string) => {

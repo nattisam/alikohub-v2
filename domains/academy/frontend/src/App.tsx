@@ -8,15 +8,17 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
+import { useAuth } from './contexts/AuthContext';
 
-import LoginPage from "./Pages/LoginPage";
+import LoginPage from './Pages/LoginPage';
+import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
 import SignupPage from "./Pages/SignupPage";
 import AcademyHomePage from "./Pages/AcademyHomePage";
 import AcademyAboutPage from "./Pages/AcademyAboutPage";
 import AcademyContactUsPage from "./Pages/AcademyContactUsPage";
 import AcademyStudentDashboard from "./Pages/AcademyStudentDashboard";
-import InstructorDashboard from "./Pages/InstructorDashboard";
+import InstructorDashboardRouter from "./components/InstructorDashboardRouter";
+import StudentDashboardRouter from "./components/StudentDashboardRouter";
 import CoursesPage from "./Pages/CoursesPage";
 import CourseDetailsPage from "./Pages/CourseDetailsPage";
 import AcademyHeader from "./components/AcademyHeader";
@@ -131,9 +133,17 @@ function App() {
           <Route path="/events/:eventId" element={<EventDetailsPage />} />
         </Route>
 
-        {/* Auth routes — NO wrapper */}
-        <Route path="/auth/login" element={<LoginPage />} />
-        <Route path="/auth/signup" element={<SignupPage />} />
+        {/* Auth routes — redirect authenticated users */}
+        <Route path="/auth/login" element={
+          <RedirectIfAuthenticated redirectPath="/">
+            <LoginPage />
+          </RedirectIfAuthenticated>
+        } />
+        <Route path="/auth/signup" element={
+          <RedirectIfAuthenticated redirectPath="/">
+            <SignupPage />
+          </RedirectIfAuthenticated>
+        } />
 
         {/* Smart dashboard router */}
         <Route path="/dashboard" element={<DashboardRouter />} />
@@ -142,24 +152,24 @@ function App() {
         <Route path="/role" element={<RolesPage />} />
 
         {/* Student dashboard */}
-        <Route element={<DashboardLayout />}>
+        <Route element={<DashboardLayout />}>  
           <Route
-            path="/student-dashboard"
+            path="/student-dashboard/*"
             element={
               <ProtectedRoute requiredRole="STUDENT">
-                <AcademyStudentDashboard />
+                <StudentDashboardRouter />
               </ProtectedRoute>
             }
           />
         </Route>
 
         {/* Instructor dashboard */}
-        <Route element={<DashboardLayout />}>
+        <Route element={<DashboardLayout />}>  
           <Route
-            path="/instructor"
+            path="/instructor/*"
             element={
               <ProtectedRoute requiredRole="INSTRUCTOR">
-                <InstructorDashboard />
+                <InstructorDashboardRouter />
               </ProtectedRoute>
             }
           />

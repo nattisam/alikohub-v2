@@ -15,6 +15,9 @@ import AllCourses from "../components/AllCourses";
 import StudentProgressTracker from "../components/StudentProgressTracker";
 import StudentModuleView from "../components/StudentModuleView";
 import { useNavigate } from "react-router-dom";
+import ErrorState from "../components/states/ErrorState";
+import EmptyState from "../components/states/EmptyState";
+import AccessDenied from "../components/states/AccessDenied";
 
 const AcademyStudentDashboard = () => {
   const { user: currentUser, isLoading, refetchCurrentUser } = useAuth();
@@ -122,6 +125,7 @@ const AcademyStudentDashboard = () => {
   });
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [courseForModuleView, setCourseForModuleView] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
@@ -129,6 +133,7 @@ const AcademyStudentDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null); // Reset error state
       
       // Fetch dashboard statistics
       const progressResponse = await progressApi.getStudentDashboard();
@@ -149,6 +154,7 @@ const AcademyStudentDashboard = () => {
       setCourses(coursesResponse.data);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      setError(error as Error);
     } finally {
       setLoading(false);
     }
@@ -195,6 +201,39 @@ const AcademyStudentDashboard = () => {
     setRefreshKey(prev => prev + 1);
   };
 
+  // Check for error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="px-4 md:px-8 py-6">
+          <ErrorState 
+            title="Failed to Load Dashboard" 
+            message="There was an error loading your dashboard data. Please try again later." 
+            error={error}
+            onRetry={fetchDashboardData}
+          />
+        </div>
+      </div>
+    );
+  }
+  
+  // Check for empty state
+  if (!loading && courses.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="px-4 md:px-8 py-6">
+          <EmptyState 
+            title="No Courses Yet" 
+            message="You haven't enrolled in any courses yet. Start learning by exploring our course catalog." 
+            showAction={true}
+            actionText="Browse Courses"
+            onAction={() => navigate('/courses')}
+          />
+        </div>
+      </div>
+    );
+  }
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20">
@@ -209,10 +248,6 @@ const AcademyStudentDashboard = () => {
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="px-4 md:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Sidebar - Navigation */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <DashboardSidebar />
-          </div>
 
           {/* Main Content */}
           <div className="flex-1">

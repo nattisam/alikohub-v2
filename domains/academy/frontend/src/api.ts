@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 import apiClient from "./lib/api";
 import { progressApi } from "./api/progressApi";
 import { enrollmentApi } from "./api/enrollmentApi";
@@ -31,7 +31,7 @@ export const academyApi = axios.create({
 // Manually add the same interceptors as apiClient
 academyApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -47,11 +47,11 @@ academyApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (token) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('firebaseCustomToken');
-        localStorage.removeItem('user');
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("firebaseCustomToken");
+        localStorage.removeItem("user");
       }
     }
     return Promise.reject(error);

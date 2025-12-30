@@ -4,7 +4,12 @@ import { academyApi } from "../api";
 import type { Course } from "../components/types.d";
 import StudentCourseCard from "../components/StudentCourseCard";
 import StudentProgressTracker from "../components/StudentProgressTracker";
-import { FaBook, FaChartLine, FaGraduationCap, FaBookReader } from "react-icons/fa";
+import {
+  FaBook,
+  FaChartLine,
+  FaGraduationCap,
+  FaBookReader,
+} from "react-icons/fa";
 
 const StudentDashboard: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -17,7 +22,7 @@ const StudentDashboard: React.FC = () => {
   const fetchEnrolledCourses = async () => {
     try {
       setLoading(true);
-      const response = await academyApi.get("/enrollments/my-courses");
+      const response = await academyApi.get("/academy/enrollments/my-courses");
       setCourses(response.data);
     } catch (err: any) {
       console.error("Error fetching enrolled courses:", err);
@@ -39,7 +44,7 @@ const StudentDashboard: React.FC = () => {
     lessonsViewed: 0,
     quizzesCompleted: 0,
     projectsPassed: 0,
-    programsCompleted: 0
+    programsCompleted: 0,
   });
 
   useEffect(() => {
@@ -60,7 +65,7 @@ const StudentDashboard: React.FC = () => {
   // Function to trigger dashboard refresh
   const handleEnrollmentComplete = () => {
     // Increment the refresh key to trigger re-render
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   if (loading) {
@@ -108,7 +113,7 @@ const StudentDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center">
               <FaBook className="text-green-500 text-xl mr-3" />
@@ -120,7 +125,7 @@ const StudentDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center">
               <FaChartLine className="text-yellow-500 text-xl mr-3" />
@@ -132,7 +137,7 @@ const StudentDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center">
               <FaGraduationCap className="text-purple-500 text-xl mr-3" />
@@ -144,7 +149,7 @@ const StudentDashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-center">
               <FaBookReader className="text-red-500 text-xl mr-3" />
@@ -162,7 +167,7 @@ const StudentDashboard: React.FC = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">My Courses</h2>
           </div>
-          
+
           {courses && courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
@@ -179,8 +184,12 @@ const StudentDashboard: React.FC = () => {
               <div className="text-gray-400 mb-4">
                 <FaBook className="mx-auto h-12 w-12" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No enrolled courses yet</h3>
-              <p className="text-gray-500 mb-4">Browse and enroll in courses to start learning</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No enrolled courses yet
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Browse and enroll in courses to start learning
+              </p>
             </div>
           )}
         </div>
@@ -200,12 +209,12 @@ const StudentDashboard: React.FC = () => {
                     &times;
                   </button>
                 </div>
-                
-                <StudentProgressTracker 
-                  course={selectedCourse} 
-                  userId={currentUser?.firebaseId || ""} 
+
+                <StudentProgressTracker
+                  course={selectedCourse}
+                  userId={currentUser?.firebaseId || ""}
                 />
-                
+
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={() => setSelectedCourse(null)}

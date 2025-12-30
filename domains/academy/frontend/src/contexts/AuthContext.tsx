@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authAPI, academyAPI } from "../services/api";
-import { normalizeUserRoles } from "../utils/role-normalizer";
+
 import type {
   CurrentUser,
   LoginCredentials,
@@ -34,25 +34,50 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const buildUser = (user: any): CurrentUser => {
-  // Normalize roles first
-  const normalizedUser = normalizeUserRoles(user);
-  const academyUser = normalizedUser.academyUser;
+  const academyUser = user.academyUser;
+  
+  // Convert backend lowercase roles to frontend uppercase format
+  const convertRoleToUppercase = (role: string) => {
+    if (!role) return role;
+    
+    switch (role.toLowerCase()) {
+      case 'instructor':
+      case 'teacher':
+        return 'INSTRUCTOR';
+      case 'student':
+        return 'STUDENT';
+      case 'admin':
+        return 'ADMIN';
+      case 'user':
+        return 'USER';
+      case 'course_manager':
+        return 'COURSE_MANAGER';
+      default:
+        return role.toUpperCase();
+    }
+  };
+
+  const convertedAcademyUser = academyUser ? {
+    ...academyUser,
+    role: convertRoleToUppercase(academyUser.role),
+    activeRole: convertRoleToUppercase(academyUser.activeRole),
+  } : null;
 
   return {
-    ...normalizedUser,
-    academyUser,
-    academyRole: academyUser?.role ?? 'USER',
-    academyActiveRole: normalizedUser.academyActiveRole ?? academyUser?.activeRole ?? academyUser?.role ?? 'USER',
+    ...user,
+    academyUser: convertedAcademyUser,
+    academyRole: convertRoleToUppercase(academyUser?.role) ?? 'USER',
+    academyActiveRole: convertRoleToUppercase(user.academyActiveRole) ?? convertRoleToUppercase(academyUser?.activeRole) ?? convertRoleToUppercase(academyUser?.role) ?? 'USER',
 
-    hasSelectedRole: academyUser?.role && academyUser.role !== 'USER',
+    hasSelectedRole: convertedAcademyUser?.role && convertedAcademyUser.role !== 'USER',
 
     // Include INSTRUCTOR in availableRoles if user has applied and been approved
     // Include INSTRUCTOR if the user has an approved instructor application status
     availableRoles: [
       'STUDENT',
       // Include INSTRUCTOR if user's role is INSTRUCTOR or if they have an approved instructor application
-      ...((academyUser?.role === 'INSTRUCTOR' || normalizedUser.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
-      ...(normalizedUser.globalRole === 'ADMIN' ? ['ADMIN'] : []),
+      ...((convertedAcademyUser?.role === 'INSTRUCTOR' || user.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
+      ...(user.globalRole === 'ADMIN' ? ['ADMIN'] : []),
     ],
   };
 };
@@ -66,7 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     const init = async () => {
-      const token = localStorage.getItem("firebaseCustomToken");
+      const token = localStorage.getItem("accessToken");
       const rawUser = localStorage.getItem("user");
 
       if (!token || !rawUser) {

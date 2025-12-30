@@ -43,7 +43,7 @@ The Academy frontend uses a token-based authentication system with Firebase Cust
 
 ### 3. Token Verification
 - On app initialization, the frontend checks for stored user data and tokens
-- If both exist, it calls `authAPI.verifyToken()` to verify the Firebase Custom Token
+- If both exist, it calls `authAPI.verifyToken()` to verify the JWT Access Token
 - Academy profile is fetched to get the latest role information
 - User object is normalized with proper role formatting
 - If verification succeeds, user remains logged in
@@ -147,11 +147,11 @@ interface CurrentUser {
 }
 ```
 
-### Role Normalization
-The system includes role normalization to handle differences between backend API Gateway roles (lowercase) and frontend roles (uppercase):
+### Role Conversion
+The system includes role conversion to handle differences between backend API Gateway roles (lowercase) and frontend roles (uppercase):
 - Backend uses: 'student', 'teacher', 'instructor', 'admin'
 - Frontend uses: 'STUDENT', 'INSTRUCTOR', 'ADMIN'
-- The `normalizeRole()` and `denormalizeRole()` functions handle conversion
+- Role conversion happens directly in API calls from frontend uppercase to backend lowercase format
 
 ### Local Storage
 User data and tokens are persisted in localStorage:
