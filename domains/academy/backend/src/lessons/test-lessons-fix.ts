@@ -47,7 +47,12 @@ async function testAuthorizationFix() {
     // Test data
     const mockUser: AuthenticatedUser = {
         firebaseId: 'test-instructor-id',
-        globalRole: 'USER' as any // Using string literal to avoid enum import issues
+        email: 'test@example.com',
+        firstname: 'Test',
+        lastname: 'User',
+        role: 'USER',
+        status: 'ACTIVE',
+        globalRole: 'USER'
     };
 
     const createLessonDto: CreateLessonDto = {

@@ -39,13 +39,5 @@ export class MilestonesController {
         return this.milestonesService.submitForReview(payload.id);
     }
 
-    @MessagePattern({cmd: 'createReview'})
-    createReview(@Payload() payload: { id: number; createMilestoneReviewDto: CreateMilestoneReviewDto }) {
-        return this.milestonesService.createReview(payload.id, payload.createMilestoneReviewDto);
-    }
 
-    @MessagePattern({cmd: 'getReviewsForMilestone'})
-    getReviewsForMilestone(@Payload() payload: { id: number }) {
-        return this.milestonesService.getReviewsForMilestone(payload.id);
-    }
 }

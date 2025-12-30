@@ -21,7 +21,7 @@ export class UserController {
 
     @MessagePattern({ cmd: 'update_contech_profile' })
     async updateProfile(@Payload() payload: { user: AuthenticatedUser; updateData: any }) {
-        return await this.userService.updateProfile(payload.user.firebaseId, payload.updateData);
+        return await this.userService.updateProfile(payload.user, payload.updateData);
     }
 
     @MessagePattern({ cmd: 'select_contech_role' })
@@ -35,8 +35,8 @@ export class UserController {
             const authenticatedUser: AuthenticatedUser = {
                 firebaseId: payload.userId,
                 email: payload.email,
-                firstName: '',
-                lastName: '',
+                firstname: '',
+                lastname: '',
                 role: payload.role,
                 status: 'ACTIVE'
             };

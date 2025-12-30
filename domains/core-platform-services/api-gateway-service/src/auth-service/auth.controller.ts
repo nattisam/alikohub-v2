@@ -56,7 +56,7 @@ export class AuthController {
     
     return firstValueFrom(
       this.authClient.send({ cmd: 'login' }, loginDto).pipe(
-        timeout(10000),
+        timeout(30000),
         catchError(error => {
           this.handleError(error, 'Login');
           return throwError(() => error);
@@ -76,7 +76,7 @@ export class AuthController {
     
     return firstValueFrom(
       this.authClient.send({ cmd: 'register' }, registerDto).pipe(
-        timeout(10000),
+        timeout(30000),
         catchError(error => {
           this.handleError(error, 'Registration');
           return throwError(() => error);
@@ -218,7 +218,7 @@ export class AuthController {
   async loginWithGoogle(@Body() body: { idToken: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'login_google' }, body).pipe(
-        timeout(10000),
+        timeout(30000),
         catchError(error => {
           this.handleError(error, 'Google Login');
           return throwError(() => error);
@@ -233,7 +233,7 @@ export class AuthController {
   async createSession(@Body() body: { idToken: string }, @Res({ passthrough: true }) response: Response) {
     const result = await firstValueFrom(
       this.authClient.send({ cmd: 'create_session' }, { idToken: body.idToken }).pipe(
-        timeout(10000),
+        timeout(30000),
         catchError(error => {
           this.handleError(error, 'Create Session');
           return throwError(() => error);

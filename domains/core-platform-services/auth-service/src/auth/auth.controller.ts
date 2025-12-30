@@ -101,4 +101,18 @@ export class AuthController {
 		return this.authService.getUserAcademyStatus(data.userId);
 	}
 
+	@MessagePattern({ cmd: 'sync_contech_user' })
+	async handleSyncContechUser(@Payload() data: { userId: string }) {
+		return this.authService.syncContechUser(data.userId);
+	}
+
+	@MessagePattern({ cmd: 'sync_events_user' })
+	async handleSyncEventsUser(@Payload() data: { userId: string }) {
+		return this.authService.syncEventsUser(data.userId);
+	}
+
+	@MessagePattern({ cmd: 'sync_academy_user' })
+	async handleSyncAcademyUser(@Payload() data: { userId: string }) {
+		return this.authService.syncAcademyUser(data.userId);
+	}
 }

@@ -35,4 +35,16 @@ export class UpdateProjectDto extends PartialType(CreateProjectDto) {
     @IsString()
     @IsOptional()
     location?: string;
+
+    @IsString()
+    @IsOptional()
+    manager?: string;
+
+    @IsString()
+    @IsOptional()
+    inspectorId?: string;
+
+    @IsString()
+    @IsOptional()
+    contractorId?: string;
 }

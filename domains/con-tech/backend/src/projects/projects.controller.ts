@@ -35,7 +35,7 @@ export class ProjectsController {
 
   @MessagePattern({cmd: 'find_inspector'})
   async findallinspector(){
-    return await this.projectsService.getInspectors
+    return await this.projectsService.getInspectors()
   }
 
   @MessagePattern({ cmd: 'update_project' })
@@ -77,8 +77,8 @@ export class ProjectsController {
 
   @MessagePattern({ cmd: 'get_project_stats' })
   async getStats(
-    @Payload() payload: { managerId?: string; user: AuthenticatedUser },
+    @Payload() payload: { manager?: string; user: AuthenticatedUser },
   ) {
-    return await this.projectsService.getProjectStats(payload.managerId);
+    return await this.projectsService.getProjectStats(payload.manager);
   }
 }

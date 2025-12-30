@@ -27,10 +27,7 @@ export class ClientReportService {
       data: {
         projectId,
         summary,
-        title,
-        kpis: JSON.stringify(KPIs),
-        createdBy: user.firebaseId, // <-- use firebaseId, consistent with ProjectsService
-        updatedBy: user.firebaseId,
+        KPIs: KPIs as any,
       },
     });
   }
