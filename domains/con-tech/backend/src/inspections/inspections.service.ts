@@ -25,23 +25,14 @@ export class InspectionsService {
     const uploadResults = await Promise.all(photoUploadPromises);
     const photoUrls = uploadResults.map((result) => result.secure_url);
 
-    // 2. Create inspection and its checklist items in a single transaction
+    // 2. Create inspection with checklist and photos as Json
     const inspection = await this.prisma.inspection.create({
       data: {
         projectId: createInspectionDto.projectId,
-        inspectorId: createInspectionDto.inspectorId,
-        status: createInspectionDto.status,
-        photos: photoUrls,
-        checklist: {
-          create: createInspectionDto.checklist.map((item) => ({
-            itemDescription: item.itemDescription,
-            status: item.status,
-            comment: item.comment,
-          })),
-        },
-      },
-      include: {
-        checklist: true,
+        inspector: createInspectionDto.inspectorId, // Mapping inspectorId to inspector
+        status: createInspectionDto.status as string,
+        photos: photoUrls, // Stored as Json array
+        checklist: createInspectionDto.checklist as any, // Stored as Json
       },
     });
 
@@ -54,21 +45,12 @@ export class InspectionsService {
       where: { projectId },
       skip,
       take,
-      include: {
-        checklist: true, 
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
     });
   }
 
   async findOne(id: number) {
     const inspection = await this.prisma.inspection.findUnique({
       where: { id },
-      include: {
-        checklist: true,
-      },
     });
 
     if (!inspection) {
@@ -82,7 +64,10 @@ export class InspectionsService {
 
     return this.prisma.inspection.update({
       where: { id },
-      data: updateInspectionDto,
+      data: {
+        ...updateInspectionDto,
+        status: updateInspectionDto.status as string,
+      } as any,
     });
   }
 

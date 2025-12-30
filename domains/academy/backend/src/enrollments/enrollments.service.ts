@@ -59,20 +59,13 @@ export class EnrollmentsService {
 
     this.logger.log(`User ID to enroll: ${userIdToEnroll}`);
 
-    // Check if the user has an academy profile (more reliable than auth service check)
-    const userProfile = await this.prisma.academyProfile.findUnique({
-      where: { userId: userIdToEnroll }
-    });
+    // Ensure user has an academy profile
+    const userProfile = await this.userService.ensureProfileExists(userIdToEnroll);
     
     if (!userProfile) {
-      // Try to fetch from auth service and create profile if exists there
-      const authUser = await this.userService.getUserById(userIdToEnroll);
-      if (!authUser) {
-        throw new BadRequestException(`User with ID ${userIdToEnroll} does not have an academy profile. They must access the academy first.`);
-      }
-      // User exists in auth but not in academy - this shouldn't happen in normal flow
-      this.logger.warn(`User ${userIdToEnroll} exists in auth but has no academy profile`);
+      throw new BadRequestException(`User with ID ${userIdToEnroll} could not be synchronized or does not exist in the Auth Service.`);
     }
+
 
     // Validate that the course exists and is published
     let course;

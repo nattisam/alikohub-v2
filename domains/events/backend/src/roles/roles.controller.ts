@@ -1,18 +1,23 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload, EventPattern } from '@nestjs/microservices';
-import { PrismaService } from '../database/prisma.service';
+import { RolesService, AuthenticatedUser } from './roles.service';
+import { Role } from '@prisma/client';
 
 @Controller('roles')
 export class RolesController {
-    constructor(private prisma: PrismaService) { }
+    constructor(private rolesService: RolesService) { }
+
+    @MessagePattern({ cmd: 'get_events_profile' })
+    async getProfile(@Payload() payload: { user: AuthenticatedUser }) {
+        return this.rolesService.getOrCreateProfile(payload.user);
+    }
 
     @MessagePattern({ cmd: 'assign_role' })
     async assignRole(@Payload() payload: any) {
         const { dto, user } = payload;
-
-        // Validate the requested role
-        const validRoles = ['USER', 'ATTENDEE', 'ORGANIZER', 'SPONSOR', 'ADMIN'];
-        if (!dto.requestedRole || !validRoles.includes(dto.requestedRole)) {
+        const validRoles = Object.values(Role);
+        
+        if (!dto.requestedRole || !validRoles.includes(dto.requestedRole as Role)) {
             return {
                 success: false,
                 message: 'Invalid role requested'
@@ -20,20 +25,13 @@ export class RolesController {
         }
 
         try {
-            const updatedUser = await this.prisma.eventsProfile.upsert({
-                where: { id: user.firebaseId },
-                update: { role: dto.requestedRole },
-                create: {
-                    id: user.firebaseId,
-                    role: dto.requestedRole
-                }
-            });
+            const updatedProfile = await this.rolesService.assignRole(user.firebaseId, dto.requestedRole as Role);
 
             return {
                 success: true,
                 message: 'Role assigned successfully',
                 data: {
-                    role: updatedUser.role
+                    role: updatedProfile.role
                 }
             };
         } catch (error) {
@@ -50,22 +48,22 @@ export class RolesController {
         const { user } = payload;
 
         try {
-            const existingUser = await this.prisma.eventsProfile.findUnique({
-                where: { id: user.firebaseId }
-            });
+            const profile = await this.rolesService.findProfileById(user.firebaseId);
 
-            if (existingUser) {
+            if (profile) {
                 return {
                     success: true,
                     data: {
-                        role: existingUser.role
+                        role: profile.role
                     }
                 };
             } else {
+                // If profile doesn't exist, try to create/sync it
+                const newProfile = await this.rolesService.getOrCreateProfile(user);
                 return {
                     success: true,
                     data: {
-                        role: null
+                        role: newProfile.role
                     }
                 };
             }
@@ -80,17 +78,16 @@ export class RolesController {
 
     @EventPattern('user_created')
     async handleUserCreated(@Payload() payload: { userId: string; email: string; role: string }) {
-        console.log(`Received user_created event for user: ${payload.userId}`);
         try {
-            await this.prisma.eventsProfile.upsert({
-                where: { id: payload.userId },
-                update: {},
-                create: {
-                    id: payload.userId,
-                    role: 'USER'
-                }
-            });
-            console.log(`Events profile ensured for user: ${payload.userId}`);
+            const mockUser: AuthenticatedUser = {
+                firebaseId: payload.userId,
+                email: payload.email,
+                firstname: '',
+                lastname: '',
+                role: payload.role,
+                status: 'ACTIVE'
+            };
+            await this.rolesService.getOrCreateProfile(mockUser);
         } catch (error) {
             console.error(`Failed to handle user_created event for user: ${payload.userId}`, error);
         }

@@ -8,7 +8,7 @@ async function bootstrap() {
         transport: Transport.TCP,
         options: {
             host: process.env.EVENTS_SERVICE_HOST || 'localhost',
-            port: parseInt(process.env.EVENTS_SERVICE_PORT, 10) || 3004,
+            port: parseInt(process.env.EVENTS_SERVICE_PORT as string, 10) || 3004,
         },
         logger: new AppLogger(),
     });

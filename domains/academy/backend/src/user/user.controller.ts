@@ -50,7 +50,12 @@ export class UserController {
             // Mapping global role to AcademyRole defaults if needed, though getOrCreateProfile handles it
             const authenticatedUser: AuthenticatedUser = {
                 firebaseId: payload.userId,
-                globalRole: payload.role === 'ADMIN' ? 'ADMIN' as any : 'USER' as any
+                email: payload.email,
+                firstname: '',
+                lastname: '',
+                role: payload.role,
+                status: 'ACTIVE',
+                globalRole: payload.role === 'ADMIN' ? 'ADMIN' : 'USER'
             };
             await this.userService.getOrCreateProfile(authenticatedUser);
             this.logger.log(`Academy profile ensured for user: ${payload.userId}`);

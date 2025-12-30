@@ -15,8 +15,8 @@ import { winstonLogger } from '../logger';
 type FindAllQuery = {
   page?: number;
   pageSize?: number;
-  status?: ProjectStatus;
-  managerId?: string;
+  status?: string;
+  manager?: string;
   search?: string;
 };
 
@@ -43,26 +43,15 @@ export class ProjectsService {
       }
 
       // Check if project with same name exists for this manager
-      const existingProject = await this.prisma.project.findFirst({
-        where: {
-          name: dto.name,
-          managerId: user.firebaseId,
-        },
-      });
-
-      if (existingProject) {
-        throw new RpcException('You already have a project with this name');
-      }
-
       const result = await this.prisma.project.create({
         data: {
           ...dto,
+          manager: user.firebaseId,
           contractorId: user.firebaseId,
           inspectorId: user.firebaseId,
-          managerId: user.firebaseId,
-          budgetCents: dto.budget ? dto.budget * 100 : null, // Convert to cents
-          endDate: dto.endDate ? new Date(dto.endDate) : null,
+          endDate: dto.endDate ? new Date(dto.endDate) : new Date(), // Fallback if missing, but schema requires it
           startDate: new Date(dto.startDate),
+          status: 'PLANNED',
           createdBy: user.firebaseId,
           updatedBy: user.firebaseId,
         },
@@ -96,7 +85,7 @@ export class ProjectsService {
 
     const where: any = {};
     if (query.status) where.status = query.status;
-    if (query.managerId) where.managerId = query.managerId;
+    if (query.manager) where.manager = query.manager;
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
@@ -126,7 +115,7 @@ export class ProjectsService {
         const managerIds = [
           ...new Set(
             projects
-              .map((p) => p.managerId)
+              .map((p) => p.manager)
               .filter((id): id is string => id != null),
           ),
         ];
@@ -134,8 +123,7 @@ export class ProjectsService {
 
     const enrichedProjects = projects.map((project) => ({
       ...project,
-      budget: project.budgetCents ? project.budgetCents / 100 : null, // Convert back from cents
-      manager: managers.find((m) => m.firebaseId === project.managerId) || null,
+      manager: managers.find((m) => m.firebaseId === project.manager) || null,
       taskStats: {
         total: project.tasks.length,
         completed: project.tasks.filter((t) => t.status === 'COMPLETED').length,
@@ -158,9 +146,7 @@ export class ProjectsService {
     const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
-        tasks: {
-          orderBy: { createdAt: 'asc' },
-        },
+        tasks: true,
       },
     });
 
@@ -169,11 +155,10 @@ export class ProjectsService {
     }
 
     // Enrich with manager data
-    const manager = await this.userService.getUserById(project.contractorId);
+    const manager = await this.userService.getUserById(project.manager);
 
     return {
       ...project,
-      budget: project.budgetCents ? project.budgetCents / 100 : null,
       manager,
     };
   }
@@ -189,18 +174,22 @@ export class ProjectsService {
     // Check permissions: ADMIN can update any project, PROJECT_MANAGER can only update their own
     if (
       contechProfile.role !== 'ADMIN' &&
-      project.managerId !== user.firebaseId
+      project.manager !== user.firebaseId
     ) {
       throw new ForbiddenException(
         'You do not have permission to update this project',
       );
     }
 
+    // Ensure newly assigned users have profiles and are synced
+    if (dto.manager) await this.userService.ensureProfileExists(dto.manager);
+    if (dto.inspectorId) await this.userService.ensureProfileExists(dto.inspectorId);
+    if (dto.contractorId) await this.userService.ensureProfileExists(dto.contractorId);
+
     return await this.prisma.project.update({
       where: { id },
       data: {
         ...dto,
-        budgetCents: dto.budget ? dto.budget * 100 : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         updatedBy: user.firebaseId,
@@ -219,7 +208,7 @@ export class ProjectsService {
     // Check permissions
     if (
       contechProfile.role !== 'ADMIN' &&
-      project.managerId !== user.firebaseId
+      project.manager !== user.firebaseId
     ) {
       throw new ForbiddenException(
         'You do not have permission to delete this project',
@@ -244,7 +233,7 @@ export class ProjectsService {
     // Check permissions
     if (
       contechProfile.role !== 'ADMIN' &&
-      project.managerId !== user.firebaseId
+      project.manager !== user.firebaseId
     ) {
       throw new ForbiddenException(
         'You do not have permission to update this project status',
@@ -254,14 +243,14 @@ export class ProjectsService {
     return await this.prisma.project.update({
       where: { id },
       data: {
-        status,
+        status: status as string,
         updatedBy: user.firebaseId,
       },
     });
   }
 
-  async getProjectStats(managerId?: string) {
-    const where = managerId ? { managerId } : {};
+  async getProjectStats(manager?: string) {
+    const where = manager ? { manager } : {};
 
     const [totalProjects, activeProjects, completedProjects, plannedProjects] =
       await Promise.all([

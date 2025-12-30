@@ -286,7 +286,10 @@ export class CoursesService {
     }
 
     if (dto.instructorId) {
-      const newInstructorProfile = await this.userService.getOrCreateProfile({ firebaseId: dto.instructorId, globalRole: user.globalRole });
+      const newInstructorProfile = await this.userService.ensureProfileExists(dto.instructorId);
+      if (!newInstructorProfile) {
+        throw new BadRequestException('The assigned user does not exist in the Auth Service.');
+      }
       if (newInstructorProfile.role !== AcademyRole.INSTRUCTOR && newInstructorProfile.role !== AcademyRole.ADMIN) {
         throw new BadRequestException('The assigned user is not an instructor.');
       }
@@ -346,10 +349,10 @@ export class CoursesService {
     }
 
     // Validate that the new instructor is a valid user with the correct role
-    const newInstructorProfile = await this.userService.getOrCreateProfile({
-      firebaseId: newInstructorId,
-      globalRole: user.globalRole
-    });
+    const newInstructorProfile = await this.userService.ensureProfileExists(newInstructorId);
+    if (!newInstructorProfile) {
+      throw new BadRequestException('The assigned user does not exist in the Auth Service.');
+    }
     if (newInstructorProfile.role !== AcademyRole.INSTRUCTOR && newInstructorProfile.role !== AcademyRole.ADMIN) {
       throw new BadRequestException('The assigned user is not a valid instructor.');
     }

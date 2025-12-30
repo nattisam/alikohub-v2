@@ -11,11 +11,14 @@ enum GlobalRole {
 
 export type AuthenticatedUser = {
   firebaseId: string;
-  globalRole: GlobalRole;
+  email: string;
+  firstname: string;
+  lastname: string;
+  role: string;
+  globalRole?: string;
+  status: string;
 };
 
-// Add this interface
-// Update type definition
 export type AcademyUserProfile = {
   id: number;
   userId: string;
@@ -25,7 +28,11 @@ export type AcademyUserProfile = {
   expertise?: string[] | null;
   createdAt: Date;
   updatedAt: Date;
-  user?: any; // Enriched User Info
+  email: string;
+  firstname: string;
+  lastname: string;
+  globalRole?: string;
+  status: string;
 };
 
 @Injectable()
@@ -72,13 +79,15 @@ export class UserService {
   }
 
   async getOrCreateProfile(user: AuthenticatedUser): Promise<AcademyUserProfile> {
+    await this.syncFromAuth(user.firebaseId);
+
     let profile = await this.prisma.academyProfile.findUnique({
       where: { userId: user.firebaseId },
     });
 
     if (!profile) {
       const roleToAssign =
-        user.globalRole === GlobalRole.ADMIN
+        user.globalRole === 'ADMIN'
           ? AcademyRole.ADMIN
           : AcademyRole.USER;
       profile = await this.prisma.academyProfile.create({
@@ -90,38 +99,64 @@ export class UserService {
       });
     }
 
-    // Fetch user details from Auth Service
-    const authUser = await this.getUserById(user.firebaseId);
-
-    // Check if academy profile needs synchronization with auth service data
-    if (authUser && authUser.academyUser && authUser.academyUser.role !== profile.role) {
-      // Sync academy profile with auth service role
-      await this.prisma.academyProfile.update({
-        where: { userId: profile.userId },
-        data: {
-          role: authUser.academyUser.role,
-          hasSelectedRole: true
-        },
-      });
-      
-      // Re-fetch the updated profile
-      profile = await this.prisma.academyProfile.findUnique({
-        where: { userId: user.firebaseId }
-      });
-    }
-
-    // Return the profile, ensuring hasSelectedRole is properly set
+    // Return the profile with enriched user data
     return {
-      id: profile.id,
-      userId: profile.userId,
-      role: profile.role,
-      hasSelectedRole: profile.hasOwnProperty('hasSelectedRole') ? profile.hasSelectedRole : false,
-      bio: profile.bio,
-      expertise: profile.expertise,
-      createdAt: profile.createdAt,
-      updatedAt: profile.updatedAt,
-      user: authUser, // Attach the user details
+      ...profile,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      globalRole: user.globalRole,
+      status: user.status,
     };
+  }
+
+  async ensureProfileExists(userId: string) {
+    const authUser = await this.getUserById(userId);
+    if (!authUser) return null;
+
+    await this.syncFromAuth(userId);
+
+    return this.prisma.academyProfile.upsert({
+      where: { userId },
+      update: {},
+      create: {
+        userId,
+        role: AcademyRole.USER,
+        hasSelectedRole: false,
+      },
+    });
+  }
+
+  private async syncFromAuth(userId: string) {
+    try {
+      const authRecord = await firstValueFrom(
+        this.authClient.send({ cmd: 'sync_academy_user' }, { userId }),
+      );
+
+      if (authRecord) {
+        // Use activeRole if available (it represents the current switched role), otherwise fallback to role
+        const effectiveRole = authRecord.activeRole || authRecord.role;
+
+        if (effectiveRole) {
+          await this.prisma.academyProfile.upsert({
+            where: { userId },
+            create: {
+              userId,
+              role: effectiveRole as AcademyRole,
+              hasSelectedRole: !!authRecord.activeRole,
+            },
+            update: {
+              role: effectiveRole as AcademyRole,
+              // If activeRole is present, we know a selection has been made
+              hasSelectedRole: authRecord.activeRole ? true : undefined,
+            },
+          });
+          this.logger.log(`Synced user ${userId} from auth service. Role: ${effectiveRole}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to sync user ${userId} from auth service`, error);
+    }
   }
 
   // Add this new method for role selection

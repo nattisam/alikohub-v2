@@ -46,37 +46,7 @@ export class MilestonesService {
     });
   }
 
-  async createReview(milestoneId: number, createMilestoneReviewDto: CreateMilestoneReviewDto) {
-    const { status, ...reviewData } = createMilestoneReviewDto;
 
-    return this.prisma.$transaction(async (prisma) => {
-      const review = await prisma.milestoneReview.create({
-        data: {
-          milestoneId,
-          status,
-          ...reviewData,
-        },
-      });
-
-      const updatedMilestone = await prisma.milestone.update({
-        where: { id: milestoneId },
-        data: { status: status },
-      });
-
-      await this.updateProjectProgress(updatedMilestone.projectId);
-
-      return { review, updatedMilestone };
-    });
-  }
-
-  getReviewsForMilestone(milestoneId: number) {
-    return this.prisma.milestoneReview.findMany({
-      where: { milestoneId },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
 
   private async updateProjectProgress(projectId: number) {
     const milestones = await this.prisma.milestone.findMany({

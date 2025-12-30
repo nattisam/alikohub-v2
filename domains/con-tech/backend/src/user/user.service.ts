@@ -7,8 +7,8 @@ import { firstValueFrom } from 'rxjs';
 export type AuthenticatedUser = {
   firebaseId: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   role: string;
   globalRole?: string;
   status: string;
@@ -22,6 +22,11 @@ export type ConTechUserProfile = {
   bio?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  email: string;
+  firstname: string;
+  lastname: string;
+  globalRole?: string;
+  status: string;
 };
 
 @Injectable()
@@ -36,6 +41,8 @@ export class UserService {
   async getOrCreateProfile(
     user: AuthenticatedUser,
   ): Promise<ConTechUserProfile> {
+    await this.syncFromAuth(user.firebaseId);
+    
     let profile = await this.prisma.contechProfile.findUnique({
       where: { userId: user.firebaseId },
     });
@@ -51,14 +58,40 @@ export class UserService {
     }
 
     return {
-      id: profile.id,
-      userId: profile.userId,
-      role: profile.role,
-      hasSelectedRole: profile.hasSelectedRole,
-      bio: profile.bio,
-      createdAt: profile.createdAt,
-      updatedAt: profile.updatedAt,
+      ...profile,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      globalRole: user.globalRole,
+      status: user.status,
     };
+  }
+
+  async ensureProfileExists(userId: string) {
+    const authUser = await this.getUserById(userId);
+    if (!authUser) return null;
+
+    await this.syncFromAuth(userId);
+
+    return this.prisma.contechProfile.upsert({
+      where: { userId },
+      update: {},
+      create: {
+        userId,
+        role: ContechRole.USER,
+        hasSelectedRole: false,
+      },
+    });
+  }
+
+  private async syncFromAuth(userId: string) {
+    try {
+      await firstValueFrom(
+        this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
+      );
+    } catch (error) {
+      this.logger.error(`Failed to sync user ${userId} from auth service`, error);
+    }
   }
 
   async getUserById(userId: string) {
@@ -83,11 +116,20 @@ export class UserService {
     }
   }
 
-  async updateProfile(userId: string, updateData: any) {
-    return this.prisma.contechProfile.update({
-      where: { userId },
+  async updateProfile(user: AuthenticatedUser, updateData: any) {
+    const profile = await this.prisma.contechProfile.update({
+      where: { userId: user.firebaseId },
       data: updateData,
     });
+
+    return {
+      ...profile,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      globalRole: user.globalRole,
+      status: user.status,
+    };
   }
 
   async selectRole(userId: string, role: ContechRole) {

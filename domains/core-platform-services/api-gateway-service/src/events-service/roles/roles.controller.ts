@@ -33,4 +33,12 @@ export class RolesController {
         };
         return this.eventsClient.send({ cmd: 'get_user_role' }, payload);
     }
+
+    @Get('profile')
+    getProfile(@Request() req: RequestWithUser) {
+        const payload = {
+            user: req.user,
+        };
+        return this.eventsClient.send({ cmd: 'get_events_profile' }, payload);
+    }
 }
