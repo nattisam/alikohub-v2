@@ -51,7 +51,7 @@ export const enrollmentApi = {
 
   // Get all enrolled courses for the current user (simplified)
   getMyCourses: () =>
-    academyApi.get<Course[]>("/academy/enrollments/my-courses"),
+    academyApi.get<Course[]>("/academy/enrollment/my-courses"),
 
   // Get all enrollments (admin only)
   getAllEnrollments: () =>

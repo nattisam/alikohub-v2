@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { InstructorCoursesProvider } from "../context_providers/InstructorCourseContextProvider";
 
 const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user: currentUser, logout } = useAuth();
@@ -74,7 +75,9 @@ const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
 
       {/* Main Content */}
       <main className="flex-1 pb-16 lg:pb-0">
-        {children}
+        <InstructorCoursesProvider>
+          {children}
+        </InstructorCoursesProvider>
       </main>
     </div>
   );

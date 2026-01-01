@@ -11,7 +11,7 @@ import { enrollmentApi } from "../api/enrollmentApi";
 import { courseApi } from "../api/courseApi";
 import type { CourseProgress } from "../api/progressApi";
 import type { Course } from "../components/types.d.tsx";
-import AllCourses from "../components/AllCourses";
+
 import StudentProgressTracker from "../components/StudentProgressTracker";
 import StudentModuleView from "../components/StudentModuleView";
 import { useNavigate } from "react-router-dom";
@@ -118,36 +118,33 @@ const AcademyStudentDashboard = () => {
     );
   }
 
-  const [stats, setStats] = useState({
-    enrolledCourses: 0,
-    completedCourses: 0,
-    certificates: 0,
-  });
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [courseForModuleView, setCourseForModuleView] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
+  
+  const [stats, setStats] = useState({
+    enrolledCourses: 0,
+    completedCourses: 0,
+    certificates: 0,
+  });
+
+  // Update stats when courses change
+  useEffect(() => {
+    const completedCourses = courses.filter(course => course.progress && course.progress >= 100).length;
+    setStats({
+      enrolledCourses: courses.length,
+      completedCourses,
+      certificates: completedCourses,
+    });
+  }, [courses]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null); // Reset error state
-      
-      // Fetch dashboard statistics
-      const progressResponse = await progressApi.getStudentDashboard();
-      const progressCourses: CourseProgress[] = progressResponse.data;
-      
-      // Calculate stats
-      const enrolledCourses = progressCourses.length;
-      const completedCourses = progressCourses.filter(course => course.percentage === 100).length;
-      
-      setStats({
-        enrolledCourses,
-        completedCourses,
-        certificates: completedCourses, // For now, assume certificates = completed courses
-      });
       
       // Fetch enrolled courses
       const coursesResponse = await enrollmentApi.getMyCourses();
@@ -264,16 +261,20 @@ const AcademyStudentDashboard = () => {
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-3xl font-bold text-blue-600">{stats.enrolledCourses}</div>
+                <div className="text-3xl font-bold text-blue-600">{courses.length}</div>
                 <div className="text-gray-600 mt-1">Enrolled Courses</div>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-3xl font-bold text-green-600">{stats.completedCourses}</div>
+                <div className="text-3xl font-bold text-green-600">{
+                  courses.filter(course => course.progress && course.progress >= 100).length
+                }</div>
                 <div className="text-gray-600 mt-1">Completed Courses</div>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-3xl font-bold text-yellow-600">{stats.certificates}</div>
-                <div className="text-gray-600 mt-1">Certificates</div>
+                <div className="text-3xl font-bold text-yellow-600">{
+                  courses.filter(course => course.progress && course.progress >= 100).length
+                }</div>
+                <div className="text-gray-600 mt-1">Certificates Earned</div>
               </div>
             </div>
 
@@ -285,11 +286,7 @@ const AcademyStudentDashboard = () => {
                   onviewProgress={handleViewProgress} 
                   onViewCourseContent={handleViewCourseContent} 
                 />
-                <AllCourses 
-                  className="mt-6" 
-                  onViewCourseContent={handleViewCourseContent} 
-                  onEnrollmentComplete={handleEnrollmentComplete}
-                />
+
               </div>
 
               <div className="w-full xl:w-80">

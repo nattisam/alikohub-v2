@@ -115,26 +115,17 @@ export const InstructorCoursesProvider: React.FC<{
       // Log the incoming course data for debugging
       console.log("InstructorCourseContextProvider - Creating course with data:", newCourse);
       
-      // Prepare the course data according to CreateCourseDto
+      // Prepare the course data according to CreateCourseDto - only include required fields
       const courseData = {
         title: newCourse.title || "",
         shortDescription: newCourse.shortDescription || "",
         longDescription: newCourse.longDescription || "",
-        thumbnail: newCourse.thumbnail || "", // Add thumbnail property
+        thumbnail: newCourse.thumbnail || "",
         category: newCourse.category || "Technology",
-        // Set status to PUBLISHED by default so courses appear on homepage immediately
-        status: "PUBLISHED",
-        skills: newCourse.skills || [],
-        conceptsLearned: newCourse.conceptsLearned || [],
-        estimatedTime: newCourse.estimatedTime || undefined,
-        targetLevel: newCourse.targetLevel || undefined,
-        prerequisites: newCourse.prerequisites || [],
-        languages: newCourse.languages || [],
-        // Include the createDefaultCohort property
-        createDefaultCohort: newCourse.createDefaultCohort || false,
+        status: newCourse.status || "PUBLISHED", // Use provided status or default to PUBLISHED
       };
       
-      const response = await academyApi.post("/courses", courseData);
+      const response = await academyApi.post("/academy/courses", courseData);
       
       if (response.data) {
         const course = response.data;

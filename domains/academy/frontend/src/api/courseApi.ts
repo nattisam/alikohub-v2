@@ -2,8 +2,26 @@ import { academyApi } from "../api";
 import { enrollmentApi } from "./enrollmentApi";
 import axios from "axios";
 
-// Since backend requires auth for all course endpoints, we'll use the regular academyApi
-const publicAcademyApi = academyApi;
+const env = import.meta.env.MODE as "development" | "production" | "test";
+
+const PORT = import.meta.env.VITE_API_PORT || 3006;
+
+// Choose academy base URL depending on environment
+const ACADEMY_BASE_URL =
+  env === "development"
+    ? `http://localhost:${PORT}` // your local dev server
+    : "https://alikohub.com/api/academy"; // production server
+
+// Create a public API instance that doesn't require authentication for published courses
+const publicAcademyApi = axios.create({
+  baseURL: ACADEMY_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+  // Ensure no credentials are sent
+  withCredentials: false,
+});
 
 // Course APIs
 export const courseApi = {
@@ -33,10 +51,22 @@ export const courseApi = {
       throw error;
     }
   },
-  getCourse: (id: number) => academyApi.get(`/academy/courses/${id}`),
-  createCourse: (data: any) => academyApi.post("academy/courses", data),
+  getCourse: async (id: number) => {
+    try {
+      // Try public API first (for published courses)
+      const response = await publicAcademyApi.get(`/academy/courses/${id}`);
+      return response;
+    } catch (error: any) {
+      // If public access fails (401/403), try with authentication for private courses
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return academyApi.get(`/academy/courses/${id}`);
+      }
+      throw error;
+    }
+  },
+  createCourse: (data: any) => academyApi.post("/academy/courses", data),
   updateCourse: (id: number, data: any) => academyApi.patch(`academy/courses/${id}`, data),
-  deleteCourse: (id: number) => academyApi.delete(`academy/courses/${id}`),
+  deleteCourse: (id: number) => academyApi.delete(`/academy/courses/${id}`),
 
   // Modules
   getModules: (courseId: number) => academyApi.get(`/modules/course/${courseId}`),

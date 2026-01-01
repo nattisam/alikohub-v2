@@ -10,7 +10,7 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   // Navigation items
   const navItems = [
     { path: "/student-dashboard", label: "Dashboard", icon: "📊" },
-    { path: "/student-dashboard/mycourses", label: "My Courses", icon: "📚" },
+    { path: "/student-dashboard/mycourses", label: "All Courses", icon: "📚" },
     { path: "/student-dashboard/progress", label: "Progress", icon: "📈" },
     { path: "/student-dashboard/certificates", label: "Certificates", icon: "📜" },
     { path: "/student-dashboard/profile", label: "Profile", icon: "👤" },

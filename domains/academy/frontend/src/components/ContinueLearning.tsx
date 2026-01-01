@@ -1,63 +1,39 @@
-import courseImg from "../assets/courses.png";
 import { useState, useEffect } from "react";
 import { progressApi } from "../api/progressApi";
+import { enrollmentApi } from "../api/enrollmentApi";
 import type { CourseProgress } from "../api/progressApi";
 import { courseApi } from "../api/courseApi";
 import type { Course } from "./types.d.tsx";
 import { FaChartLine } from "react-icons/fa";
 
-export default function ContinueLearning({ onviewProgress, onViewCourseContent }: { onviewProgress?: (courseId: number) => void, onViewCourseContent?: (courseId: number) => void }) {
-  const [courses, setCourses] = useState<(CourseProgress & { thumbnail?: string })[]>([]);
+interface ContinueLearningProps {
+  onviewProgress?: (courseId: number) => void;
+  onViewCourseContent?: (courseId: number) => void;
+}
+
+export default function ContinueLearning({ onviewProgress, onViewCourseContent }: ContinueLearningProps) {
+  const [enrollments, setEnrollments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      setLoading(true);
-      setError(null);
-      
+    const fetchEnrollments = async () => {
       try {
-        // Fetch student dashboard data which includes progress information
-        const response = await progressApi.getStudentDashboard();
-        const courseProgressData: CourseProgress[] = response.data;
-        
-        // Enhance the data with actual course information including thumbnails
-        if (courseProgressData.length > 0) {
-          // Get detailed course information for each enrolled course
-          const courseDetails = await Promise.all(
-            courseProgressData.map(async (progress) => {
-              try {
-                const courseResponse = await courseApi.getCourse(progress.courseId);
-                const course: Course = courseResponse.data;
-                return {
-                  ...progress,
-                  course: course.title || progress.course,
-                  thumbnail: course.thumbnail // Add thumbnail from course data
-                };
-              } catch (error) {
-                // If we can't get the course details, use the existing data
-                return progress;
-              }
-            })
-          );
-          setCourses(courseDetails);
-        } else {
-          setCourses(courseProgressData);
-        }
-      } catch (err: any) {
-        console.error("Error fetching courses:", err);
+        setLoading(true);
+        // Get enrolled courses with progress from the enrollment API
+        const response = await enrollmentApi.getMyCourses(); // Using the enrollment API as you specified
+        setEnrollments(response.data);
+      } catch (err) {
+        console.error("Error fetching continue learning courses:", err);
         setError("Failed to load courses");
-        // Fallback to dummy data if API fails
-        setCourses([
-          { courseId: 1, course: "Cloud Practitioner", percentage: 20 },
-          { courseId: 2, course: "Azure Fundamentals", percentage: 65 },
-        ]);
+        // Fallback to empty array
+        setEnrollments([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourses();
+    fetchEnrollments();
   }, []);
 
   if (loading) {
@@ -96,6 +72,18 @@ export default function ContinueLearning({ onviewProgress, onViewCourseContent }
     );
   }
 
+  // Map enrollments to the format expected by the UI
+  const coursesWithDetails = enrollments.map(enrollment => {
+    const course = enrollment.course || enrollment.cohort?.course;
+    return {
+      courseId: enrollment.courseId,
+      title: course?.title || enrollment.course,
+      thumbnail: course?.thumbnail,
+      percentage: enrollment.progress || 0
+    };
+  });
+
+
   return (
     <div className="w-full mt-6">
       <div className="max-w-[1200px] mx-auto bg-white border border-[#E7E7E7] rounded-lg p-6">
@@ -104,32 +92,33 @@ export default function ContinueLearning({ onviewProgress, onViewCourseContent }
             Continue Learning
           </h2>
           <span className="text-gray-500 text-sm md:text-md">
-            {courses.length} Enrollments
+            {coursesWithDetails.length} Enrollments
           </span>
         </div>
 
-        {courses.length === 0 ? (
+        {coursesWithDetails.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
             You are not enrolled in any courses yet. Check out the courses available below!
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
+            {coursesWithDetails.map((course) => (
               <div
                 key={course.courseId}
                 className="bg-white border border-[#E7E7E7] p-4 rounded shadow flex flex-col gap-6"
               >
-                <img
-                  src={course.thumbnail || "/placeholder-course-image.jpg"} // Use real thumbnail or fallback
-                  alt={course.course}
-                  className="w-full h-32 object-cover rounded"
-                  onError={(e) => {
-                    // Fallback to placeholder if image fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/placeholder-course-image.jpg";
-                  }}
-                />
-                <h3 className="font-semibold">{course.course}</h3>
+                {course.thumbnail ? (
+                  <img
+                    src={course.thumbnail} // Use real thumbnail from server database
+                    alt={course.title}
+                    className="w-full h-32 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center">
+                    <span className="text-gray-500">No Image</span>
+                  </div>
+                )}
+                <h3 className="font-semibold">{course.title}</h3>
                 <div className="flex flex-col gap-2">
                   <div className="w-full bg-gray-200 rounded h-2">
                     <div

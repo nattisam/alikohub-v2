@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { academyApi } from "../api";
+import { courseApi } from "../api/courseApi";
+import { enrollmentApi } from "../api/enrollmentApi";
 import { useAuth } from "../contexts/AuthContext";
 import type { Course, Enrollment } from "../components/types.d";
 import { FaStar, FaUsers, FaClock, FaTag, FaDollarSign, FaBook, FaUser, FaPlay, FaFilePdf, FaVideo } from "react-icons/fa";
@@ -28,8 +29,14 @@ const CourseDetailsPage: React.FC = () => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        const response = await academyApi.get(`/academy/courses/${courseId}`);
-        setCourse(response.data);
+        const response = await courseApi.getCourse(parseInt(courseId || '0'));
+        // Handle response structure: if data has items array, take first item
+        if (response.data.items && Array.isArray(response.data.items) && response.data.items.length > 0) {
+          setCourse(response.data.items[0]);
+        } else {
+          // If response is directly the course object
+          setCourse(response.data);
+        }
       } catch (err) {
         console.error("Error fetching course:", err);
         setError("Failed to load course details. Please try again later.");
@@ -48,8 +55,14 @@ const CourseDetailsPage: React.FC = () => {
     const fetchUserEnrollments = async () => {
       if (currentUser) {
         try {
-          const response = await academyApi.get("/academy/enrollment/me");
-          setUserEnrollments(response.data);
+          const response = await enrollmentApi.getMyCourses();
+          // Handle response structure: if data has items array, use it, otherwise use data directly
+          if (response.data.items && Array.isArray(response.data.items)) {
+            setUserEnrollments(response.data.items);
+          } else {
+            // If response is directly the array of enrollments
+            setUserEnrollments(response.data);
+          }
         } catch (err) {
           console.error("Error fetching user enrollments:", err);
         } finally {
@@ -86,7 +99,7 @@ const CourseDetailsPage: React.FC = () => {
     try {
       setEnrolling(true);
       // Create enrollment for the current user
-      const response = await academyApi.post("/enrollment", {
+      const response = await enrollmentApi.createEnrollment({
         courseId: parseInt(courseId || "0"),
       });
       
@@ -94,12 +107,24 @@ const CourseDetailsPage: React.FC = () => {
         // Show success message
         alert("Successfully enrolled in the course!");
         // Refresh course data to show updated enrollment status
-        const updatedCourseResponse = await academyApi.get(`/academy/courses/${courseId}`);
-        setCourse(updatedCourseResponse.data);
+        const updatedCourseResponse = await courseApi.getCourse(parseInt(courseId || '0'));
+        // Handle response structure: if data has items array, take first item
+        if (updatedCourseResponse.data.items && Array.isArray(updatedCourseResponse.data.items) && updatedCourseResponse.data.items.length > 0) {
+          setCourse(updatedCourseResponse.data.items[0]);
+        } else {
+          // If response is directly the course object
+          setCourse(updatedCourseResponse.data);
+        }
         
         // Also refresh user enrollments to update the isEnrolled state
-        const enrollmentResponse = await academyApi.get("/enrollment/me");
-        setUserEnrollments(enrollmentResponse.data);
+        const enrollmentResponse = await enrollmentApi.getMyCourses();
+        // Handle response structure: if data has items array, use it, otherwise use data directly
+        if (enrollmentResponse.data.items && Array.isArray(enrollmentResponse.data.items)) {
+          setUserEnrollments(enrollmentResponse.data.items);
+        } else {
+          // If response is directly the array of enrollments
+          setUserEnrollments(enrollmentResponse.data);
+        }
       }
     } catch (err: any) {
       console.error("Error enrolling in course:", err);

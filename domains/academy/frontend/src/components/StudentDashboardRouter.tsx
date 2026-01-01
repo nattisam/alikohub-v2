@@ -50,7 +50,7 @@ const StudentDashboardRouter: React.FC = () => {
     <StudentDashboardLayout>
       <Routes>
         <Route path="" element={<AcademyStudentDashboard />} />
-        <Route path="/courses/*" element={<StudentCourseOverview />} />
+        <Route path="/mycourses" element={<StudentCourseOverview />} />
         <Route path="/profile" element={<StudentProfile />} />
         <Route path="/settings" element={<StudentProfile />} />
       </Routes>
