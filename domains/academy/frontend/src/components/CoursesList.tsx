@@ -1,4 +1,4 @@
-import { useStudentCourses } from "../hooks/useStudentCourses";
+import { useEnrollCourse } from "../queries/studentCourses";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import CourseCard from "./StudentCourseCard";
@@ -12,7 +12,7 @@ const CoursesList = ({
   category: string;
 }) => {
   const cardWidth = window.innerWidth / 4;
-  const { enrollCourse } = useStudentCourses();
+  const enrollCourseMutation = useEnrollCourse();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
@@ -33,7 +33,7 @@ const CoursesList = ({
                 if (currentUser) {
                   // Check if user has student role
                   if (currentUser.role === 'STUDENT' || currentUser.globalRole === 'USER') {
-                    enrollCourse(course.id);
+                    enrollCourseMutation.mutate(course.id);
                   } else {
                     alert("Only students can enroll in courses. Please switch to student role.");
                   }

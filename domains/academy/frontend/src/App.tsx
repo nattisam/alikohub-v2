@@ -9,6 +9,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { useAuth } from './contexts/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import NotFoundState from './components/states/NotFoundState';
 
 import LoginPage from './Pages/LoginPage';
 import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
@@ -121,7 +123,8 @@ const DashboardLayout = () => {
 
 function App() {
   return (
-    <Router>
+    <ErrorBoundary>
+      <Router>
       <Routes>
         {/* Public routes */}
         <Route element={<PublicLayout />}>
@@ -208,9 +211,15 @@ function App() {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={
+          <NotFoundState 
+            title="Page Not Found" 
+            message="The page you are looking for does not exist."
+          /> 
+        } />
       </Routes>
-    </Router>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

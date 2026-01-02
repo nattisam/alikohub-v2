@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { InstructorCoursesProvider } from "../context_providers/InstructorCourseContextProvider";
+
 
 const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user: currentUser, logout } = useAuth();
@@ -14,7 +14,6 @@ const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
     { path: "/instructor", label: "Dashboard", icon: "📊" },
     { path: "/instructor/mycourses", label: "My Courses", icon: "📚" },
     { path: "/instructor/create-course", label: "Create Course", icon: "➕" },
-    { path: "/instructor/submissions", label: "Submissions", icon: "📋" },
     { path: "/instructor/analytics", label: "Analytics", icon: "📈" },
   ];
 
@@ -75,9 +74,7 @@ const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ ch
 
       {/* Main Content */}
       <main className="flex-1 pb-16 lg:pb-0">
-        <InstructorCoursesProvider>
-          {children}
-        </InstructorCoursesProvider>
+        {children}
       </main>
     </div>
   );

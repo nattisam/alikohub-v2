@@ -23,11 +23,6 @@ const publicAcademyApi = axios.create({
   withCredentials: false,
 });
 
-export interface CourseModule {
-  id: number;
-  title: string;
-  lessons: CourseLesson[];
-}
 
 export interface CourseLesson {
   id: number;

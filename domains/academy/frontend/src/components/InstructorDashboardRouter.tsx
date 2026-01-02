@@ -1,14 +1,14 @@
 import React from "react";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import RoleSelectionModal from "./RoleSelectionModal";
 import InstructorDashboardMain from "../Pages/InstructorDashboard";
 import InstructorMyCourses from "../Pages/InstructorMyCourses";
 import InstructorCreateCourse from "../Pages/InstructorCreateCourse";
-import InstructorSubmissions from "../Pages/InstructorSubmissions";
 import InstructorAnalytics from "../Pages/InstructorAnalytics";
 import InstructorDashboardLayout from "./InstructorDashboardLayout";
 import ManageCoursePage from "../Pages/ManageCoursePage";
+import NotFoundState from "./states/NotFoundState";
 
 const InstructorDashboardRouter: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -65,8 +65,16 @@ const InstructorDashboardRouter: React.FC = () => {
         <Route path="/mycourses" element={<InstructorMyCourses />} />
         <Route path="/mycourses/manage/:id" element={<ManageCoursePage />} />
         <Route path="/create-course" element={<InstructorCreateCourse />} />
-        <Route path="/submissions" element={<InstructorSubmissions />} />
         <Route path="/analytics" element={<InstructorAnalytics />} />
+        <Route 
+          path="*" 
+          element={
+            <NotFoundState 
+              title="Page Not Found" 
+              message="The page you are looking for does not exist in the instructor dashboard."
+            /> 
+          } 
+        />
       </Routes>
     </InstructorDashboardLayout>
   );

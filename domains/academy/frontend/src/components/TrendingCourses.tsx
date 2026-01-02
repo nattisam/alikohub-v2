@@ -1,11 +1,11 @@
 import TrendingCourseCard from "./TrendingCourseCard";
 import type { Course } from "./types.d";
-import { useStudentCourses } from "../hooks/useStudentCourses";
+import { useEnrollCourse } from "../queries/studentCourses";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const TrendingCourses = ({ courses }: { courses: Course[] }) => {
-  const { enrollCourse } = useStudentCourses();
+  const enrollCourseMutation = useEnrollCourse();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
@@ -16,7 +16,7 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
     if (currentUser) {
       // Check if user has student role
       if (currentUser.role === 'STUDENT' || currentUser.globalRole === 'USER') {
-        enrollCourse(courseId);
+        enrollCourseMutation.mutate(courseId);
       } else {
         alert("Only students can enroll in courses. Please switch to student role.");
       }

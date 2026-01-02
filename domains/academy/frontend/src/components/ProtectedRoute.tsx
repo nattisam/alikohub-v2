@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import AccessDenied from './states/AccessDenied';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -40,7 +41,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (requiredRole === "INSTRUCTOR" && 
       (currentUser.roleStatus?.instructor === "pending" || currentUser.roleStatus?.instructor === "rejected" || currentUser.roleStatus?.instructor === "not_applied")) {
     // Don't allow access to instructor dashboard if application is pending, not applied, or rejected
-    return <Navigate to="/" replace state={{ from: location }} />;
+    return <AccessDenied 
+      title="Access Denied"
+      message="You do not have access to the instructor dashboard."
+    />;
   }
 
   // If a required role is specified, check if user has it
@@ -54,8 +58,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
                            (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application
     
     if (!hasRequiredRole) {
-      // Redirect to home if user doesn't have required role
-      return <Navigate to="/" replace state={{ from: location }} />;
+      // Show access denied state if user doesn't have required role
+      return <AccessDenied 
+        title="Access Denied"
+        message="You do not have permission to access this page."
+      />;
     }
   }
 
@@ -85,7 +92,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Default fallback - should not reach here
-  return <Navigate to="/" replace />;
+  return <AccessDenied 
+    title="Access Denied"
+    message="You do not have permission to access this page."
+  />;
 };
 
 export default ProtectedRoute;

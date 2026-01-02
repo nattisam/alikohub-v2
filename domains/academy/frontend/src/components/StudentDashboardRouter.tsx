@@ -3,14 +3,16 @@ import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import RoleSelectionModal from "./RoleSelectionModal";
 import AcademyStudentDashboard from "../Pages/AcademyStudentDashboard";
-import StudentDashboard from "../Pages/StudentDashboard";
 import StudentCourseOverview from "../Pages/StudentCourseOverview";
 import StudentProfile from "../Pages/StudentProfile";
 import StudentDashboardLayout from "./StudentDashboardLayout";
+import StudentCertificatesPage from "../Pages/StudentCertificatesPage";
+import NotFoundState from "./states/NotFoundState";
 
 const StudentDashboardRouter: React.FC = () => {
   const { user: currentUser } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check the active role from the user's academyUser
   const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
@@ -50,9 +52,20 @@ const StudentDashboardRouter: React.FC = () => {
     <StudentDashboardLayout>
       <Routes>
         <Route path="" element={<AcademyStudentDashboard />} />
-        <Route path="/mycourses" element={<StudentCourseOverview />} />
-        <Route path="/profile" element={<StudentProfile />} />
-        <Route path="/settings" element={<StudentProfile />} />
+        <Route path="mycourses" element={<StudentCourseOverview />} />
+        <Route path="certificates" element={<StudentCertificatesPage />} />
+        <Route path="profile" element={<StudentProfile />} />
+        <Route path="settings" element={<StudentProfile />} />
+        <Route 
+          path="*" 
+          element={
+            <NotFoundState 
+              title="Page Not Found" 
+              message="The page you are looking for does not exist in the student dashboard."
+              onGoHome={() => navigate('/student-dashboard')} 
+            /> 
+          } 
+        />
       </Routes>
     </StudentDashboardLayout>
   );

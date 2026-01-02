@@ -33,16 +33,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only clear storage if it's a definitive authentication failure
-      // We check if there was actually a token before removing it
       const token = localStorage.getItem('accessToken');
       if (token) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('firebaseCustomToken');
         localStorage.removeItem('user');
       }
-      // We don't automatically redirect in the academy app like in general app
-      // The UI components will handle the unauthorized state
     }
     return Promise.reject(error);
   }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useInstructorCourses } from "../hooks/useInstructorCourses";
+import { useCreateCourse } from "../queries/instructorCourses";
 import type { Course } from "../components/types.d";
 
 interface CourseData {
@@ -24,7 +24,7 @@ const InstructorCreateCourse: React.FC = () => {
   
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { createCourse } = useInstructorCourses();
+  const createCourseMutation = useCreateCourse();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -36,20 +36,20 @@ const InstructorCreateCourse: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
     try {
-      const courseId = await createCourse(course as Partial<Course>);
+      const response = await createCourseMutation.mutateAsync(course as Partial<Course>);
+      const courseId = response.data?.id || -1;
+      
       if (courseId > 0) {
         alert("Course created successfully!");
+        navigate("/instructor/mycourses");
       } else {
         alert("Failed to create course. Please try again.");
       }
     } catch (error) {
       console.error("Error creating course:", error);
       alert("Failed to create course. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -129,15 +129,16 @@ const InstructorCreateCourse: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
-            <input
-              type="text"
-              name="category"
-              value={course.category}
+                    <select
+              name="status"
+              value={course.status}
               onChange={handleChange}
-              required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter category"
-            />
+            >
+              <option value="STEM">STEM</option>
+              <option value="Health">Health</option>
+              <option value="Technology">Technology</option>
+            </select>
           </div>
 
           <div>
@@ -166,10 +167,10 @@ const InstructorCreateCourse: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={createCourseMutation.isPending}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating..." : "Create Course"}
+              {createCourseMutation.isPending ? "Creating..." : "Create Course"}
             </button>
           </div>
         </form>

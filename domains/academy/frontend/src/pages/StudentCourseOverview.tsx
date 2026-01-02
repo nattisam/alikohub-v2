@@ -5,8 +5,7 @@ import { courseApi, enrollmentApi } from "../api/courseApi";
 import type { Course } from "../components/types.d.tsx";
 import AllCourses from "../components/AllCourses";
 import StudentModuleView from "../components/StudentModuleView";
-import ErrorState from "../components/states/ErrorState";
-import EmptyState from "../components/states/EmptyState";
+
 import RoleSelectionModal from "../components/RoleSelectionModal";
 import TeacherApplicationModal from "../components/TeacherApplicationModal";
 

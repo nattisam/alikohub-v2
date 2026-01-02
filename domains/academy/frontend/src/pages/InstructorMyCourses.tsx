@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useInstructorCourses } from "../hooks/useInstructorCourses";
+import { useInstructorCourses } from "../queries/instructorCourses";
 import { useAuth } from "../contexts/AuthContext";
 import { FaPlus, FaEdit, FaBook } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -24,8 +24,9 @@ import {
 } from 'lucide-react';
 
 const InstructorMyCourses: React.FC = () => {
-  const { courses } = useInstructorCourses();
   const { user: currentUser } = useAuth();
+  const instructorId = currentUser?.firebaseId;
+  const { data: courses = [], isLoading, isError } = useInstructorCourses(instructorId);
   const navigate = useNavigate();
 
   const activeRole =
@@ -54,6 +55,33 @@ const InstructorMyCourses: React.FC = () => {
           showHomeButton
           showBackButton
         />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500">Failed to load courses. Please try again later.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }

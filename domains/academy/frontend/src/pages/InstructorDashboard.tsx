@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useInstructorCourses } from "../hooks/useInstructorCourses";
-import { academyApi } from "../api";
+import { useInstructorStats } from "../queries/instructorStats";
+import { useInstructorCourses } from "../queries/instructorCourses";
 import { FaChalkboardTeacher, FaBook, FaUsers, FaStar } from "react-icons/fa";
 import ErrorState from "../components/states/ErrorState";
 import EmptyState from "../components/states/EmptyState";
@@ -9,47 +9,19 @@ import AccessDenied from "../components/states/AccessDenied";
 
 const InstructorDashboardMain: React.FC = () => {
   const { user: currentUser } = useAuth();
-  const { courses } = useInstructorCourses();
+  
+  const instructorId = currentUser?.firebaseId;
+  const { data: courses = [] } = useInstructorCourses(instructorId);
+  const {
+    data: instructorStats,
+    isLoading,
+    isError,
+    error
+  } = useInstructorStats();
 
-  const [instructorStats, setInstructorStats] = useState({
-    experience: 10,
-    courses: 0,
-    students: 0,
-    rating: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchInstructorStats = async () => {
-      try {
-        setLoading(true);
-        setError(null); // Reset error state
-        const response = await academyApi.get(
-          "/academy/progress/instructor/stats"
-        );
-        setInstructorStats({
-          experience: response.data.yearsOfExperience || 10,
-          courses: response.data.totalCourses || 0,
-          students: response.data.totalStudents || 0,
-          rating: response.data.averageRating || 0,
-        });
-      } catch (err) {
-        setError(err as Error);
-        // Set default stats in case of error
-        setInstructorStats({
-          experience: 10,
-          courses: courses.length,
-          students: 847,
-          rating: 4.9,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    if (currentUser) fetchInstructorStats();
-  }, [currentUser]);
+
 
   // Check if user has instructor role
   const activeRole =
@@ -76,49 +48,21 @@ const InstructorDashboardMain: React.FC = () => {
   }
 
   // Check for error state
-  if (error) {
+  if (isError) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
         <ErrorState
           title="Failed to Load Dashboard"
           message="There was an error loading your dashboard data. Please try again later."
-          error={error}
-          onRetry={() => {
-            // Retry the data fetch
-            const fetchInstructorStats = async () => {
-              try {
-                setLoading(true);
-                setError(null);
-                const response = await academyApi.get(
-                  "/progress/instructor/stats"
-                );
-                setInstructorStats({
-                  experience: response.data.yearsOfExperience || 10,
-                  courses: response.data.totalCourses || 0,
-                  students: response.data.totalStudents || 0,
-                  rating: response.data.averageRating || 0,
-                });
-              } catch (err) {
-                setError(err as Error);
-                setInstructorStats({
-                  experience: 10,
-                  courses: courses.length,
-                  students: 847,
-                  rating: 4.9,
-                });
-              } finally {
-                setLoading(false);
-              }
-            };
-            fetchInstructorStats();
-          }}
+          error={error as Error}
+          onRetry={() => window.location.reload()}
         />
       </div>
     );
   }
 
   // Check for empty state - if instructor has no courses
-  if (!loading && instructorStats.courses === 0) {
+  if (!isLoading && instructorStats?.totalCourses === 0) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
         <EmptyState
@@ -132,7 +76,7 @@ const InstructorDashboardMain: React.FC = () => {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
         <div className="text-center">
@@ -166,7 +110,7 @@ const InstructorDashboardMain: React.FC = () => {
           </div>
           <p className="text-sm text-gray-500">Experience</p>
           <p className="text-3xl font-bold text-gray-900">
-            {instructorStats.experience} yrs
+            {instructorStats?.yearsOfExperience || 0} yrs
           </p>
         </div>
 
@@ -179,7 +123,7 @@ const InstructorDashboardMain: React.FC = () => {
           </div>
           <p className="text-sm text-gray-500">Courses</p>
           <p className="text-3xl font-bold text-gray-900">
-            {instructorStats.courses}
+            {instructorStats?.totalCourses || 0}
           </p>
         </div>
 
@@ -192,7 +136,7 @@ const InstructorDashboardMain: React.FC = () => {
           </div>
           <p className="text-sm text-gray-500">Students</p>
           <p className="text-3xl font-bold text-gray-900">
-            {instructorStats.students.toLocaleString()}
+            {(instructorStats?.totalStudents || 0).toLocaleString()}
           </p>
         </div>
 
@@ -205,7 +149,7 @@ const InstructorDashboardMain: React.FC = () => {
           </div>
           <p className="text-sm text-gray-500">Rating</p>
           <p className="text-3xl font-bold text-gray-900">
-            {instructorStats.rating}
+            {instructorStats?.averageRating || 0}
           </p>
         </div>
       </div>

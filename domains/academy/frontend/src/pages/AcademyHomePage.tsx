@@ -7,13 +7,14 @@ import CoursesList from "../components/CoursesList.tsx";
 import Testimonials from "../components/Testimonials.tsx";
 import CourseStats from "../components/CourseStats.tsx"; // New import
 import { FaSearch, FaBook } from "react-icons/fa";
-import { useStudentCourses } from "../hooks/useStudentCourses";
+import { useTrendingCourses, useAllCourses } from "../queries/studentCourses";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useCourses } from "../hooks/useCourses"; // New import
 
 const AcademyHomePage = () => {
-  const { trendingCourses, courses } = useStudentCourses();
+  const { data: trendingCourses = [], isLoading: isLoadingTrending } = useTrendingCourses();
+  const { data: courses = [], isLoading: isLoadingCourses } = useAllCourses();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
