@@ -131,7 +131,7 @@ const CoursesPage: React.FC = () => {
         {/* Page Header */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#1175BD] to-[#1175BD]">
-            Our Courses
+            Explore Our Courses
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
             Explore our comprehensive collection of courses taught by industry experts. 
@@ -246,34 +246,7 @@ const CoursesPage: React.FC = () => {
                     </p>
                   )}
 
-                  {/* Instructor */}
-                  {course.instructor && (
-                    <div className="flex items-center mb-4">
-                      <div className="flex-shrink-0 mr-3">
-                        {course.instructor.profilePicture ? (
-                          <img 
-                            src={course.instructor.profilePicture} 
-                            alt={`${course.instructor.firstname} ${course.instructor.lastname}`}
-                            className="h-10 w-10 rounded-full object-cover border-2 border-[#E6D600]"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#E6D600] to-[#F2F296] flex items-center justify-center border-2 border-[#E6D600]">
-                            <FaUser className="h-5 w-5 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-base font-semibold text-gray-900">
-                          {course.instructor.firstname} {course.instructor.lastname}
-                        </p>
-                        {course.instructor.title && (
-                          <p className="text-sm text-gray-500">
-                            {course.instructor.title}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
+               
 
                   {/* Course Metadata */}
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -315,7 +288,7 @@ const CoursesPage: React.FC = () => {
                   {/* Action Button */}
                   <Link
                     to={`/courses/${course.id}`}
-                    className="w-full bg-gradient-to-r from-[#E6D600] to-[#F2F296] text-black text-center py-3 rounded-lg hover:from-[#D4C400] hover:to-[#E0E08A] transition-all duration-300 block font-bold text-lg shadow-md"
+                    className="w-full bg-gradient-to-r from-[#1175BD] to-[#1175BD] text-white text-center py-3 rounded-lg hover:from-[#0E5F9A] hover:to-[#0E5F9A] transition-all duration-300 block font-bold text-lg shadow-md"
                   >
                     View Details
                   </Link>

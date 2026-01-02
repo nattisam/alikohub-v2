@@ -23,6 +23,19 @@ const publicAcademyApi = axios.create({
   withCredentials: false,
 });
 
+export interface CourseModule {
+  id: number;
+  title: string;
+  lessons: CourseLesson[];
+}
+
+export interface CourseLesson {
+  id: number;
+  title: string;
+  moduleId: number;
+}
+
+
 // Course APIs
 export const courseApi = {
   // Public method to get published courses - requires authentication
@@ -51,15 +64,15 @@ export const courseApi = {
       throw error;
     }
   },
-  getCourse: async (id: number) => {
+  getCourse: async (courseId: number) => {
     try {
       // Try public API first (for published courses)
-      const response = await publicAcademyApi.get(`/academy/courses/${id}`);
+      const response = await publicAcademyApi.get(`/academy/courses/${courseId}`);
       return response;
     } catch (error: any) {
       // If public access fails (401/403), try with authentication for private courses
       if (error.response?.status === 401 || error.response?.status === 403) {
-        return academyApi.get(`/academy/courses/${id}`);
+        return academyApi.get(`/academy/courses/${courseId}`);
       }
       throw error;
     }
@@ -69,25 +82,25 @@ export const courseApi = {
   deleteCourse: (id: number) => academyApi.delete(`/academy/courses/${id}`),
 
   // Modules
-  getModules: (courseId: number) => academyApi.get(`/modules/course/${courseId}`),
-  getModule: (id: number) => academyApi.get(`/modules/${id}`),
-  createModule: (data: any) => academyApi.post("/modules", data),
-  updateModule: (id: number, data: any) => academyApi.put(`/modules/${id}`, data),
-  deleteModule: (id: number) => academyApi.delete(`/modules/${id}`),
+  getModules: (courseId: number) => academyApi.get(`/academy/modules/course/${courseId}`),
+  getModule: (id: number) => academyApi.get(`/academy/modules/${id}`),
+  createModule: (data: any) => academyApi.post("/academy/modules", data),
+  updateModule: (id: number, data: any) => academyApi.put(`/academy/modules/${id}`, data),
+  deleteModule: (id: number) => academyApi.delete(`/academy/modules/${id}`),
 
   // Cohorts
-  getCohorts: (courseId: number) => academyApi.get(`/cohorts`, { params: { courseId } }),
-  getCohort: (id: number) => academyApi.get(`/cohorts/${id}`),
-  createCohort: (data: any) => academyApi.post("/cohorts", data),
-  updateCohort: (id: number, data: any) => academyApi.patch(`/cohorts/${id}`, data),
-  deleteCohort: (id: number) => academyApi.delete(`/cohorts/${id}`),
+  getCohorts: (courseId: number) => academyApi.get(`/academy/cohorts`, { params: { courseId } }),
+  getCohort: (id: number) => academyApi.get(`/academy/cohorts/${id}`),
+  createCohort: (data: any) => academyApi.post("/academy/cohorts", data),
+  updateCohort: (id: number, data: any) => academyApi.patch(`/academy/cohorts/${id}`, data),
+  deleteCohort: (id: number) => academyApi.delete(`/academy/cohorts/${id}`),
 
   // Lessons
-  getLessons: (moduleId: number) => academyApi.get(`/lessons/module/${moduleId}`),
-  getLesson: (id: number) => academyApi.get(`/lessons/${id}`),
-  createLesson: (data: any) => academyApi.post("/lessons", data),
-  updateLesson: (id: number, data: any) => academyApi.put(`/lessons/${id}`, data),
-  deleteLesson: (id: number) => academyApi.delete(`/lessons/${id}`),
+  getLessons: (moduleId: number) => academyApi.get(`/academy/lessons/module/${moduleId}`),
+  getLesson: (id: number) => academyApi.get(`/academy/lessons/${id}`),
+  createLesson: (data: any) => academyApi.post("/academy/lessons", data),
+  updateLesson: (id: number, data: any) => academyApi.put(`/academy/lessons/${id}`, data),
+  deleteLesson: (id: number) => academyApi.delete(`/academy/lessons/${id}`),
 
   // Content
   getContent: (lessonId: number) => academyApi.get(`/content/lesson/${lessonId}`),

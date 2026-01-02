@@ -39,6 +39,11 @@ export const authAPI = {
       return false;
     }
   },
+
+  updateProfile: async (profileData) => {
+    const { data } = await apiClient.patch('/users/profile', profileData);
+    return data;
+  },
 };
 
 // Academy API

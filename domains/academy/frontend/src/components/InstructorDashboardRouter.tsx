@@ -8,6 +8,7 @@ import InstructorCreateCourse from "../Pages/InstructorCreateCourse";
 import InstructorSubmissions from "../Pages/InstructorSubmissions";
 import InstructorAnalytics from "../Pages/InstructorAnalytics";
 import InstructorDashboardLayout from "./InstructorDashboardLayout";
+import ManageCoursePage from "../Pages/ManageCoursePage";
 
 const InstructorDashboardRouter: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -62,6 +63,7 @@ const InstructorDashboardRouter: React.FC = () => {
       <Routes>
         <Route path="" element={<InstructorDashboardMain />} />
         <Route path="/mycourses" element={<InstructorMyCourses />} />
+        <Route path="/mycourses/manage/:id" element={<ManageCoursePage />} />
         <Route path="/create-course" element={<InstructorCreateCourse />} />
         <Route path="/submissions" element={<InstructorSubmissions />} />
         <Route path="/analytics" element={<InstructorAnalytics />} />
