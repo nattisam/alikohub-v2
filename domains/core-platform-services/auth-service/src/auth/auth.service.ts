@@ -182,9 +182,28 @@ export class AuthService {
 		};
 	}
 
-	private toPlain(obj: any) {
-		const plain = JSON.parse(JSON.stringify(obj));
+	private toPlain(user: any) {
+		if (!user) return null;
+		const plain = JSON.parse(JSON.stringify(user));
 		delete plain.password;
+
+		// Flatten subdomain roles for easier access in guards
+		if (user.academyUser) {
+			plain.academyRole = user.academyUser.role;
+			plain.academyActiveRole = user.academyUser.activeRole || user.academyUser.role;
+			plain.academyStatus = user.academyUser.status;
+		}
+
+		if (user.contechUser) {
+			plain.contechRole = user.contechUser.role;
+			plain.contechStatus = user.contechUser.status;
+		}
+
+		if (user.eventsUser) {
+			plain.eventsRole = user.eventsUser.role;
+			plain.eventsStatus = user.eventsUser.status;
+		}
+
 		return plain;
 	}
 
@@ -340,7 +359,7 @@ export class AuthService {
 			});
 		}
 
-		return { user, decodedToken: decoded };
+		return { user: this.toPlain(user), decodedToken: decoded };
 	}
 
 	// Academy-specific authentication methods
@@ -649,6 +668,9 @@ export class AuthService {
 			this.logger.log(`Created missing AcademyUser record for user: ${user.firebaseId}`);
 		}
 
-		return academyUser;
+		return {
+			...academyUser,
+			globalRole: user.globalRole,
+		};
 	}
 }

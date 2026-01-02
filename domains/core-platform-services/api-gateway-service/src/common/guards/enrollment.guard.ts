@@ -9,11 +9,12 @@ export class EnrollmentGuard implements CanActivate {
     const user = request.user;
     const courseId = request.params.courseId || request.params.id;
 
-    if (!user || !user.academyRole) {
+    const academyRole = user.academyActiveRole || user.academyRole || user.academyUser?.role;
+    if (!user || !academyRole) {
       throw new ForbiddenException('Access denied: No academy role found');
     }
 
-    const userRole = user.academyRole.toUpperCase();
+    const userRole = academyRole.toUpperCase();
 
     // Academy admin can access everything
     if (userRole === 'ADMIN') {
@@ -43,11 +44,12 @@ export class CourseAccessGuard implements CanActivate {
     const user = request.user;
     const courseId = request.params.courseId || request.params.id;
 
-    if (!user || !user.academyRole) {
+    const academyRole = user.academyActiveRole || user.academyRole || user.academyUser?.role;
+    if (!user || !academyRole) {
       throw new ForbiddenException('Access denied: No academy role found');
     }
 
-    const userRole = user.academyRole.toUpperCase();
+    const userRole = academyRole.toUpperCase();
 
     // Academy admin can access everything
     if (userRole === 'ADMIN') {

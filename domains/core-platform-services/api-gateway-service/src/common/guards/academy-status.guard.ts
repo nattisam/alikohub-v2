@@ -10,16 +10,18 @@ export class AcademyStatusGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Use activeRole from JWT for role switching support
-    const academyRole = user.academyActiveRole || user.academyUser?.role;
+    // Determine highest available role
+    let academyRole = user.academyActiveRole || user.academyUser?.role;
+    if (user.academyUser?.role === 'ADMIN' || user.academyUser?.role === 'INSTRUCTOR') {
+       academyRole = user.academyUser.role;
+    }
+
     const academyStatus = user.academyStatus || user.academyUser?.status;
 
-    // Check if user has any academy role
     if (!academyRole) {
       throw new ForbiddenException('Access denied: No academy role assigned. Please select a role to continue.');
     }
 
-    // Check if user's academy role is active
     if (academyStatus !== 'ACTIVE') {
       throw new ForbiddenException('Access denied: Academy account is not active');
     }
@@ -38,11 +40,17 @@ export class StudentAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Use activeRole from JWT for role switching support
-    const academyRole = user.academyActiveRole || user.academyUser?.role;
+    let academyRole = user.academyActiveRole || user.academyUser?.role;
+    // For students, we generally respect the activeRole if they are an instructor switching to student,
+    // but here we just need to ensure they have student access.
+    
     const academyStatus = user.academyStatus || user.academyUser?.status;
 
-    if (!academyRole || (academyRole.toUpperCase() !== 'STUDENT' && academyRole.toUpperCase() !== 'USER')) {
+    const isStudent = academyRole?.toUpperCase() === 'STUDENT' || 
+                     academyRole?.toUpperCase() === 'USER' || 
+                     user.academyUser?.role?.toUpperCase() === 'STUDENT';
+
+    if (!isStudent) {
       throw new ForbiddenException('Access denied: Student role required');
     }
 
@@ -64,14 +72,18 @@ export class TeacherAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Use activeRole from JWT for role switching support
     const academyRole = user.academyActiveRole || user.academyUser?.role;
-    const academyStatus = user.academyStatus || user.academyUser?.status;
+    const baseRole = user.academyUser?.role;
+    const isInstructor = (academyRole?.toUpperCase() === 'INSTRUCTOR') || 
+                        (baseRole?.toUpperCase() === 'INSTRUCTOR') ||
+                        (academyRole?.toUpperCase() === 'ADMIN') ||
+                        (baseRole?.toUpperCase() === 'ADMIN');
 
-    if (!academyRole || (academyRole.toUpperCase() !== 'INSTRUCTOR' && academyRole.toUpperCase() !== 'TEACHER')) {
+    if (!isInstructor) {
       throw new ForbiddenException('Access denied: Instructor role required');
     }
 
+    const academyStatus = user.academyStatus || user.academyUser?.status;
     if (academyStatus !== 'ACTIVE') {
       throw new ForbiddenException('Access denied: Instructor account is not active');
     }
@@ -90,11 +102,15 @@ export class AdminAccessGuard implements CanActivate {
       throw new ForbiddenException('Access denied: User not authenticated');
     }
 
-    // Use activeRole from JWT for role switching support
     const academyRole = user.academyActiveRole || user.academyUser?.role;
-
-    // Check if user is global admin or academy admin
-    const isAdmin = user.globalRole === 'ADMIN' || academyRole === 'ADMIN' || academyRole === 'ACADEMY_ADMIN';
+    const baseRole = user.academyUser?.role;
+    
+    // Check if user is global admin or has instructor/admin role in academy
+    const isAdmin = user.globalRole === 'ADMIN' || 
+                    academyRole === 'ADMIN' || 
+                    baseRole === 'ADMIN' ||
+                    academyRole === 'ACADEMY_ADMIN' ||
+                    baseRole === 'ACADEMY_ADMIN';
     
     if (!isAdmin) {
       throw new ForbiddenException('Access denied: Admin role required');

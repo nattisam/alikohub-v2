@@ -21,16 +21,16 @@ export class RoleGuard implements CanActivate {
 
     const data = context.switchToRpc().getData();
     
-    // Get the contechProfile attached by the ConTechProfileGuard
-    const { contechProfile } = data;
+    // Get the eventsProfile attached by the EventsProfileGuard
+    const { eventsProfile } = data;
 
-    if (!contechProfile || !contechProfile.role) {
-      // This should ideally never happen if the ConTechProfileGuard ran first
+    if (!eventsProfile || !eventsProfile.role) {
+      // This should ideally never happen if the EventsProfileGuard ran first
       throw new RpcException('User profile or role not found.');
     }
 
     // Check if the user's role is included in the list of required roles.
-    const hasRequiredRole = requiredRoles.some((role) => contechProfile.role === role);
+    const hasRequiredRole = requiredRoles.some((role) => eventsProfile.role === role);
 
     if (!hasRequiredRole) {
       throw new RpcException('You do not have the required permissions to perform this action.');

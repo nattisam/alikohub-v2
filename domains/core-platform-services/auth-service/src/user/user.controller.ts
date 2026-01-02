@@ -38,4 +38,9 @@ export class UserController {
 		);
 		return users.filter(u => u !== null);
 	}
+
+	@MessagePattern({ cmd: 'update_contech_role' })
+	async updateContechRole(@Payload() data: { userId: string; role: string }) {
+		return this.userService.updateContechRole(data.userId, data.role);
+	}
 }

@@ -42,6 +42,11 @@ export class UserService {
     user: AuthenticatedUser,
   ): Promise<ConTechUserProfile> {
     await this.syncFromAuth(user.firebaseId);
+
+    // Fetch fresh user data from Auth Service to ensure we have the latest details
+    const authUser = await this.getUserById(user.firebaseId);
+    // Fallback to the provided user object if fetch fails
+    const effectiveUser = authUser || user;
     
     let profile = await this.prisma.contechProfile.findUnique({
       where: { userId: user.firebaseId },
@@ -59,11 +64,11 @@ export class UserService {
 
     return {
       ...profile,
-      email: user.email,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      globalRole: user.globalRole,
-      status: user.status,
+      email: effectiveUser.email,
+      firstname: effectiveUser.firstname,
+      lastname: effectiveUser.lastname,
+      globalRole: effectiveUser.globalRole,
+      status: effectiveUser.status,
     };
   }
 
@@ -86,9 +91,42 @@ export class UserService {
 
   private async syncFromAuth(userId: string) {
     try {
-      await firstValueFrom(
+      // Check if user has already selected a local ConTech role
+      const existingProfile = await this.prisma.contechProfile.findUnique({
+        where: { userId },
+      });
+
+      // If user has selected a role locally, don't overwrite it with Auth service data
+      if (existingProfile?.hasSelectedRole) {
+        this.logger.log(`User ${userId} has a locally selected role. Skipping sync from auth.`);
+        return;
+      }
+
+      const authRecord: any = await firstValueFrom(
         this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
       );
+
+      if (authRecord) {
+        // Priority: 1. activeRole (if switched), 2. role (base role)
+        const effectiveRole = authRecord.activeRole || authRecord.role;
+
+        if (effectiveRole) {
+          await this.prisma.contechProfile.upsert({
+            where: { userId },
+            create: {
+              userId,
+              role: effectiveRole as ContechRole,
+              hasSelectedRole: !!authRecord.activeRole,
+            },
+            update: {
+              role: effectiveRole as ContechRole,
+              // If activeRole is present, update hasSelectedRole
+              hasSelectedRole: authRecord.activeRole ? true : undefined,
+            },
+          });
+          this.logger.log(`Synced user ${userId} from auth service. Role: ${effectiveRole}`);
+        }
+      }
     } catch (error) {
       this.logger.error(`Failed to sync user ${userId} from auth service`, error);
     }
@@ -97,7 +135,7 @@ export class UserService {
   async getUserById(userId: string) {
     try {
       return await firstValueFrom(
-        this.authClient.send({ cmd: 'get_user_by_id' }, { userId }),
+        this.authClient.send({ cmd: 'get_user_profile' }, { firebaseId: userId }),
       );
     } catch (error) {
       this.logger.error(`Failed to fetch user ${userId}`, error);
@@ -138,16 +176,33 @@ export class UserService {
         where: { userId },
       });
 
+      let updatedProfile;
       if (existingProfile) {
-        return this.prisma.contechProfile.update({
+        updatedProfile = await this.prisma.contechProfile.update({
           where: { userId },
           data: { role, hasSelectedRole: true },
         });
       } else {
-        return this.prisma.contechProfile.create({
+        updatedProfile = await this.prisma.contechProfile.create({
           data: { userId, role, hasSelectedRole: true },
         });
       }
+
+      // Notify Auth service of the role change so JWT tokens are updated
+      try {
+        await firstValueFrom(
+          this.authClient.send(
+            { cmd: 'update_contech_role' },
+            { userId, role }
+          )
+        );
+        this.logger.log(`Notified Auth service of role change for user ${userId}`);
+      } catch (error) {
+        this.logger.error(`Failed to notify Auth service of role change for user ${userId}`, error);
+        // Don't fail the operation if Auth service notification fails
+      }
+
+      return updatedProfile;
     } catch (error) {
       this.logger.error('Error in selectRole', error);
       throw error;

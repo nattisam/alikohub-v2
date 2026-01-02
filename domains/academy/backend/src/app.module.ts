@@ -13,8 +13,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UserApplicationModule } from './user-application/user-application.module';
 import { TeachingScheduleModule } from './teaching-schedule/teaching-schedule.module';
-// import { APP_GUARD } from '@nestjs/core';
-// import { AcademyProfileGuard } from './auth/academy-profile.guard'; // Update import
+import { AcademyProfileGuard } from './auth/academy-profile.guard';
+import { RoleGuard } from './auth/role-guard/role-guard';
 
 @Global()
 @Module({
@@ -36,13 +36,8 @@ import { TeachingScheduleModule } from './teaching-schedule/teaching-schedule.mo
     TeachingScheduleModule
   ],
   providers: [
-    // Remove the global guard registration
-    /*
-    {
-      provide: APP_GUARD,
-      useClass: AcademyProfileGuard // Update to use AcademyProfileGuard
-    }
-    */
+    AcademyProfileGuard,
+    RoleGuard,
   ]
 })
 export class AppModule { }

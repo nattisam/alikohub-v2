@@ -20,7 +20,9 @@ model ContechProfile {
   role            ContechRole @default(USER)
   hasSelectedRole Boolean     @default(false)
   bio             String?
+  companyName     String?
   company         String?
+  phone           String?
   projects        String[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt

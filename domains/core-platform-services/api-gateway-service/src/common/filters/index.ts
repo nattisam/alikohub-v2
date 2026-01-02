@@ -1,2 +1,1 @@
-export * from './all-exceptions.filter';
-export * from './rpc-exception.filter';
+export { GlobalExceptionFilter as RpcExceptionFilter } from './rpc-exception.filter';

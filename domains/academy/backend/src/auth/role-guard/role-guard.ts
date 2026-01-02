@@ -33,7 +33,11 @@ export class RoleGuard implements CanActivate {
     const hasRequiredRole = requiredRoles.some((role) => academyProfile.role === role);
 
     if (!hasRequiredRole) {
-      throw new RpcException('You do not have the required permissions to perform this action.');
+      throw new RpcException({
+        statusCode: 403,
+        message: 'You do not have the required permissions to perform this action.',
+        error: 'Forbidden',
+      });
     }
 
     return true;

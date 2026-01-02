@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
-import { RpcExceptionFilter } from './filters/rpc-exception.filter';
+import { RpcExceptionFilter } from './common/filters';
 import { UserModule } from './auth-service/user/user.module';
 import { AcademyServiceModule } from './academy-service';
 
@@ -80,12 +80,7 @@ import { EventsServiceModule } from './events-service/events-service.module';
     ConTechServiceModule,
     EventsServiceModule,
   ],
-  providers: [
-    {
-      provide: APP_FILTER,
-      useClass: RpcExceptionFilter,
-    },
-  ],
+  providers: [],
   exports: [ClientsModule],
 })
 export class AppModule { }

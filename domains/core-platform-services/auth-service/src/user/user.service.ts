@@ -215,4 +215,29 @@ export class UserService {
 			where: { firebaseId }
 		});
 	}
+
+	async updateContechRole(userId: string, role: string) {
+		this.logger.log(`Updating ConTech role for user ${userId} to ${role}`);
+		
+		// Update the contechUser relation in the Auth service database
+		const user = await this.prisma.user.update({
+			where: { firebaseId: userId },
+			data: {
+				contechUser: {
+					update: {
+						role: role as any // Cast to any to avoid enum type issues
+					}
+				}
+			},
+			include: {
+				academyUser: true,
+				consultancyUser: true,
+				contechUser: true,
+				eventsUser: true,
+			}
+		});
+
+		this.logger.log(`ConTech role updated successfully for user ${userId}`);
+		return user;
+	}
 }

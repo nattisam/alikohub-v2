@@ -1,4 +1,3 @@
-// Trigger reload
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
@@ -10,7 +9,7 @@ import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
 import { AcademyServiceModule } from './academy-service';
 import { winstonConfig } from './common/logger/winston.config';
-import { AllExceptionsFilter, RpcExceptionFilter } from './common/filters';
+import { RpcExceptionFilter } from './common/filters';
 
 dotenv.config();
 
@@ -45,7 +44,7 @@ async function bootstrap() {
   }));
 
   // Global exception filters
-  app.useGlobalFilters(new AllExceptionsFilter(), new RpcExceptionFilter());
+  app.useGlobalFilters(new RpcExceptionFilter());
 
   app.use(cookieParser());
 
@@ -118,3 +117,4 @@ async function bootstrap() {
   logger.log(`📚 Swagger docs available at http://localhost:${port}/api-docs`);
 }
 bootstrap();
+ 

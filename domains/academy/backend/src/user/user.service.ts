@@ -81,6 +81,11 @@ export class UserService {
   async getOrCreateProfile(user: AuthenticatedUser): Promise<AcademyUserProfile> {
     await this.syncFromAuth(user.firebaseId);
 
+    // Fetch fresh user data from Auth Service to ensure we have the latest details
+    const authUser = await this.getUserById(user.firebaseId);
+    // Fallback to the provided user object if fetch fails
+    const effectiveUser = authUser || user;
+
     let profile = await this.prisma.academyProfile.findUnique({
       where: { userId: user.firebaseId },
     });
@@ -102,11 +107,11 @@ export class UserService {
     // Return the profile with enriched user data
     return {
       ...profile,
-      email: user.email,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      globalRole: user.globalRole,
-      status: user.status,
+      email: effectiveUser.email,
+      firstname: effectiveUser.firstname,
+      lastname: effectiveUser.lastname,
+      globalRole: effectiveUser.globalRole,
+      status: effectiveUser.status,
     };
   }
 
@@ -129,13 +134,24 @@ export class UserService {
 
   private async syncFromAuth(userId: string) {
     try {
+      this.logger.log(`[UserService] Syncing user ${userId} from Auth service...`);
       const authRecord = await firstValueFrom(
         this.authClient.send({ cmd: 'sync_academy_user' }, { userId }),
       );
 
       if (authRecord) {
-        // Use activeRole if available (it represents the current switched role), otherwise fallback to role
-        const effectiveRole = authRecord.activeRole || authRecord.role;
+        // Determine effective role: prioritize ADMIN > INSTRUCTOR > STUDENT > USER
+        let effectiveRole = authRecord.activeRole || authRecord.role;
+        
+        // If the user is a global admin, they are an admin in Academy too
+        if (authRecord.globalRole === 'ADMIN' || authRecord.role === 'ADMIN') {
+          effectiveRole = 'ADMIN';
+        } else if (authRecord.role === 'INSTRUCTOR') {
+          // If approved as instructor, use it if not already admin
+          effectiveRole = 'INSTRUCTOR';
+        }
+        
+        this.logger.log(`[UserService] Auth record found for ${userId}. Role: ${authRecord.role}, GlobalRole: ${authRecord.globalRole}, Effective: ${effectiveRole}`);
 
         if (effectiveRole) {
           await this.prisma.academyProfile.upsert({
@@ -151,11 +167,15 @@ export class UserService {
               hasSelectedRole: authRecord.activeRole ? true : undefined,
             },
           });
-          this.logger.log(`Synced user ${userId} from auth service. Role: ${effectiveRole}`);
+          this.logger.log(`[UserService] Successfully synced user ${userId}. Academy role set to: ${effectiveRole}`);
+        } else {
+          this.logger.warn(`[UserService] No role found in auth record for ${userId}`);
         }
+      } else {
+        this.logger.warn(`[UserService] No auth record returned for ${userId}`);
       }
     } catch (error) {
-      this.logger.error(`Failed to sync user ${userId} from auth service`, error);
+      this.logger.error(`[UserService] Failed to sync user ${userId} from auth service:`, error);
     }
   }
 
