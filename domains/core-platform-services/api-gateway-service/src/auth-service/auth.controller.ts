@@ -1,7 +1,10 @@
-import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
+import { RoleGuard } from '../common/roles/roles.guard';
+import { Roles } from '../common/roles/roles.decorator';
+import { CaptchaService } from '../common/captcha/captcha.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto } from './dto/academy-roles.dto';
@@ -14,7 +17,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(@Inject('AUTH_SERVICE') private authClient: ClientProxy) {}
+  constructor(
+    @Inject('AUTH_SERVICE') private authClient: ClientProxy,
+    private readonly captchaService: CaptchaService,
+  ) {}
 
   private handleError(error: any, operation: string) {
     this.logger.error(`${operation} failed:`, error);
@@ -74,8 +80,17 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto) {
     this.logger.log(`Registration attempt for: ${registerDto.email}`);
     
+    // TEST-04 Fix: Validate CAPTCHA if configured
+    const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
+    if (captchaValid === false) {
+      throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
+    }
+
+    // Remove captchaToken before sending to auth service
+    const { captchaToken, ...authPayload } = registerDto;
+    
     return firstValueFrom(
-      this.authClient.send({ cmd: 'register' }, registerDto).pipe(
+      this.authClient.send({ cmd: 'register' }, authPayload).pipe(
         timeout(30000),
         catchError(error => {
           this.handleError(error, 'Registration');
@@ -94,7 +109,7 @@ export class AuthController {
     // Inject userId from authenticated user
     const payload = { 
       ...selectRoleDto, 
-      userId: req.user.id.toString() 
+      userId: req.user.firebaseId 
     };
     
     return firstValueFrom(
@@ -115,7 +130,7 @@ export class AuthController {
   async applyTeacher(@Request() req: any, @Body() applicationDto: TeacherApplicationDto) {
     const payload = {
       ...applicationDto,
-      userId: req.user.id.toString()
+      userId: req.user.firebaseId
     };
 
     return firstValueFrom(
@@ -130,8 +145,9 @@ export class AuthController {
   }
 
   @Get('academy/teacher-applications')
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Get all teacher applications' })
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Get all teacher applications (Admin only)' })
   async getTeacherApplications() {
     return firstValueFrom(
       this.authClient.send({ cmd: 'get_teacher_applications' }, {}).pipe(
@@ -145,9 +161,10 @@ export class AuthController {
   }
 
   @Post('academy/approve-teacher/:applicationId')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Approve teacher application' })
+  @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
   async approveTeacher(@Param('applicationId') applicationId: string) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'approve_teacher_application' }, { applicationId }).pipe(
@@ -161,9 +178,10 @@ export class AuthController {
   }
 
   @Post('academy/reject-teacher/:applicationId')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reject teacher application' })
+  @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
   async rejectTeacher(@Param('applicationId') applicationId: string) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'reject_teacher_application' }, { applicationId }).pipe(
@@ -183,7 +201,7 @@ export class AuthController {
   async switchRole(@Request() req: any, @Body() switchRoleDto: SwitchRoleDto) {
     const payload = {
       ...switchRoleDto,
-      userId: req.user.id.toString()
+      userId: req.user.firebaseId
     };
     return firstValueFrom(
       this.authClient.send({ cmd: 'switch_role' }, payload).pipe(
@@ -199,7 +217,15 @@ export class AuthController {
   @Get('academy/user-status/:userId')
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get user academy status' })
-  async getUserAcademyStatus(@Param('userId') userId: string) {
+  async getUserAcademyStatus(@Request() req: any, @Param('userId') userId: string) {
+    // TEST-07 Fix: Verify user ownership - users can only view their own status unless they are admin
+    const requestingUserId = req.user.id.toString();
+    const isAdmin = req.user.globalRole === 'ADMIN';
+    
+    if (requestingUserId !== userId && !isAdmin) {
+      throw new ForbiddenException('You are not authorized to view another user\'s academy status');
+    }
+    
     return firstValueFrom(
       this.authClient.send({ cmd: 'get_user_academy_status' }, { userId }).pipe(
         timeout(10000),

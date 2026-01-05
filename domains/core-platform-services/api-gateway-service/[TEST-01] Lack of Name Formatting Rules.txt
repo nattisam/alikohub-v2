@@ -1,0 +1,674 @@
+[TEST-01] Lack of Name Formatting Rules
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Labels:
+	Login, register
+	Priority:
+	Medium
+
+
+
+
+Description
+	The system lacks a character filtering policy for name fields. User can successfully  with names such as “user_99!”. Firstname/Lastname validation for registration is not restricting character types with digits/symbols with 201 success response in Registration API.
+
+
+
+
+
+
+
+
+1. Initialize the application services (Gateway and Auth Service).
+2. Open a terminal or API client (e.g., Postman/Curl).
+3. Send a POST request to the registration endpoint http://localhost:3006/auth/register.
+4. Provide a JSON payload containing numeric or symbolic characters in the firstname or lastname fields.
+Example Payload:
+{
+  "email": "new12@gmail.com",
+  "firstname": "User-999!",
+  "lastname": "Test!!!",
+  "password": "password123"
+}
+5. Execute the request using the following curl command:
+
+
+curl -X POST http://localhost:3006/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "new12@gmail.com", "firstname": "User-999!", "lastname": "Test!!!", "password": "password123"}'
+
+
+6. Observe the response code and body.
+Expected Result: The API should return a 400 Bad Request status code with a validation message indicating that name fields must only contain alphabetic characters.
+
+
+Actual Result: The API returns a 201 Created status code, and the user is successfully registered with the invalid name data stored in the database.
+
+
+
+
+
+
+
+
+
+
+Attachments:
+
+
+
+
+
+[TEST-02] Missing Input Trimming
+
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Labels:
+	Login, register
+	Priority:
+	Medium
+
+
+
+
+Description
+	Users who copy/paste their email with an accidental space (e.g., " testing@test.com") receive a "must be an email" error instead of the space being automatically removed.
+
+
+
+
+
+
+
+
+1. Initialize the application services (Gateway and Auth Service).
+2. Open a terminal or API client (e.g., Postman/Curl).
+3. Send a POST request to the registration endpoint http://localhost:3006/auth/register.
+4. Provide a JSON payload where the email field contains leading or trailing whitespace.
+Example Payload:
+{
+  "email": "new12@gmail.com",
+  "firstname": "User-999!",
+  "lastname": "Test!!!",
+  "password": "password123"
+}
+5.  Execute the request using the following curl command:
+curl -X POST http://localhost:3006/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": " new12@gmail.com ", "firstname": "User-999!, "lastname": "Test!!!", "password": "password123"}'
+6. Observe the response code and body.
+Expected Result: The API should automatically trim the leading and trailing whitespace from the email string, validate it successfully, and return a 201 Created status code.
+
+
+Actual Result: The API returns a 400 Bad Request status code with the error message: {"message":["email must be an email"]}. The validation fails because the string is not normalized before the regex check.
+
+
+
+
+Attachments:
+
+
+
+[TEST-03] Missing SMTP Integration
+
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Labels:
+	register
+	Priority:
+	Medium
+
+
+
+
+Description
+	The registration flow in auth.service.ts
+ successfully creates records in the database and Firebase, but it contains no logic to trigger an email worker or send a confirmation message to the user. Account lifecycle for registration is not triggering notifications with successful signup with missing welcome/verification email in Auth Service.
+
+
+
+
+Steps to Reproduce:
+
+
+1. Initialize the application services (Gateway and Auth Service).
+2. Open a terminal or API client.
+3. Register a new account by sending a POST request to http://localhost:3006/auth/register using a real or accessible email address.
+
+
+
+
+curl -X POST http://localhost:3006/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "your-email@example.com", "firstname": "TEST", "lastname": "USER", "password": "password123"}'
+4. Wait for the 201 Created successful response.
+5. Monitor the auth-service terminal logs for any "Email sent" or "SMTP" related logs.
+6. Check the inbox of the registered email address for a "Welcome" or "Verification" message.
+Expected Result: The system should dispatch an automated confirmation or welcome email to the user immediately upon successful account creation.
+
+Actual Result: The account is created in the database and Firebase, but no email is sent. The auth-service logs show no evidence of an email-dispatch event or SMTP connection attempt, as the logic is missing from the service implementation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[TEST-04] Missing Anti-Bot Verification
+
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Labels:
+	Login, register
+	Priority:
+	Medium
+
+
+
+
+Description
+	The registration process lacks any "Proof of Humanity" requirement, such as CAPTCHA. Testing confirms that automated shell scripts (e.g., test-functional.sh) can programmatically create hundreds of valid user accounts in both Firebase and PostgreSQL with no manual intervention required.
+
+
+
+
+Impact: Bots can be used to flood the database with spam accounts, potentially resulting in increased Firebase costs and degradation of system performance.
+Proposed Fix: Add a mandatory CAPTCHA token validation step in the 
+api-gateway-service
+ that must be verified against a provider (like Google or Cloudflare) before the auth-service is called.
+
+
+
+
+
+
+
+
+
+
+
+[TEST-05] Weak Password Standard
+  Created: 10/Jan/22  Updated: 12/Jan/22
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Labels:
+	register
+	Priority:
+	Medium
+
+
+
+
+Description
+	The current RegisterDto validation enforces a MinLength(6) but does not require any character diversity. The system accepts simple passwords such as "123456" or "aaaaaa". Password validation for user account is not enforcing complexity with simple numeric strings with 201 success response in Registration API.
+
+
+
+
+Impact: Lowers the barrier for attackers to gain access to accounts via simple dictionary attacks.
+Proposed Fix: Update the RegisterDto to require a minimum of 8 characters, at least one uppercase letter, one number, and one special character using a regex validator.
+
+
+
+
+
+
+[TEST-06] Missing Rate Limiting
+
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Labels:
+	Login , Register
+	Priority:
+	Medium
+
+
+
+
+Description
+	There is no mechanism in the api-gateway-service to limit the number of requests originating from a single IP address within a specific timeframe. During testing, it was possible to send 20+ registration attempts and login attempts per second without receiving an HTTP 429 (Too Many Requests) response.
+
+
+
+
+
+
+
+
+Steps to Reproduce:
+
+
+1. Prepare Environment: Ensure the API Gateway and Auth Service are active and healthy.
+2. Open API Client: Open an API testing tool such as Postman,or any automated REST client.
+3. Test Registration Flow:
+* Configure a POST request to the registration endpoint.
+* Submit a series of 20 unique registration requests in rapid succession (e.g., using a different email each time).
+* Observe that every single request returns a 201 "Created" status with no blocking or delay.
+4. Test Login Flow:
+* Configure a POST request to the login endpoint.
+* Submit 20 consecutive login attempts within a few seconds using any credentials (valid or invalid).
+* Observe that every attempt returns a standard 200 "OK" or 401 "Unauthorized" status.
+5. Verify Global Throttling: Confirm that the server never intervenes with an HTTP 429 "Too Many Requests" response across either endpoint.
+Expected Result: The system should detect the abnormal frequency of requests from a single source and temporarily block the client after a set threshold (e.g., 10 requests) to protect against automated brute-force and bot-creation attacks.
+
+
+Actual Result: The server processes 100% of the traffic without any rate-limiting intervention, allowing an unlimited number of login or registration attempts to be executed programmatically.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[TEST-07] Unauthorized Access to User Academy Status
+
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Component
+	api-gateway-service / auth-service
+	Priority:
+	Medium
+
+
+
+
+Description
+	The system fails to validate object ownership when retrieving user-specific academy status records. An authenticated user can bypass authorization logic by manipulating the userId parameter in the URL provided to the 
+getUserAcademyStatus
+ endpoint. This allows any user to peek at the internal roles, status, and pending application flags of any other user in the database.
+
+
+
+
+
+
+Steps to Reproduce:
+1. Preparation: Log in as User B (ID: 37) and obtain a valid Bearer Token.
+
+2.     Target Selection: Pick a target user, for example, User A (ID: 3 or 4..5..).
+3.     Cross-User Data Request: Send a GET request to User A's status endpoint while using User B's token:    4.   Observe the Vulnerability: The system returns the private academy details for User 25, despite the requester being User 37. The expected behavior should be a 403 Forbidden.
+
+
+Actual Behavior:
+Request: GET /auth/academy/user-status/25 (sent by User 37).
+HTTP Status: 200 OK
+Response Body: The API returns the full private data belonging to User 25, including their role, enrollment status, and teacher application flags.
+Result: FAIL. Private user data is leaked to an unauthorized party.
+
+
+Expected Behavior:
+Request: GET /auth/academy/user-status/25 (sent by User 37).
+HTTP Status: 403 Forbidden
+Response Body: {"statusCode": 403, "message": "You are not authorized to view another user's academy status", "error": "Forbidden"}
+Result: PASS. The data remains private; only User 25 or an Administrator can see it.
+
+
+Proposed Fix: Update the API Gateway to compare the User ID from the URL with the User ID from the authenticated token. If they don't match (and the user isn't an Admin), the request must be blocked.
+      File:  `api-gateway-service/src/auth-service/auth.controller.ts`
+      Logic: Use req.user.id to verify ownership of the :userId parameter.
+
+
+
+
+
+
+
+
+
+
+[TEST-08] Critical Privilege Escalation via Teacher Approval Bypass
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Component:
+	api-gateway-service / auth-service
+	Priority:
+	High
+
+
+
+
+Description
+	Unauthorized users can promote themselves (or others) to the INSTRUCTOR role.The administrative endpoint for approving teacher applications lacks role validation. A user with the base USER role can successfully call the approval endpoint for their own or any other user's application.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Login as a standard user to get a JWT.
+
+
+2. Submit a teacher application via POST /auth/academy/apply-teacher (Status starts as PENDING).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3. Call POST /auth/academy/approve-teacher/:applicationId using the student's JWT.
+
+
+4. Relogin or check profile; academyRole has changed from STUDENT to INSTRUCTOR.
+
+
+
+
+Actual Result: The server returns 200 OK with the message: "Teacher application approved and instructor role assigned". The user's role is immediately updated in the database without any administrator review.
+
+
+Expected Result: The server should return 403 Forbidden. The request should be blocked because the user lacks the ADMIN global role required to manage applications.
+
+
+Proposed Fix:
+1. Gateway Layer (First Line of Defense): Apply the AdminAccessGuard to the vulnerable routes in api-gateway-service/src/auth-service/auth.controller.ts
+
+
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @Post('academy/approve-teacher/:applicationId')
+  async approveTeacher(...) { ... }
+
+
+2. Microservice Layer (Defense in Depth): Update auth-service/src/auth/auth.service.ts to verify the requester's role before executing the database update.
+
+
+async approveTeacherApplication(applicationId: string, requestingUserRole: string) {
+    if (requestingUserRole !== 'ADMIN') {
+        throw new RpcException({
+            statusCode: HttpStatus.FORBIDDEN,
+            message: 'Only admins can approve applications'
+        });
+    }
+    // ... proceed with update
+}
+3. Remove Backdoor: Delete the hardcoded mock-id check in the AuthServicethat allows skipping database lookups entirely.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[TEST-09] Information Disclosure - Global Teacher Application Leak
+	Status:
+
+
+	Project:
+	ALIKOHUB ACADEMY
+
+
+
+
+Component
+	api-gateway-service / auth-service
+	Priority:
+	High
+
+
+
+
+Description
+	Any authenticated user can list ALL teacher applications in the database.The API Gateway exposes an endpoint that allows any logged-in user to download the entire database of teacher applications. This include sensitive PII (Personally Identifiable Information) such as full names, email addresses, and professional details. This data has to be intended only for system administrators.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. Login as any standard user (e.g., student@gmail.com).
+2. Request the application list: 
+GET http://localhost:3006/auth/academy/teacher-applications
+
+
+3. Observe the result: The response returns a full array of every teacher application submitted by other users in the system.
+
+Actual Result: The server returns 200 OK and a full JSON array of applications.
+
+
+Expected Result: The server should return 403 Forbidden. This endpoint should be a protected administrative route accessible only to users with the ADMIN role.
+Update the @UseGuards decorator on line 133 to include an administrative validation guard (e.g., 
+AdminAccessGuard
+ or RoleGuard(['ADMIN'])). This ensures that the request is rejected at the Gateway layer before any sensitive data is fetched from the microservice.
+
+
+Proposed Fix:
+Update the @UseGuards decorator to include an administrative validation guard (e.g., 
+AdminAccessGuard or RoleGuard(['ADMIN'])). This ensures that the request is rejected at the Gateway layer before any sensitive data is fetched from the microservice.

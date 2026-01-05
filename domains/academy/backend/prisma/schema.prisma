@@ -82,6 +82,7 @@ model Enrollment {
   progress      Float           @default(0.0)
   enrollmentType EnrollmentType @default(FREE)
   paymentStatus PaymentStatus   @default(COMPLETED)
+  status        EnrollmentStatus @default(ACTIVE)
 
   cohort  Cohort?        @relation(fields: [cohortId], references: [id], onDelete: Cascade)
   course  Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -100,6 +101,15 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+// ... existing models ...
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  ARCHIVED
 }
 
 model Module {

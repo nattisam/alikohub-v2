@@ -5,6 +5,7 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
+import { EmailService } from './email.service';
 import { AcademyRole, ContechRole, EventsRole, GlobalRole } from '@prisma/client';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
 		private readonly prisma: PrismaService,
 		private readonly jwtService: JwtService,
 		private readonly argon2Service: Argon2Service,
+		private readonly emailService: EmailService,
 		@Inject('ACADEMY_SERVICE') private readonly academyClient: ClientProxy,
 		@Inject('CONTECH_SERVICE') private readonly contechClient: ClientProxy,
 		@Inject('EVENTS_SERVICE') private readonly eventsClient: ClientProxy,
@@ -113,6 +115,11 @@ export class AuthService {
 		
 		// Generate JWT tokens
 		const tokens = this.generateTokens(user);
+
+		// Send welcome email (async, don't block registration)
+		this.emailService.sendWelcomeEmail(dto.email, dto.firstname).catch((error) => {
+			this.logger.error(`Failed to send welcome email to ${dto.email}: ${error.message}`);
+		});
 
 		this.logger.log(`Registration successful for: ${dto.email}`);
 		
