@@ -4,13 +4,14 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { ConTechProfileGuard } from './auth';
-import { AppLogger } from './logger';
 
 dotenv.config();
 
+import { winstonConfig } from './winston.config';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: new AppLogger(),
+    logger: winstonConfig,
   });
   const PORT = process.env.PORT || 3002;
   const configService = app.get(ConfigService);
