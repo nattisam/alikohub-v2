@@ -1,6 +1,3 @@
-
-
-// Frontend CurrentUser interface adapted for frontend use
 export interface CurrentUser {
   id: number;
   firebaseId: string;

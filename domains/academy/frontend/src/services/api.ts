@@ -1,55 +1,47 @@
 import apiClient from '../lib/api';
+import type { LoginCredentials, SignupCredentials, CurrentUser } from '../types';
 
 
-// Auth API
+
 export const authAPI = {
-  login: async (credentials) => {
+  login: async (credentials: LoginCredentials) => {
     const { data } = await apiClient.post('/auth/login', credentials);
     return data;
   },
 
-  register: async (credentials) => {
+  register: async (credentials: SignupCredentials) => {
     const { data } = await apiClient.post('/auth/register', credentials);
     return data;
   },
 
-  verifyToken: async (token) => {
+  verifyToken: async (token: string) => {
     const { data } = await apiClient.post('/auth/verify', { type: 'jwt', value: token });
     
     return data;
   },
 
-  // Check if email is available for registration
-  checkEmailAvailability: async (email) => {
+  checkEmailAvailability: async (email: string) => {
     try {
-      // Attempt to login with the email to check if it exists
-      // This is a workaround since there's no direct email check endpoint
       await apiClient.post('/auth/login', { email, password: 'dummy-password' });
-      // If login succeeds, email exists
       return false;
     } catch (error: any) {
-      // If it's a 401 (unauthorized), the email exists but password is wrong
-      // If it's a 400 (bad request), the email doesn't exist
       if (error?.response?.status === 401) {
-        return false; // Email exists
+        return false;
       } else if (error?.response?.status === 400) {
-        return true; // Email doesn't exist
+        return true;
       }
-      // For other errors, assume email exists to be safe
       return false;
     }
   },
 
-  updateProfile: async (profileData) => {
+  updateProfile: async (profileData: Partial<CurrentUser>) => {
     const { data } = await apiClient.patch('/users/profile', profileData);
     return data;
   },
 };
 
-// Academy API
 export const academyAPI = {
-  selectRole: async (role) => {
-    // Convert frontend uppercase role to backend lowercase format
+  selectRole: async (role: string) => {
     let backendRole = '';
     switch(role) {
       case 'INSTRUCTOR':
@@ -65,10 +57,8 @@ export const academyAPI = {
         backendRole = role.toLowerCase();
     }
     
-    console.log('Sending role selection request to backend:', { role: backendRole });
     try {
       const response = await apiClient.post('/auth/academy/select-role', { role: backendRole });
-      console.log('Role selection response from backend:', response.data);
       
       return response.data;
     } catch (error) {
@@ -77,8 +67,7 @@ export const academyAPI = {
     }
   },
   
-  switchRole: async (role) => {
-    // Convert frontend uppercase role to backend lowercase format
+  switchRole: async (role: string) => {
     let backendRole = '';
     switch(role) {
       case 'INSTRUCTOR':
@@ -94,9 +83,7 @@ export const academyAPI = {
         backendRole = role.toLowerCase();
     }
     
-    console.log('Making switch role request:', { newRole: backendRole });
     const { data } = await apiClient.post('/auth/academy/switch-role', { newRole: backendRole });
-    console.log('Switch role response data:', data);
     
     return data;
   },
@@ -107,7 +94,7 @@ export const academyAPI = {
     return data;
   },
   
-  applyTeacher: async (applicationData) => {
+  applyTeacher: async (applicationData: any) => {
     const { data } = await apiClient.post('/auth/academy/apply-teacher', applicationData);
     return data;
   },

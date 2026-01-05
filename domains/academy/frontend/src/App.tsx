@@ -9,27 +9,27 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { useAuth } from './contexts/AuthContext';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import NotFoundState from './components/states/NotFoundState';
 
-import LoginPage from './Pages/LoginPage';
-import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
-import SignupPage from "./Pages/SignupPage";
-import AcademyHomePage from "./Pages/AcademyHomePage";
-import AcademyAboutPage from "./Pages/AcademyAboutPage";
-import AcademyContactUsPage from "./Pages/AcademyContactUsPage";
-import AcademyStudentDashboard from "./Pages/AcademyStudentDashboard";
-import InstructorDashboardRouter from "./components/InstructorDashboardRouter";
-import StudentDashboardRouter from "./components/StudentDashboardRouter";
-import CoursesPage from "./Pages/CoursesPage";
-import CourseDetailsPage from "./Pages/CourseDetailsPage";
-import AcademyHeader from "./components/AcademyHeader";
-import EventDetailsPage from "./Pages/EventDetailsPage";
-import ProtectedRoute from "./components/ProtectedRoute";
-import DashboardRouter from "./components/DashboardRouter";
-import RolesPage from "./Pages/RolesPage";
-import ProfilePage from "./Pages/ProfilePage";
-import SettingsPage from "./Pages/SettingsPage";
+import LoginPage from './Pages/auth/LoginPage';
+import RedirectIfAuthenticated from './components/auth/RedirectIfAuthenticated';
+import SignupPage from "./Pages/auth/SignupPage";
+import AcademyHomePage from "./Pages/user/AcademyHomePage";
+import AcademyAboutPage from "./Pages/user/AcademyAboutPage";
+import AcademyContactUsPage from "./Pages/user/AcademyContactUsPage";
+import AcademyStudentDashboard from "./Pages/student/AcademyStudentDashboard";
+import InstructorDashboardRouter from "./components/layout/InstructorDashboardRouter";
+import StudentDashboardRouter from "./components/layout/StudentDashboardRouter";
+import CoursesPage from "./Pages/user/CoursesPage";
+import CourseDetailsPage from "./Pages/user/CourseDetailsPage";
+import AcademyHeader from "./components/layout/AcademyHeader";
+import EventDetailsPage from "./Pages/user/EventDetailsPage";
+import ProtectedRoute from "./components/common/ProtectedRoute";
+import DashboardRouter from "./components/layout/DashboardRouter";
+import RolesPage from "./Pages/user/RolesPage";
+import ProfilePage from "./Pages/user/ProfilePage";
+import SettingsPage from "./Pages/user/SettingsPage";
 
 // -------------------- Layouts --------------------
 

@@ -19,53 +19,34 @@ const AUTH_BASE_URL =
     ? `http://localhost:${PORT}/auth`
     : "https://alikohub.com/api/auth";
 
-// Create a new instance with the same interceptors by using the same defaults
+// Create academy API instance that reuses the interceptors from apiClient
 export const academyApi = axios.create({
   baseURL: ACADEMY_BASE_URL,
   headers: {
+    ...apiClient.defaults.headers,
     "Content-Type": "application/json",
   },
   timeout: 10000,
 });
 
-// Manually add the same interceptors as apiClient
-academyApi.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Copy interceptors from apiClient to maintain consistent authentication handling
+academyApi.interceptors.request.handlers = [...apiClient.interceptors.request.handlers];
+academyApi.interceptors.response.handlers = [...apiClient.interceptors.response.handlers];
 
-// Add response interceptor
-academyApi.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("firebaseCustomToken");
-        localStorage.removeItem("user");
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
+// Create auth API instance for auth service
 export const authApi = axios.create({
   baseURL: AUTH_BASE_URL,
   headers: {
+    ...apiClient.defaults.headers,
     "Content-Type": "application/json",
   },
   timeout: 10000,
   withCredentials: true, // Add this to send cookies with requests
 });
+
+// Copy interceptors from apiClient to authApi as well
+authApi.interceptors.request.handlers = [...apiClient.interceptors.request.handlers];
+authApi.interceptors.response.handlers = [...apiClient.interceptors.response.handlers];
 
 // Export all API modules
 export { progressApi, enrollmentApi };

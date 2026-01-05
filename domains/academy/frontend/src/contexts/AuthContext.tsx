@@ -216,23 +216,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     setIsRoleSwitching(true);
     try {
-      console.log("Switching role to:", role);
       const res = await academyAPI.switchRole(role);
-      console.log("Switch role response:", res);
       if (res?.accessToken)
         localStorage.setItem("accessToken", res.accessToken);
 
       // Use the user data from the response which contains the updated active role
       const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
-      console.log(
-        "Updated user from response after switch:",
-        updatedUserFromResponse
-      );
 
       // Build user with the response data which contains the correct active role
       const updated = buildUser(updatedUserFromResponse);
 
-      console.log("Final updated user after switch:", updated);
       updateUser(updated);
 
       // Don't redirect automatically from profile page - let the UI update as needed
