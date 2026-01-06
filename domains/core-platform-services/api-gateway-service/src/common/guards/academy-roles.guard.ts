@@ -37,11 +37,13 @@ export class AcademyRolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
     
-    if (!user || !user.academyRole) {
+    const academyRole = user.academyActiveRole || user.academyRole || user.academyUser?.role;
+    
+    if (!user || !academyRole) {
       return false; // No user or no academy role
     }
 
-    const userRole = user.academyRole.toUpperCase();
+    const userRole = academyRole.toUpperCase();
     
     // Support both INSTRUCTOR and TEACHER naming during transition
     const effectiveRoles = [userRole];

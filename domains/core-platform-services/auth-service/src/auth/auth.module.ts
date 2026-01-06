@@ -8,9 +8,11 @@ import { UserModule } from '../user/user.module';
 import { FirebaseModule } from '../firebase/firebase.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RolesGuard } from './roles/roles.guard';
+import { EmailService } from './email.service';
 
 import { JwtModule } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
+
 
 @Module({
   imports: [
@@ -58,7 +60,8 @@ import { Argon2Service } from './argon2.service';
     ]),
   ],
   controllers: [AuthController, RbacController],
-  providers: [AuthService, RolesGuard, Argon2Service],
-  exports: [RolesGuard, Argon2Service],
+  providers: [AuthService, RolesGuard, Argon2Service, EmailService],
+  exports: [RolesGuard, Argon2Service, EmailService],
 })
 export class AuthModule {}
+

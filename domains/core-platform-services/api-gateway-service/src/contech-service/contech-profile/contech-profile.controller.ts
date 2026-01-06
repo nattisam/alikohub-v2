@@ -15,6 +15,7 @@ import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
 import { lastValueFrom } from 'rxjs';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { SelectRoleDto, ContechRoleDto } from './dto/select-role.dto';
 
 // Define the enum to match the backend
 enum ContechRole {
@@ -60,43 +61,19 @@ export class ConTechProfileController {
   }
 
   @ApiOperation({ summary: 'Select a role for the current user' })
-  @ApiBody({ description: 'Role to select', schema: { example: 'CLIENT' } })
+  @ApiBody({ type: SelectRoleDto })
   @ApiResponse({ status: 200, description: 'Role selected successfully' })
   @ApiResponse({ status: 400, description: 'Invalid role provided' })
   @Post('select-role')
-  async selectRole(@Request() req: RequestWithUser, @Body('role') role: string) {
-    console.log('selectRole endpoint called with role:', role);
+  async selectRole(@Request() req: RequestWithUser, @Body() selectRoleDto: SelectRoleDto) {
+    console.log('selectRole endpoint called with role:', selectRoleDto.role);
+    console.log('Full DTO:', selectRoleDto);
     console.log('User:', req.user);
-
-    // Validate and map the role string to the enum
-    let contechRole: ContechRole;
-    switch (role) {
-      case 'CLIENT':
-        contechRole = ContechRole.CLIENT;
-        break;
-      case 'CONTRACTOR':
-        contechRole = ContechRole.CONTRACTOR;
-        break;
-      case 'PROJECT_MANAGER':
-        contechRole = ContechRole.PROJECT_MANAGER;
-        break;
-      case 'ADMIN':
-        contechRole = ContechRole.ADMIN;
-        break;
-      case 'USER':
-        contechRole = ContechRole.USER;
-        break;
-      default:
-        console.log('Invalid role provided:', role);
-        throw new BadRequestException('Invalid role provided');
-    }
-
-    console.log('Mapped role:', contechRole);
 
     const payload = {
       user: req.user,
       userId: req.user?.firebaseId,
-      role: contechRole,
+      role: selectRoleDto.role,
     };
 
     console.log('Sending payload to contech service:', payload);

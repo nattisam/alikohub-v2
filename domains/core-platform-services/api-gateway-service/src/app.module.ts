@@ -1,18 +1,26 @@
 import { Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
-import { RpcExceptionFilter } from './filters/rpc-exception.filter';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { RpcExceptionFilter } from './common/filters';
+import { CaptchaModule } from './common/captcha/captcha.module';
 import { UserModule } from './auth-service/user/user.module';
 import { AcademyServiceModule } from './academy-service';
 
 import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
 
+
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // TEST-06 Fix: Add global rate limiting - 10 requests per 60 seconds per IP
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 60 seconds in milliseconds
+      limit: 10, // 10 requests per ttl
+    }]),
     ClientsModule.registerAsync([
       {
         name: 'AUTH_SERVICE',
@@ -75,17 +83,20 @@ import { EventsServiceModule } from './events-service/events-service.module';
         }),
       },
     ]),
+    CaptchaModule,
     UserModule,
     AcademyServiceModule,
     ConTechServiceModule,
     EventsServiceModule,
   ],
   providers: [
+    // Global rate limiter guard
     {
-      provide: APP_FILTER,
-      useClass: RpcExceptionFilter,
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
   exports: [ClientsModule],
 })
 export class AppModule { }
+

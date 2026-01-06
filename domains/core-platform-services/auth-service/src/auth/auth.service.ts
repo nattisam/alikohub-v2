@@ -5,6 +5,7 @@ import { FirebaseService } from '../firebase/firebase.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
+import { EmailService } from './email.service';
 import { AcademyRole, ContechRole, EventsRole, GlobalRole } from '@prisma/client';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
 		private readonly prisma: PrismaService,
 		private readonly jwtService: JwtService,
 		private readonly argon2Service: Argon2Service,
+		private readonly emailService: EmailService,
 		@Inject('ACADEMY_SERVICE') private readonly academyClient: ClientProxy,
 		@Inject('CONTECH_SERVICE') private readonly contechClient: ClientProxy,
 		@Inject('EVENTS_SERVICE') private readonly eventsClient: ClientProxy,
@@ -114,6 +116,11 @@ export class AuthService {
 		// Generate JWT tokens
 		const tokens = this.generateTokens(user);
 
+		// Send welcome email (async, don't block registration)
+		this.emailService.sendWelcomeEmail(dto.email, dto.firstname).catch((error) => {
+			this.logger.error(`Failed to send welcome email to ${dto.email}: ${error.message}`);
+		});
+
 		this.logger.log(`Registration successful for: ${dto.email}`);
 		
 		return {
@@ -182,9 +189,28 @@ export class AuthService {
 		};
 	}
 
-	private toPlain(obj: any) {
-		const plain = JSON.parse(JSON.stringify(obj));
+	private toPlain(user: any) {
+		if (!user) return null;
+		const plain = JSON.parse(JSON.stringify(user));
 		delete plain.password;
+
+		// Flatten subdomain roles for easier access in guards
+		if (user.academyUser) {
+			plain.academyRole = user.academyUser.role;
+			plain.academyActiveRole = user.academyUser.activeRole || user.academyUser.role;
+			plain.academyStatus = user.academyUser.status;
+		}
+
+		if (user.contechUser) {
+			plain.contechRole = user.contechUser.role;
+			plain.contechStatus = user.contechUser.status;
+		}
+
+		if (user.eventsUser) {
+			plain.eventsRole = user.eventsUser.role;
+			plain.eventsStatus = user.eventsUser.status;
+		}
+
 		return plain;
 	}
 
@@ -340,7 +366,7 @@ export class AuthService {
 			});
 		}
 
-		return { user, decodedToken: decoded };
+		return { user: this.toPlain(user), decodedToken: decoded };
 	}
 
 	// Academy-specific authentication methods
@@ -649,6 +675,9 @@ export class AuthService {
 			this.logger.log(`Created missing AcademyUser record for user: ${user.firebaseId}`);
 		}
 
-		return academyUser;
+		return {
+			...academyUser,
+			globalRole: user.globalRole,
+		};
 	}
 }

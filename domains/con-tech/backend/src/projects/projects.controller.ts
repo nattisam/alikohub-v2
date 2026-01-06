@@ -5,7 +5,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectStatus } from '@prisma/client';
 import { AuthenticatedUser } from '../user/user.service';
-import { ConTechProfileGuard } from '../auth';
+import { ConTechProfileGuard, RoleGuard, Roles } from '../auth';
 
 @Controller()
 @UseGuards(ConTechProfileGuard)
@@ -13,6 +13,8 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @MessagePattern({ cmd: 'create_project' })
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN')
   async create(
     @Payload() payload: { dto: CreateProjectDto; user: AuthenticatedUser },
   ) {
@@ -29,16 +31,22 @@ export class ProjectsController {
     return await this.projectsService.findOne(payload.id);
   }
   @MessagePattern({cmd: 'find_contractor'})
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN')
   async findallcontractor(){
     return await this.projectsService.getContracrors()
   }
 
   @MessagePattern({cmd: 'find_inspector'})
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN')
   async findallinspector(){
     return await this.projectsService.getInspectors()
   }
 
   @MessagePattern({ cmd: 'update_project' })
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN')
   async update(
     @Payload()
     payload: {
@@ -55,11 +63,15 @@ export class ProjectsController {
   }
 
   @MessagePattern({ cmd: 'remove_project' })
+  @UseGuards(RoleGuard)
+  @Roles('ADMIN')
   async remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
     return await this.projectsService.remove(payload.id, payload.user);
   }
 
   @MessagePattern({ cmd: 'update_project_status' })
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN')
   async updateStatus(
     @Payload()
     payload: {
@@ -76,6 +88,8 @@ export class ProjectsController {
   }
 
   @MessagePattern({ cmd: 'get_project_stats' })
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN')
   async getStats(
     @Payload() payload: { manager?: string; user: AuthenticatedUser },
   ) {
