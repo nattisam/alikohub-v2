@@ -107,11 +107,28 @@ export interface CourseLesson {
   dueDate?: string;
 }
 
+export interface Lesson {
+  id: number;
+  title: string;
+  description?: string;
+  type: LessonType;
+  moduleId: number;
+  contents: LessonContent[];
+  maxScore?: number;
+  passingScore?: number;
+  isCompleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  dueDate?: string;
+}
+
 export interface LessonContent {
   id: number;
   lessonId: number;
   title: string;
   type: ContentType;
+  content?: string;
+  contentUrl?: string;
   url: string;
   createdAt: string;
   updatedAt: string;

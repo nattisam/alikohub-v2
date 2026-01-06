@@ -98,4 +98,19 @@ export const academyAPI = {
     const { data } = await apiClient.post('/auth/academy/apply-teacher', applicationData);
     return data;
   },
+  
+  getTeacherApplications: async () => {
+    const { data } = await apiClient.get('/auth/academy/teacher-applications');
+    return data;
+  },
+  
+  approveTeacher: async (applicationId: string) => {
+    const { data } = await apiClient.post(`/auth/academy/approve-teacher/${applicationId}`);
+    return data;
+  },
+  
+  rejectTeacher: async (applicationId: string) => {
+    const { data } = await apiClient.post(`/auth/academy/reject-teacher/${applicationId}`);
+    return data;
+  },
 };

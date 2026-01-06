@@ -23,7 +23,7 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [showInstructorApplication, setShowInstructorApplication] = useState<boolean>(false);
 
-  const handleRoleSelect = (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => {
+  const handleRoleSelect = (role: "STUDENT" | "INSTRUCTOR") => {
     setSelectedRole(role);
     setError("");
   };
@@ -45,7 +45,7 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
         return;
       }
       
-      await selectRole(selectedRole as "STUDENT" | "INSTRUCTOR" | "ADMIN");
+      await selectRole(selectedRole as "STUDENT" | "INSTRUCTOR");
       
       // Don't navigate automatically - user needs to switch role manually from profile
       // Show success message and close modal
@@ -161,29 +161,7 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
                   </div>
                 </div>
 
-                {/* Admin Role Card */}
-                <div 
-                  className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                    selectedRole === "ADMIN" 
-                      ? "border-blue-500 bg-blue-50" 
-                      : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
-                  }`}
-                  onClick={() => handleRoleSelect("ADMIN")}
-                >
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3">
-                      {selectedRole === "ADMIN" && (
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">Administrator</h3>
-                      <p className="text-gray-600 text-sm mt-1">
-                        Manage users, courses, and platform settings
-                      </p>
-                    </div>
-                  </div>
-                </div>
+
               </div>
 
               <div className="mt-6">

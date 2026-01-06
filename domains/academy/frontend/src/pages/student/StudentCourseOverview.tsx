@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import type { Course } from "../../components/types.d.tsx";
+import type { Course } from "../../components/common/types.d.tsx";
 import AllCourses from "../../components/course/AllCourses";
 import StudentModuleView from "../../components/student/StudentModuleView";
 
@@ -33,10 +33,7 @@ const StudentCourseOverview = () => {
       return; // allowed to see application modal
     }
 
-    // If user is ADMIN, also allow access
-    if (userRole === "ADMIN" || activeRole === "ADMIN") {
-      return; // allowed
-    }
+
 
     // Redirect to role selection if user hasn't selected a role yet
     navigate("/role"); // Redirect to role selection page
@@ -63,7 +60,7 @@ const StudentCourseOverview = () => {
   // Check if user has selected a role and it's appropriate
   const userRole = currentUser?.academyRole || currentUser?.currentRole || currentUser?.academyUser?.role;
   const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR" || activeRole === "ADMIN");
+  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
   
   // Check if user wants to apply as instructor
   const pendingRole = currentUser?.pendingRole;
@@ -73,7 +70,7 @@ const StudentCourseOverview = () => {
   const academyUserRole = currentUser?.academyUser?.role;
   
   // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
-  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR' && activeRole !== 'ADMIN')) {
+  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -107,7 +104,8 @@ const StudentCourseOverview = () => {
 
   // Function to handle viewing course content
   const handleViewCourseContent = async (courseId: number) => {
-    setCourseForModuleView({ id: courseId } as Course); // We'll fetch the actual course data in the modal
+    // Redirect to the module page for this course
+    navigate(`/student-dashboard/mycourses/${courseId}/modules`);
   };
 
   return (
@@ -128,13 +126,14 @@ const StudentCourseOverview = () => {
         />
       </div>
 
-      {/* Course Content Modal */}
+      {/* Course Content Modal - commented out since we're redirecting to module page */}
+      {/*
       {courseForModuleView && (
         <StudentModuleView
           courseId={courseForModuleView.id}
           onClose={() => setCourseForModuleView(null)}
         />
-      )}
+      */}
     </div>
   );
 };

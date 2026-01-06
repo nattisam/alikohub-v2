@@ -7,7 +7,7 @@ import TeacherApplicationModal from "../../components/auth/TeacherApplicationMod
 import { useState, useEffect } from "react";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { courseApi } from "../../api/courseApi";
-import type { Course } from "../../components/types.d.tsx";
+import type { Course } from "../../components/common/types.d.tsx";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
 import StudentModuleView from "../../components/student/StudentModuleView";
@@ -43,10 +43,7 @@ const AcademyStudentDashboard = () => {
       return; // allowed to see application modal
     }
 
-    // If user is ADMIN, also allow access
-    if (userRole === "ADMIN" || activeRole === "ADMIN") {
-      return; // allowed
-    }
+
 
     // Redirect to role selection if user hasn't selected a role yet
     navigate("/role"); // Redirect to role selection page
@@ -75,7 +72,7 @@ const AcademyStudentDashboard = () => {
   // Check if user has selected a role and it's appropriate for student dashboard
   const userRole = currentUser?.academyRole || currentUser?.currentRole || currentUser?.academyUser?.role;
   const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR" || activeRole === "ADMIN");
+  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
   
   // Check if user wants to apply as instructor
   const pendingRole = currentUser?.pendingRole;
@@ -86,7 +83,7 @@ const AcademyStudentDashboard = () => {
   
   // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
   console.log('AcademyStudentDashboard: Checking role - activeRole:', activeRole, 'hasSelectedRole:', hasSelectedRole);
-  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR' && activeRole !== 'ADMIN')) {
+  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
     // Show role selection modal
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -168,23 +165,8 @@ const AcademyStudentDashboard = () => {
     console.log("handleViewCourseContent called with courseId:", courseId);
     console.log("Available courses:", courses);
     
-    // Find the course in the courses array
-    const course = courses.find(c => c.id === courseId);
-    console.log("Found course:", course);
-    
-    if (course) {
-      setCourseForModuleView(course);
-    } else {
-      console.error("Course not found in courses array");
-      // Try to fetch the course directly
-      try {
-        const response = await courseApi.getCourse(courseId);
-        console.log("Fetched course directly:", response.data);
-        setCourseForModuleView(response.data);
-      } catch (error) {
-        console.error("Error fetching course directly:", error);
-      }
-    }
+    // Redirect to the module page for this course
+    navigate(`/student-dashboard/mycourses/${courseId}/modules`);
   };
 
   // Function to trigger dashboard refresh
@@ -327,13 +309,15 @@ const AcademyStudentDashboard = () => {
         </div>
       )}
       
-      {/* Course Content Modal */}
+      {/* Course Content Modal - commented out since we're redirecting to module page */}
+      {/*
       {courseForModuleView && (
         <StudentModuleView
           courseId={courseForModuleView.id}
           onClose={() => setCourseForModuleView(null)}
         />
       )}
+      */}
     </div>
   );
 };

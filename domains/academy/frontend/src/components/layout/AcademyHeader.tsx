@@ -89,8 +89,18 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
           <div className="flex items-center">
             {currentUser ? (
               <>
-                {/* Choose Role button ONLY if no role */}
-                {!currentUser.hasSelectedRole && (
+                {/* Admin Panel button for global admin users */}
+                {currentUser.globalRole === 'ADMIN' && (
+                  <Link
+                    to="/admin"
+                    className="mr-4 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-md"
+                  >
+                    Admin Panel
+                  </Link>
+                )}
+                
+                {/* Choose Role button ONLY if no role and not admin */}
+                {!currentUser.hasSelectedRole && currentUser.globalRole !== 'ADMIN' && (
                   <Link
                     to="/role"
                     className="mr-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md"

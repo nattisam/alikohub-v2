@@ -123,30 +123,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const loginMutation = useMutation({
     mutationFn: (c: LoginCredentials) => authAPI.login(c),
     onSuccess: async (data) => {
+      // Store the token first to make it available for subsequent API calls
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
 
-      // Use the user data from the response which may contain updated role information
-      const profile = await academyAPI.getProfile();
-      const finalUser = buildUser(data.user);
+      try {
+        // Use the user data from the response which may contain updated role information
+        const profile = await academyAPI.getProfile();
+        const finalUser = buildUser(data.user);
 
-      setUser(finalUser);
-      localStorage.setItem("user", JSON.stringify(finalUser));
+        setUser(finalUser);
+        localStorage.setItem("user", JSON.stringify(finalUser));
+      } catch (error) {
+        // If profile fetch fails, we should still have the user data from login
+        // Build user with the login response data as fallback
+        const finalUser = buildUser(data.user);
+        setUser(finalUser);
+        localStorage.setItem("user", JSON.stringify(finalUser));
+        
+        console.error('Error fetching profile after login:', error);
+      }
     },
   });
 
   const signupMutation = useMutation({
     mutationFn: (c: SignupCredentials) => authAPI.register(c),
     onSuccess: async (data) => {
+      // Store the token first to make it available for subsequent API calls
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
 
-      // Use the user data from the response which may contain updated role information
-      const profile = await academyAPI.getProfile();
-      const finalUser = buildUser(data.user);
+      try {
+        // Use the user data from the response which may contain updated role information
+        const profile = await academyAPI.getProfile();
+        const finalUser = buildUser(data.user);
 
-      setUser(finalUser);
-      localStorage.setItem("user", JSON.stringify(finalUser));
+        setUser(finalUser);
+        localStorage.setItem("user", JSON.stringify(finalUser));
+      } catch (error) {
+        // If profile fetch fails, we should still have the user data from registration
+        // Build user with the registration response data as fallback
+        const finalUser = buildUser(data.user);
+        setUser(finalUser);
+        localStorage.setItem("user", JSON.stringify(finalUser));
+        
+        console.error('Error fetching profile after signup:', error);
+      }
     },
   });
 

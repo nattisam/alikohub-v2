@@ -1,16 +1,15 @@
 export interface CurrentUser {
+  id?: number;
   firebaseId: string;
-  email: string;
   firstname: string;
   lastname: string;
-  role?: string;
+  email: string;
   globalRole?: string;
-  academyRole?: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
   profilePicture?: string;
   bio?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
   [key: string]: any; // Allow additional properties
 }
 

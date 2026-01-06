@@ -20,7 +20,7 @@ const SignupPage: React.FC = () => {
         password: data.password,
       });
       // Redirect back to the home page after signup
-      navigate('/');
+      navigate('/login');
     } catch (error) {
       console.error('Signup error:', error);
       // Error handling is managed by the context (signupError state)

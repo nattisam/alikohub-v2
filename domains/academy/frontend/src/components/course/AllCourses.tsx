@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { courseApi, enrollmentApi } from "../../api/courseApi";
-import type { Course } from "../types.d";
+import type { Course } from "../common/types.d";
 import courseImg from "../../assets/courses.png";
 import { FaUsers, FaStar } from "react-icons/fa";
 import EnrollmentModal from "../instructor/EnrollmentModal";

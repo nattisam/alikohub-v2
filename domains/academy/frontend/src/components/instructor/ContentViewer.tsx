@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaFilePdf, FaVideo, FaFileAlt, FaQuestionCircle, FaTasks, FaBook } from "react-icons/fa";
 import { academyApi } from "../../api";
 import { progressApi } from "../../api/progressApi";
-import type { LessonContent } from "../types.d.tsx";
+import type { LessonContent } from "../common/types.d.tsx";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface ContentViewerProps {

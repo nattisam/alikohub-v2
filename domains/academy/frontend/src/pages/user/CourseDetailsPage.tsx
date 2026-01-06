@@ -334,7 +334,7 @@ const CourseDetailsPage: React.FC = () => {
                   >
                     Select Role to Enroll
                   </button>
-                ) : currentUser?.academyRole === 'INSTRUCTOR' || currentUser?.academyRole === 'ADMIN' ? (
+                ) : currentUser?.academyRole === 'INSTRUCTOR' ? (
                   <button
                     disabled
                     className="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white py-4 rounded-xl font-bold text-lg cursor-not-allowed shadow-lg"

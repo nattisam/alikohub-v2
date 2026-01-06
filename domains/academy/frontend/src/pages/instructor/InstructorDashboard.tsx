@@ -31,8 +31,7 @@ const InstructorDashboardMain: React.FC = () => {
   // Check if user has access to instructor dashboard
   const hasInstructorAccess =
     activeRole === "INSTRUCTOR" ||
-    mainRole === "INSTRUCTOR" ||
-    activeRole === "ADMIN";
+    mainRole === "INSTRUCTOR";
 
   if (!hasInstructorAccess) {
     return (

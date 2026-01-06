@@ -9,16 +9,19 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add JWT token
+// Request interceptor to add Access Token for API authentication
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('API Interceptor: No token found in localStorage');
     }
     return config;
   },
   (error) => {
+    console.log('API Interceptor: Error in request interceptor', error);
     return Promise.reject(error);
   }
 );
@@ -27,18 +30,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      error.config?.url.includes('/auth/change-password') &&
-      error.response?.status === 401
-    ) {
-      return Promise.reject(error);
-    }
-
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    // Note: We've removed automatic logout on 401 errors
+    // since 401 can mean 'unauthorized' (insufficient permissions) rather than 'unauthenticated' (expired session)
+    // Session management is handled by the AuthContext and ProtectedRoute components
     return Promise.reject(error);
   }
 );

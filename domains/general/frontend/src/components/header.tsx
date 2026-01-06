@@ -82,10 +82,6 @@ const Header = ({
     navigate("/");
   };
 
-  const handleAdminClick = () => {
-    navigate("/admin/careers");
-  };
-
   // Update navLinks based on user status
   const getNavLinks = () => {
     // Remove the automatic addition of "Admin Panel" link to navLinks

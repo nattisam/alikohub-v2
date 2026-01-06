@@ -31,6 +31,7 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Courses')
 @ApiBearerAuth()
@@ -56,6 +57,7 @@ export class CourseController {
   }
 
   // Get all courses
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all courses' })
   @ApiResponse({ status: 200, description: 'List of courses' })
@@ -71,7 +73,7 @@ export class CourseController {
 
   // Get a course by ID
   @Get(':id')
-  @UseGuards(AuthGuard, CourseAccessGuard)
+  // @UseGuards(AuthGuard, CourseAccessGuard)
   @ApiOperation({ summary: 'Get a course by ID' })
   @ApiResponse({ status: 200, description: 'Course found' })
   @ApiResponse({ status: 404, description: 'Course not found' })
@@ -102,6 +104,7 @@ export class CourseController {
     };
     return this.academyClient.send({ cmd: 'update_course' }, payload);
   }
+
 
   // Remove a course
   @Delete(':id')

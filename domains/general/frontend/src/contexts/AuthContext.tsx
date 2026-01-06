@@ -6,6 +6,7 @@ import type { CurrentUser, LoginCredentials, SignupCredentials } from "../types.
 // Backend response structure
 interface AuthResponse {
   user: CurrentUser;
+  accessToken: string;
   firebaseCustomToken: string;
 }
 
@@ -17,7 +18,6 @@ interface AuthContextType {
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => void;
   updateUser: (user: CurrentUser) => void;
-  selectRole: (role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       try {
         const userData = localStorage.getItem('user');
-        const token = localStorage.getItem('firebaseCustomToken');
+        const token = localStorage.getItem('accessToken');
         
         // If we have both user data and a token, verify the token
         if (userData && token) {
@@ -42,23 +42,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (response.user) {
               setUser(response.user);
             } else {
-              // Token is invalid, clear storage
-              localStorage.removeItem('user');
-              localStorage.removeItem('firebaseCustomToken');
+              // Token is invalid, fall back to stored user data
+              try {
+                setUser(JSON.parse(userData));
+              } catch {
+                setUser(null);
+              }
             }
           } catch (error) {
-            // Verification failed, clear storage
-            localStorage.removeItem('user');
-            localStorage.removeItem('firebaseCustomToken');
+            // Verification failed, fall back to stored user data
+            try {
+              setUser(JSON.parse(userData));
+            } catch {
+              setUser(null);
+            }
           }
         } else if (userData) {
-          // We have user data but no token, clear storage
-          localStorage.removeItem('user');
+          // We have user data but no token, try to use stored user data
+          try {
+            setUser(JSON.parse(userData));
+          } catch {
+            setUser(null);
+          }
         }
       } catch (error) {
-        // If there's an error, clear any invalid user data
-        localStorage.removeItem('user');
-        localStorage.removeItem('firebaseCustomToken');
+        // If there's an error, try to use stored user data
+        try {
+          const userData = localStorage.getItem('user');
+          if (userData) {
+            setUser(JSON.parse(userData));
+          }
+        } catch {
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -69,12 +85,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await authAPI.login(credentials);
+      const response: AuthResponse = await authAPI.login(credentials);
       return response;
     },
     onSuccess: (data) => {
       // Save user data and token to localStorage
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('firebaseCustomToken', data.firebaseCustomToken);
       
       // Update user state
@@ -84,12 +101,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signupMutation = useMutation({
     mutationFn: async (credentials: SignupCredentials) => {
-      const response = await authAPI.register(credentials);
+      const response: AuthResponse = await authAPI.register(credentials);
       return response;
     },
     onSuccess: (data) => {
       // Save user data and token to localStorage
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('firebaseCustomToken', data.firebaseCustomToken);
       
       // Update user state
@@ -116,32 +134,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
-    // Clear user data and token
-    localStorage.removeItem('user');
-    localStorage.removeItem('firebaseCustomToken');
-    
-    // Reset user state
-    setUser(null);
-    
-    // Invalidate queries
-    queryClient.invalidateQueries();
+  const logout = async () => {
+    try {
+      // Call the backend logout endpoint if it exists
+      try {
+        await authAPI.logout();
+      } catch (error) {
+        // If logout endpoint doesn't exist or fails, continue with local cleanup
+        console.log('Logout endpoint may not exist, proceeding with local cleanup');
+      }
+      
+      // Clear user data and token
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('firebaseCustomToken');
+      
+      // Reset user state
+      setUser(null);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const updateUser = (updatedUser: CurrentUser) => {
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));
-  };
-
-  const selectRole = (role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN') => {
-    if (user) {
-      const updatedUser = {
-        ...user,
-        academyRole: role
-      };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
   };
 
   const value = {
@@ -152,7 +172,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signup,
     logout,
     updateUser,
-    selectRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

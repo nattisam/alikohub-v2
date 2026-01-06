@@ -26,10 +26,13 @@ import CourseDetailsPage from "./Pages/user/CourseDetailsPage";
 import AcademyHeader from "./components/layout/AcademyHeader";
 import EventDetailsPage from "./Pages/user/EventDetailsPage";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import AdminProtectedRoute from "./components/common/AdminProtectedRoute";
 import DashboardRouter from "./components/layout/DashboardRouter";
 import RolesPage from "./Pages/user/RolesPage";
 import ProfilePage from "./Pages/user/ProfilePage";
 import SettingsPage from "./Pages/user/SettingsPage";
+import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
+import AdminDashboard from "./admin/AdminDashboard";
 
 // -------------------- Layouts --------------------
 
@@ -183,9 +186,17 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <div>Admin Dashboard (To be implemented)</div>
-              </ProtectedRoute>
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/teacher-applications"
+            element={
+              <AdminProtectedRoute>
+                <TeacherApplicationsDashboard />
+              </AdminProtectedRoute>
             }
           />
         </Route>

@@ -28,7 +28,7 @@ const ProfilePage = () => {
   const [uploading, setUploading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
-  const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR" | "ADMIN") => {
+  const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR") => {
     if (currentUser) {
       try {
 
@@ -187,9 +187,7 @@ const ProfilePage = () => {
       // Include title for instructors
       if (
         currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-        currentUser.academyRole === "INSTRUCTOR" ||
-        currentUser.academyUser?.activeRole === "ADMIN" ||
-        currentUser.academyRole === "ADMIN"
+        currentUser.academyRole === "INSTRUCTOR"
       ) {
         updateData.title = formData.title;
       }
@@ -269,14 +267,14 @@ const ProfilePage = () => {
                       <div className="py-1" role="menu">
                         {currentUser.availableRoles
                           .filter((role) =>
-                            ["STUDENT", "INSTRUCTOR", "ADMIN"].includes(role)
+                            ["STUDENT", "INSTRUCTOR"].includes(role)
                           ) // Only show valid academy roles
                           .map((role) => (
                             <button
                               key={role}
                               onClick={() =>
                                 handleRoleChange(
-                                  role as "STUDENT" | "INSTRUCTOR" | "ADMIN"
+                                  role as "STUDENT" | "INSTRUCTOR"
                                 )
                               }
                               className={`block px-4 py-2 text-sm w-full text-left ${

@@ -1,7 +1,7 @@
  import React, { useState, useEffect } from "react";
 import { FaChevronDown, FaChevronRight, FaFile, FaVideo, FaFilePdf } from "react-icons/fa";
 import { academyApi } from "../../api";
-import type { CourseModule, LessonContent } from "../types.d.tsx";
+import type { CourseModule, LessonContent } from "../common/types.d.tsx";
 import LessonView from "../instructor/LessonView";
 
 interface StudentModuleViewProps {

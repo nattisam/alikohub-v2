@@ -28,8 +28,7 @@ const InstructorMyCourses: React.FC = () => {
 
   const hasInstructorAccess =
     activeRole === "INSTRUCTOR" ||
-    mainRole === "INSTRUCTOR" ||
-    activeRole === "ADMIN";
+    mainRole === "INSTRUCTOR";
 
   // State for modals
   const [showAddModuleModal, setShowAddModuleModal] = useState(false);
