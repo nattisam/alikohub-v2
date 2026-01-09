@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import AuthInput from './AuthInput';
 import AuthButton from './AuthButton';
 import SocialLoginButton from './SocialLoginButton';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 interface SignupFormProps {
   onSubmit: (data: SignupFormData) => void;
   onSwitchToLogin: () => void;
   loading?: boolean;
+  recaptchaSiteKey?: string;
 }
 
 export interface SignupFormData {
@@ -15,6 +17,7 @@ export interface SignupFormData {
   email: string;
   password: string;
   agreeToTerms: boolean;
+  captchaToken?: string;
 }
 
 interface FormErrors {
@@ -23,22 +26,27 @@ interface FormErrors {
   email?: string;
   password?: string;
   agreeToTerms?: string;
+  captchaToken?: string;
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({
   onSubmit,
   onSwitchToLogin,
-  loading = false
+  loading = false,
+  recaptchaSiteKey
 }) => {
   const [formData, setFormData] = useState<SignupFormData>({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    agreeToTerms: false
+    agreeToTerms: false,
+    captchaToken: undefined
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [captchaLoaded, setCaptchaLoaded] = useState(false);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -66,6 +74,11 @@ const SignupForm: React.FC<SignupFormProps> = ({
     if (!formData.agreeToTerms) {
       newErrors.agreeToTerms = 'You must agree to the terms and conditions';
     }
+    
+    // Validate captcha if loaded
+    if (captchaLoaded && !formData.captchaToken) {
+      newErrors.captchaToken = 'Please complete the security check';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,6 +88,20 @@ const SignupForm: React.FC<SignupFormProps> = ({
     e.preventDefault();
     if (validateForm()) {
       onSubmit(formData);
+    }
+  };
+  
+  const handleCaptchaChange = (token: string | null) => {
+    setFormData(prev => ({
+      ...prev,
+      captchaToken: token || undefined
+    }));
+    
+    if (token) {
+      setCaptchaError(null);
+      setCaptchaLoaded(true);
+    } else {
+      setCaptchaError('Please complete the security check');
     }
   };
 
@@ -178,19 +205,43 @@ const SignupForm: React.FC<SignupFormProps> = ({
           <p className="text-sm text-red-600">{errors.agreeToTerms}</p>
         )}
 
+        {/* reCAPTCHA Widget */}
+        <div className="pt-4">
+          {(recaptchaSiteKey && recaptchaSiteKey.length > 0) || (import.meta.env.VITE_RECAPTCHA_SITE_KEY && import.meta.env.VITE_RECAPTCHA_SITE_KEY.length > 0) ? (
+            <ReCAPTCHA
+              sitekey={recaptchaSiteKey || import.meta.env.VITE_RECAPTCHA_SITE_KEY || ""}
+              onChange={handleCaptchaChange}
+              onErrored={() => {
+                setCaptchaError('reCAPTCHA error occurred. Please refresh the page and try again.');
+              }}
+            />
+          ) : (
+            <div className="text-red-600 text-sm">
+              reCAPTCHA is not configured. Contact the administrator to set up reCAPTCHA.
+            </div>
+          )}
+          {errors.captchaToken && (
+            <p className="mt-1 text-sm text-red-600">{errors.captchaToken}</p>
+          )}
+          {captchaError && (
+            <p className="mt-1 text-sm text-red-600">{captchaError}</p>
+          )}
+        </div>
+        
         {/* Submit Button */}
         <div className="pt-4">
           <AuthButton
             type="submit"
             variant="primary"
             loading={loading}
-            disabled={loading}
+            disabled={loading || !captchaLoaded || !formData.captchaToken}
           >
             Create account
           </AuthButton>
         </div>
       </form>
 
+      {/* Divider */}
       {/* Divider */}
       <div className="my-6 flex items-center">
         <div className="flex-1 border-t border-gray-300"></div>

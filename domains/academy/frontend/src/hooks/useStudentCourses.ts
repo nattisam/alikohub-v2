@@ -7,7 +7,7 @@ export const useStudentCourses = () => {
   const userId = currentUser?.firebaseId;
   
   const allCoursesQuery = useAllCourses();
-  const trendingCoursesQuery = useTrendingCourses();
+  const trendingCourses = useTrendingCourses(allCoursesQuery.data || []);
   const enrolledCoursesQuery = useEnrolledCourses(userId);
   const enrollCourseMutation = useEnrollCourse();
 
@@ -19,10 +19,10 @@ export const useStudentCourses = () => {
     isErrorCourses: allCoursesQuery.isError,
     
     // Trending courses data
-    trendingCourses: trendingCoursesQuery.data || [],
-    isLoadingTrending: trendingCoursesQuery.isLoading,
-    isFetchingTrending: trendingCoursesQuery.isFetching,
-    isErrorTrending: trendingCoursesQuery.isError,
+    trendingCourses: trendingCourses || [],
+    isLoadingTrending: allCoursesQuery.isLoading,
+    isFetchingTrending: allCoursesQuery.isFetching,
+    isErrorTrending: allCoursesQuery.isError,
     
     // Enrolled courses data
     enrolledCourses: enrolledCoursesQuery.data || [],

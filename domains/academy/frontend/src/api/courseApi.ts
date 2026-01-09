@@ -60,17 +60,8 @@ export const courseApi = {
     }
   },
   getCourse: async (courseId: number) => {
-    try {
-      // Try public API first (for published courses)
-      const response = await publicAcademyApi.get(`/academy/courses/${courseId}`);
-      return response;
-    } catch (error: any) {
-      // If public access fails (401/403), try with authentication for private courses
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        return academyApi.get(`/academy/courses/${courseId}`);
-      }
-      throw error;
-    }
+    // Use authenticated API directly - backend handles authorization
+    return academyApi.get(`/academy/courses/${courseId}`);
   },
   createCourse: (data: any) => academyApi.post("/academy/courses", data),
   updateCourse: (id: number, data: any) => academyApi.patch(`academy/courses/${id}`, data),

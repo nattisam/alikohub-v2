@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { useCourses } from "../../hooks/useCourses"; 
 
 const AcademyHomePage = () => {
-  const { data: trendingCourses = [], isLoading: isLoadingTrending } = useTrendingCourses();
   const { data: courses = [], isLoading: isLoadingCourses } = useAllCourses();
+  const trendingCourses = useTrendingCourses(courses);
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
@@ -125,10 +125,6 @@ const AcademyHomePage = () => {
           </div>
         </section>
         
-        <h2 className="m-5 font-sans text-4xl font-extrabold">
-          Explore Our Courses
-        </h2>
-        
         {/* Course Statistics */}
         {!loading && !error && allCourses.length > 0 && (
           <div className="mx-5 mb-8">
@@ -172,8 +168,16 @@ const AcademyHomePage = () => {
           })
         )}
         
+        {/* Render all courses when no categories exist */}
+        {!loading && !error && categories.length === 0 && allCourses.length > 0 && (
+          <CoursesList
+            courses={allCourses}
+            category="All Courses"
+          />
+        )}
+        
         {/* No courses message */}
-        {!loading && !error && categories.length === 0 && (
+        {!loading && !error && allCourses.length === 0 && (
           <div className="text-center py-12">
             <FaBook className="mx-auto text-6xl text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No Courses Available</h3>

@@ -7,23 +7,19 @@ export const useAllCourses = () => {
   return useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
-      const response = await courseApi.getPublishedCourses({ status: "PUBLISHED" });
+      const response = await courseApi.getPublishedCourses();
       const payload = (response.data && response.data.items) ? response.data.items : response.data;
       return Array.isArray(payload) ? payload : [];
     },
+    staleTime: 5 * 60 * 1000,      // 5 minutes
+    cacheTime: 10 * 60 * 1000,     // 10 minutes
+    refetchOnWindowFocus: false,   // stop spam
+    retry: 1,                      // don't hammer server
   });
 };
 
-export const useTrendingCourses = () => {
-  return useQuery({
-    queryKey: ["trending-courses"],
-    queryFn: async () => {
-      const response = await courseApi.getPublishedCourses({ status: "PUBLISHED" });
-      const payload = (response.data && response.data.items) ? response.data.items : response.data;
-      const coursesData = Array.isArray(payload) ? payload : [];
-      return coursesData.slice(0, 5);
-    },
-  });
+export const useTrendingCourses = (allCourses: Course[] = []) => {
+  return allCourses.slice(0, 5);
 };
 
 export const useEnrolledCourses = (userId?: string) => {

@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { courseApi, enrollmentApi } from "../../api/courseApi";
+import { useAuth } from "../../contexts/AuthContext";
 import type { Course } from "../common/types.d";
 import courseImg from "../../assets/courses.png";
 import { FaUsers, FaStar } from "react-icons/fa";
@@ -16,47 +18,55 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   onViewCourseContent,
   onEnrollmentComplete // Add this new prop
 }) => {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [enrolling, setEnrolling] = useState<number | null>(null);
-  const [enrolledCourses, setEnrolledCourses] = useState<Set<number>>(new Set());
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [courseToEnroll, setCourseToEnroll] = useState<number | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
-
-  useEffect(() => {
-    const fetchCoursesAndEnrollments = async () => {
-      setLoading(true);
-      setError(null);
-      
+  
+  const { user: currentUser } = useAuth();
+  
+  const {
+    data: courses = [],
+    isLoading,
+    isError,
+    error: queryError
+  } = useQuery({
+    queryKey: ["all-courses", currentUser?.firebaseId],
+    queryFn: async () => {
+      const response = await courseApi.getCourses();
+      console.log("Courses API Response:", response);
+      const coursesData = response.data.items || response.data;
+      return Array.isArray(coursesData) ? coursesData : [];
+    },
+    staleTime: 5 * 60 * 1000,      // 5 minutes
+    cacheTime: 10 * 60 * 1000,     // 10 minutes
+    refetchOnWindowFocus: false,   // stop spam
+    retry: 1,                      // don't hammer server
+  });
+  
+  // Fetch user's enrollments to show which courses are already enrolled
+  const {
+    data: enrolledCourseIds = [],
+    isLoading: enrollmentsLoading
+  } = useQuery({
+    queryKey: ["user-enrollments", currentUser?.firebaseId],
+    queryFn: async () => {
       try {
-        // Fetch all courses
-        const response = await courseApi.getCourses();
-        console.log("Courses API Response:", response);
-        const coursesData = response.data.items || response.data;
-        setCourses(coursesData);
-        
-        // Fetch user's enrollments to show which courses are already enrolled
-        try {
-          const enrollmentResponse = await enrollmentApi.getMyEnrollments();
-          const enrolledCourseIds = new Set(
-            enrollmentResponse.data.map((enrollment: any) => enrollment.courseId)
-          );
-          setEnrolledCourses(enrolledCourseIds);
-        } catch (enrollmentError) {
-          console.error("Error fetching enrollments:", enrollmentError);
-        }
-      } catch (err: any) {
-        console.error("Error fetching courses:", err);
-        setError("Failed to load courses");
-      } finally {
-        setLoading(false);
+        const enrollmentResponse = await enrollmentApi.getMyEnrollments();
+        return enrollmentResponse.data.map((enrollment: any) => enrollment.courseId);
+      } catch (enrollmentError) {
+        console.error("Error fetching enrollments:", enrollmentError);
+        return [];
       }
-    };
-
-    fetchCoursesAndEnrollments();
-  }, []);
+    },
+    staleTime: 5 * 60 * 1000,      // 5 minutes
+    cacheTime: 10 * 60 * 1000,     // 10 minutes
+    refetchOnWindowFocus: false,   // stop spam
+    retry: 1,                      // don't hammer server
+    enabled: !!currentUser?.firebaseId, // Only run if user is authenticated
+  });
+  
+  const enrolledCourses = new Set(enrolledCourseIds);
 
   const handleEnrollClick = (courseId: number) => {
     const course = courses.find(c => c.id === courseId);
@@ -133,7 +143,7 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     }
   };
 
-  if (loading) {
+  if (isLoading || enrollmentsLoading) {
     return (
       <div className={`${className} bg-white rounded-lg shadow p-6`}>
         <div className="flex justify-between items-center mb-6">
@@ -144,13 +154,13 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className={`${className} bg-white rounded-lg shadow p-6`}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-900">All Courses</h2>
         </div>
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500">Failed to load courses</p>
       </div>
     );
   }

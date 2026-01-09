@@ -24,12 +24,16 @@ export const useCourses = () => {
         setCourses(fetchedCourses);
         
         // Extract unique categories from the fetched courses
+        // Only include valid categories that match the expected types
+        const validCategories = ['Technology', 'STEM', 'Health'];
         const uniqueCategories = Array.from(
           new Set(
             fetchedCourses
               .map(course => course.category)
               .filter((category): category is string => 
-                typeof category === 'string' && category.length > 0
+                typeof category === 'string' && 
+                category.length > 0 && 
+                validCategories.includes(category)
               )
           )
         );
@@ -58,8 +62,10 @@ export const useCourses = () => {
   }, []);
 
   const filterCoursesByCategory = (targetCategory: string) => {
+    // Only include courses with valid categories
+    const validCategories = ['Technology', 'STEM', 'Health'];
     return courses.filter((course) => {
-      if (!course.category) return false;
+      if (!course.category || !validCategories.includes(course.category)) return false;
       return course.category.toLowerCase() === targetCategory.toLowerCase();
     });
   };

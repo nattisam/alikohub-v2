@@ -18,6 +18,10 @@ const CoursesPage: React.FC = () => {
   // Check if user has selected a role
   const hasRole = currentUser?.academyRole !== undefined;
   const isStudent = currentUser?.academyRole === 'STUDENT';
+  
+  // Create a stable identifier for user changes
+  const userId = currentUser?.firebaseId || currentUser?.id;
+  const userRole = currentUser?.academyRole || currentUser?.currentRole;
 
   // Fetch all published courses (requires authentication)
   useEffect(() => {
@@ -48,7 +52,7 @@ const CoursesPage: React.FC = () => {
     };
 
     fetchCourses();
-  }, [currentUser]);
+  }, [userId, userRole]); // Only refetch when user ID or role changes
 
   // Set category from URL params if available
   useEffect(() => {

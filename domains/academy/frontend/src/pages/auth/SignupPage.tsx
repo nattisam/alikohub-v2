@@ -18,6 +18,7 @@ const SignupPage: React.FC = () => {
         lastname: data.lastName,
         email: data.email,
         password: data.password,
+        captchaToken: data.captchaToken,
       });
       // Redirect back to the home page after signup
       navigate('/login');
@@ -44,6 +45,7 @@ const SignupPage: React.FC = () => {
             onSubmit={handleSignup}
             onSwitchToLogin={handleSwitchToLogin}
             loading={signupLoading}
+            recaptchaSiteKey={"6LdnZEMsAAAAAO9XTu3-JBnoVSTQ6GY1MUgdR7YV"}
           />
         </div>
       </AuthLayout>

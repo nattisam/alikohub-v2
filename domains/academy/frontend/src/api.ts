@@ -19,7 +19,16 @@ const AUTH_BASE_URL =
     ? `http://localhost:${PORT}/auth`
     : "https://alikohub.com/api/auth";
 
-// Create academy API instance that reuses the interceptors from apiClient
+// Function to attach auth interceptor to any axios instance
+const attachAuthInterceptor = (instance: any) => {
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+};
+
+// Create academy API instance
 export const academyApi = axios.create({
   baseURL: ACADEMY_BASE_URL,
   headers: {
@@ -28,10 +37,6 @@ export const academyApi = axios.create({
   },
   timeout: 10000,
 });
-
-// Copy interceptors from apiClient to maintain consistent authentication handling
-academyApi.interceptors.request.handlers = [...apiClient.interceptors.request.handlers];
-academyApi.interceptors.response.handlers = [...apiClient.interceptors.response.handlers];
 
 // Create auth API instance for auth service
 export const authApi = axios.create({
@@ -44,9 +49,10 @@ export const authApi = axios.create({
   withCredentials: true, // Add this to send cookies with requests
 });
 
-// Copy interceptors from apiClient to authApi as well
-authApi.interceptors.request.handlers = [...apiClient.interceptors.request.handlers];
-authApi.interceptors.response.handlers = [...apiClient.interceptors.response.handlers];
+// Attach the auth interceptor to each instance
+attachAuthInterceptor(apiClient);
+attachAuthInterceptor(academyApi);
+attachAuthInterceptor(authApi);
 
 // Export all API modules
 export { progressApi, enrollmentApi };

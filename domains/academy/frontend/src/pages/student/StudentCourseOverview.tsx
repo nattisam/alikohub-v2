@@ -3,7 +3,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import type { Course } from "../../components/common/types.d.tsx";
 import AllCourses from "../../components/course/AllCourses";
-import StudentModuleView from "../../components/student/StudentModuleView";
 
 import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";

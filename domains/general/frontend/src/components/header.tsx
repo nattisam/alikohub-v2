@@ -82,6 +82,7 @@ const Header = ({
     navigate("/");
   };
 
+
   // Update navLinks based on user status
   const getNavLinks = () => {
     // Remove the automatic addition of "Admin Panel" link to navLinks
@@ -166,15 +167,7 @@ const Header = ({
           <div>
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                {user?.globalRole === "ADMIN" && (
-                  <Button
-                    label="Admin Panel"
-                    onClick={handleAdminClick}
-                    variant="primary"
-                    className={`${homeHeaderButtonsClassName} w-32 items-end hidden lg:block md:block`}
-                    ariaLabel="Admin Panel"
-                  />
-                )}
+
                 <span className="hidden lg:block md:block text-sm font-medium">
                   Welcome, {user?.firstname || "User"}
                 </span>
@@ -210,15 +203,7 @@ const Header = ({
           >
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
-                {user?.globalRole === "ADMIN" && (
-                  <Button
-                    label="Admin"
-                    onClick={handleAdminClick}
-                    variant="primary"
-                    className={`w-20 ${mobileButtonClassName}`}
-                    ariaLabel="Admin Panel"
-                  />
-                )}
+
                 <span className="text-sm font-medium md:hidden lg:hidden">
                   Welcome, {user?.firstname || "User"}
                 </span>
@@ -263,14 +248,6 @@ const Header = ({
                 })),
                 ...(isAuthenticated
                   ? [
-                      ...(user?.globalRole === "ADMIN"
-                        ? [
-                            {
-                              label: "Admin Panel",
-                              onClick: handleAdminClick,
-                            },
-                          ]
-                        : []),
                       {
                         label: "Logout",
                         onClick: handleLogout,

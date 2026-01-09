@@ -38,6 +38,13 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('user');
       }
     }
+    if (error.response?.status === 429) {
+      console.warn("Rate limited — slowing down requests");
+      // Add a delay before rejecting the promise to allow rate limit to reset
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(Promise.reject(error)), 2000);
+      });
+    }
     return Promise.reject(error);
   }
 );

@@ -100,10 +100,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       try {
-        const parsed = JSON.parse(rawUser);
-        const { user: verified } = await authAPI.verifyToken(token);
+        // Trust token initially and fetch profile once
         const profile = await academyAPI.getProfile();
-        const finalUser = buildUser(verified);
+        const finalUser = buildUser(profile);
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
       } catch {

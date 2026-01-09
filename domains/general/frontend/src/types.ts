@@ -23,4 +23,5 @@ export interface SignupCredentials {
   lastname: string;
   email: string;
   password: string;
+  captchaToken?: string;
 }

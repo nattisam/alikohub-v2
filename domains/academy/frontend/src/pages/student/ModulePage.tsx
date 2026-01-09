@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { courseApi } from "../../api/courseApi";
+import { useCourse } from "../../queries/courseQueries";
+import { useCourseModules } from "../../queries/moduleQueries";
 import {
   FaChevronDown,
   FaChevronRight,
@@ -14,49 +16,32 @@ const ModulePage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
-  const [modules, setModules] = useState<CourseModule[]>([]);
   const [expandedModules, setExpandedModules] = useState<
     Record<number, boolean>
   >({});
   const [completedLessons, setCompletedLessons] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [courseTitle, setCourseTitle] = useState("");
-  const [courseDescription, setCourseDescription] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    if (courseId) fetchCourseModules(Number(courseId));
-  }, [courseId]);
-
-  const fetchCourseModules = async (id: number) => {
-    try {
-      setLoading(true);
-
-      const courseRes = await courseApi.getCourse(id);
-      setCourseTitle(courseRes.data.title);
-      setCourseDescription(courseRes.data.longDescription);
-
-      const modulesRes = await courseApi.getModules(id);
-
-      const modulesWithLessons = await Promise.all(
-        modulesRes.data.map(async (module: CourseModule) => {
-          try {
-            const lessonsRes = await courseApi.getLessons(module.id);
-            return { ...module, lessons: lessonsRes.data };
-          } catch {
-            return { ...module, lessons: [] };
-          }
-        })
-      );
-
-      setModules(modulesWithLessons);
-    } catch {
-      setError("Failed to load course content");
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  const { data: courseData, isLoading: isCourseLoading, isError: isCourseError } = useCourse(Number(courseId) || 0);
+  
+  const { data: modules = [], isLoading: areModulesLoading, isError: areModulesError } = useCourseModules(Number(courseId) || 0);
+  
+  if (isCourseError) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6 text-center text-red-600">
+        Failed to load course information
+      </div>
+    );
+  }
+  
+  if (areModulesError) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6 text-center text-red-600">
+        Failed to load course modules
+      </div>
+    );
+  }
 
   const toggleModule = (id: number) => {
     setExpandedModules((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -86,7 +71,7 @@ const ModulePage: React.FC = () => {
     return Math.round((completed / lessons.length) * 100);
   };
 
-  if (loading) {
+  if (isCourseLoading || areModulesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full" />
@@ -125,9 +110,9 @@ const ModulePage: React.FC = () => {
 
         {/* HEADER */}
         <h1 className="text-3xl font-bold">
-          Course {courseId}: {courseTitle}
+          Course {courseId}: {courseData?.title || "Loading..."}
         </h1>
-        <p className="mt-2 text-gray-600 max-w-3xl">{courseDescription}</p>
+        <p className="mt-2 text-gray-600 max-w-3xl">{courseData?.longDescription || ""}</p>
 
         {/* PROGRESS + ACTIONS */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mt-6">
