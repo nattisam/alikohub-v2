@@ -61,6 +61,17 @@ export class CourseModulesService {
             // Exclude content for public view
           },
           orderBy: { createdAt: 'asc' }
+        },
+        exercises: {
+            select: {
+                id: true,
+                title: true,
+                type: true,
+                points: true,
+                order: true,
+                // Exclude correct answer
+            },
+            orderBy: { order: 'asc' }
         }
       },
       orderBy: { createdAt: 'asc' },
@@ -70,7 +81,7 @@ export class CourseModulesService {
   async findOne(id: number, user: AuthenticatedUser) {
     const module = await this.prisma.module.findUnique({
       where: { id },
-      include: { lessons: true, course: true },
+      include: { lessons: true, exercises: true, course: true },
     });
     if (!module) throw new NotFoundException('Module not found');
 

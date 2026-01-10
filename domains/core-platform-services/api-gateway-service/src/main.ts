@@ -8,11 +8,12 @@ import { UserModule } from './auth-service/user/user.module';
 import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
 import { AcademyServiceModule } from './academy-service';
-import { winstonConfig } from './common/logger/winston.config';
+import { winstonConfig } from './winston.config';
 import { RpcExceptionFilter } from './common/filters';
 
 dotenv.config();
 
+// Bootstrap the application
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,

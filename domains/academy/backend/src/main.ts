@@ -7,9 +7,13 @@ import { AcademyProfileGuard } from './auth';
 
 dotenv.config(); // Load .env variables first
 
+import { winstonConfig } from './winston.config';
+
 async function bootstrap() {
   // Create Nest application instance
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: winstonConfig,
+  });
 
   // Get ConfigService if needed
   const configService = app.get(ConfigService);

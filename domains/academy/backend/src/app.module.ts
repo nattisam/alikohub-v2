@@ -15,6 +15,7 @@ import { UserApplicationModule } from './user-application/user-application.modul
 import { TeachingScheduleModule } from './teaching-schedule/teaching-schedule.module';
 import { AcademyProfileGuard } from './auth/academy-profile.guard';
 import { RoleGuard } from './auth/role-guard/role-guard';
+import { ExercisesModule } from './exercises/exercises.module';
 
 @Global()
 @Module({
@@ -33,7 +34,8 @@ import { RoleGuard } from './auth/role-guard/role-guard';
     ProgressAnalyticsModule,
     NotificationsModule,
     UserApplicationModule,
-    TeachingScheduleModule
+    TeachingScheduleModule,
+    ExercisesModule
   ],
   providers: [
     AcademyProfileGuard,

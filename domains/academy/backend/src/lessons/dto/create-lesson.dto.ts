@@ -35,4 +35,11 @@ export class CreateLessonDto {
   @ValidateNested({ each: true })
   @Type(() => CreateContentDto)
   contents?: CreateContentDto[];
+
+  @IsOptional()
+  @IsInt()
+  order?: number;
+
+  @IsOptional()
+  unlockRules?: any;
 }

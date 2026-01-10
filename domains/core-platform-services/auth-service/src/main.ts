@@ -1,8 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
-import { AppLogger } from './logger';
-import { ValidationPipe } from '@nestjs/common';
+import { winstonConfig } from './winston.config';
 
 async function bootstrap() {
   // Create microservice
@@ -12,7 +11,7 @@ async function bootstrap() {
       host: '0.0.0.0',
       port: parseInt(process.env.AUTH_SERVICE_PORT) || 3001,
     },
-    logger: new AppLogger(),
+    logger: winstonConfig,
   });
   
   await app.listen();

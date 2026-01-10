@@ -28,6 +28,7 @@ model AcademyProfile {
   progress          Progress[]
   // NEW: Add relation to teaching schedules
   teachingSchedules TeachingSchedule[]
+  submissions      ExerciseSubmission[]
 }
 
 model Course {
@@ -42,6 +43,8 @@ model Course {
   status           CourseStatus
   skills           String[]
   conceptsLearned  String[]
+  outcomes         String[]
+  rejectionReason  String?
   estimatedTime    Int?
   targetLevel      String?
   enrolledNum      Int? // Changed from String? to Int?
@@ -123,6 +126,7 @@ model Module {
   updatedAt   DateTime   @updatedAt
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exercises Exercise[]
 }
 
 model Lesson {
@@ -130,12 +134,15 @@ model Lesson {
   title     String
   type      LessonType
   moduleId  Int
-  contents  Content[]
-  progress  Progress[]
-  dueDate   DateTime?
-  maxScore  Int?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now())
+  contents     Content[]
+  exercises    Exercise[]
+  progress     Progress[]
+  dueDate      DateTime?
+  maxScore     Int?
+  order        Int?      @default(0)
+  unlockRules  Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 }
@@ -144,11 +151,12 @@ model Content {
   id        Int         @id @default(autoincrement())
   title     String
   type      ContentType
-  url       String
+  url       String?
+  body      String?
   lessonId  Int
   progress  Progress[]
   createdAt DateTime    @default(now())
-  updatedAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
@@ -214,6 +222,7 @@ enum ContentType {
   PDF
   QUIZ
   ASSIGNMENT
+  TEXT
 }
 
 // NEW: ScheduleType enum
@@ -227,7 +236,9 @@ enum ScheduleType {
 
 enum CourseStatus {
   DRAFT
+  PENDING_APPROVAL
   PUBLISHED
+  REJECTED
   ARCHIVED
 }
 
@@ -237,4 +248,56 @@ enum AcademyRole {
   INSTRUCTOR
   COURSE_MANAGER
   ADMIN
+}
+
+enum ExerciseType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  MATCHING
+  SHORT_TEXT
+}
+
+enum SubmissionStatus {
+  PENDING_REVIEW
+  GRADED
+}
+
+model Exercise {
+  id          Int          @id @default(autoincrement())
+  moduleId    Int
+  type        ExerciseType
+  title       String
+  description String?
+  question    String
+  options     Json?
+  correctAnswer Json?
+  hints       String[]
+  points      Int          @default(1)
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  module      Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lesson      Lesson?      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    Int?
+  submissions ExerciseSubmission[]
+}
+
+model ExerciseSubmission {
+  id           Int              @id @default(autoincrement())
+  userId       String
+  exerciseId   Int
+  answer       Json
+  isCorrect    Boolean          @default(false)
+  score        Float            @default(0)
+  status       SubmissionStatus @default(GRADED)
+  feedback     String?
+  attemptCount Int              @default(1)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  exercise    Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  profile     AcademyProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, exerciseId])
 }

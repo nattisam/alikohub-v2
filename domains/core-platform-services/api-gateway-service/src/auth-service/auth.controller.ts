@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
@@ -11,6 +11,8 @@ import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto } from './dto/acade
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError, firstValueFrom } from 'rxjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import * as Joi from 'joi';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -57,6 +59,10 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 400, description: 'Invalid credentials' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim(),
+    password: Joi.string().required()
+  })))
   async login(@Body() loginDto: LoginDto) {
     this.logger.log(`Login attempt for: ${loginDto.email}`);
     
@@ -77,6 +83,13 @@ export class AuthController {
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Registration successful' })
   @ApiResponse({ status: 400, description: 'Validation failed' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim(),
+    firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim().messages({'string.pattern.base': 'firstname must contain only alphabetic characters'}),
+    lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
+    password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required().messages({'string.pattern.base': 'Password too weak'}),
+    captchaToken: Joi.string().optional()
+  })))
   async register(@Body() registerDto: RegisterDto) {
     this.logger.log(`Registration attempt for: ${registerDto.email}`);
     
@@ -219,7 +232,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get user academy status' })
   async getUserAcademyStatus(@Request() req: any, @Param('userId') userId: string) {
     // TEST-07 Fix: Verify user ownership - users can only view their own status unless they are admin
-    const requestingUserId = req.user.id.toString();
+    const requestingUserId = req.user.firebaseId;
     const isAdmin = req.user.globalRole === 'ADMIN';
     
     if (requestingUserId !== userId && !isAdmin) {
@@ -241,6 +254,9 @@ export class AuthController {
   @Post('login/google')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with Google' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    idToken: Joi.string().required()
+  })))
   async loginWithGoogle(@Body() body: { idToken: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'login_google' }, body).pipe(

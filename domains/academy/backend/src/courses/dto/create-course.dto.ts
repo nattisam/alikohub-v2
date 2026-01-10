@@ -36,6 +36,11 @@ export class CreateCourseDto {
     @IsOptional()
     conceptsLearned?: string[];
 
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    outcomes?: string[];
+
     @IsInt()
     @IsOptional()
     estimatedTime?: number;

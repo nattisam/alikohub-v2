@@ -371,7 +371,7 @@ export class AuthService {
 
 	// Academy-specific authentication methods
 	async selectAcademyRole(userId: string, role: string) {
-		const user: any = await this.userService.findById(userId);
+		const user: any = await this.userService.findByFirebaseId(userId);
 		if (!user) {
 			throw new RpcException({
 				statusCode: HttpStatus.NOT_FOUND,
@@ -425,7 +425,7 @@ export class AuthService {
 	}
 
 	async applyForTeacherRole(applicationDto: any) {
-		const user = await this.userService.findById(applicationDto.userId);
+		const user = await this.userService.findByFirebaseId(applicationDto.userId);
 		if (!user) {
 			throw new RpcException({
 				statusCode: HttpStatus.NOT_FOUND,
@@ -495,7 +495,7 @@ export class AuthService {
 	}
 
 	async switchRole(userId: string, newRole: string) {
-		const user: any = await this.userService.findById(userId);
+		const user: any = await this.userService.findByFirebaseId(userId);
 		if (!user) {
 			throw new RpcException({
 				statusCode: HttpStatus.NOT_FOUND,
@@ -564,7 +564,7 @@ export class AuthService {
 	}
 
 	async getUserAcademyStatus(userId: string) {
-		const user = await this.userService.findById(userId);
+		const user = await this.userService.findByFirebaseId(userId);
 		if (!user) {
 			throw new RpcException({
 				statusCode: HttpStatus.NOT_FOUND,

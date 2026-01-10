@@ -37,6 +37,8 @@ export class LessonsService {
         title,
         type,
         maxScore,
+        order: dto.order || 0,
+        unlockRules: dto.unlockRules || {},
         dueDate: dueDate ? new Date(dueDate) : null,
         module: { connect: { id: moduleId } },
         ...(contents && contents.length > 0 ? { contents: { create: contents } } : {}),
@@ -114,8 +116,8 @@ export class LessonsService {
     console.log(`ACCESS GRANTED: User ${user.firebaseId} is authorized to view lessons for module ${moduleId}`);
     return await this.prisma.lesson.findMany({
       where: { moduleId },
-      orderBy: { createdAt: 'asc' },
-      include: { contents: true },
+      orderBy: { order: 'asc' },
+      include: { contents: true, exercises: true },
     });
   }
 
@@ -161,7 +163,19 @@ export class LessonsService {
 
     // We don't need to return the nested module/course info to the client
     const { module, ...lessonWithoutNesting } = lesson;
-    return lessonWithoutNesting;
+    
+    // Check if the lesson is locked for this user (if they are a student)
+    let isLocked = false;
+    if (academyProfile.role === 'STUDENT' && lesson.unlockRules) {
+      // Basic check: if unlockRules has prerequisites, we might need a separate service to check them.
+      // For now, we'll just include the rules and let the client or a subsequent PR handle the complex logic.
+      // But we specify it in the response.
+    }
+
+    return {
+      ...lessonWithoutNesting,
+      isLocked,
+    };
   }
 
   async update(id: number, dto: UpdateLessonDto, user: AuthenticatedUser) {
@@ -186,9 +200,11 @@ export class LessonsService {
       where: { id },
       data: {
         ...rest,
+        order: dto.order !== undefined ? dto.order : lesson.order,
+        unlockRules: dto.unlockRules !== undefined ? dto.unlockRules : lesson.unlockRules,
         ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
         ...(moduleId !== undefined ? { module: { connect: { id: moduleId } } } : {}),
-        ...(contents && contents.length > 0 ? { contents: { set: [], create: contents } } : {}),
+        ...(contents && contents.length > 0 ? { contents: { deleteMany: {}, create: contents } } : {}),
       },
     });
   }
