@@ -16,7 +16,7 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
   onClose, 
   allowAdditionalRoles = false // Default to false to maintain existing behavior
 }) => {
-  const { user, selectRole, isLoading: authLoading } = useAuth();
+  const { user, selectRole, isLoading: authLoading, selectRoleMutation } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -37,15 +37,16 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
     setError("");
     setIsSubmitting(true);
     
+    if (selectedRole === "INSTRUCTOR") {
+      // For instructor, show the application modal directly instead of calling selectRole
+      setShowInstructorApplication(true);
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Use the mutation directly to get access to its state
     try {
-      if (selectedRole === "INSTRUCTOR") {
-        // For instructor, show the application modal directly instead of calling selectRole
-        setShowInstructorApplication(true);
-        setIsSubmitting(false);
-        return;
-      }
-      
-      await selectRole(selectedRole as "STUDENT" | "INSTRUCTOR");
+      await selectRoleMutation.mutateAsync({ role: selectedRole as "STUDENT" | "INSTRUCTOR" });
       
       // Don't navigate automatically - user needs to switch role manually from profile
       // Show success message and close modal
@@ -57,7 +58,6 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
       }
     } catch (err: any) {
       console.error("Error selecting role:", err);
-      
       setError("Failed to select role. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -167,14 +167,14 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
               <div className="mt-6">
                 <button
                   onClick={handleSubmitRole}
-                  disabled={!selectedRole || isSubmitting || authLoading}
+                  disabled={!selectedRole || selectRoleMutation.isPending || authLoading}
                   className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
-                    !selectedRole || isSubmitting || authLoading
+                    !selectedRole || selectRoleMutation.isPending || authLoading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700"
                   }`}
                 >
-                  {isSubmitting || authLoading ? (
+                  {selectRoleMutation.isPending || authLoading ? (
                     <div className="flex items-center justify-center">
                       <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                       Processing...

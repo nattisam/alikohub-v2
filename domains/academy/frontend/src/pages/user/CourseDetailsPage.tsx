@@ -106,7 +106,6 @@ const CourseDetailsPage: React.FC = () => {
     // Check if user is a student
     if (!isStudent) {
       alert("Only students can enroll in courses. Please select the student role.");
-      navigate("/role");
       return;
     }
 

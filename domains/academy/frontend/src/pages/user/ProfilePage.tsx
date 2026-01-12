@@ -20,6 +20,7 @@ const ProfilePage = () => {
     isLoading,
     switchRole,
     isRoleSwitching,
+    switchRoleMutation,
   } = useAuth();
   
   const navigate = useNavigate();
@@ -31,9 +32,8 @@ const ProfilePage = () => {
   const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR") => {
     if (currentUser) {
       try {
-
-        // Call the switchRole function from AuthContext
-        await switchRole(role);
+        // Use the mutation directly to get access to its state
+        await switchRoleMutation.mutateAsync(role);
 
         // Close the dropdown after role switch
         setIsRoleDropdownOpen(false);
@@ -252,12 +252,12 @@ const ProfilePage = () => {
                 <div className="relative">
                   <button
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                    disabled={isRoleSwitching}
+                    disabled={switchRoleMutation.isPending}
                     className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                   >
                     <FaExchangeAlt className="mr-2 h-4 w-4" />
                     Switch Role
-                    {isRoleSwitching && (
+                    {switchRoleMutation.isPending && (
                       <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
                     )}
                   </button>

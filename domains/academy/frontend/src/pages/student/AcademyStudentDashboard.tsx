@@ -255,7 +255,7 @@ const AcademyStudentDashboard = () => {
                       View Progress
                     </button>
                     <button 
-                      onClick={() => navigate(`/courses/${course.id}/modules`)}
+                      onClick={() => navigate(`/student-dashboard/mycourses/${course.id}/modules`)}
                       className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                     >
                       Continue

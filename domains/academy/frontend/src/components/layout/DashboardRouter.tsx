@@ -49,6 +49,7 @@ const DashboardRouter: React.FC = () => {
       // If user has active instructor role, send to instructor dashboard
       return <Navigate to="/instructor" replace />;
     case "ADMIN":
+      // Even if ADMIN is the active role, redirect to admin section
       return <Navigate to="/admin" replace />;
     case "STUDENT":
     default:

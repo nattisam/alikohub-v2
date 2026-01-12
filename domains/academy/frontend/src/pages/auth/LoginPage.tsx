@@ -6,6 +6,7 @@ import LoginForm from '../../../../../../libraries/ui-libraries/components/auth/
 import ErrorModal from '../../../../../../libraries/ui-libraries/components/auth/ErrorModal';
 import type { LoginFormData } from '../../../../../../libraries/ui-libraries/components/auth/LoginForm';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEffect } from 'react';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,8 +31,26 @@ const LoginPage: React.FC = () => {
           navigate('/');
         }
       } else {
-        // Redirect back to the home page after login
-        navigate('/');
+        // After login, check user role from localStorage to determine redirect
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            // If user is an admin, redirect to admin panel directly
+            if (user.globalRole === 'ADMIN') {
+              navigate('/admin');
+            } else {
+              // For non-admin users, go to dashboard for role-based routing
+              navigate('/dashboard');
+            }
+          } catch (parseError) {
+            // Fallback to dashboard if parsing fails
+            navigate('/dashboard');
+          }
+        } else {
+          // Fallback to dashboard if no user data in localStorage
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);

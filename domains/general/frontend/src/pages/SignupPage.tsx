@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthLayout from '../../../../libraries/ui-libraries/components/auth/AuthLayout';
-import AuthHeader from '../../../../libraries/ui-libraries/components/auth/AuthHeader';
-import ErrorModal from '../../../../libraries/ui-libraries/components/auth/ErrorModal';
-import type { SignupFormData } from '../../../../libraries/ui-libraries/components/auth/SignupForm';
+import AuthLayout from '../../../../../libraries/ui-libraries/components/auth/AuthLayout';
+import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/AuthHeader';
+import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
+import type { SignupFormData } from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
 import { useAuth } from '../contexts/AuthContext';
-import SignupForm from '../../../../libraries/ui-libraries/components/auth/SignupForm';
+import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
 
 const GeneralSignupPage: React.FC = () => {
   const navigate = useNavigate();

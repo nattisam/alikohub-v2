@@ -26,13 +26,17 @@ import CourseDetailsPage from "./Pages/user/CourseDetailsPage";
 import AcademyHeader from "./components/layout/AcademyHeader";
 import EventDetailsPage from "./Pages/user/EventDetailsPage";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import AdminProtectedRoute from "./components/common/AdminProtectedRoute";
 import DashboardRouter from "./components/layout/DashboardRouter";
 import RolesPage from "./Pages/user/RolesPage";
 import ProfilePage from "./Pages/user/ProfilePage";
 import SettingsPage from "./Pages/user/SettingsPage";
 import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
 import AdminDashboard from "./admin/AdminDashboard";
+import CoursesManagementPage from "./admin/CoursesManagementPage";
+import AppRoute from "./components/common/AppRoute";
+import AdminRoute from "./components/common/AdminRoute";
+import AdminLayout from "./components/layout/AdminLayout";
+import PublicRoute from "./components/common/PublicRoute";
 
 // -------------------- Layouts --------------------
 
@@ -129,14 +133,38 @@ function App() {
     <ErrorBoundary>
       <Router>
       <Routes>
-        {/* Public routes */}
+        {/* Public routes - with admin redirection */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<AcademyHomePage />} />
-          <Route path="/about" element={<AcademyAboutPage />} />
-          <Route path="/contact" element={<AcademyContactUsPage />} />
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/courses/:courseId" element={<CourseDetailsPage />} />
-          <Route path="/events/:eventId" element={<EventDetailsPage />} />
+          <Route path="/" element={
+            <PublicRoute>
+              <AcademyHomePage />
+            </PublicRoute>
+          } />
+          <Route path="/about" element={
+            <PublicRoute>
+              <AcademyAboutPage />
+            </PublicRoute>
+          } />
+          <Route path="/contact" element={
+            <PublicRoute>
+              <AcademyContactUsPage />
+            </PublicRoute>
+          } />
+          <Route path="/courses" element={
+            <PublicRoute>
+              <CoursesPage />
+            </PublicRoute>
+          } />
+          <Route path="/courses/:courseId" element={
+            <PublicRoute>
+              <CourseDetailsPage />
+            </PublicRoute>
+          } />
+          <Route path="/events/:eventId" element={
+            <PublicRoute>
+              <EventDetailsPage />
+            </PublicRoute>
+          } />
         </Route>
 
         {/* Auth routes — redirect authenticated users */}
@@ -162,9 +190,9 @@ function App() {
           <Route
             path="/student-dashboard/*"
             element={
-              <ProtectedRoute requiredRole="STUDENT">
+              <AppRoute requiredRole="STUDENT">
                 <StudentDashboardRouter />
-              </ProtectedRoute>
+              </AppRoute>
             }
           />
         </Route>
@@ -174,51 +202,44 @@ function App() {
           <Route
             path="/instructor/*"
             element={
-              <ProtectedRoute requiredRole="INSTRUCTOR">
+              <AppRoute requiredRole="INSTRUCTOR">
                 <InstructorDashboardRouter />
-              </ProtectedRoute>
+              </AppRoute>
             }
           />
         </Route>
 
-        {/* Admin dashboard */}
-        <Route element={<DashboardLayout />}>
-          <Route
-            path="/admin"
-            element={
-              <AdminProtectedRoute>
-                <AdminDashboard />
-              </AdminProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/teacher-applications"
-            element={
-              <AdminProtectedRoute>
-                <TeacherApplicationsDashboard />
-              </AdminProtectedRoute>
-            }
-          />
-        </Route>
 
-        {/* Profile & settings */}
+
+        {/* Profile & settings - only accessible by non-admin users */}
         <Route element={<DashboardLayout />}>
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+              <AppRoute>
                 <ProfilePage />
-              </ProtectedRoute>
+              </AppRoute>
             }
           />
           <Route
             path="/settings"
             element={
-              <ProtectedRoute>
+              <AppRoute>
                 <SettingsPage />
-              </ProtectedRoute>
+              </AppRoute>
             }
           />
+        </Route>
+        
+        {/* Admin routes - completely separate tree */}
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }>
+          <Route index element={<AdminDashboard />} />
+          <Route path="teacher-applications" element={<TeacherApplicationsDashboard />} />
+          <Route path="courses" element={<CoursesManagementPage />} />
         </Route>
 
         {/* Fallback */}

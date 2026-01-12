@@ -41,78 +41,90 @@ export interface CourseLesson {
 // Course APIs
 export const courseApi = {
   // Public method to get published courses - requires authentication
-  getPublishedCourses: async (params?: any) => {
-    // Create a cache key based on the params to identify unique requests
-    const cacheKey = `/academy/courses?${new URLSearchParams({ ...params, status: "PUBLISHED" }).toString()}`;
-    const now = Date.now();
+  // getPublishedCourses: async (params?: any) => {
+  //   // Create a cache key based on the params to identify unique requests
+  //   const cacheKey = `/academy/courses?${new URLSearchParams({ ...params, status: "PUBLISHED" }).toString()}`;
+  //   const now = Date.now();
     
-    // Check if we have a cached response that's still valid
-    const cachedResponse = responseCache.get(cacheKey);
-    if (cachedResponse && (now - cachedResponse.timestamp) < CACHE_DURATION) {
-      console.log(`Returning cached response for ${cacheKey}`);
-      return cachedResponse.data;
-    }
+  //   // Check if we have a cached response that's still valid
+  //   const cachedResponse = responseCache.get(cacheKey);
+  //   if (cachedResponse && (now - cachedResponse.timestamp) < CACHE_DURATION) {
+  //     console.log(`Returning cached response for ${cacheKey}`);
+  //     return cachedResponse.data;
+  //   }
     
-    // Check if there's already an ongoing request for this cache key
-    if (ongoingRequests.has(cacheKey)) {
-      console.log(`Deduplicating request for ${cacheKey}`);
-      return ongoingRequests.get(cacheKey);
-    }
+  //   // Check if there's already an ongoing request for this cache key
+  //   if (ongoingRequests.has(cacheKey)) {
+  //     console.log(`Deduplicating request for ${cacheKey}`);
+  //     return ongoingRequests.get(cacheKey);
+  //   }
     
-    const fetchWithRetry = async (maxRetries = 3, delay = 2000) => { // Increased delay to 2s
-      let retries = 0;
+  //   const fetchWithRetry = async (maxRetries = 3, delay = 2000) => { // Increased delay to 2s
+  //     let retries = 0;
       
-      while (retries <= maxRetries) {
-        try {
-          // Fetch only published courses - requires authentication
-          const response = await academyApi.get("/academy/courses", { 
-            params: { ...params, status: "PUBLISHED" } 
-          });
+  //     while (retries <= maxRetries) {
+  //       try {
+  //         // Fetch only published courses - requires authentication
+  //         const response = await academyApi.get("/academy/courses", { 
+  //           params: { ...params, status: "PUBLISHED" } 
+  //         });
           
-          // Cache the successful response
-          responseCache.set(cacheKey, {
-            data: response,
-            timestamp: now
-          });
+  //         // Cache the successful response
+  //         responseCache.set(cacheKey, {
+  //           data: response,
+  //           timestamp: now
+  //         });
           
-          // Remove from ongoing requests
-          ongoingRequests.delete(cacheKey);
+  //         // Remove from ongoing requests
+  //         ongoingRequests.delete(cacheKey);
           
-          return response;
-        } catch (error: any) {
-          // Check if it's a 429 error (Too Many Requests)
-          if (error.response?.status === 429 && retries < maxRetries) {
-            console.warn(`Rate limited on ${cacheKey}, retrying in ${delay * Math.pow(2, retries)}ms...`);
-            // Exponential backoff: wait longer after each retry
-            await new Promise((resolve) =>
-              setTimeout(resolve, delay * Math.pow(2, retries))
-            );
-            retries++;
-          } else {
-            // Remove from ongoing requests on error too
-            ongoingRequests.delete(cacheKey);
-            // For non-429 errors, don't cache the error response
-            throw error; // Re-throw other errors or max retries reached
-          }
-        }
-      }
-    };
+  //         return response;
+  //       } catch (error: any) {
+  //         // Check if it's a 429 error (Too Many Requests)
+  //         if (error.response?.status === 429 && retries < maxRetries) {
+  //           console.warn(`Rate limited on ${cacheKey}, retrying in ${delay * Math.pow(2, retries)}ms...`);
+  //           // Exponential backoff: wait longer after each retry
+  //           await new Promise((resolve) =>
+  //             setTimeout(resolve, delay * Math.pow(2, retries))
+  //           );
+  //           retries++;
+  //         } else {
+  //           // Remove from ongoing requests on error too
+  //           ongoingRequests.delete(cacheKey);
+  //           // For non-429 errors, don't cache the error response
+  //           throw error; // Re-throw other errors or max retries reached
+  //         }
+  //       }
+  //     }
+  //   };
     
-    // Store the promise to prevent duplicate requests
-    const requestPromise = fetchWithRetry();
-    ongoingRequests.set(cacheKey, requestPromise);
+  //   // Store the promise to prevent duplicate requests
+  //   const requestPromise = fetchWithRetry();
+  //   ongoingRequests.set(cacheKey, requestPromise);
     
+  //   try {
+  //     return await requestPromise;
+  //   } catch (error) {
+  //     // Remove from ongoing requests if it fails
+  //     ongoingRequests.delete(cacheKey);
+  //     console.error("API Error fetching published courses:", error);
+  //     throw error;
+  //   }
+  // },
+  
+  // Courses (authenticated)
+  getPublishedCourses: async (params?: any) => {
     try {
-      return await requestPromise;
+      // All course endpoints require authentication in the backend
+      // Use the authenticated API for all requests
+      const response = await academyApi.get(`/academy/courses?${new URLSearchParams({ ...params, status: "PUBLISHED" }).toString()}`, { params });
+      return response;
     } catch (error) {
-      // Remove from ongoing requests if it fails
-      ongoingRequests.delete(cacheKey);
-      console.error("API Error fetching published courses:", error);
+      console.error("API Error:", error);
       throw error;
     }
   },
-  
-  // Courses (authenticated)
+
   getCourses: async (params?: any) => {
     try {
       // All course endpoints require authentication in the backend

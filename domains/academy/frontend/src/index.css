@@ -9,62 +9,29 @@
   border-radius: 20px;
 }
 
-/* @keyframes wiggle {
-  0% {
-    transform: translate(0) rotate(0deg);
+@layer components {
+  .admin-link {
+    @apply block px-4 py-2 rounded-md text-slate-600 hover:bg-blue-50 hover:text-blue-600;
   }
-  20% {
-    transform: translate(8px) rotate(8deg);
-  }
-  40% {
-    transform: translate(0) rotate(0deg);
-  }
-  60% {
-    transform: translate(-8px) rotate(-8deg);
-  }
-  80% {
-    transform: translate(0) rotate(0deg);
-  }
-  100% {
-    transform: translate(0) rotate(0deg);
-  }
-}
 
-@keyframes scroll-down {
-  from {
-    transform: translateY(-50%);
+  .status-pill {
+    @apply px-3 py-1 rounded-full text-xs font-semibold;
   }
-  to {
-    transform: translateY(0);
+  .status-pill.pending {
+    @apply bg-yellow-100 text-yellow-700;
+  }
+  .status-pill.approved {
+    @apply bg-green-100 text-green-700;
+  }
+  .status-pill.rejected {
+    @apply bg-red-100 text-red-700;
+  }
+
+  .btn-approve {
+    @apply bg-green-600 text-white w-8 h-8 rounded-md hover:bg-green-700;
+  }
+
+  .btn-reject {
+    @apply bg-red-600 text-white w-8 h-8 rounded-md hover:bg-red-700;
   }
 }
-
-@keyframes scroll-up {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-50%);
-  }
-}
-
-.animate-scroll-up {
-  animation: scroll-up 5s linear infinite;
-}
-
-.animate-scroll-down {
-  animation: scroll-down 5s linear infinite;
-}
-
-/* New animation classes for dif
-/* Animation classes for merged columns */
-.animate-scroll-up-merged {
-  animation: scroll-up 10s linear infinite;
-}
-.animate-scroll-down-merged {
-  animation: scroll-down 10s linear infinite;
-}
-
-.d {
-  border: inset 1px grey;
-} */

@@ -5,7 +5,7 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 import { authAPI, academyAPI } from "../services/api";
 
 import type {
@@ -29,6 +29,11 @@ interface AuthContextType {
   switchRole: (role: Role) => Promise<void>;
   refreshProfile: () => Promise<CurrentUser | null>;
   applyAsInstructor: (data: any) => Promise<void>;
+  loginMutation: UseMutationResult<any, any, LoginCredentials, unknown>;
+  signupMutation: UseMutationResult<any, any, SignupCredentials, unknown>;
+  selectRoleMutation: UseMutationResult<any, any, { role: Role }, unknown>;
+  switchRoleMutation: UseMutationResult<any, any, Role, unknown>;
+  applyAsInstructorMutation: UseMutationResult<any, any, any, unknown>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -176,6 +181,63 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     },
   });
 
+  const selectRoleMutation = useMutation({
+    mutationFn: ({ role }: { role: Role }) => {
+      if (role === "INSTRUCTOR") {
+        if (!user) return { error: "INSTRUCTOR_APPLICATION_REQUIRED" };
+        
+        const updated = {
+          ...user,
+          pendingRole: role,
+          roleStatus: { ...user.roleStatus, instructor: "not_applied" },
+        };
+        
+        // Update context and local storage
+        setUser(updated);
+        localStorage.setItem("user", JSON.stringify(updated));
+        
+        return { error: "INSTRUCTOR_APPLICATION_REQUIRED" };
+      }
+      
+      // For non-instructor roles, make the API call
+      return academyAPI.selectRole(role);
+    },
+    onSuccess: async (res) => {
+      // Check if this was an instructor application case
+      if (res && res.error === "INSTRUCTOR_APPLICATION_REQUIRED") {
+        // Already handled in mutationFn, just return
+        return;
+      }
+      
+      // Handle normal role selection
+      if (res?.accessToken) {
+        localStorage.setItem("accessToken", res.accessToken);
+      }
+
+      // Use the user data from the response which contains the updated role information
+      const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
+      
+      // When selecting a role for the first time, also set it as the active role by calling switchRole
+      const updated = buildUser(updatedUserFromResponse);
+      
+      // Update the user in context
+      updateUser(updated);
+      
+      // After selecting a role, automatically switch to that role to make it the active role
+      try {
+        const switchRes = await academyAPI.switchRole(updated.academyActiveRole as Role);
+        // Use the user data from the switch response which contains the updated active role
+        const switchedUserFromResponse = switchRes.user || (await academyAPI.getProfile());
+        const switchedUser = buildUser(switchedUserFromResponse);
+        updateUser(switchedUser);
+      } catch (error) {
+        console.error('Error switching to selected role:', error);
+        // If switch fails, still update with the selected role data
+        updateUser(updated);
+      }
+    },
+  });
+
   const login = async (email: string, password: string) => {
     await loginMutation.mutateAsync({ email, password });
   };
@@ -185,17 +247,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
-    // Store current location before clearing storage
-    const currentPath = window.location.pathname + window.location.search + window.location.hash;
-    
     localStorage.clear();
     setUser(null);
     
     // Dispatch a custom event to notify other tabs about logout
     window.dispatchEvent(new CustomEvent('userLoggedOut'));
     
-    // Redirect to login with return URL
-    window.location.href = `/auth/login?returnTo=${encodeURIComponent(currentPath)}`;
+    // Redirect to login
+    window.location.href = '/auth/login';
   };
 
   const updateUser = (u: CurrentUser) => {
@@ -204,56 +263,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const selectRole = async (role: Role) => {
-    if (!user) return;
-
-    if (role === "INSTRUCTOR") {
-      const updated = {
-        ...user,
-        pendingRole: role,
-        roleStatus: { ...user.roleStatus, instructor: "not_applied" },
-      };
-      updateUser(updated);
-      return { error: "INSTRUCTOR_APPLICATION_REQUIRED" };
-    }
-
-    const res = await academyAPI.selectRole(role);
-    if (res?.accessToken) {
-      localStorage.setItem("accessToken", res.accessToken);
-    }
-
-    // Use the user data from the response which contains the updated role information
-    const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
-    
-    // When selecting a role for the first time, also set it as the active role by calling switchRole
-    const updated = buildUser(updatedUserFromResponse);
-    
-    // Update the user in context
-    updateUser(updated);
-    
-    // After selecting a role, automatically switch to that role to make it the active role
-    try {
-      const switchRes = await academyAPI.switchRole(role);
-      // Use the user data from the switch response which contains the updated active role
-      const switchedUserFromResponse = switchRes.user || (await academyAPI.getProfile());
-      const switchedUser = buildUser(switchedUserFromResponse);
-      updateUser(switchedUser);
-    } catch (error) {
-      console.error('Error switching to selected role:', error);
-      // If switch fails, still update with the selected role data
-      updateUser(updated);
-    }
-
-    // Don't redirect automatically - user needs to switch role manually
+    return selectRoleMutation.mutateAsync({ role });
   };
 
-  const switchRole = async (role: Role) => {
-    if (!user) return;
-
-    setIsRoleSwitching(true);
-    try {
-      const res = await academyAPI.switchRole(role);
-      if (res?.accessToken)
+  const switchRoleMutation = useMutation({
+    mutationFn: (role: Role) => academyAPI.switchRole(role),
+    onMutate: () => {
+      setIsRoleSwitching(true);
+    },
+    onSuccess: async (res) => {
+      if (res?.accessToken) {
         localStorage.setItem("accessToken", res.accessToken);
+      }
 
       // Use the user data from the response which contains the updated active role
       const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
@@ -264,12 +285,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       updateUser(updated);
 
       // Don't redirect automatically from profile page - let the UI update as needed
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error in switchRole:", error);
       throw error;
-    } finally {
+    },
+    onSettled: () => {
       setIsRoleSwitching(false);
-    }
+    },
+  });
+
+  const switchRole = async (role: Role) => {
+    if (!user) return;
+    await switchRoleMutation.mutateAsync(role);
   };
 
   const refreshProfile = async () => {
@@ -280,11 +308,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return updated;
   };
 
+  const applyAsInstructorMutation = useMutation({
+    mutationFn: (data: any) => academyAPI.applyTeacher(data),
+    onSuccess: async () => {
+      // Refresh profile to get updated role status
+      await refreshProfile();
+    },
+  });
+
   const applyAsInstructor = async (data: any) => {
     if (!user) return;
-    await academyAPI.applyTeacher(data);
-    // Refresh profile to get updated role status
-    await refreshProfile();
+    await applyAsInstructorMutation.mutateAsync(data);
   };
 
   return (
@@ -302,6 +336,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         switchRole,
         refreshProfile,
         applyAsInstructor,
+        loginMutation,
+        signupMutation,
+        selectRoleMutation,
+        switchRoleMutation,
+        applyAsInstructorMutation,
       }}
     >
       {children}
