@@ -1,8 +1,13 @@
 import { Request } from 'express';
 
 export type AuthenticatedUser = {
+  id: number;
   firebaseId: string;
-  globalRole: 'USER' | 'ADMIN';
+  email: string;
+  globalRole: string;
+  careersUser?: {
+    role: string;
+  };
 };
 
 export interface RequestWithUser extends Request {

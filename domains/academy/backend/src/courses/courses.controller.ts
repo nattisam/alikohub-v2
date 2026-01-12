@@ -57,4 +57,25 @@ export class CoursesController {
   async assignInstructor(@Payload() payload: { id: number; instructorId: string; user: AuthenticatedUser }) {
     return await this.coursesService.assignInstructor(payload.id, payload.instructorId, payload.user);
   }
+
+  @MessagePattern({ cmd: 'submit_course_for_approval' })
+  @UseGuards(AcademyProfileGuard, RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async submitForApproval(@Payload() payload: { id: number; user: AuthenticatedUser }) {
+    return await this.coursesService.submitForApproval(payload.id, payload.user);
+  }
+
+  @MessagePattern({ cmd: 'approve_course' })
+  @UseGuards(AcademyProfileGuard, RoleGuard)
+  @Roles('ADMIN')
+  async approve(@Payload() payload: { id: number; user: AuthenticatedUser }) {
+    return await this.coursesService.approve(payload.id, payload.user);
+  }
+
+  @MessagePattern({ cmd: 'reject_course' })
+  @UseGuards(AcademyProfileGuard, RoleGuard)
+  @Roles('ADMIN')
+  async reject(@Payload() payload: { id: number; reason: string; user: AuthenticatedUser }) {
+    return await this.coursesService.reject(payload.id, payload.reason, payload.user);
+  }
 }

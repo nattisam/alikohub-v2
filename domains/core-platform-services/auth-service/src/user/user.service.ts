@@ -16,6 +16,7 @@ export class UserService {
 				consultancyUser: true,
 				contechUser: true,
 				eventsUser: true,
+				careersUser: true,
 			}
 		});
 		this.logger.log(`User ${user ? 'found' : 'not found'} for Firebase ID: ${firebaseId}`);
@@ -31,6 +32,7 @@ export class UserService {
 				consultancyUser: true,
 				contechUser: true,
 				eventsUser: true,
+				careersUser: true,
 			}
 		});
 		this.logger.log(`User ${user ? 'found' : 'not found'} for email: ${email}`);
@@ -47,6 +49,7 @@ export class UserService {
 				consultancyUser: true,
 				contechUser: true,
 				eventsUser: true,
+				careersUser: true,
 			}
 		});
 		this.logger.log(`User ${user ? 'found' : 'not found'} for ID: ${id}`);
@@ -191,6 +194,7 @@ export class UserService {
 				consultancyUser: true,
 				contechUser: true,
 				eventsUser: true,
+				careersUser: true,
 			}
 		});
 	}
@@ -234,6 +238,7 @@ export class UserService {
 				consultancyUser: true,
 				contechUser: true,
 				eventsUser: true,
+				careersUser: true,
 			}
 		});
 

@@ -1,4 +1,4 @@
-import { Controller, UseGuards } from '@nestjs/common';
+import { Controller, UseGuards, UsePipes } from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
@@ -6,6 +6,8 @@ import { AuthenticatedUser } from 'src/user/user.service';
 import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
 import { Roles } from 'src/auth/role-guard/roles.decorator';
 import { RoleGuard } from 'src/auth/role-guard/role-guard';
+import * as Joi from 'joi';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 
 
 @Controller()
@@ -14,6 +16,14 @@ export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) { }
 
   @MessagePattern({ cmd: 'create_enrollment' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    dto: Joi.object({
+      courseId: Joi.number().integer().required(),
+      cohortId: Joi.number().integer().optional().allow(null),
+      userId: Joi.string().optional()
+    }).required(),
+    user: Joi.object().unknown(true).required()
+  })))
   async create(@Payload() payload: { dto: CreateEnrollmentDto; user: AuthenticatedUser }) {
     return await this.enrollmentsService.create(payload.dto, payload.user);
   }

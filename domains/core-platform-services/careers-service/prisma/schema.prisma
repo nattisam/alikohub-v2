@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id           Int              @id @default(autoincrement())
+  title        String
+  description  String
+  requirements String
+  salaryRange  String?
+  location     String           @default("Remote")
+  type         JobType          @default(FULL_TIME)
+  status       JobStatus        @default(OPEN)
+  postedBy     String           // userId from Auth service
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id           Int      @id @default(autoincrement())
+  jobId        Int
+  userId       String   // applicant userId from Auth service
+  coverLetter  String?
+  resumeUrl    String
+  createdAt    DateTime @default(now())
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+}
+
+model RecruiterProfile {
+  id                Int      @id @default(autoincrement())
+  userId            String   @unique
+  department        String?
+  isPrimaryRecruiter Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}

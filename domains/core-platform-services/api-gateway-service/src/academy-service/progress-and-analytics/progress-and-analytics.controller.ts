@@ -13,14 +13,7 @@ import { Inject } from '@nestjs/common';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
-type AuthenticatedUser = {
-  firebaseId: string;
-  globalRole: 'USER' | 'ADMIN';
-};
-
-interface RequestWithUser extends Request {
-  user?: AuthenticatedUser;
-}
+import { AuthenticatedUser, RequestWithUser } from '../../common/types/request-with-user.interface';
 
 @ApiTags('Progress & Analytics')
 @Controller('academy/progress')

@@ -1,8 +1,9 @@
-import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
 import { RoleGuard } from '../common/roles/roles.guard';
+import { AdminAccessGuard } from '../common/guard/admin-access.guard';
 import { Roles } from '../common/roles/roles.decorator';
 import { CaptchaService } from '../common/captcha/captcha.service';
 import { LoginDto } from './dto/login.dto';
@@ -11,6 +12,8 @@ import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto } from './dto/acade
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError, firstValueFrom } from 'rxjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import * as Joi from 'joi';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -57,6 +60,10 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 400, description: 'Invalid credentials' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim(),
+    password: Joi.string().required()
+  })))
   async login(@Body() loginDto: LoginDto) {
     this.logger.log(`Login attempt for: ${loginDto.email}`);
     
@@ -77,6 +84,13 @@ export class AuthController {
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Registration successful' })
   @ApiResponse({ status: 400, description: 'Validation failed' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim(),
+    firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim().messages({'string.pattern.base': 'firstname must contain only alphabetic characters'}),
+    lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
+    password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required().messages({'string.pattern.base': 'Password too weak'}),
+    captchaToken: Joi.string().optional()
+  })))
   async register(@Body() registerDto: RegisterDto) {
     this.logger.log(`Registration attempt for: ${registerDto.email}`);
     
@@ -145,12 +159,11 @@ export class AuthController {
   }
 
   @Get('academy/teacher-applications')
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @ApiOperation({ summary: 'Get all teacher applications (Admin only)' })
-  async getTeacherApplications() {
+  async getTeacherApplications(@Request() req: any) {
     return firstValueFrom(
-      this.authClient.send({ cmd: 'get_teacher_applications' }, {}).pipe(
+      this.authClient.send({ cmd: 'get_teacher_applications' }, { requestingUserRole: req.user.globalRole }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Get Teacher Applications');
@@ -161,13 +174,15 @@ export class AuthController {
   }
 
   @Post('academy/approve-teacher/:applicationId')
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
-  async approveTeacher(@Param('applicationId') applicationId: string) {
+  async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string) {
     return firstValueFrom(
-      this.authClient.send({ cmd: 'approve_teacher_application' }, { applicationId }).pipe(
+      this.authClient.send({ cmd: 'approve_teacher_application' }, { 
+        applicationId, 
+        requestingUserRole: req.user.globalRole 
+      }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Approve Teacher');
@@ -178,13 +193,15 @@ export class AuthController {
   }
 
   @Post('academy/reject-teacher/:applicationId')
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
-  async rejectTeacher(@Param('applicationId') applicationId: string) {
+  async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string) {
     return firstValueFrom(
-      this.authClient.send({ cmd: 'reject_teacher_application' }, { applicationId }).pipe(
+      this.authClient.send({ cmd: 'reject_teacher_application' }, { 
+        applicationId, 
+        requestingUserRole: req.user.globalRole 
+      }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Reject Teacher');
@@ -219,6 +236,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get user academy status' })
   async getUserAcademyStatus(@Request() req: any, @Param('userId') userId: string) {
     // TEST-07 Fix: Verify user ownership - users can only view their own status unless they are admin
+    // Note: Use req.user.id as the URL parameter is a numeric ID
     const requestingUserId = req.user.id.toString();
     const isAdmin = req.user.globalRole === 'ADMIN';
     
@@ -241,6 +259,9 @@ export class AuthController {
   @Post('login/google')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with Google' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    idToken: Joi.string().required()
+  })))
   async loginWithGoogle(@Body() body: { idToken: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'login_google' }, body).pipe(

@@ -11,6 +11,7 @@ import { ProgressAndAnalyticsModule } from 'src/academy-service/progress-and-ana
 import { TeachingScheduleModule } from 'src/academy-service/teaching-schedule/teaching-schedule.module';
 import { AcademyController } from './academy-service.controller';
 import { FileUploadModule } from './file-upload/file-upload.module';
+import { ExercisesModule } from 'src/academy-service/exercise/exercise.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { FileUploadModule } from './file-upload/file-upload.module';
     ProgressAndAnalyticsModule,
     TeachingScheduleModule,
     FileUploadModule,
+    ExercisesModule,
   ],
   controllers: [AcademyController],
 })

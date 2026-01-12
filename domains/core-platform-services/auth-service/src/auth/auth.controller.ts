@@ -13,10 +13,10 @@ export class AuthController {
 
 	@MessagePattern({ cmd: 'register' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
-		email: Joi.string().email().required(),
-		firstname: Joi.string().required(),
-		lastname: Joi.string().optional(),
-		password: Joi.string().min(6).optional(),
+		email: Joi.string().email().required().trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 	})))
 	async register(@Payload() dto: SignUpDto) {
 		return this.authService.register(dto);
@@ -72,18 +72,18 @@ export class AuthController {
 	}
 
 	@MessagePattern({ cmd: 'get_teacher_applications' })
-	async handleGetTeacherApplications() {
-		return this.authService.getTeacherApplications();
+	async handleGetTeacherApplications(@Payload() data: { requestingUserRole?: string }) {
+		return this.authService.getTeacherApplications(data.requestingUserRole);
 	}
 
 	@MessagePattern({ cmd: 'approve_teacher_application' })
-	async handleApproveTeacher(@Payload() data: { applicationId: string }) {
-		return this.authService.approveTeacherApplication(data.applicationId);
+	async handleApproveTeacher(@Payload() data: { applicationId: string; requestingUserRole?: string }) {
+		return this.authService.approveTeacherApplication(data.applicationId, data.requestingUserRole);
 	}
 
 	@MessagePattern({ cmd: 'reject_teacher_application' })
-	async handleRejectTeacher(@Payload() data: { applicationId: string }) {
-		return this.authService.rejectTeacherApplication(data.applicationId);
+	async handleRejectTeacher(@Payload() data: { applicationId: string; requestingUserRole?: string }) {
+		return this.authService.rejectTeacherApplication(data.applicationId, data.requestingUserRole);
 	}
 
 	@MessagePattern({ cmd: 'switch_role' })

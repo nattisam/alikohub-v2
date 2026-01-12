@@ -34,11 +34,15 @@ export class CreateCourseDto {
   category?: string;
 
   @ApiProperty({
-    enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'],
+    enum: ['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED', 'REJECTED', 'ARCHIVED'],
     example: 'DRAFT',
   })
-  @IsEnum(['DRAFT', 'PUBLISHED', 'ARCHIVED'])
+  @IsEnum(['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED', 'REJECTED', 'ARCHIVED'])
   status!: string;
+
+  @ApiPropertyOptional({ example: ['Master NestJS', 'Build APIs'] })
+  @IsOptional()
+  outcomes?: string[];
 
   @ApiPropertyOptional({ example: 0 })
   @IsInt()

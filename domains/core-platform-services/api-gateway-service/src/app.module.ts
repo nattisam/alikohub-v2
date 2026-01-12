@@ -10,13 +10,13 @@ import { AcademyServiceModule } from './academy-service';
 
 import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
+import { CareersServiceModule } from './careers-service/careers.module';
 
 
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // TEST-06 Fix: Add global rate limiting - 10 requests per 60 seconds per IP
     ThrottlerModule.forRoot([{
       ttl: 60000, // 60 seconds in milliseconds
       limit: 10, // 10 requests per ttl
@@ -78,7 +78,7 @@ import { EventsServiceModule } from './events-service/events-service.module';
           transport: Transport.TCP,
           options: {
             host: configService.get('CAREERS_SERVICE_HOST'),
-            port: configService.get('CAREERS_SERVICE_PORT'),
+            port: Number(configService.get('CAREERS_SERVICE_PORT')) || 3008,
           },
         }),
       },
@@ -87,7 +87,9 @@ import { EventsServiceModule } from './events-service/events-service.module';
     UserModule,
     AcademyServiceModule,
     ConTechServiceModule,
+    ConTechServiceModule,
     EventsServiceModule,
+    CareersServiceModule,
   ],
   providers: [
     // Global rate limiter guard

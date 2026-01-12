@@ -45,10 +45,11 @@ export class CoursesService {
         longDescription: dto.longDescription,
         thumbnail: dto.thumbnail,
         category: dto.category,
-        // Automatically set to PUBLISHED to ensure visibility on homepage
-        status: CourseStatus.PUBLISHED,
+        // Automatically set to DRAFT to allow teacher to add content before approval
+        status: CourseStatus.DRAFT,
         skills: dto.skills || [],
         conceptsLearned: dto.conceptsLearned || [],
+        outcomes: (dto as any).outcomes || [],
         estimatedTime: dto.estimatedTime,
         targetLevel: dto.targetLevel,
         enrolledNum: dto.enrolledNum || 0,
@@ -116,9 +117,10 @@ export class CoursesService {
           shortDescription: dto.shortDescription,
           longDescription: dto.longDescription,
           category: dto.category,
-          status: CourseStatus.PUBLISHED, // Ensure it's published
+          status: CourseStatus.DRAFT, // Start as draft
           skills: dto.skills || [],
           conceptsLearned: dto.conceptsLearned || [],
+          outcomes: (dto as any).outcomes || [],
           estimatedTime: dto.estimatedTime,
           targetLevel: dto.targetLevel,
           enrolledNum: dto.enrolledNum || 0,
@@ -476,5 +478,48 @@ export class CoursesService {
     );
 
     return coursesWithStats;
+  }
+
+  async submitForApproval(id: number, user: AuthenticatedUser) {
+    const course = await this.prisma.course.findUnique({ where: { id } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to submit this course for approval');
+    }
+    if (course.status !== CourseStatus.DRAFT && course.status !== CourseStatus.REJECTED) {
+      throw new BadRequestException('Only draft or rejected courses can be submitted for approval');
+    }
+
+    return await this.prisma.course.update({
+      where: { id },
+      data: { status: CourseStatus.PENDING_APPROVAL },
+    });
+  }
+
+  async approve(id: number, user: AuthenticatedUser) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (academyProfile.role !== AcademyRole.ADMIN) {
+      throw new ForbiddenException('Only administrators can approve courses');
+    }
+
+    return await this.prisma.course.update({
+      where: { id },
+      data: { status: CourseStatus.PUBLISHED },
+    });
+  }
+
+  async reject(id: number, reason: string, user: AuthenticatedUser) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (academyProfile.role !== AcademyRole.ADMIN) {
+      throw new ForbiddenException('Only administrators can reject courses');
+    }
+
+    return await this.prisma.course.update({
+      where: { id },
+      data: {
+        status: CourseStatus.REJECTED,
+        rejectionReason: reason,
+      },
+    });
   }
 }

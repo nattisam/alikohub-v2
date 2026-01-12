@@ -121,7 +121,6 @@ export class CourseController {
     return this.academyClient.send({ cmd: 'remove_course' }, payload);
   }
 
-  // Update course status
   @Patch(':id/status')
   @UseGuards(AuthGuard, AdminAccessGuard)
   @ApiOperation({ summary: 'Update course status' })
@@ -140,6 +139,41 @@ export class CourseController {
       user: req.user,
     };
     return this.academyClient.send({ cmd: 'update_course_status' }, payload);
+  }
+
+  // Submit for approval
+  @Post(':id/submit')
+  @UseGuards(AuthGuard, TeacherAccessGuard)
+  @ApiOperation({ summary: 'Submit course for admin approval' })
+  @ApiResponse({ status: 200, description: 'Course submitted for approval' })
+  @ApiParam({ name: 'id', type: Number })
+  submitForApproval(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    return this.academyClient.send({ cmd: 'submit_course_for_approval' }, { id, user: req.user });
+  }
+
+  // Approve course
+  @Post(':id/approve')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Approve a course (Admin)' })
+  @ApiResponse({ status: 200, description: 'Course approved and published' })
+  @ApiParam({ name: 'id', type: Number })
+  approveCourse(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    return this.academyClient.send({ cmd: 'approve_course' }, { id, user: req.user });
+  }
+
+  // Reject course
+  @Post(':id/reject')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Reject a course (Admin)' })
+  @ApiResponse({ status: 200, description: 'Course rejected' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ schema: { properties: { reason: { type: 'string' } } } })
+  rejectCourse(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('reason') reason: string,
+  ) {
+    return this.academyClient.send({ cmd: 'reject_course' }, { id, reason, user: req.user });
   }
 
   // Assign instructor
