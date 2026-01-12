@@ -103,8 +103,8 @@ const StudentCourseOverview = () => {
 
   // Function to handle viewing course content
   const handleViewCourseContent = async (courseId: number) => {
-    // Redirect to the module page for this course
-    navigate(`/student-dashboard/mycourses/${courseId}/modules`);
+    // Redirect to the Udemy-style module page without sidebar
+    navigate(`/student-module/${courseId}/modules`);
   };
 
   return (

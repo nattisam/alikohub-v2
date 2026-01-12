@@ -33,6 +33,8 @@ import SettingsPage from "./Pages/user/SettingsPage";
 import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
 import AdminDashboard from "./admin/AdminDashboard";
 import CoursesManagementPage from "./admin/CoursesManagementPage";
+import ModulePage from "./Pages/student/ModulePage";
+
 import AppRoute from "./components/common/AppRoute";
 import AdminRoute from "./components/common/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -196,6 +198,18 @@ function App() {
             }
           />
         </Route>
+        
+        {/* Clean student module view without sidebar */}
+        <Route
+          path="/student-module/:courseId/modules"
+          element={
+            <AppRoute requiredRole="STUDENT">
+              <ModulePage />
+            </AppRoute>
+          }
+        />
+        
+
 
         {/* Instructor dashboard */}
         <Route element={<DashboardLayout />}>  
