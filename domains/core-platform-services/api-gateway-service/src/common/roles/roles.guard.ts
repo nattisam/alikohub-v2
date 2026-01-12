@@ -2,18 +2,12 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
 
-// This is the enum for GLOBAL roles from the auth-service.
-// It's best to define this in a shared library.
 enum GlobalRole {
   USER = 'USER',
   ADMIN = 'ADMIN',
 }
 
-// The shape of the user object attached by the AuthGuard
-type AuthenticatedUser = {
-  firebaseId: string;
-  globalRole: GlobalRole; // <-- FIXED: use globalRole, not role
-};
+import { AuthenticatedUser } from '../types/request-with-user.interface';
 
 @Injectable()
 export class RoleGuard implements CanActivate {

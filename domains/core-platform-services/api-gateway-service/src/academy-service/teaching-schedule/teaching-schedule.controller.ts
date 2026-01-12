@@ -20,14 +20,7 @@ import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { CreateTeachingScheduleDto, UpdateTeachingScheduleDto } from './dto';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 
-type AuthenticatedUser = {
-  firebaseId: string;
-  globalRole: 'USER' | 'ADMIN';
-};
-
-interface RequestWithUser extends Request {
-  user?: AuthenticatedUser;
-}
+import { AuthenticatedUser, RequestWithUser } from '../../common/types/request-with-user.interface';
 
 @ApiTags('Teaching Schedules')
 @Controller('academy/teaching-schedules')

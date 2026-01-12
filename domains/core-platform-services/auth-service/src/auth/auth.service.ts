@@ -453,13 +453,28 @@ export class AuthService {
 		};
 	}
 
-	async getTeacherApplications() {
+	async getTeacherApplications(requestingUserRole?: string) {
+		if (requestingUserRole !== 'ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Only admins can view teacher applications',
+				error: 'Forbidden',
+			});
+		}
 		return this.userService.getTeacherApplications();
 	}
 
-	async approveTeacherApplication(applicationId: string) {
+	async approveTeacherApplication(applicationId: string, requestingUserRole?: string) {
+		if (requestingUserRole !== 'ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Only admins can approve teacher applications',
+				error: 'Forbidden',
+			});
+		}
+
 		const application = await this.userService.getTeacherApplication(applicationId);
-		if (!application && applicationId !== 'mock-id') { // Allow mock for testing
+		if (!application) {
 			throw new RpcException({
 				statusCode: HttpStatus.NOT_FOUND,
 				message: 'Application not found',
@@ -467,7 +482,7 @@ export class AuthService {
 			});
 		}
 
-		const userId = application ? application.userId : '1'; // Default if mock
+		const userId = application.userId;
 
 		// Update application status
 		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED');
@@ -483,7 +498,15 @@ export class AuthService {
 		};
 	}
 
-	async rejectTeacherApplication(applicationId: string) {
+	async rejectTeacherApplication(applicationId: string, requestingUserRole?: string) {
+		if (requestingUserRole !== 'ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Only admins can reject teacher applications',
+				error: 'Forbidden',
+			});
+		}
+
 		// Update application status
 		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED');
 
@@ -564,7 +587,7 @@ export class AuthService {
 	}
 
 	async getUserAcademyStatus(userId: string) {
-		const user = await this.userService.findByFirebaseId(userId);
+		const user = await this.userService.findById(userId);
 		if (!user) {
 			throw new RpcException({
 				statusCode: HttpStatus.NOT_FOUND,

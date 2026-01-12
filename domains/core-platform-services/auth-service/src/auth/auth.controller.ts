@@ -72,18 +72,18 @@ export class AuthController {
 	}
 
 	@MessagePattern({ cmd: 'get_teacher_applications' })
-	async handleGetTeacherApplications() {
-		return this.authService.getTeacherApplications();
+	async handleGetTeacherApplications(@Payload() data: { requestingUserRole?: string }) {
+		return this.authService.getTeacherApplications(data.requestingUserRole);
 	}
 
 	@MessagePattern({ cmd: 'approve_teacher_application' })
-	async handleApproveTeacher(@Payload() data: { applicationId: string }) {
-		return this.authService.approveTeacherApplication(data.applicationId);
+	async handleApproveTeacher(@Payload() data: { applicationId: string; requestingUserRole?: string }) {
+		return this.authService.approveTeacherApplication(data.applicationId, data.requestingUserRole);
 	}
 
 	@MessagePattern({ cmd: 'reject_teacher_application' })
-	async handleRejectTeacher(@Payload() data: { applicationId: string }) {
-		return this.authService.rejectTeacherApplication(data.applicationId);
+	async handleRejectTeacher(@Payload() data: { applicationId: string; requestingUserRole?: string }) {
+		return this.authService.rejectTeacherApplication(data.applicationId, data.requestingUserRole);
 	}
 
 	@MessagePattern({ cmd: 'switch_role' })

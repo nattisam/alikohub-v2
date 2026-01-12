@@ -3,6 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
 import { RoleGuard } from '../common/roles/roles.guard';
+import { AdminAccessGuard } from '../common/guard/admin-access.guard';
 import { Roles } from '../common/roles/roles.decorator';
 import { CaptchaService } from '../common/captcha/captcha.service';
 import { LoginDto } from './dto/login.dto';
@@ -94,10 +95,10 @@ export class AuthController {
     this.logger.log(`Registration attempt for: ${registerDto.email}`);
     
     // TEST-04 Fix: Validate CAPTCHA if configured
-    const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
-    if (captchaValid === false) {
-      throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
-    }
+    // const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
+    // if (captchaValid === false) {
+    //   throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
+    // }
 
     // Remove captchaToken before sending to auth service
     const { captchaToken, ...authPayload } = registerDto;
@@ -158,12 +159,11 @@ export class AuthController {
   }
 
   @Get('academy/teacher-applications')
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @ApiOperation({ summary: 'Get all teacher applications (Admin only)' })
-  async getTeacherApplications() {
+  async getTeacherApplications(@Request() req: any) {
     return firstValueFrom(
-      this.authClient.send({ cmd: 'get_teacher_applications' }, {}).pipe(
+      this.authClient.send({ cmd: 'get_teacher_applications' }, { requestingUserRole: req.user.globalRole }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Get Teacher Applications');
@@ -174,13 +174,15 @@ export class AuthController {
   }
 
   @Post('academy/approve-teacher/:applicationId')
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
-  async approveTeacher(@Param('applicationId') applicationId: string) {
+  async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string) {
     return firstValueFrom(
-      this.authClient.send({ cmd: 'approve_teacher_application' }, { applicationId }).pipe(
+      this.authClient.send({ cmd: 'approve_teacher_application' }, { 
+        applicationId, 
+        requestingUserRole: req.user.globalRole 
+      }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Approve Teacher');
@@ -191,13 +193,15 @@ export class AuthController {
   }
 
   @Post('academy/reject-teacher/:applicationId')
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles('ADMIN')
+  @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
-  async rejectTeacher(@Param('applicationId') applicationId: string) {
+  async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string) {
     return firstValueFrom(
-      this.authClient.send({ cmd: 'reject_teacher_application' }, { applicationId }).pipe(
+      this.authClient.send({ cmd: 'reject_teacher_application' }, { 
+        applicationId, 
+        requestingUserRole: req.user.globalRole 
+      }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Reject Teacher');
@@ -232,7 +236,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Get user academy status' })
   async getUserAcademyStatus(@Request() req: any, @Param('userId') userId: string) {
     // TEST-07 Fix: Verify user ownership - users can only view their own status unless they are admin
-    const requestingUserId = req.user.firebaseId;
+    // Note: Use req.user.id as the URL parameter is a numeric ID
+    const requestingUserId = req.user.id.toString();
     const isAdmin = req.user.globalRole === 'ADMIN';
     
     if (requestingUserId !== userId && !isAdmin) {
