@@ -23,9 +23,6 @@ export class CaptchaService {
    * @returns true if valid, false if invalid, or null if CAPTCHA is not configured
    */
   async verifyCaptcha(token: string | undefined): Promise<boolean | null> {
-    // CAPTCHA disabled for now
-    return true;
-    /*
     // If CAPTCHA is not configured, skip validation
     if (!this.secretKey) {
       this.logger.debug('CAPTCHA validation skipped - not configured');
@@ -70,6 +67,5 @@ export class CaptchaService {
       // You might want to change this to fail-close in high-security environments
       return null;
     }
-    */
   }
 }
