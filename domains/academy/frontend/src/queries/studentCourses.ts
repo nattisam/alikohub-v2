@@ -11,10 +11,15 @@ export const useAllCourses = () => {
       const payload = (response.data && response.data.items) ? response.data.items : response.data;
       return Array.isArray(payload) ? payload : [];
     },
-    staleTime: 5 * 60 * 1000,      // 5 minutes
-    cacheTime: 10 * 60 * 1000,     // 10 minutes
-    refetchOnWindowFocus: false,   // stop spam
-    retry: 1,                      // don't hammer server
+    staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
+    gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
+    refetchOnWindowFocus: false,   // prevent refetch on window focus
+    refetchOnReconnect: false,     // prevent refetch on reconnect
+    retry: 1,                      // reduce retries to avoid overwhelming the server
+    retryDelay: (attemptIndex) => {
+      // Exponential backoff: 2s, 4s, 8s
+      return Math.min(2000 * 2 ** attemptIndex, 8000);
+    },
   });
 };
 

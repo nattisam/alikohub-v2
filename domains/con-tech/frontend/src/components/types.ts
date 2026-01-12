@@ -1,3 +1,6 @@
+// =========================
+// GENERAL INTERFACES
+// =========================
 export interface Notification {
   title: string;
   description: string;
@@ -8,17 +11,20 @@ export interface Notification {
 export interface Activity {
   avatar: string;
   projectId: string;
-  user: User; //string referring to the user display name
+  user: User;
   action: string;
   time: string;
 }
 
-export interface CurrentUser extends User {
-  firebaseId: string;
-  email: string;
+export interface User {
+  firebaseId: string | number;
   firstname: string;
   lastname: string;
   profilePicture?: string;
+}
+
+export interface CurrentUser extends User {
+  email: string;
   role: "ADMIN" | "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "USER";
   bio?: string | null;
   qualifications?: string[] | null;
@@ -26,30 +32,158 @@ export interface CurrentUser extends User {
   updatedAt?: string;
   hasSelectedRole?: boolean;
 }
-export interface User {
-  firebaseId: number | string;
-  firstname: string;
-  lastname: string;
-  profilePicture?: string;
+
+export interface ExtendedCurrentUser extends CurrentUser {
+  permissions?: string[];
+  activeRole?: string;
+  availableRoles?: string[];
 }
+
 export interface Document {
   name: string;
   type: string;
   updated: string;
   version?: string;
 }
+
 export interface SignupCredentials {
   firstname: string;
   lastname: string;
   email: string;
   password: string;
-  captchaToken: string;
+  captchaToken?: string;
 }
-
 
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+
+export interface FileWithMetadata {
+  file: File;
+  preview?: string;
+}
+
+// Task related interfaces
+export interface Task {
+  id: number;
+  projectId: number;
+  title?: string | null;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  progress?: number | null;
+  deadline?: Date | null;
+  assignedTo?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+
+  project?: Project;
+}
+
+export interface TaskQuery {
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
+  assignedTo?: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDateBefore?: string;
+  dueDateAfter?: string;
+}
+
+export interface TaskStatsParams {
+  projectId?: number;
+  assignedTo?: string;
+}
+
+export interface CreateTaskDto {
+  title: string;
+  description: string;
+  projectId: number;
+  assignedTo?: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDate?: string;
+}
+
+export interface UpdateTaskDto {
+  title?: string;
+  description?: string;
+  assignedTo?: string;
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDate?: string;
+  progress?: number;
+}
+
+export interface TaskStats {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  inProgressTasks: number;
+}
+
+// Report related interfaces
+export interface Report {
+  id: number;
+  projectId: number;
+  title: string;
+  summary: string;
+  generatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+
+  project?: Project;
+}
+
+// Inspection related interfaces
+export interface Inspection {
+  id: number;
+  projectId: number;
+  inspectorId: string;
+  findings: string;
+  recommendations: string;
+  status: InspectionStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateInspectionDto {
+  projectId: number;
+  inspectorId: string;
+  findings: string;
+  recommendations: string;
+}
+
+export interface UpdateInspectionDto {
+  id: number;
+  findings?: string;
+  recommendations?: string;
+  status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+}
+
+// Contract related interfaces
+export interface Contract {
+  id: number;
+  projectId: number;
+  fileName: string;
+  secureUrl: string;
+  publicId: string;
+  status: ContractStatus;
+  changeOrders: ChangeOrder[];
+  uploadedAt: Date;
+  updatedAt: Date;
+
+  project?: Project;
+}
+
+// Comment related interfaces
+export interface Comment {
+  id: number;
+  projectId: number;
+  userId: string;
+  content: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 // =========================
@@ -68,7 +202,7 @@ export enum ProjectStatus {
 export enum TaskStatus {
   TODO = "TODO",
   IN_PROGRESS = "IN_PROGRESS",
-  REVIEW = "REVIEWED",
+  REVIEWED = "REVIEWED",
   COMPLETED = "COMPLETED",
   BLOCKED = "BLOCKED",
   CANCELLED = "CANCELLED",
@@ -102,30 +236,26 @@ export enum ChecklistItemStatus {
   NOT_APPLICABLE = "NOT_APPLICABLE",
 }
 
-export interface FileWithMetadata {
-  file: File;
-  preview?: string;
-}
-
 export enum MilestoneStatus {
   PENDING = "PENDING",
   IN_REVIEW = "IN_REVIEW",
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
 }
+
 // =========================
 // MODELS
 // =========================
 export interface Project {
   id: number;
   name: string;
-  subtitle: string | null;
+  subtitle?: string | null;
   inspectorId: string;
   contractorId: string;
-  site?: string | nulll;
-  description: string | null;
+  site?: string | null;
+  description?: string | null;
   status: ProjectStatus;
-  startDate: Date | string | null;
+  startDate?: Date | string | null;
   endDate?: Date | string | null;
   budgetCents?: number | null;
   progress?: number | null;
@@ -139,22 +269,12 @@ export interface Project {
   contracts?: Contract[];
   inspections?: Inspection[];
   milestones?: Milestone[];
-  clientReports?: ClientReport[];
+  clientReports?: Report[];
   documents?: Document[];
   comments?: Comment[];
   activities?: Activity[];
 }
-export interface Milestone {
-  id: number;
-  projectId: number;
-  title: string;
-  description?: string;
-  status: MilestoneStatus | MilestoneStatus.PENDING;
-  dueDate?: Date | string | null;
-  progress: number | 0.0;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
+
 export interface ProjectWithStats extends Project {
   taskStats?: {
     total: number;
@@ -164,23 +284,73 @@ export interface ProjectWithStats extends Project {
   };
 }
 
+export interface Milestone {
+  id: number;
+  projectId: number;
+  title: string;
+  description?: string;
+  status: MilestoneStatus;
+  dueDate?: Date | string | null;
+  progress: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 export interface Task {
   id: number;
   projectId: number;
-  title: string | null;
+  title?: string | null;
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
   progress?: number | null;
   deadline?: Date | null;
-  assignedTo?: string | null; // firebaseId of the assignee
+  assignedTo?: string | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string | null;
   updatedBy?: string | null;
 
-  // Relations
   project?: Project;
+}
+
+export interface TaskQuery {
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
+  assignedTo?: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDateBefore?: string;
+  dueDateAfter?: string;
+}
+
+export interface TaskStatsParams {
+  projectId?: number;
+  assignedTo?: string;
+}
+
+export interface CreateTaskDto {
+  title: string;
+  description: string;
+  projectId: number;
+  assignedTo?: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDate?: string;
+}
+
+export interface UpdateTaskDto {
+  title?: string;
+  description?: string;
+  assignedTo?: string;
+  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  dueDate?: string;
+  progress?: number;
+}
+
+export interface TaskStats {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  inProgressTasks: number;
 }
 
 export interface Contract {
@@ -194,7 +364,6 @@ export interface Contract {
   uploadedAt: Date;
   updatedAt: Date;
 
-  // Relations
   project?: Project;
 }
 
@@ -202,7 +371,7 @@ export interface ChangeOrder {
   id: number;
   description: string;
   amount: number;
-  createdAt: Date |string;
+  createdAt: Date | string;
 }
 
 export interface AddChangeOrderDto {
@@ -214,16 +383,25 @@ export interface Inspection {
   id: number;
   projectId: number;
   inspectorId: string;
-  checklist?: ChecklistItem[];
-  photos: string[];
-  status: InspectionStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string | null;
-  updatedBy?: string | null;
+  findings: string;
+  recommendations: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+}
 
-  // Relations
-  project?: Project;
+export interface CreateInspectionDto {
+  projectId: number;
+  inspectorId: string;
+  findings: string;
+  recommendations: string;
+}
+
+export interface UpdateInspectionDto {
+  id: number;
+  findings?: string;
+  recommendations?: string;
+  status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
 export interface ChecklistItem {
@@ -233,7 +411,6 @@ export interface ChecklistItem {
   comment?: string | null;
   inspectionId: number;
 
-  // Relations
   inspection?: Inspection;
 }
 
@@ -246,8 +423,23 @@ export interface Report {
   createdBy?: string | null;
   updatedBy?: string | null;
 
-  // Relations
   project?: Project;
+}
+
+export interface CreateReportDto {
+  projectId: number;
+  title: string;
+  summary: string;
+}
+
+// Comment related interfaces
+export interface Comment {
+  id: number;
+  projectId: number;
+  userId: string;
+  content: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface UserContextType {
@@ -262,9 +454,14 @@ export interface UserContextType {
   selectRole: (role: string) => Promise<void>;
 }
 
-export interface ExtendedCurrentUser extends CurrentUser {
-  role: "ADMIN" | "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "USER";
-  permissions?: string[];
-  activeRole?: string;
-  availableRoles?: string[];
+// =========================
+// OPTIONAL: Comment interface
+// =========================
+export interface Comment {
+  id: number;
+  projectId: number;
+  userId: string;
+  content: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

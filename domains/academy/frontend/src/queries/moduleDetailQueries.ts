@@ -9,8 +9,8 @@ export const useCourseModulesOnly = (courseId: number) => {
       return modulesRes.data;
     },
     enabled: !!courseId,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,     // 15 minutes - longer cache
+    gcTime: 30 * 60 * 1000,        // 30 minutes - keep in cache longer
     refetchOnWindowFocus: false,
     retry: 1,
   });

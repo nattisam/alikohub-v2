@@ -101,6 +101,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     init();
+    
+    // Listen for logout events from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === null || e.key === 'accessToken' || e.key === 'user') {
+        if (!localStorage.getItem('accessToken') || !localStorage.getItem('user')) {
+          setUser(null);
+        }
+      }
+    };
+    
+    // Listen for custom logout event dispatched by other tabs
+    const handleUserLoggedOut = () => {
+      setUser(null);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userLoggedOut', handleUserLoggedOut);
+    
+    // Cleanup listeners
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLoggedOut', handleUserLoggedOut);
+    };
   }, []);
 
   const loginMutation = useMutation({
@@ -163,19 +186,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // Use the user data from the response to determine redirect destination
     const userData = buildUser(response.user);
     
-    // Check if user has selected a role to determine redirect destination
-    if (userData && userData.hasSelectedRole) {
-      // If user has already selected a role, redirect to appropriate dashboard
-      if (userData.role === 'CLIENT') {
-        window.location.href = "/client-dashboard";
-      } else if (userData.role === 'CONTRACTOR') {
-        window.location.href = "/contractor-dashboard";
+    // Check for return URL in query parameters
+    const searchParams = new URLSearchParams(window.location.search);
+    const returnTo = searchParams.get('returnTo');
+    
+    if (returnTo) {
+      // Decode and navigate to the return URL
+      const decodedReturnTo = decodeURIComponent(returnTo);
+      // Ensure the return URL is safe (starts with / to prevent external redirects)
+      if (decodedReturnTo.startsWith('/')) {
+        window.location.href = decodedReturnTo;
       } else {
-        window.location.href = "/dashboard";
+        // Check if user has selected a role to determine redirect destination
+        if (userData && userData.hasSelectedRole) {
+          // If user has already selected a role, redirect to appropriate dashboard
+          if (userData.role === 'CLIENT') {
+            window.location.href = "/client-dashboard";
+          } else if (userData.role === 'CONTRACTOR') {
+            window.location.href = "/contractor-dashboard";
+          } else if (userData.role === 'PROJECT_MANAGER') {
+            window.location.href = "/pm-dashboard";
+          } else {
+            window.location.href = "/dashboard";
+          }
+        } else {
+          // If user hasn't selected a role, redirect to role selection
+          window.location.href = "/role-selection";
+        }
       }
     } else {
-      // If user hasn't selected a role, redirect to role selection
-      window.location.href = "/role-selection";
+      // Check if user has selected a role to determine redirect destination
+      if (userData && userData.hasSelectedRole) {
+        // If user has already selected a role, redirect to appropriate dashboard
+        if (userData.role === 'CLIENT') {
+          window.location.href = "/client-dashboard";
+        } else if (userData.role === 'CONTRACTOR') {
+          window.location.href = "/contractor-dashboard";
+        } else if (userData.role === 'PROJECT_MANAGER') {
+          window.location.href = "/pm-dashboard";
+        } else {
+          window.location.href = "/dashboard";
+        }
+      } else {
+        // If user hasn't selected a role, redirect to role selection
+        window.location.href = "/role-selection";
+      }
     }
   };
 
@@ -192,6 +247,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         window.location.href = "/client-dashboard";
       } else if (userData.role === 'CONTRACTOR') {
         window.location.href = "/contractor-dashboard";
+      } else if (userData.role === 'PROJECT_MANAGER') {
+        window.location.href = "/pm-dashboard";
       } else {
         window.location.href = "/dashboard";
       }
@@ -202,9 +259,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
+    // Store current location before clearing storage
+    const currentPath = window.location.pathname + window.location.search + window.location.hash;
+    
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     setUser(null);
+    
+    // Dispatch a custom event to notify other tabs about logout
+    window.dispatchEvent(new CustomEvent('userLoggedOut'));
+    
+    // Redirect to login with return URL
+    window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
   };
 
   const updateUser = (u: CurrentUser) => {

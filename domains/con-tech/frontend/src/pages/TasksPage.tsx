@@ -26,12 +26,7 @@ const TasksPage = () => {
       navigate('/login');
       return;
     }
-    
-    // Set loading to false when both data sources are loaded
-    if (!projectsLoading && !tasksLoading) {
-      setLoading(false);
-    }
-  }, [currentUser, navigate, projectsLoading, tasksLoading]);
+  }, [currentUser, navigate]);
 
   const filteredTasks = allTasks.filter(task =>
     task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||

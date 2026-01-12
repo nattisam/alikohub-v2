@@ -19,23 +19,22 @@ const AUTH_BASE_URL =
     ? `http://localhost:${PORT}/auth`
     : "https://alikohub.com/api/auth";
 
-// Function to attach auth interceptor to any axios instance
-const attachAuthInterceptor = (instance: any) => {
-  instance.interceptors.request.use((config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
-};
-
 // Create academy API instance
 export const academyApi = axios.create({
   baseURL: ACADEMY_BASE_URL,
   headers: {
-    ...apiClient.defaults.headers,
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
   timeout: 10000,
+});
+
+// Add auth header to academyApi
+academyApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // Create auth API instance for auth service
@@ -49,10 +48,14 @@ export const authApi = axios.create({
   withCredentials: true, // Add this to send cookies with requests
 });
 
-// Attach the auth interceptor to each instance
-attachAuthInterceptor(apiClient);
-attachAuthInterceptor(academyApi);
-attachAuthInterceptor(authApi);
+// Add auth header to authApi
+authApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 // Export all API modules
 export { progressApi, enrollmentApi };

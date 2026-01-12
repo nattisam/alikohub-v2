@@ -11,12 +11,6 @@ function DashboardLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (window.innerWidth < 780) {
-      setShowSidebar(false);
-    } else {
-      setShowSidebar(true);
-    }
-
     const handleResize = () => {
       if (window.innerWidth < 780) {
         setShowSidebar(false);
@@ -24,7 +18,10 @@ function DashboardLayout() {
         setShowSidebar(true);
       }
     };
-
+    
+    // Initial check
+    handleResize();
+    
     window.addEventListener("resize", handleResize);
 
     return () => {

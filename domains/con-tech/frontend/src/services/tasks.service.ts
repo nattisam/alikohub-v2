@@ -1,5 +1,5 @@
 import { contechApi } from "../api";
-import { type Task } from "../components/type";
+import type { Task, TaskQuery, TaskStatsParams, CreateTaskDto, UpdateTaskDto, TaskStats } from "../components/types";
 
 export interface CreateTaskDto {
   title: string;
@@ -40,112 +40,54 @@ export class TasksService {
   }
 
   async create(dto: CreateTaskDto): Promise<Task> {
-    try {
-      const response = await contechApi.post("/tasks", dto, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error creating task:", error);
-      throw error;
-    }
+    const response = await contechApi.post<Task>("/tasks", dto, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
+    return response.data;
   }
 
-  async findByProject(projectId: number, query: any): Promise<Task[]> {
-    try {
-      const response = await contechApi.get(`/tasks/project/${projectId}`, {
-        params: query,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching tasks for project ${projectId}:`, error);
-      throw error;
-    }
+  async findByProject(projectId: number, query?: TaskQuery): Promise<Task[]> {
+    const response = await contechApi.get<Task[]>(`/tasks/project/${projectId}`, {
+      params: query,
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
+    return response.data;
   }
 
   async findOne(id: number): Promise<Task> {
-    try {
-      const response = await contechApi.get(`/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching task ${id}:`, error);
-      throw error;
-    }
+    const response = await contechApi.get<Task>(`/tasks/${id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
+    return response.data;
   }
 
   async update(id: number, dto: UpdateTaskDto): Promise<Task> {
-    try {
-      const response = await contechApi.put(`/tasks/${id}`, dto, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating task ${id}:`, error);
-      throw error;
-    }
+    const response = await contechApi.put<Task>(`/tasks/${id}`, dto, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
+    return response.data;
   }
 
   async remove(id: number): Promise<void> {
-    try {
-      await contechApi.delete(`/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-    } catch (error) {
-      console.error(`Error deleting task ${id}:`, error);
-      throw error;
-    }
+    await contechApi.delete(`/tasks/${id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
   }
 
   async updateTaskProgress(id: number, progress: number): Promise<Task> {
-    try {
-      const response = await contechApi.patch(
-        `/tasks/${id}/progress`,
-        { progress },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating task ${id} progress:`, error);
-      throw error;
-    }
+    const response = await contechApi.patch<Task>(
+      `/tasks/${id}/progress`,
+      { progress },
+      { headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` } }
+    );
+    return response.data;
   }
 
-  async getTaskStats(
-    projectId: number | undefined,
-    assignedTo: string | undefined
-  ): Promise<TaskStats> {
-    try {
-      const params: any = {};
-      if (projectId) params.projectId = projectId;
-      if (assignedTo) params.assignedTo = assignedTo;
-
-      const response = await contechApi.get("/tasks/stats", {
-        params,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching task stats:", error);
-      throw error;
-    }
+  async getTaskStats(params?: TaskStatsParams): Promise<TaskStats> {
+    const response = await contechApi.get<TaskStats>("/tasks/stats", {
+      params,
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
+    return response.data;
   }
 }

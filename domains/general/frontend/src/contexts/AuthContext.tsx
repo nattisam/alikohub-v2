@@ -81,6 +81,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     initializeAuth();
+    
+    // Listen for logout events from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === null || e.key === 'accessToken' || e.key === 'user') {
+        if (!localStorage.getItem('accessToken') || !localStorage.getItem('user')) {
+          setUser(null);
+        }
+      }
+    };
+    
+    // Listen for custom logout event dispatched by other tabs
+    const handleUserLoggedOut = () => {
+      setUser(null);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userLoggedOut', handleUserLoggedOut);
+    
+    // Cleanup listeners
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLoggedOut', handleUserLoggedOut);
+    };
   }, []);
 
   const loginMutation = useMutation({
@@ -118,7 +141,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string) => {
     try {
       const credentials: LoginCredentials = { email, password };
+      
+      // Check for return URL in query parameters
+      const searchParams = new URLSearchParams(window.location.search);
+      const returnTo = searchParams.get('returnTo');
+      
       await loginMutation.mutateAsync(credentials);
+      
+      if (returnTo) {
+        // Decode and navigate to the return URL
+        const decodedReturnTo = decodeURIComponent(returnTo);
+        // Ensure the return URL is safe (starts with / to prevent external redirects)
+        if (decodedReturnTo.startsWith('/')) {
+          window.location.href = decodedReturnTo;
+        } else {
+          window.location.href = "/";
+        }
+      } else {
+        window.location.href = "/";
+      }
     } catch (error) {
       // Re-throw to let the calling component handle the error
       throw error;
@@ -136,6 +177,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      // Store current location before clearing storage
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      
       // Call the backend logout endpoint if it exists
       try {
         await authAPI.logout();
@@ -154,6 +198,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Invalidate queries
       queryClient.invalidateQueries();
+      
+      // Dispatch a custom event to notify other tabs about logout
+      window.dispatchEvent(new CustomEvent('userLoggedOut'));
+      
+      // Redirect to login with return URL
+      window.location.href = `/auth/login?returnTo=${encodeURIComponent(currentPath)}`;
     } catch (error) {
       console.error('Error during logout:', error);
     }

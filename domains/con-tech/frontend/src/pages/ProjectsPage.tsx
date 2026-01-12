@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDashboard, useUser } from "../hooks";
 
@@ -7,7 +7,7 @@ const ProjectsPage = () => {
   const { projects, loadingProjects, errorProjects, loadProjects } =
     useDashboard();
   const [loading, setLoading] = useState(true);
-  const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
+  // const [filteredProjects, setFilteredProjects] = useState<any[]>([]); // Replaced with useMemo
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const { projectId } = useParams();
@@ -24,24 +24,20 @@ const ProjectsPage = () => {
     }
   }, [projectId, navigate]);
 
-  useEffect(() => {
+  const filteredProjects = useMemo(() => {
     if (searchTerm.trim() !== "") {
       // Filter projects based on search term
       if (projects && Array.isArray(projects)) {
-        const filtered = projects.filter(
+        return projects.filter(
           (project) =>
             project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             project.description?.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        setFilteredProjects(filtered);
       }
+      return [];
     } else {
       // Show all projects when no search term
-      if (projects && Array.isArray(projects)) {
-        setFilteredProjects(projects);
-      } else {
-        setFilteredProjects([]);
-      }
+      return projects && Array.isArray(projects) ? projects : [];
     }
   }, [searchTerm, projects]);
 

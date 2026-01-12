@@ -89,35 +89,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isRoleSwitching, setIsRoleSwitching] = useState(false);
 
-  useEffect(() => {
-    const init = async () => {
-      const token = localStorage.getItem("accessToken");
-      const rawUser = localStorage.getItem("user");
+ useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+  const rawUser = localStorage.getItem("user");
 
-      if (!token || !rawUser) {
-        setIsLoading(false);
-        return;
+  if (token && rawUser) {
+    try {
+      setUser(JSON.parse(rawUser));   // trust cached user
+    } catch {
+      setUser(null);
+    }
+  }
+
+  setIsLoading(false);
+
+  // Listen for logout events from other tabs
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === null || e.key === "accessToken" || e.key === "user") {
+      if (!localStorage.getItem("accessToken") || !localStorage.getItem("user")) {
+        setUser(null);
       }
+    }
+  };
 
-      try {
-        // Trust token initially and fetch profile once
-        const profile = await academyAPI.getProfile();
-        const finalUser = buildUser(profile);
-        setUser(finalUser);
-        localStorage.setItem("user", JSON.stringify(finalUser));
-      } catch {
-        try {
-          setUser(JSON.parse(rawUser));
-        } catch {
-          setUser(null);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const handleUserLoggedOut = () => setUser(null);
 
-    init();
-  }, []);
+  window.addEventListener("storage", handleStorageChange);
+  window.addEventListener("userLoggedOut", handleUserLoggedOut);
+
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+    window.removeEventListener("userLoggedOut", handleUserLoggedOut);
+  };
+}, []);
+
 
   const loginMutation = useMutation({
     mutationFn: (c: LoginCredentials) => authAPI.login(c),
@@ -180,8 +185,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
+    // Store current location before clearing storage
+    const currentPath = window.location.pathname + window.location.search + window.location.hash;
+    
     localStorage.clear();
     setUser(null);
+    
+    // Dispatch a custom event to notify other tabs about logout
+    window.dispatchEvent(new CustomEvent('userLoggedOut'));
+    
+    // Redirect to login with return URL
+    window.location.href = `/auth/login?returnTo=${encodeURIComponent(currentPath)}`;
   };
 
   const updateUser = (u: CurrentUser) => {
@@ -218,10 +232,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     
     // After selecting a role, automatically switch to that role to make it the active role
     try {
-      await academyAPI.switchRole(role);
-      // Refresh the user data after switching
-      const switchedUserResponse = await academyAPI.getProfile();
-      const switchedUser = buildUser(switchedUserResponse);
+      const switchRes = await academyAPI.switchRole(role);
+      // Use the user data from the switch response which contains the updated active role
+      const switchedUserFromResponse = switchRes.user || (await academyAPI.getProfile());
+      const switchedUser = buildUser(switchedUserFromResponse);
       updateUser(switchedUser);
     } catch (error) {
       console.error('Error switching to selected role:', error);

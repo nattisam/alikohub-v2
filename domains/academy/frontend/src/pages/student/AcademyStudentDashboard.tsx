@@ -6,11 +6,10 @@ import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import { useState, useEffect } from "react";
 import { enrollmentApi } from "../../api/enrollmentApi";
-import { courseApi } from "../../api/courseApi";
+import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
 import type { Course } from "../../components/common/types.d.tsx";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
-import StudentModuleView from "../../components/student/StudentModuleView";
 import { useNavigate } from "react-router-dom";
 import ErrorState from "../../components/states/ErrorState";
 import EmptyState from "../../components/states/EmptyState";
@@ -111,39 +110,76 @@ const AcademyStudentDashboard = () => {
   }
 
   const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [courseForModuleView, setCourseForModuleView] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
-  
-  const [stats, setStats] = useState({
-    enrolledCourses: 0,
-    completedCourses: 0,
-    certificates: 0,
-  });
-
-  // Update stats when courses change
-  useEffect(() => {
-    const completedCourses = courses.filter(course => course.progress && course.progress >= 100).length;
-    setStats({
-      enrolledCourses: courses.length,
-      completedCourses,
-      certificates: completedCourses,
-    });
-  }, [courses]);
 
   const fetchDashboardData = async () => {
+    const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
+      let retries = 0;
+
+      while (retries <= maxRetries) {
+        try {
+          // Fetch enrolled courses
+          const coursesResponse = await enrollmentApi.getMyCourses();
+          const rawItems = Array.isArray(coursesResponse.data)
+            ? coursesResponse.data
+            : Array.isArray((coursesResponse.data as any)?.items)
+              ? (coursesResponse.data as any).items
+              : [];
+
+          const detectedEnrollments: EnrollmentWithCourse[] = [];
+          const detectedCourses: Course[] = [];
+
+          rawItems.forEach((item: any) => {
+            if (item && typeof item === "object" && "courseId" in item) {
+              const enrollmentItem = item as EnrollmentWithCourse;
+              detectedEnrollments.push(enrollmentItem);
+              if (enrollmentItem.course) {
+                detectedCourses.push({
+                  ...enrollmentItem.course,
+                  progress:
+                    enrollmentItem.progress ??
+                    enrollmentItem.course.progress ??
+                    0,
+                });
+              }
+            } else if (item && typeof item === "object") {
+              detectedCourses.push(item as Course);
+            }
+          });
+
+          setEnrollments(detectedEnrollments);
+          setCourses(detectedCourses);
+          setError(null); // Clear any previous error
+          return; // Success, exit the retry loop
+        } catch (error: any) {
+          console.error("Error fetching dashboard data:", error);
+
+          // Check if it's a 429 error (Too Many Requests)
+          if (error.response?.status === 429 && retries < maxRetries) {
+            console.warn(`Rate limited, retrying in ${delay * Math.pow(2, retries)}ms...`);
+            // Exponential backoff: wait longer after each retry
+            await new Promise((resolve) =>
+              setTimeout(resolve, delay * Math.pow(2, retries))
+            );
+            retries++;
+          } else {
+            setError(error as Error);
+            break; // Stop retrying on other errors or max retries reached
+          }
+        }
+      }
+    };
+
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null); // Reset error state
-      
-      // Fetch enrolled courses
-      const coursesResponse = await enrollmentApi.getMyCourses();
-      setCourses(coursesResponse.data);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      setError(error as Error);
+      await fetchWithRetry();
+    } catch (err: any) {
+      setError(err as Error);
     } finally {
       setLoading(false);
     }
@@ -151,151 +187,107 @@ const AcademyStudentDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [refreshKey]); // Add refreshKey to dependencies
+  }, [refreshKey]);
 
-  const handleViewProgress = async (courseId: number) => {
-    // Find the course in the courses array
-    const course = courses.find(c => c.id === courseId);
-    if (course) {
-      setSelectedCourse(course);
-    }
-  };
-
-  const handleViewCourseContent = async (courseId: number) => {
-    console.log("handleViewCourseContent called with courseId:", courseId);
-    console.log("Available courses:", courses);
-    
-    // Redirect to the module page for this course
-    navigate(`/student-dashboard/mycourses/${courseId}/modules`);
-  };
-
-  // Function to trigger dashboard refresh
-  const handleEnrollmentComplete = () => {
-    // Increment the refresh key to trigger re-render
-    setRefreshKey(prev => prev + 1);
-  };
-
-  // Check for error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="px-4 md:px-8 py-6">
-          <ErrorState 
-            title="Failed to Load Dashboard" 
-            message="There was an error loading your dashboard data. Please try again later." 
-            error={error}
-            onRetry={fetchDashboardData}
-          />
-        </div>
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <ErrorState 
+          message="Failed to load dashboard data"
+          onRetry={() => setRefreshKey(prev => prev + 1)}
+        />
       </div>
     );
   }
-  
-  // Check for empty state
-  if (!loading && courses.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="px-4 md:px-8 py-6">
-          <EmptyState 
-            title="No Courses Yet" 
-            message="You haven't enrolled in any courses yet. Start learning by exploring our course catalog." 
-            showAction={true}
-            actionText="Browse Courses"
-            onAction={() => navigate('/courses')}
-          />
-        </div>
-      </div>
-    );
-  }
-  
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="px-4 md:px-8 py-6">
-          <p>Loading dashboard...</p>
+      <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="px-4 md:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {/* Welcome Section */}
-            <div className="mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                Welcome back, {currentUser?.firstname}!
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Continue your learning journey and track your progress
-              </p>
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-3xl font-bold text-blue-600">{courses.length}</div>
-                <div className="text-gray-600 mt-1">Enrolled Courses</div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-3xl font-bold text-green-600">{
-                  courses.filter(course => course.progress && course.progress >= 100).length
-                }</div>
-                <div className="text-gray-600 mt-1">Completed Courses</div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-3xl font-bold text-yellow-600">{
-                  courses.filter(course => course.progress && course.progress >= 100).length
-                }</div>
-                <div className="text-gray-600 mt-1">Certificates Earned</div>
-              </div>
-            </div>
-
-            <div className="flex flex-col xl:flex-row gap-6">
-              <div className="flex-1 flex flex-col">
-                <QuickActions />
-                <ContinueLearning 
-                  key={refreshKey}
-                  onviewProgress={handleViewProgress} 
-                  onViewCourseContent={handleViewCourseContent} 
-                />
-
-              </div>
-
-              <div className="w-full xl:w-80">
-                <SidebarStats className="w-full" />
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50 pt-16">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-600">Welcome, {currentUser?.firstName || currentUser?.email}</span>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Progress Tracker Modal */}
-      {selectedCourse && currentUser && (
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {enrollments.length === 0 ? (
+          <EmptyState 
+            title="No Enrollments Found"
+            message="You haven't enrolled in any courses yet."
+            actionText="Browse Courses"
+            onAction={() => navigate('/courses')}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.map((course) => (
+              <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
+                  <p className="text-gray-500 mt-1">{course.description}</p>
+                  <div className="mt-4">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
+                        style={{ width: `${course.progress || 0}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">{course.progress || 0}% complete</p>
+                  </div>
+                  <div className="mt-4 flex space-x-3">
+                    <button 
+                      onClick={() => setSelectedCourse(course)}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      View Progress
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/courses/${course.id}/modules`)}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Progress Detail Modal */}
+      {selectedCourse && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Progress for "{selectedCourse.title}"
-                </h2>
-                <button
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800">{selectedCourse.title} Progress</h2>
+                <button 
                   onClick={() => setSelectedCourse(null)}
                   className="text-gray-500 hover:text-gray-700 text-2xl"
                 >
-                  &times;
+                  ×
                 </button>
               </div>
-              
-              <StudentProgressTracker 
-                course={selectedCourse} 
-                userId={currentUser.firebaseId} 
+
+              <StudentProgressTracker
+                course={selectedCourse}
+                userId={currentUser.firebaseId}
               />
-              
+
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setSelectedCourse(null)}
@@ -308,16 +300,6 @@ const AcademyStudentDashboard = () => {
           </div>
         </div>
       )}
-      
-      {/* Course Content Modal - commented out since we're redirecting to module page */}
-      {/*
-      {courseForModuleView && (
-        <StudentModuleView
-          courseId={courseForModuleView.id}
-          onClose={() => setCourseForModuleView(null)}
-        />
-      )}
-      */}
     </div>
   );
 };

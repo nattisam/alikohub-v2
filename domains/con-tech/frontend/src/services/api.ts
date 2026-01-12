@@ -1,5 +1,5 @@
 import apiClient from '../lib/api';
-import type { LoginCredentials, SignupCredentials, CurrentUser } from '../components/type';
+import type { LoginCredentials, SignupCredentials, CreateTaskDto, UpdateTaskDto, CreateInspectionDto, UpdateInspectionDto, CreateReportDto, ContractStatus, Comment } from '../components/types';
 
 export const authAPI = {
   login: async (credentials: LoginCredentials) => {
@@ -68,7 +68,7 @@ export const contechAPI = {
     return response.data;
   },
   // Projects endpoints
-  getProjects: async (params?: any) => {
+  getProjects: async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/projects', { params });
     // Extract items from paginated response
     return response.data.items || response.data;
@@ -79,12 +79,12 @@ export const contechAPI = {
     return response.data;
   },
 
-  createProject: async (data: any) => {
+  createProject: async (data: Record<string, unknown>) => {
     const response = await apiClient.post('/projects', data);
     return response.data;
   },
 
-  updateProject: async (id: number, data: any) => {
+  updateProject: async (id: number, data: Record<string, unknown>) => {
     const response = await apiClient.put(`/projects/${id}`, data);
     return response.data;
   },
@@ -100,7 +100,7 @@ export const contechAPI = {
   },
 
   // Tasks endpoints
-  getTasks: async (projectId?: number, params?: any) => {
+  getTasks: async (projectId?: number, params?: Record<string, unknown>) => {
     const url = projectId ? `/contech/tasks/project/${projectId}` : '/contech/tasks';
     const response = await apiClient.get(url, { params });
     return response.data;
@@ -111,12 +111,12 @@ export const contechAPI = {
     return response.data;
   },
 
-  createTask: async (data: any) => {
+  createTask: async (data: CreateTaskDto) => {
     const response = await apiClient.post('/contech/tasks', data);
     return response.data;
   },
 
-  updateTask: async (id: number, data: any) => {
+  updateTask: async (id: number, data: UpdateTaskDto) => {
     const response = await apiClient.put(`/contech/tasks/${id}`, data);
     return response.data;
   },
@@ -138,12 +138,12 @@ export const contechAPI = {
     return response.data;
   },
 
-  createInspection: async (data: any, files?: File[]) => {
+  createInspection: async (data: CreateInspectionDto, files?: File[]) => {
     const formData = new FormData();
     formData.append('data', JSON.stringify(data));
     
     if (files) {
-      files.forEach((file, index) => {
+      files.forEach((file) => {
         formData.append(`files`, file);
       });
     }
@@ -156,7 +156,7 @@ export const contechAPI = {
     return response.data;
   },
 
-  updateInspection: async (data: any) => {
+  updateInspection: async (data: UpdateInspectionDto) => {
     const response = await apiClient.put(`/contech/inspections/${data.id}`, data);
     return response.data;
   },
@@ -176,7 +176,7 @@ export const contechAPI = {
     return response.data;
   },
 
-  createReport: async (data: any) => {
+  createReport: async (data: CreateReportDto) => {
     const response = await apiClient.post('/client-reports', data);
     return response.data;
   },
@@ -206,13 +206,13 @@ export const contechAPI = {
     return response.data;
   },
 
-  updateContractStatus: async (id: number, status: any) => {
+  updateContractStatus: async (id: number, status: ContractStatus) => {
     const response = await apiClient.patch(`/contech/contracts/${id}/status`, { status });
     return response.data;
   },
 
   // Comments endpoints
-  getComments: async (params?: any) => {
+  getComments: async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/contech/comments', { params });
     return response.data;
   },
@@ -222,12 +222,12 @@ export const contechAPI = {
     return response.data;
   },
 
-  createComment: async (data: any) => {
+  createComment: async (data: Comment) => {
     const response = await apiClient.post('/contech/comments', data);
     return response.data;
   },
 
-  updateComment: async (id: string, data: any) => {
+  updateComment: async (id: string, data: Partial<Comment>) => {
     const response = await apiClient.put(`/contech/comments/${id}`, data);
     return response.data;
   },
@@ -238,8 +238,8 @@ export const contechAPI = {
   },
 
   // Dashboard endpoints
-  getClientDashboardData: async () => {
-    const response = await apiClient.get(`/client-reports/${id}`);
+  getClientDashboardData: async (reportId?: number) => {
+    const response = await apiClient.get(reportId ? `/client-reports/${reportId}` : '/client-reports');
     return response.data;
   },
 

@@ -4,9 +4,12 @@ import { courseApi } from "../../api/courseApi";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCourse } from "../../queries/courseQueries";
-import { useCourseModulesOnly } from "../../queries/moduleDetailQueries";
+import { useCourseModules } from "../../queries/moduleQueries";
 import type { Course, Enrollment, CourseModule, CourseLesson } from "../../components/common/types.d";
-import { FaStar, FaUsers, FaClock, FaTag, FaBook, FaUser, FaPlay, FaFilePdf, FaVideo } from "react-icons/fa";
+import { 
+  FaStar, FaChevronDown, FaPlay, FaRegHeart, FaShareAlt, 
+  FaInfinity, FaCertificate, FaMobileAlt, FaDownload, FaShieldAlt 
+} from "react-icons/fa";
 
 const CourseDetailsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -17,8 +20,8 @@ const CourseDetailsPage: React.FC = () => {
   const { data: course, isLoading, isError, error: queryError } = useCourse(parseInt(courseId || '0'));
 
   // Check if user has selected a role
-  const hasRole = currentUser?.academyRole !== undefined;
-  const isStudent = currentUser?.academyRole === 'STUDENT';
+  const hasRole = (currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole) !== undefined;
+  const isStudent = (currentUser?.academyActiveRole === 'STUDENT' || currentUser?.academyUser?.activeRole === 'STUDENT');
   
   // Check if user is already enrolled
   // Since the Course type doesn't include enrollments, we'll need to fetch them separately
@@ -27,24 +30,49 @@ const CourseDetailsPage: React.FC = () => {
 
   // State for modules and lessons
   const [lessonsByModule, setLessonsByModule] = useState<Record<number, CourseLesson[]>>({});
-
+  
+  // State for filters
+  const [selectedCategories, setSelectedCategories] = useState<Record<string, boolean>>({});
+  const [searchFilter, setSearchFilter] = useState('');
 
   
   // Fetch user enrollments
   useEffect(() => {
     const fetchUserEnrollments = async () => {
       if (currentUser) {
-        try {
-          const response = await enrollmentApi.getMyCourses();
-          // Handle response structure: if data has items array, use it, otherwise use data directly
-          if (response.data.items && Array.isArray(response.data.items)) {
-            setUserEnrollments(response.data.items);
-          } else {
-            // If response is directly the array of enrollments
-            setUserEnrollments(response.data);
+        // Retry function for handling 429 errors
+        const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
+          let retries = 0;
+          
+          while (retries <= maxRetries) {
+            try {
+              const response = await enrollmentApi.getMyCourses();
+              // Handle response structure: if data has items array, use it, otherwise use data directly
+              if (response.data.items && Array.isArray(response.data.items)) {
+                setUserEnrollments(response.data.items);
+              } else {
+                // If response is directly the array of enrollments
+                setUserEnrollments(response.data);
+              }
+              return; // Success, exit the retry loop
+            } catch (err: any) {
+              console.error("Error fetching user enrollments:", err);
+              
+              // Check if it's a 429 error (Too Many Requests)
+              if (err.response?.status === 429 && retries < maxRetries) {
+                console.warn(`Rate limited, retrying in ${delay * Math.pow(2, retries)}ms...`);
+                // Exponential backoff: wait longer after each retry
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, retries)));
+                retries++;
+              } else {
+                break; // Stop retrying on other errors or max retries reached
+              }
+            }
           }
-        } catch (err) {
-          console.error("Error fetching user enrollments:", err);
+        };
+        
+        try {
+          await fetchWithRetry();
         } finally {
           setEnrollmentsLoading(false);
         }
@@ -56,7 +84,7 @@ const CourseDetailsPage: React.FC = () => {
     fetchUserEnrollments();
   }, [currentUser]);
 
-  const { data: modulesFromQuery = [], isLoading: areModulesLoading, isError: modulesError } = useCourseModulesOnly(parseInt(courseId || '0'));
+  const { data: modulesFromQuery = [], isLoading: areModulesLoading, isError: modulesError } = useCourseModules(parseInt(courseId || '0'));
   
   if (modulesError) {
     console.error("Error fetching course modules");
@@ -94,14 +122,37 @@ const CourseDetailsPage: React.FC = () => {
         alert("Successfully enrolled in the course!");
         
         // Also refresh user enrollments to update the isEnrolled state
-        const enrollmentResponse = await enrollmentApi.getMyCourses();
-        // Handle response structure: if data has items array, use it, otherwise use data directly
-        if (enrollmentResponse.data.items && Array.isArray(enrollmentResponse.data.items)) {
-          setUserEnrollments(enrollmentResponse.data.items);
-        } else {
-          // If response is directly the array of enrollments
-          setUserEnrollments(enrollmentResponse.data);
-        }
+        const fetchEnrollmentsWithRetry = async (maxRetries = 3, delay = 1000) => {
+          let retries = 0;
+          
+          while (retries <= maxRetries) {
+            try {
+              const enrollmentResponse = await enrollmentApi.getMyCourses();
+              // Handle response structure: if data has items array, use it, otherwise use data directly
+              if (enrollmentResponse.data.items && Array.isArray(enrollmentResponse.data.items)) {
+                setUserEnrollments(enrollmentResponse.data.items);
+              } else {
+                // If response is directly the array of enrollments
+                setUserEnrollments(enrollmentResponse.data);
+              }
+              return; // Success, exit the retry loop
+            } catch (err: any) {
+              console.error("Error refreshing user enrollments after enrollment:", err);
+              
+              // Check if it's a 429 error (Too Many Requests)
+              if (err.response?.status === 429 && retries < maxRetries) {
+                console.warn(`Rate limited, retrying in ${delay * Math.pow(2, retries)}ms...`);
+                // Exponential backoff: wait longer after each retry
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, retries)));
+                retries++;
+              } else {
+                break; // Stop retrying on other errors or max retries reached
+              }
+            }
+          }
+        };
+        
+        await fetchEnrollmentsWithRetry();
       }
     } catch (err: any) {
       console.error("Error enrolling in course:", err);
@@ -173,178 +224,236 @@ const CourseDetailsPage: React.FC = () => {
   );
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-white to-[#EFF6FF] pt-20">
-    <div className="container mx-auto px-4 py-10">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 pb-20">
 
-      {/* Back Button */}
-      <div className="mb-8">
-        <Link
-          to="/courses"
-          className="text-[#0D72BA] hover:text-[#094F87] flex items-center font-semibold text-lg transition"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Courses
-        </Link>
-      </div>
-
-      <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(13,114,186,0.25)] overflow-hidden border border-gray-200">
-
-        {/* Header */}
-        <div className="md:flex">
-
-          {/* Image */}
-          <div className="md:w-2/5">
-            {course.thumbnail ? (
-              <img
-                src={course.thumbnail}
-                alt={course.title}
-                className="w-full h-64 md:h-80 object-cover"
-              />
-            ) : (
-              <div className="w-full h-72 md:h-full bg-gradient-to-br from-[#F47E28] to-[#0D72BA] flex items-center justify-center">
-                <FaBook className="h-20 w-20 text-white opacity-90" />
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="p-10 md:w-3/5 bg-gradient-to-br from-white via-[#F8FAFC] to-[#EFF6FF]">
-
-            <div className="flex justify-between items-start mb-4">
-              <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">
-                {course.title}
-              </h1>
-              <span className="text-3xl font-extrabold text-[#F47E28]">
-                {course.price && course.price > 0 ? `$${course.price}` : "Free"}
-              </span>
-            </div>
-
-            {course.shortDescription && (
-              <p className="text-gray-600 text-base mb-6">
-                {course.shortDescription}
-              </p>
-            )}
-
-            {/* Instructor */}
-            {course.instructor && (
-              <div className="flex items-center mb-6 p-4 rounded-xl bg-white/70 backdrop-blur border border-gray-200 shadow-sm">
-                <div className="mr-4">
-                  {course.instructor.profilePicture ? (
-                    <img
-                      src={course.instructor.profilePicture}
-                      alt=""
-                      className="h-14 w-14 rounded-full object-cover border-2 border-[#0D72BA]"
+      <div className="max-w-7xl mx-auto px-4 py-24 grid grid-cols-12 gap-8">
+        
+        {/* LEFT SIDEBAR - Filters */}
+        <aside className="hidden lg:block col-span-2 space-y-8">
+          <div>
+            <h4 className="font-bold mb-4">Filters</h4>
+            <input 
+              type="text" 
+              placeholder="Search in content" 
+              className="w-full border rounded-lg p-2 text-xs mb-6" 
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+            />
+            
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Category</p>
+              {course && (
+                <label key={course.category} className="flex items-center justify-between text-sm cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedCategories[course.category] || false}
+                      onChange={() => {
+                        setSelectedCategories(prev => ({
+                          ...prev,
+                          [course.category]: !prev[course.category]
+                        }));
+                      }}
+                      className="rounded text-blue-600" 
                     />
-                  ) : (
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-[#0D72BA] to-[#F47E28] flex items-center justify-center">
-                      <FaUser className="text-white" />
-                    </div>
-                  )}
+                    <span className={selectedCategories[course.category] ? "font-bold" : "text-gray-500"}>{course.category}</span>
+                  </div>
+                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">
+                    {course.enrolledNum || 0}
+                  </span>
+                </label>
+              )}
+            </div>
+          </div>
+          <button className="w-full py-2 text-sm font-bold bg-gray-100 rounded-xl hover:bg-gray-200 transition">Clear All Filters</button>
+        </aside>
+
+        {/* MAIN CONTENT - Course Info */}
+        <main className="col-span-12 lg:col-span-7">
+          <div className="bg-[#E9F0F7] rounded-[40px] p-8 md:p-12 relative overflow-hidden mb-12 min-h-[500px]">
+             {/* Header Tags */}
+             <div className="flex gap-2 mb-6">
+                <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 uppercase tracking-tighter">
+                  <FaStar size={8} /> Best Seller
+                </span>
+                <span className="bg-blue-200 text-blue-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">New Update</span>
+             </div>
+
+             <h1 className="text-5xl font-black text-slate-900 leading-[1.1] mb-6 max-w-md">
+                {course.title}
+             </h1>
+             
+             <p className="text-slate-600 text-lg mb-10 max-w-md leading-relaxed">
+                {course.shortDescription || "Master the art of high-level business strategy with industry experts. Learn how to navigate complex international markets."}
+             </p>
+
+             <div className="flex items-center gap-8 mb-12">
+                <div className="flex items-center gap-2">
+                   <FaStar className="text-orange-400" />
+                   <span className="font-bold text-sm">{(course.rating || 0).toFixed(1)} ({course.enrolledNum || 0} Ratings)</span>
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900">
-                    {course.instructor.firstname} {course.instructor.lastname}
-                  </p>
-                  {course.instructor.title && (
-                    <p className="text-sm text-gray-600">
-                      {course.instructor.title}
-                    </p>
-                  )}
+                <div className="flex items-center gap-2">
+                   <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                     {(course.instructor?.firstname?.charAt(0) || 'U') + (course.instructor?.lastname?.charAt(0) || 'N')}
+                   </div>
+                   <span className="text-sm font-medium">Instructor: <span className="font-bold">{course.instructor?.firstname} {course.instructor?.lastname}</span></span>
+                </div>
+             </div>
+
+             {/* Dynamic Stats Grid */}
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 relative z-10">
+                <div className="bg-white/80 backdrop-blur rounded-2xl p-4 flex items-center gap-3">
+                   <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                      <FaPlay size={14} />
+                   </div>
+                   <div>
+                      <p className="text-xl font-black">{course.estimatedTime ? Math.floor(course.estimatedTime / 60) + '+' : 'N/A'}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">Hours Content</p>
+                   </div>
+                </div>
+                <div className="bg-white/80 backdrop-blur rounded-2xl p-4 flex items-center gap-3">
+                   <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                      <FaDownload size={14} />
+                   </div>
+                   <div>
+                      <p className="text-xl font-black">{modulesFromQuery.reduce((total, module) => total + (module.lessons?.length || 0), 0)}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">Lessons</p>
+                   </div>
+                </div>
+                <div className="bg-white/80 backdrop-blur rounded-2xl p-4 flex items-center gap-3">
+                   <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
+                      <FaStar size={14} />
+                   </div>
+                   <div>
+                      <p className="text-xl font-black">{course.enrolledNum ? (course.enrolledNum > 1000 ? (course.enrolledNum/1000).toFixed(1) + 'k' : course.enrolledNum) : 'N/A'}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase">Active Students</p>
+                   </div>
+                </div>
+             </div>
+
+             {/* Video Play Preview (Floating Right) */}
+             <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 hidden xl:block w-72">
+                <div className="bg-black rounded-3xl aspect-[4/3] relative overflow-hidden border-4 border-white shadow-2xl">
+                   <img src={course.thumbnail} className="w-full h-full object-cover opacity-60" alt="preview" />
+                   <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40">
+                         <FaPlay className="text-white ml-1" />
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          {/* Curriculum Section */}
+          <section>
+             <div className="flex justify-between items-end mb-8">
+                <h2 className="text-3xl font-black text-slate-900">Course Curriculum</h2>
+                <span className="text-sm font-bold text-gray-400">Total duration: {course?.estimatedTime ? `${Math.floor(course.estimatedTime / 60)}h ${course.estimatedTime % 60}m` : 'N/A'}</span>
+             </div>
+
+             <div className="space-y-4">
+                {modulesFromQuery.map((module, idx) => {
+                  // Calculate lesson count and duration for this module
+                  const lessonCount = module.lessons ? module.lessons.length : 0;
+                  // Calculate approximate duration based on number of lessons
+                  const hours = Math.floor(lessonCount * 0.75);
+                  const minutes = (lessonCount * 45) % 60;
+                  const duration = hours > 0 ? `${hours}h ${minutes}m` : `${lessonCount * 45}m`; // Approximate 45 min per lesson
+                  
+                  return (
+                    <div key={module.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                      <div className="p-6 flex items-center justify-between cursor-pointer">
+                        <div className="flex items-center gap-4">
+                          <FaChevronDown className={`text-gray-400 transition ${idx === 0 ? '' : '-rotate-90'}`} />
+                          <div>
+                             <p className="font-bold text-lg">Module {idx + 1}: {module.title}</p>
+                             <p className="text-xs text-gray-400 font-bold">{lessonCount} Lessons • {duration}</p>
+                          </div>
+                        </div>
+                        {idx === 0 && <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white"><FaStar size={10} /></div>}
+                      </div>
+                      {module.lessons && module.lessons.length > 0 && (
+                        <div className="px-6 pb-6 space-y-4 border-t border-gray-50 pt-4">
+                          {module.lessons.map((lesson, lessonIdx) => (
+                            <div key={lesson.id} className="flex items-center justify-between text-sm font-bold text-gray-600">
+                              <div className="flex items-center gap-3">
+                                <FaPlay size={12} className="text-blue-600" /> {lesson.title}
+                              </div>
+                              <span className="text-gray-400">{(lesson.title.length % 12) + 5}:{(lesson.title.length * 7 % 60).toString().padStart(2, '0')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+             </div>
+          </section>
+        </main>
+
+        {/* RIGHT SIDEBAR - Purchase Card */}
+        <aside className="col-span-12 lg:col-span-3">
+          <div className="bg-white rounded-[32px] shadow-2xl shadow-blue-100 overflow-hidden sticky top-24">
+            <div className="h-48 bg-gray-100 overflow-hidden">
+                <img src={course.thumbnail} className="w-full h-full object-cover" alt="thumbnail" />
+            </div>
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-4xl font-black">${course.price?.toFixed(2) || "0.00"}</span>
+                {course.price && course.price < 500 && (
+                  <>
+                    <span className="text-gray-400 line-through font-bold">${(course.price * 2.5).toFixed(2)}</span>
+                    <span className="text-green-500 font-black text-sm">{Math.round(((course.price * 2.5 - course.price) / (course.price * 2.5)) * 100)}% OFF</span>
+                  </>
+                )}
+              </div>
+
+              <button 
+                onClick={() => {
+                  if (isEnrolled) {
+                    navigate("/dashboard");
+                  } else {
+                    handleEnroll();
+                  }
+                }}
+                disabled={enrolling}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl mb-4 transition transform active:scale-95 disabled:opacity-50"
+              >
+                {isEnrolled ? "Go to Dashboard" : enrolling ? "Processing..." : "Enroll Now"}
+              </button>
+
+              <div className="flex gap-2 mb-8">
+                 <button className="flex-1 bg-gray-50 hover:bg-gray-100 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition">
+                    <FaRegHeart className="text-gray-400" /> Wishlist
+                 </button>
+                 <button className="w-12 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 transition">
+                    <FaShareAlt />
+                 </button>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <p className="font-bold text-sm">This course includes:</p>
+                <div className="space-y-3 text-xs font-bold text-slate-600">
+                  <div className="flex items-center gap-3"><FaInfinity className="text-blue-600" /> Lifetime access</div>
+                  <div className="flex items-center gap-3"><FaCertificate className="text-blue-600" /> Verified Certificate</div>
+                  <div className="flex items-center gap-3"><FaMobileAlt className="text-blue-600" /> Access on mobile and TV</div>
+                  <div className="flex items-center gap-3"><FaDownload className="text-blue-600" /> {modulesFromQuery.reduce((total, module) => total + (module.lessons?.length || 0), 0)} Downloadable resources</div>
                 </div>
               </div>
-            )}
 
-            {/* Metadata */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {course.rating !== null && (
-                <div className="flex items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <FaStar className="text-[#F47E28] mr-2" />
-                  <span className="font-bold">{course.rating.toFixed(1)}</span>
-                </div>
-              )}
-              {course.enrolledNum !== null && (
-                <div className="flex items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <FaUsers className="text-[#0D72BA] mr-2" />
-                  <span className="font-bold">{course.enrolledNum}</span>
-                </div>
-              )}
-              {course.estimatedTime && (
-                <div className="flex items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <FaClock className="text-indigo-500 mr-2" />
-                  <span className="font-bold">{course.estimatedTime}h</span>
-                </div>
-              )}
-              {course.targetLevel && (
-                <div className="flex items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <FaTag className="text-sky-500 mr-2" />
-                  <span className="font-bold">{course.targetLevel}</span>
-                </div>
-              )}
+              <div className="bg-blue-50/50 p-4 rounded-2xl flex gap-3 items-start border border-blue-100">
+                 <FaShieldAlt className="text-blue-600 mt-1 shrink-0" />
+                 <p className="text-[10px] font-bold text-blue-800 leading-relaxed">
+                   30-Day Money-Back Guarantee. No questions asked.
+                 </p>
+              </div>
             </div>
-
-            {/* CTA */}
-            <div>
-              {isEnrolled ? (
-                <button
-                  onClick={() => navigate(`/student-dashboard/mycourses/${course.id}/modules`)}
-                  className="w-full bg-[#0D72BA] text-white py-3 rounded-xl font-bold hover:bg-[#095A92] transition shadow-lg"
-                >
-                  Go to Course
-                </button>
-              ) : (
-                <button
-                  onClick={handleEnroll}
-                  disabled={enrolling}
-                  className="w-full bg-gradient-to-r from-[#F47E28] to-[#0D72BA] text-white py-3 rounded-xl font-bold hover:scale-[1.02] transition shadow-xl disabled:opacity-70"
-                >
-                  {enrolling ? "Enrolling..." : "Enroll in Course"}
-                </button>
-              )}
-            </div>
-
           </div>
-        </div>
-
-        {/* Details */}
-        <div className="p-8 border-t border-gray-200 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-            {/* Description */}
-            <div className="md:col-span-2">
-              <h2 className="text-2xl font-extrabold text-[#0D72BA] mb-3 after:block after:w-12 after:h-1 after:bg-[#F47E28] after:mt-2">
-                Course Description
-              </h2>
-              <p className="text-gray-700 text-base whitespace-pre-line">
-                {course.longDescription}
-              </p>
-            </div>
-
-            {/* Modules */}
-            <div className="bg-[#F8FAFC] rounded-xl p-5 border border-gray-200 shadow-sm">
-              <h3 className="text-xl font-bold text-[#0D72BA] mb-3">
-                Course Content
-              </h3>
-
-              {modulesFromQuery.map(module => (
-                <div key={module.id} className="mb-4 border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="p-4 bg-white font-semibold flex items-center">
-                    <FaPlay className="text-[#F47E28] mr-2" />
-                    {module.title}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-          </div>
-        </div>
+        </aside>
 
       </div>
     </div>
-  </div>
-);
-
+  );
 };
 
 export default CourseDetailsPage;

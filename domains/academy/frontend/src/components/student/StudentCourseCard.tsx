@@ -7,11 +7,13 @@ import { getCourseImageUrlWithFallback } from "../../utils/imageUtils";
 export default function CourseCard({
   course,
   onEnroll,
+  isEnrolled = false,
   className,
 }: {
   course: Course ;
   className?: HTMLAttributes<string>["className"];
   onEnroll: () => void;
+  isEnrolled?: boolean;
 }) {
   const [isEnrolling, setIsEnrolling] = useState(false);
   course.rating = course.rating ?? 0;
@@ -56,7 +58,7 @@ export default function CourseCard({
               <FaSpinner className="animate-spin" />
               Enrolling...
             </div>
-          ) : "Enroll",
+          ) : isEnrolled ? "Go to Dashboard" : "Enroll",
           onClick: handleEnroll,
           className: `rounded-3xl bg-gradient-to-r from-[#E6D600] to-[#F2F296] shadow-md shadow-gray-500 ml-4 mb-4 px-4 w-fit ${
             isEnrolling ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'

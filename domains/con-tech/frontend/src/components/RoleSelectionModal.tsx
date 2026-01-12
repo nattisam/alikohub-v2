@@ -39,6 +39,8 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
         navigate("/client-dashboard");
       } else if (selectedRole === "CONTRACTOR") {
         navigate("/contractor-dashboard");
+      } else if (selectedRole === "PROJECT_MANAGER") {
+        navigate("/pm-dashboard");
       } else {
         // For other roles, go to the default dashboard
         navigate("/dashboard");

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useUser } from '../hooks';
 import { useProjects } from '../queries/projects';
 import { useContracts } from '../queries/contracts';
@@ -26,11 +26,15 @@ interface ChangeOrder {
 
 const FinancialTracking: React.FC = () => {
   const { currentUser } = useUser() as { currentUser: ExtendedCurrentUser };
-  const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   const { data: allProjects = [], isLoading: loadingProjects, error: errorProjects } = useProjects();
+  
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  
+
+  
   const { data: allContracts = [], isLoading: loadingContracts, error: errorContracts } = useContracts();
   
   // Filter projects and contracts based on selection
@@ -44,20 +48,18 @@ const FinancialTracking: React.FC = () => {
   
 
   
-  useEffect(() => {
+  const initialSelectedProject = useMemo(() => {
     if (allProjects.length > 0 && !selectedProject) {
-      setSelectedProject(allProjects[0].id);
+      return allProjects[0].id;
     }
+    return selectedProject;
   }, [allProjects, selectedProject]);
+  
+  // Initialize selectedProject if not set and projects are available
+
   
   // Set loading and error states based on query states
   useEffect(() => {
-    if (loadingProjects || loadingContracts) {
-      setLoading(true);
-    } else {
-      setLoading(false);
-    }
-    
     if (errorProjects) {
       setError(errorProjects.message || 'Failed to load projects');
     } else if (errorContracts) {
@@ -65,7 +67,7 @@ const FinancialTracking: React.FC = () => {
     } else {
       setError(null);
     }
-  }, [loadingProjects, loadingContracts, errorProjects, errorContracts]);
+  }, [errorProjects, errorContracts, setError]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

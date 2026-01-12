@@ -3,7 +3,7 @@ import type {
   CurrentUser,
   LoginCredentials,
   SignupCredentials,
-} from "../types";
+} from "../components/types";
 export class AuthService {
   private static authToken: string | null = null; // Using authToken internally but storing as accessToken
   private static expiresOn: Date | null = null;
@@ -29,7 +29,7 @@ export class AuthService {
     email,
     password,
     captchaToken,
-  }: SignupCredentials): Promise<any> {  // Changed return type to match expected format
+  }: SignupCredentials): Promise<{ token: string; user: CurrentUser; expiresIn?: string } | boolean> {  // Changed return type to match expected format
     const response = await authApi.post("/register", {
       firstname: firstname,
       lastname: lastname,

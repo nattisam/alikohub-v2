@@ -16,8 +16,8 @@ const CoursesPage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   // Check if user has selected a role
-  const hasRole = currentUser?.academyRole !== undefined;
-  const isStudent = currentUser?.academyRole === 'STUDENT';
+  const hasRole = (currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole) !== undefined;
+  const isStudent = (currentUser?.academyActiveRole === 'STUDENT' || currentUser?.academyUser?.activeRole === 'STUDENT');
   
   // Create a stable identifier for user changes
   const userId = currentUser?.firebaseId || currentUser?.id;
@@ -43,6 +43,9 @@ const CoursesPage: React.FC = () => {
           // For 401 errors, we still try to continue but with empty courses
           // This allows the page to render without showing login prompts
           setCourses([]);
+        } else if (err?.response?.status === 429) {
+          // For 429 errors, show a more specific message
+          setError("Too many requests. Please try again in a moment.");
         } else {
           setError("Failed to load courses. Please try again later.");
         }

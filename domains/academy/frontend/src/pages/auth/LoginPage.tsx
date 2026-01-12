@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../../../../../libraries/ui-libraries/components/auth/AuthLayout';
 import AuthHeader from '../../../../../../libraries/ui-libraries/components/auth/AuthHeader';
 import LoginForm from '../../../../../../libraries/ui-libraries/components/auth/LoginForm';
@@ -9,13 +9,30 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading: loginLoading, loginError, logout } = useAuth();
 
   const handleLogin = async (data: LoginFormData) => {
     try {
       await login(data.email, data.password);
-      // Redirect back to the home page after login
-      navigate('/');
+      
+      // Check for return URL in query parameters
+      const searchParams = new URLSearchParams(location.search);
+      const returnTo = searchParams.get('returnTo');
+      
+      if (returnTo) {
+        // Decode and navigate to the return URL
+        const decodedReturnTo = decodeURIComponent(returnTo);
+        // Ensure the return URL is safe (starts with / to prevent external redirects)
+        if (decodedReturnTo.startsWith('/')) {
+          navigate(decodedReturnTo);
+        } else {
+          navigate('/');
+        }
+      } else {
+        // Redirect back to the home page after login
+        navigate('/');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       // Error handling is managed by the context (loginError state)

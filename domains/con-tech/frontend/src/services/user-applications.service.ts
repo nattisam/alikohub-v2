@@ -2,11 +2,19 @@ import { contechApi } from "../api";
 import { AuthService } from "./auth.service";
 
 // Type definitions
+
+export interface ApplicationData {
+  role: string;
+  bio?: string | null;
+  expertise?: string[] | null;
+  [key: string]: unknown; // for any additional dynamic fields
+}
+
 export interface UserApplication {
   id: number;
   userId: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
-  applicationData: any;
+  applicationData: ApplicationData;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,7 +38,7 @@ export class UserApplicationsService {
    * @returns {Promise<UserApplication>} - A promise that resolves to the submitted user application.
    * @throws {Error} - If no authenticated user is found.
    */
-  async submitApplication(applicationData: any): Promise<UserApplication> {
+  async submitApplication(applicationData: ApplicationData): Promise<UserApplication> {
     const authToken = AuthService.getAuthToken();
     if (authToken) {
       try {

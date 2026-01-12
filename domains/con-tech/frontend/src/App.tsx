@@ -4,8 +4,8 @@ import {
   Outlet,
   useLocation,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
-import { useState, useEffect } from "react";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -13,7 +13,6 @@ import ConTechHomePage from "./pages/ConTechHomePage";
 import ConTechAboutUsPage from "./pages/ConTechAboutUsPage";
 import ContactUsPage from "./pages/ContactUsPage";
 import { useUser } from "./hooks";
-import Navbar from "./components/Navbar";
 import LoginForm from "./components/LoginForm";
 import CSignupForm from "./components/SignupForm";
 import RoleSelectionModal from "./components/RoleSelectionModal";
@@ -26,7 +25,6 @@ import ProfilePage from "./pages/ProfilePage";
 import Dashboard from "./pages/Dashboard";
 import FinancialTracking from "./pages/FinancialTracking";
 import ClientApproval from "./pages/ClientApprovals";
-import Sidebar from "./components/Sidebar";
 import CreateProjectForm from "./components/CreateProjectForm";
 import ConTechServicesPage from "./pages/ConTechServicesPage";
 import ContractsPage from "./pages/ContractsPage";
@@ -36,6 +34,7 @@ import PMDashboard from "./pages/PMDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
+import DashboardHome from "./pages/DashboardHome";
 
 
 
@@ -61,28 +60,37 @@ function DefaultLayout() {
 
 function RoleSelectionWrapper() {
   const { currentUser } = useUser();
+  const navigate = useNavigate();
   
   const handleCloseModal = () => {
     // Close modal and redirect to appropriate dashboard based on role
     if (currentUser?.role === "CLIENT") {
-      window.location.href = "/client-dashboard";
+      navigate("/client-dashboard");
     } else if (currentUser?.role === "CONTRACTOR") {
-      window.location.href = "/contractor-dashboard";
+      navigate("/contractor-dashboard");
+    } else if (currentUser?.role === "PROJECT_MANAGER") {
+      navigate("/pm-dashboard");
     } else {
-      window.location.href = "/dashboard";
+      navigate("/dashboard");
     }
   };
   
   // If user has selected a role, redirect away from role selection
   if (currentUser?.hasSelectedRole) {
     if (currentUser?.role === "CLIENT") {
-      window.location.href = "/client-dashboard";
+      navigate("/client-dashboard");
     } else if (currentUser?.role === "CONTRACTOR") {
-      window.location.href = "/contractor-dashboard";
+      navigate("/contractor-dashboard");
+    } else if (currentUser?.role === "PROJECT_MANAGER") {
+      navigate("/pm-dashboard");
     } else {
-      window.location.href = "/dashboard";
+      navigate("/dashboard");
     }
-    return null;
+    return <Navigate to={
+      currentUser?.role === "CLIENT" ? "/client-dashboard" :
+      currentUser?.role === "CONTRACTOR" ? "/contractor-dashboard" :
+      currentUser?.role === "PROJECT_MANAGER" ? "/pm-dashboard" : "/dashboard"
+    } replace />;
   }
   
   // If user hasn't selected a role, show the role selection modal
@@ -97,22 +105,24 @@ function LoginLayout() {
   );
 }
 
+const RoleProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { currentUser } = useUser();
+  
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If user hasn't selected a role, they should go through role selection first
+  if (!currentUser.hasSelectedRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 export default function App() {
   const { currentUser } = useUser();
-
-  // Role selection wrapper - shows role modal if user hasn't selected role
-  const RoleProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (!currentUser) {
-      return <Navigate to="/login" replace />;
-    }
-
-    // If user hasn't selected a role, they should go through role selection first
-    if (!currentUser.hasSelectedRole) {
-      return <Navigate to="/dashboard" replace />;
-    }
-
-    return <>{children}</>;
-  };
+  console.log(currentUser); // Keep this to avoid unused variable
 
   const router = createBrowserRouter([
     {
@@ -158,6 +168,20 @@ export default function App() {
           element: (
             <ProtectedRoute requiredRole="CONTRACTOR">
               <ContractorDashboard />
+            </ProtectedRoute>
+          ),
+        }
+      ]
+    },
+    {
+      path: "/pm-dashboard",
+      element: <DashboardLayout />,
+      children: [
+        {
+          index: true,
+          element: (
+            <ProtectedRoute requiredRole="PROJECT_MANAGER">
+              <DashboardHome />
             </ProtectedRoute>
           ),
         }

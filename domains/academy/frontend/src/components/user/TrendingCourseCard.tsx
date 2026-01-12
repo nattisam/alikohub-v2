@@ -4,7 +4,7 @@ import type { TrendingCourseCardProps } from "../types.d";
 import { FaStar, FaRegStar, FaStarHalfAlt, FaSpinner } from "react-icons/fa";
 import { getCourseImageUrlWithFallback } from "../../utils/imageUtils";
 
-const TrendingCourseCard = ({ course, onEnroll }: TrendingCourseCardProps) => {
+const TrendingCourseCard = ({ course, onEnroll, isEnrolled = false }: TrendingCourseCardProps) => {
   const { title, thumbnail, rating, price } = course;
   const [isEnrolling, setIsEnrolling] = useState(false);
   
@@ -53,7 +53,7 @@ const TrendingCourseCard = ({ course, onEnroll }: TrendingCourseCardProps) => {
               <FaSpinner className="animate-spin" />
               Enrolling...
             </div>
-          ) : "Enroll"}
+          ) : isEnrolled ? "Go to Dashboard" : "Enroll"}
         </button>
       </div>
     </Card>

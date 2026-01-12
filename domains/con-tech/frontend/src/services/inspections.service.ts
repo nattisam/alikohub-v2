@@ -1,31 +1,5 @@
 import { contechApi } from '../api';
-
-
-// Type definitions
-export interface Inspection {
-    id: number;
-    projectId: number;
-    inspectorId: string;
-    findings: string;
-    recommendations: string;
-    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface CreateInspectionDto {
-    projectId: number;
-    inspectorId: string;
-    findings: string;
-    recommendations: string;
-}
-
-export interface UpdateInspectionDto {
-    id: number;
-    findings?: string;
-    recommendations?: string;
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-}
+import type { Inspection, CreateInspectionDto, UpdateInspectionDto } from '../components/types';
 
 export class InspectionsService {
     private static instance: InspectionsService;
@@ -39,7 +13,7 @@ export class InspectionsService {
         return InspectionsService.instance;
     }
 
-    async create(createInspectionDto: CreateInspectionDto, files: any[]): Promise<Inspection> {
+    async create(createInspectionDto: CreateInspectionDto, files: File[]): Promise<Inspection> {
         try {
             const formData = new FormData();
             formData.append('data', JSON.stringify(createInspectionDto));

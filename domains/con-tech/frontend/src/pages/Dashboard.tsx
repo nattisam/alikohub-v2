@@ -13,10 +13,12 @@ const Dashboard = () => {
       navigate("/client-dashboard");
     } else if (currentUser?.role === "CONTRACTOR") {
       navigate("/contractor-dashboard");
+    } else if (currentUser?.role === "PROJECT_MANAGER") {
+      navigate("/pm-dashboard");
     }
   }, [currentUser, navigate]);
   
-  if (currentUser?.role === "CLIENT" || currentUser?.role === "CONTRACTOR" || currentUser?.role === "PROJECT_MANAGER") {
+  if (currentUser?.role === "CLIENT" || currentUser?.role === "CONTRACTOR") {
     return <DashboardHome />;
   } else if (currentUser?.role === "ADMIN") {
     return (

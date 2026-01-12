@@ -1,38 +1,28 @@
-import { useState, useEffect } from "react";
-import { enrollmentApi } from "../../api/enrollmentApi";
+import type { Course } from "../common/types.d.tsx";
+import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
 import { FaChartLine } from "react-icons/fa";
-
 interface ContinueLearningProps {
+  courses: Array<Course | EnrollmentWithCourse>;
+  isLoading?: boolean;
+  errorMessage?: string | null;
   onviewProgress?: (courseId: number) => void;
   onViewCourseContent?: (courseId: number) => void;
 }
 
-export default function ContinueLearning({ onviewProgress, onViewCourseContent }: ContinueLearningProps) {
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const isEnrollmentWithCourse = (
+  item: Course | EnrollmentWithCourse
+): item is EnrollmentWithCourse => {
+  return (item as EnrollmentWithCourse).course !== undefined;
+};
 
-  useEffect(() => {
-    const fetchEnrollments = async () => {
-      try {
-        setLoading(true);
-        // Get enrolled courses with progress from the enrollment API
-        const response = await enrollmentApi.getMyCourses(); // Using the enrollment API as you specified
-        setEnrollments(response.data);
-      } catch (err) {
-        console.error("Error fetching continue learning courses:", err);
-        setError("Failed to load courses");
-        // Fallback to empty array
-        setEnrollments([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEnrollments();
-  }, []);
-
-  if (loading) {
+export default function ContinueLearning({
+  courses,
+  isLoading = false,
+  errorMessage = null,
+  onviewProgress,
+  onViewCourseContent,
+}: ContinueLearningProps) {
+  if (isLoading) {
     return (
       <div className="w-full mt-6">
         <div className="max-w-[1200px] mx-auto bg-white border border-[#E7E7E7] rounded-lg p-6">
@@ -50,7 +40,7 @@ export default function ContinueLearning({ onviewProgress, onViewCourseContent }
     );
   }
 
-  if (error) {
+  if (errorMessage) {
     return (
       <div className="w-full mt-6">
         <div className="max-w-[1200px] mx-auto bg-white border border-[#E7E7E7] rounded-lg p-6">
@@ -62,20 +52,29 @@ export default function ContinueLearning({ onviewProgress, onViewCourseContent }
               Error
             </span>
           </div>
-          <p className="text-red-500">{error}</p>
+          <p className="text-red-500">{errorMessage}</p>
         </div>
       </div>
     );
   }
 
   // Map enrollments to the format expected by the UI
-  const coursesWithDetails = enrollments.map(enrollment => {
-    const course = enrollment.course || enrollment.cohort?.course;
+  const coursesWithDetails = courses.map((item) => {
+    if (isEnrollmentWithCourse(item)) {
+      const course = item.course || item.cohort?.course;
+      return {
+        courseId: item.courseId,
+        title: course?.title || item.courseId,
+        thumbnail: course?.thumbnail,
+        percentage: item.progress || course?.progress || 0,
+      };
+    }
+
     return {
-      courseId: enrollment.courseId,
-      title: course?.title || enrollment.course,
-      thumbnail: course?.thumbnail,
-      percentage: enrollment.progress || 0
+      courseId: item.id,
+      title: item.title,
+      thumbnail: item.thumbnail,
+      percentage: item.progress || 0,
     };
   });
 

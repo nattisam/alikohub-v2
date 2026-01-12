@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useUser } from "../hooks";
 import { FiLoader } from "react-icons/fi";
 import type { LoginCredentials } from "./type";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const LoginForm = () => {
   const { login, loginLoading, loginError, currentUser } = useUser();
@@ -14,6 +14,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
 
 

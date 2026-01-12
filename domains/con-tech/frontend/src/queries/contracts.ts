@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
-import type { Contract } from "../components/type";
 
 export const useContracts = (projectId?: number) => {
   return useQuery({
@@ -51,7 +50,7 @@ export const useUpdateContractStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: any }) => {
+    mutationFn: ({ id, status }: { id: number; status: ContractStatus }) => {
       return contechAPI.updateContractStatus(id, status);
     },
     onSuccess: (updatedContract) => {

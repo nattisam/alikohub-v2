@@ -30,9 +30,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Note: We've removed automatic logout on 401 errors
-    // since 401 can mean 'unauthorized' (insufficient permissions) rather than 'unauthenticated' (expired session)
-    // Session management is handled by the AuthContext and ProtectedRoute components
+    if (error.response?.status === 401) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        // Clear authentication data
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('firebaseCustomToken');
+        localStorage.removeItem('user');
+        
+        // Dispatch a custom event to notify other tabs about logout
+        window.dispatchEvent(new CustomEvent('userLoggedOut'));
+      }
+    }
     return Promise.reject(error);
   }
 );

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import type { CourseModule, CourseLesson } from '../../components/types.d';
 import { courseApi } from '../../api/courseApi';
 import AddLessonModal from '../../components/instructor/AddLessonModal';
+import AddModuleModal from '../../components/instructor/AddModuleModal';
 
 // Icons
 import { 
@@ -37,6 +38,8 @@ const ManageCoursePage: React.FC = () => {
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
   const [moduleLessons, setModuleLessons] = useState<Record<number, CourseLesson[]>>({});
   const [lessonsLoading, setLessonsLoading] = useState<Record<number, boolean>>({});
+  const [showAddModuleModal, setShowAddModuleModal] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   useEffect(() => {
     if (courseId) {
@@ -275,11 +278,12 @@ const ManageCoursePage: React.FC = () => {
           >
             <div>
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <BookOpen size={18} className="text-indigo-600" />
                 {module.title}
               </h3>
               <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                 <FileText size={14} className="text-indigo-500" />
-                {moduleLessons[module.id]?.length || 0} lessons
+                {moduleLessons[module.id]?.length || 0} lessons in this module
               </p>
             </div>
 
@@ -299,7 +303,7 @@ const ManageCoursePage: React.FC = () => {
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-medium text-gray-800 flex items-center gap-2">
                   <Play size={18} className="text-indigo-500" />
-                  Lessons
+                  Lessons in "{module.title}"
                 </h4>
                 <button
                   onClick={() => handleAddLessonClick(module.id)}
@@ -336,6 +340,9 @@ const ManageCoursePage: React.FC = () => {
                             <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                               {lesson.type}
                             </span>
+                            <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              ID: {lesson.id}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -353,7 +360,7 @@ const ManageCoursePage: React.FC = () => {
                     <FileText size={40} className="text-gray-300" />
                   </div>
                   <p className="text-gray-500 italic">
-                    No lessons added yet
+                    No lessons added to this module yet
                   </p>
                   <button
                     onClick={() => handleAddLessonClick(module.id)}
@@ -368,6 +375,27 @@ const ManageCoursePage: React.FC = () => {
           )}
         </div>
       ))}
+      {modules.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
+          <div className="flex justify-center mb-4">
+            <BookOpen size={48} className="text-gray-300" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No modules yet</h3>
+          <p className="text-gray-500 max-w-md mx-auto mb-4">
+            This course doesn't have any modules. Create your first module to organize your lessons.
+          </p>
+          <button
+            onClick={() => {
+              setSelectedCourseId(courseId);
+              setShowAddModuleModal(true);
+            }}
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus size={16} />
+            Create First Module
+          </button>
+        </div>
+      )}
     </div>
 
     {/* Add Lesson Modal */}
@@ -377,6 +405,22 @@ const ManageCoursePage: React.FC = () => {
         isOpen={showAddLessonModal}
         onClose={() => setShowAddLessonModal(false)}
         onLessonAdded={handleLessonAdded}
+      />
+    )}
+    
+    {/* Add Module Modal */}
+    {showAddModuleModal && selectedCourseId && (
+      <AddModuleModal
+        courseId={selectedCourseId}
+        isOpen={showAddModuleModal}
+        onClose={() => {
+          setShowAddModuleModal(false);
+          setSelectedCourseId(null);
+        }}
+        onModuleAdded={() => {
+          // Refresh the modules list
+          fetchCourseDetails();
+        }}
       />
     )}
   </div>

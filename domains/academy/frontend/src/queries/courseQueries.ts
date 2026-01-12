@@ -9,8 +9,8 @@ export const useCourse = (courseId: number) => {
       const response = await courseApi.getCourse(courseId);
       return response.data;
     },
-    staleTime: 5 * 60 * 1000,      // 5 minutes
-    cacheTime: 10 * 60 * 1000,     // 10 minutes
+    staleTime: 15 * 60 * 1000,     // 15 minutes - longer cache
+    gcTime: 30 * 60 * 1000,        // 30 minutes - keep in cache longer
     refetchOnWindowFocus: false,   // stop spam
     retry: 1,                      // don't hammer server
     enabled: !!courseId,
@@ -25,7 +25,7 @@ export const prefetchCourse = async (queryClient: any, courseId: number) => {
       const response = await courseApi.getCourse(courseId);
       return response.data;
     },
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,     // 15 minutes - longer cache
+    gcTime: 30 * 60 * 1000,        // 30 minutes - keep in cache longer
   });
 };

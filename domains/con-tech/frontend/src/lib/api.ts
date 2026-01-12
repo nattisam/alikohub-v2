@@ -33,8 +33,12 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       const token = localStorage.getItem('accessToken');
       if (token) {
+        // Clear authentication data
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
+        
+        // Dispatch a custom event to notify other tabs about logout
+        window.dispatchEvent(new CustomEvent('userLoggedOut'));
       }
     }
     return Promise.reject(error);

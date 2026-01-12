@@ -26,12 +26,7 @@ const ReportsPage = () => {
       navigate('/login');
       return;
     }
-    
-    // Set loading to false when both data sources are loaded
-    if (!projectsLoading && !reportsLoading) {
-      setLoading(false);
-    }
-  }, [currentUser, navigate, projectsLoading, reportsLoading]);
+  }, [currentUser, navigate]);
 
   const filteredReports = reports.filter(report =>
     report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -4,7 +4,6 @@ import { useDashboard } from '../hooks';
 import { useUser } from '../hooks';
 import { useProjects } from '../queries/projects';
 import type { ExtendedCurrentUser } from '../components/type';
-import type { CurrentUser, User } from '../components/type';
 
 interface Comment {
   author: { name: string; avatar: string };
@@ -14,11 +13,6 @@ interface Comment {
 
 interface ProjectComment extends Comment {
   projectId?: number;
-}
-
-interface DashboardComment {
-  author: User;
-  text: string;
 }
 
 interface FormattedComment {
@@ -33,49 +27,46 @@ interface CommentSectionProps {
 
 const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
   const { comments } = useDashboard();
-  const { currentUser } = useUser() as { currentUser: ExtendedCurrentUser };
+  const { currentUser } = useUser() as { currentUser: ExtendedCurrentUser | null };
   const [projectComments, setProjectComments] = useState<FormattedComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [localComments, setLocalComments] = useState<ProjectComment[]>([]);
 
   const { data: allProjects = [], isLoading } = useProjects();
-  
   const projects = allProjects; // For backward compatibility with JSX
 
   if (isLoading) {
     return <div>Loading projects...</div>;
   }
 
+  // Format and filter comments
   useEffect(() => {
-    // Format dashboard comments
     const formattedDashboardComments: FormattedComment[] = (comments || []).map(comment => ({
       author: { name: comment.author.name, avatar: comment.author.avatar },
       text: comment.text,
-      time: 'Just now' // In a real implementation, this would come from the comment data
+      time: 'Just now'
     }));
-    
-    // Combine with local comments and filter by project
+
     const allComments = [...formattedDashboardComments, ...localComments];
-    
+
     if (selectedProject) {
-      const filteredComments = allComments.filter(comment => 
-        !('projectId' in comment) || !comment.projectId || comment.projectId === selectedProject
+      const filteredComments = allComments.filter(
+        (comment: any) =>
+          !('projectId' in comment) || !comment.projectId || comment.projectId === selectedProject
       );
       setProjectComments(filteredComments);
     } else {
       setProjectComments(allComments);
     }
   }, [comments, localComments, selectedProject]);
-  
-  // Initialize selected project when projects are loaded
+
+  // Initialize selected project
   useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
       setSelectedProject(projects[0].id);
     }
   }, [projects, selectedProject]);
-
-
 
   const handleAddComment = () => {
     if (newComment.trim() && currentUser) {
@@ -85,11 +76,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
         projectId: selectedProject || undefined
       };
-      
+
       setLocalComments(prev => [...prev, comment]);
       setNewComment('');
-      
-      // In a real implementation, you would send this to a backend service
+
       console.log('Comment posted:', comment);
     }
   };
@@ -100,7 +90,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
         <h2 className="text-lg font-bold">Comments</h2>
         {projects.length > 0 && (
           <select
-            value={selectedProject || ""}
+            value={selectedProject ?? ''}
             onChange={(e) => setSelectedProject(parseInt(e.target.value))}
             className="text-sm rounded border-gray-300"
           >
@@ -112,9 +102,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
           </select>
         )}
       </div>
-      
+
       <div className="space-y-4 mb-4">
-        {projectComments && projectComments.length > 0 ? (
+        {projectComments.length > 0 ? (
           projectComments.map((comment, index) => (
             <div key={index} className="border-b pb-2">
               <div className="flex items-center space-x-2">
@@ -131,7 +121,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
           <p>No comments yet.</p>
         )}
       </div>
-      
+
       <div className="flex space-x-2">
         <input
           type="text"

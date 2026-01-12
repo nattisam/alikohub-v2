@@ -33,13 +33,13 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   } = useQuery({
     queryKey: ["all-courses", currentUser?.firebaseId],
     queryFn: async () => {
-      const response = await courseApi.getCourses();
+      const response = await courseApi.getPublishedCourses(); // Use the cached version
       console.log("Courses API Response:", response);
       const coursesData = response.data.items || response.data;
       return Array.isArray(coursesData) ? coursesData : [];
     },
-    staleTime: 5 * 60 * 1000,      // 5 minutes
-    cacheTime: 10 * 60 * 1000,     // 10 minutes
+    staleTime: 30 * 60 * 1000,     // 30 minutes - longer cache
+    gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
     refetchOnWindowFocus: false,   // stop spam
     retry: 1,                      // don't hammer server
   });

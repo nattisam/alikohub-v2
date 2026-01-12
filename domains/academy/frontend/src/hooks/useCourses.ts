@@ -15,7 +15,7 @@ export const useCourses = () => {
         setError(null);
         
         // Fetch all published courses
-        const response = await courseApi.getCourses({ status: "PUBLISHED" });
+        const response = await courseApi.getPublishedCourses();
         
         // Handle different response formats
         const coursesData = response.data.items || response.data;
@@ -47,6 +47,10 @@ export const useCourses = () => {
         if (error?.response?.status === 401) {
           setError("Please log in to view courses.");
           // Fallback to default categories if not authenticated
+          setCategories(["Technology", "STEM", "Health"]);
+        } else if (error?.response?.status === 429) {
+          setError("Too many requests. Please try again in a moment.");
+          // Fallback to default categories if rate limited
           setCategories(["Technology", "STEM", "Health"]);
         } else {
           setError("Failed to load courses. Please try again later.");

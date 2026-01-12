@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
-import type { Report } from "../components/type";
+import type { CreateReportDto } from "../components/types";
+
 
 export const useReports = (projectId?: number) => {
   return useQuery({
@@ -32,7 +33,7 @@ export const useCreateReport = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: (data: CreateReportDto) => {
       return contechAPI.createReport(data);
     },
     onSuccess: (newReport) => {

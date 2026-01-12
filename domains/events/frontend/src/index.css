@@ -1,0 +1,10 @@
+@import "tailwindcss";
+::-webkit-scrollbar {
+  background-color: #3180c1;
+  width: 5px;
+  height: 5px;
+}
+:hover::-webkit-scrollbar-thumb {
+  background-color: #050546;
+  border-radius: 20px;
+}

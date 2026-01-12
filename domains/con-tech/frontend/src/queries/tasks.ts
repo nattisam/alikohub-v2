@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
-import type { Task } from "../components/type";
+import type { CreateTaskDto, UpdateTaskDto } from "../components/types";
+
 
 export const useTasks = (projectId?: number) => {
   return useQuery({
@@ -31,7 +32,7 @@ export const useCreateTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: (data: CreateTaskDto) => {
       return contechAPI.createTask(data);
     },
     onSuccess: (newTask) => {
@@ -51,7 +52,7 @@ export const useUpdateTask = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => {
+    mutationFn: ({ id, data }: { id: number; data: UpdateTaskDto }) => {
       return contechAPI.updateTask(id, data);
     },
     onSuccess: (updatedTask) => {

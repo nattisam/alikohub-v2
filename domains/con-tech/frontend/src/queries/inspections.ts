@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
-import type { Inspection } from "../components/type";
+import type { CreateInspectionDto, UpdateInspectionDto } from "../components/types";
 
 export const useInspections = (projectId?: number) => {
   return useQuery({
@@ -31,7 +31,7 @@ export const useCreateInspection = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ data, files }: { data: any; files: File[] }) => {
+    mutationFn: ({ data, files }: { data: CreateInspectionDto; files: File[] }) => {
       return contechAPI.createInspection(data, files);
     },
     onSuccess: (newInspection) => {
@@ -51,7 +51,7 @@ export const useUpdateInspection = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: (data: UpdateInspectionDto) => {
       return contechAPI.updateInspection(data);
     },
     onSuccess: (updatedInspection) => {
