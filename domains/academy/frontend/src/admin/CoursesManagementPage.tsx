@@ -1,6 +1,275 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { courseApi } from '../api/courseApi';
+
+interface User {
+  id: number;
+  firebaseId: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  globalRole: string;
+  profilePicture: string | null;
+  bio: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Course {
+  id: number;
+  title: string;
+  thumbnail: string;
+  shortDescription: string;
+  longDescription: string;
+  category: string;
+  instructorId: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'PENDING_APPROVAL' | 'REJECTED';
+  skills: string[];
+  conceptsLearned: string[];
+  outcomes: string[];
+  rejectionReason: string | null;
+  estimatedTime: number | null;
+  targetLevel: string | null;
+  enrolledNum: number;
+  rating: number | null;
+  price: number | null;
+  prerequisites: string[];
+  languages: string[];
+  createdAt: string;
+  updatedAt: string;
+  instructor: {
+    id: number;
+    firebaseId: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    password: string;
+    globalRole: string;
+    profilePicture: string | null;
+    bio: string | null;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    academyUser: {
+      id: string;
+      userId: string;
+      role: string;
+      activeRole: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+    consultancyUser: any;
+    contechUser: {
+      id: string;
+      userId: string;
+      role: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+    eventsUser: {
+      id: string;
+      userId: string;
+      role: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+    careersUser: any;
+  };
+}
+
+interface ApiResponse {
+  items: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 
 const CoursesManagementPage = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    published: 0,
+    draft: 0,
+    pending: 0,
+  });
+  
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await courseApi.getCourses();
+        
+        // Handle the expected response structure
+        let coursesData: Course[] = [];
+        if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
+          coursesData = response.data.items;
+        } else if (Array.isArray(response.data)) {
+          coursesData = response.data;
+        } else {
+          console.error('Unexpected response structure:', response);
+          coursesData = [];
+        }
+        
+        setCourses(coursesData);
+        
+        // Calculate statistics
+        const total = coursesData.length;
+        const published = coursesData.filter((course: Course) => course.status === 'PUBLISHED').length;
+        const draft = coursesData.filter((course: Course) => course.status === 'DRAFT').length;
+        const pending = coursesData.filter((course: Course) => course.status === 'PENDING_APPROVAL').length;
+        
+        setStats({
+          total,
+          published,
+          draft,
+          pending,
+        });
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCourses();
+  }, []);
+  
+  const handleApprove = async (id: number) => {
+    try {
+      await courseApi.approveCourse(id);
+      // Refresh the courses list
+      const response = await courseApi.getCourses();
+      
+      // Handle the expected response structure
+      let coursesData: Course[] = [];
+      if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
+        coursesData = response.data.items;
+      } else if (Array.isArray(response.data)) {
+        coursesData = response.data;
+      } else {
+        console.error('Unexpected response structure:', response);
+        coursesData = [];
+      }
+      
+      setCourses(coursesData);
+      alert('Course approved successfully!');
+    } catch (error) {
+      console.error('Error approving course:', error);
+      alert('Failed to approve course');
+    }
+  };
+  
+  const handleReject = async (id: number) => {
+    try {
+      const reason = prompt('Enter rejection reason:');
+      if (reason !== null) {
+        await courseApi.rejectCourse(id, reason);
+        // Refresh the courses list
+        const response = await courseApi.getCourses();
+        
+        // Handle the expected response structure
+        let coursesData: Course[] = [];
+        if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
+          coursesData = response.data.items;
+        } else if (Array.isArray(response.data)) {
+          coursesData = response.data;
+        } else {
+          console.error('Unexpected response structure:', response);
+          coursesData = [];
+        }
+        
+        setCourses(coursesData);
+        alert('Course rejected successfully!');
+      }
+    } catch (error) {
+      console.error('Error rejecting course:', error);
+      alert('Failed to reject course');
+    }
+  };
+  
+  const handlePublish = async (id: number) => {
+    try {
+      await courseApi.updateCourseStatus(id, 'PUBLISHED');
+      // Refresh the courses list
+      const response = await courseApi.getCourses();
+      
+      // Handle the expected response structure
+      let coursesData: Course[] = [];
+      if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
+        coursesData = response.data.items;
+      } else if (Array.isArray(response.data)) {
+        coursesData = response.data;
+      } else {
+        console.error('Unexpected response structure:', response);
+        coursesData = [];
+      }
+      
+      setCourses(coursesData);
+      alert('Course published successfully!');
+    } catch (error) {
+      console.error('Error publishing course:', error);
+      alert('Failed to publish course');
+    }
+  };
+  
+  const handleArchive = async (id: number) => {
+    try {
+      await courseApi.updateCourseStatus(id, 'ARCHIVED');
+      // Refresh the courses list
+      const response = await courseApi.getCourses();
+      
+      // Handle the expected response structure
+      let coursesData: Course[] = [];
+      if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
+        coursesData = response.data.items;
+      } else if (Array.isArray(response.data)) {
+        coursesData = response.data;
+      } else {
+        console.error('Unexpected response structure:', response);
+        coursesData = [];
+      }
+      
+      setCourses(coursesData);
+      alert('Course archived successfully!');
+    } catch (error) {
+      console.error('Error archiving course:', error);
+      alert('Failed to archive course');
+    }
+  };
+  
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'PUBLISHED':
+        return 'bg-green-100 text-green-800';
+      case 'DRAFT':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'PENDING_APPROVAL':
+        return 'bg-blue-100 text-blue-800';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800';
+      case 'ARCHIVED':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Manage Courses</h2>
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="mt-2 text-gray-600">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Manage Courses</h2>
@@ -17,7 +286,7 @@ const CoursesManagementPage = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course Title</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
@@ -26,60 +295,73 @@ const CoursesManagementPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">Introduction to React</div>
-                  <div className="text-sm text-gray-500">Learn the basics of React development</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">John Doe</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Web Development</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,245</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Published
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                  <button className="text-red-600 hover:text-red-900">Delete</button>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">Advanced JavaScript Concepts</div>
-                  <div className="text-sm text-gray-500">Deep dive into advanced JS patterns</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Jane Smith</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Programming</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">876</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Draft
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                  <button className="text-red-600 hover:text-red-900">Delete</button>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">UI/UX Design Principles</div>
-                  <div className="text-sm text-gray-500">Master design fundamentals</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Bob Johnson</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Design</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">542</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Published
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                  <button className="text-red-600 hover:text-red-900">Delete</button>
-                </td>
-              </tr>
+              {courses.map((course) => (
+                <tr key={course.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <img className="h-10 w-10 rounded-md" src={course.thumbnail} alt="Thumbnail" />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                        <div className="text-sm text-gray-500 truncate max-w-xs">{course.shortDescription}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {course.instructor ? `${course.instructor.firstname} ${course.instructor.lastname}` : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{course.category}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{course.enrolledNum}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(course.status)}`}>
+                      {course.status.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex space-x-2">
+                      {course.status === 'PENDING_APPROVAL' && (
+                        <>
+                          <button 
+                            onClick={() => handleApprove(course.id)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Approve"
+                          >
+                            Approve
+                          </button>
+                          <button 
+                            onClick={() => handleReject(course.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Reject"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      {course.status === 'DRAFT' && (
+                        <button 
+                          onClick={() => handlePublish(course.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Publish"
+                        >
+                          Publish
+                        </button>
+                      )}
+                      {(course.status === 'PUBLISHED') && (
+                        <button 
+                          onClick={() => handleArchive(course.id)}
+                          className="text-orange-600 hover:text-orange-900"
+                          title="Archive"
+                        >
+                          Archive
+                        </button>
+                      )}
+                      <button className="text-blue-600 hover:text-blue-900 mr-2">View</button>
+                      <button className="text-red-600 hover:text-red-900">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -91,33 +373,37 @@ const CoursesManagementPage = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Total Courses:</span>
-              <span className="font-medium">142</span>
+              <span className="font-medium">{stats.total}</span>
             </div>
             <div className="flex justify-between">
               <span>Published:</span>
-              <span className="font-medium">118</span>
+              <span className="font-medium">{stats.published}</span>
             </div>
             <div className="flex justify-between">
               <span>Draft:</span>
-              <span className="font-medium">24</span>
+              <span className="font-medium">{stats.draft}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pending Approval:</span>
+              <span className="font-medium">{stats.pending}</span>
             </div>
           </div>
         </div>
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="font-medium text-gray-700 mb-2">Top Categories</h3>
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Web Development</span>
-              <span className="font-medium">32</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Programming</span>
-              <span className="font-medium">28</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Design</span>
-              <span className="font-medium">22</span>
-            </div>
+            {Array.from(new Set(courses.map(course => course.category)))
+              .slice(0, 3)
+              .map(category => {
+                const count = courses.filter(course => course.category === category).length;
+                return (
+                  <div key={category} className="flex justify-between">
+                    <span>{category}</span>
+                    <span className="font-medium">{count}</span>
+                  </div>
+                );
+              })
+            }
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { courseApi, enrollmentApi } from "../../api/courseApi";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Course } from "../common/types.d";
@@ -25,23 +25,25 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   
   const { user: currentUser } = useAuth();
   
+  // Get the query client to manually invalidate queries
+  const queryClient = useQueryClient();
+  
   const {
     data: courses = [],
     isLoading,
     isError,
     error: queryError
   } = useQuery({
-    queryKey: ["all-courses", currentUser?.firebaseId],
+    queryKey: ["all-courses"],
     queryFn: async () => {
-      const response = await courseApi.getPublishedCourses(); // Use the cached version
-      console.log("Courses API Response:", response);
+      const response = await courseApi.getPublishedCourses();
       const coursesData = response.data.items || response.data;
       return Array.isArray(coursesData) ? coursesData : [];
     },
-    staleTime: 30 * 60 * 1000,     // 30 minutes - longer cache
-    gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
-    refetchOnWindowFocus: false,   // stop spam
-    retry: 1,                      // don't hammer server
+    staleTime: 5 * 60 * 1000,      // 5 minutes - conservative cache setting
+    gcTime: 10 * 60 * 1000,        // 10 minutes - garbage collection time
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
   
   // Fetch user's enrollments to show which courses are already enrolled
@@ -59,10 +61,10 @@ const AllCourses: React.FC<AllCoursesProps> = ({
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000,      // 5 minutes
-    cacheTime: 10 * 60 * 1000,     // 10 minutes
-    refetchOnWindowFocus: false,   // stop spam
-    retry: 1,                      // don't hammer server
+    staleTime: 5 * 60 * 1000,      // 5 minutes - conservative cache setting
+    gcTime: 10 * 60 * 1000,        // 10 minutes - garbage collection time
+    refetchOnWindowFocus: false,
+    retry: 1,
     enabled: !!currentUser?.firebaseId, // Only run if user is authenticated
   });
   
@@ -77,20 +79,18 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     }
   };
 
-  const handleEnrollSuccess = () => {
-    // Update the enrolled courses state
-    if (courseToEnroll) {
-      setEnrolledCourses(prev => new Set(prev).add(courseToEnroll));
-    }
+  const handleEnrollSuccess = async () => {
+    // Close the modal first
+    setShowEnrollmentModal(false);
+    setCourseToEnroll(null);
+    setSelectedCourse(null);
+    
+    // Invalidate the enrollment query to refetch the updated data
+    await queryClient.invalidateQueries({ queryKey: ["user-enrollments"] });
+    await queryClient.invalidateQueries({ queryKey: ["all-courses"] });
     
     // If there's a onViewCourseContent function, call it to show the course content
     if (courseToEnroll && onViewCourseContent) {
-      // Close the modal first
-      setShowEnrollmentModal(false);
-      setCourseToEnroll(null);
-      setSelectedCourse(null);
-      
-      // Then show the course content
       onViewCourseContent(courseToEnroll);
     }
     
@@ -112,17 +112,21 @@ const AllCourses: React.FC<AllCoursesProps> = ({
         // No need to specify cohortId, backend will allow direct course enrollment
       };
       
-      console.log("Enrollment data being sent:", enrollmentData);
       
       // Try to enroll
       const enrollResponse = await enrollmentApi.createEnrollment(enrollmentData);
-      console.log("Enrollment response:", enrollResponse);
-      
-      // Update the enrolled courses state
-      setEnrolledCourses(prev => new Set(prev).add(courseToEnroll));
       
       // Show success message
       alert("Successfully enrolled in the course!");
+      
+      // Close the modal and refresh the enrollment data
+      setShowEnrollmentModal(false);
+      setCourseToEnroll(null);
+      setSelectedCourse(null);
+      
+      // Invalidate the enrollment query to refetch the updated data
+      await queryClient.invalidateQueries({ queryKey: ["user-enrollments"] });
+      await queryClient.invalidateQueries({ queryKey: ["all-courses"] });
     } catch (err: any) {
       console.error("Error enrolling in course:", err);
       console.error("Error response:", err.response);

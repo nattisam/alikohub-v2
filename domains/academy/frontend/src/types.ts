@@ -84,3 +84,20 @@ export interface SignupCredentials {
   password: string;
   captchaToken?: string;
 }
+
+export interface Course {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'PENDING_APPROVAL' | 'REJECTED';
+  enrolledNum: number;
+  instructor?: {
+    firstname: string;
+    lastname: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+  difficulty?: string;
+  duration?: number;
+}

@@ -30,13 +30,11 @@ const CoursesPage: React.FC = () => {
         setLoading(true);
         
         const response = await courseApi.getPublishedCourses();
-        console.log("Courses API Response:", response.data);
         
         // Handle different response formats
         const coursesData = response.data.items || response.data;
         setCourses(Array.isArray(coursesData) ? coursesData : []);
       } catch (err: any) {
-        console.error("Error fetching courses:", err);
         
         // Check if it's a 401 error (unauthorized)
         if (err?.response?.status === 401) {

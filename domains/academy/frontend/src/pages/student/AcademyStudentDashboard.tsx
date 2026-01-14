@@ -61,9 +61,7 @@ const AcademyStudentDashboard = () => {
   }
 
   // If user is not logged in, redirect to login
-  console.log('AcademyStudentDashboard: Checking navigation - currentUser:', currentUser);
   if (!currentUser) {
-    console.log('AcademyStudentDashboard: Redirecting to login');
     window.location.href = '/auth/login';
     return null;
   }
@@ -81,7 +79,6 @@ const AcademyStudentDashboard = () => {
   const academyUserRole = currentUser?.academyUser?.role;
   
   // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
-  console.log('AcademyStudentDashboard: Checking role - activeRole:', activeRole, 'hasSelectedRole:', hasSelectedRole);
   if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
     // Show role selection modal
     return (
@@ -157,11 +154,9 @@ const AcademyStudentDashboard = () => {
           setError(null); // Clear any previous error
           return; // Success, exit the retry loop
         } catch (error: any) {
-          console.error("Error fetching dashboard data:", error);
 
           // Check if it's a 429 error (Too Many Requests)
           if (error.response?.status === 429 && retries < maxRetries) {
-            console.warn(`Rate limited, retrying in ${delay * Math.pow(2, retries)}ms...`);
             // Exponential backoff: wait longer after each retry
             await new Promise((resolve) =>
               setTimeout(resolve, delay * Math.pow(2, retries))
