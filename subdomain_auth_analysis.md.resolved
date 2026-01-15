@@ -1,0 +1,92 @@
+# API Gateway, Auth Service, and Subdomain Analysis
+
+This document outlines the architecture and interaction patterns between the **API Gateway**, **Auth Service**, and the subdomain services (**ConTech Service** and **Events Service**).
+
+## 1. Architecture Overview
+
+The **API Gateway** serves as the unified entry point for all client requests. It handles:
+- **Routing**: Dispatches requests to the appropriate microservice.
+- **Authentication**: Validates user sessions before reaching the business logic.
+- **Proxying**: Communicates with backend microservices via **TCP** Transport.
+
+The system uses a **Microservices Architecture** where the Gateway delegates work to `AUTH_SERVICE`, `CONTECH_SERVICE`, `EVENTS_SERVICE`, etc.
+
+## 2. Authentication Mechanism
+
+Authentication is centralized in the API Gateway using a shared Guard.
+
+### AuthGuard Implementation
+*   **Location**: [domains/core-platform-services/api-gateway-service/common/guard/firebase_auth.guard.ts](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/common/guard/firebase_auth.guard.ts)
+*   **Mechanism**:
+    1.  Intercepts HTTP requests.
+    2.  Extracts the `session` cookie.
+    3.  Sends a TCP message (`{ cmd: 'verify' }`) to the **Auth Service** with the cookie.
+    4.  **Auth Service** validates the session (and likely the underlying Firebase token).
+    5.  On success, the user object is attached to `req.user`.
+
+```typescript
+// excerpt from firebase_auth.guard.ts
+const sessionCookie = request.cookies?.session;
+const authResponse = await firstValueFrom(
+  this.authClient.send({ cmd: 'verify' }, { type: 'cookie', value: sessionCookie })
+);
+request['user'] = authResponse.user;
+```
+
+## 3. ConTech Service Analysis
+
+### Routing & Structure
+*   **Module**: [ConTechServiceModule](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/contech-service/contech-service.module.ts#12-42)
+*   **Base Path**: `/contech` (Configured via `RouterModule`)
+*   **Sub-Modules**: `ProjectsModule`, `TasksModule`, etc.
+
+### Projects Controller
+*   **Location**: [contech-service/projects/projects.controller.ts](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/contech-service/projects/projects.controller.ts)
+*   **Path**: `/contech/projects` (Derived from module path `/contech` + controller path `projects`)
+*   **Security**: Protected by `@UseGuards(AuthGuard)`.
+*   **Interaction**:
+    *   Injects `CONTECH_SERVICE` (TCP Client).
+    *   Forwards `req.user` in the payload to maintain specific user context handling in the microservice.
+
+```typescript
+// Example: Create Project
+@Post()
+createProject(@Request() req, @Body() dto: CreateProjectDto) {
+  return this.contechClient.send({ cmd: 'create_project' }, { dto, user: req.user });
+}
+```
+
+## 4. Events Service Analysis
+
+### Routing & Structure
+*   **Module**: [EventsServiceModule](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/events-service/events-service.module.ts#9-19) imports `EventsModule` containing controllers.
+*   **Routing Strategy**: Standard Controller decorators (no global `RouterModule` prefix observed for this module).
+
+### Event Controllers
+Two distinct controllers handle event operations:
+
+1.  **Public/User Events** ([PublicEventsController](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/events-service/events/public-events.controller.ts#16-46))
+    *   **Path**: `/events`
+    *   **File**: [events/public-events.controller.ts](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/events-service/events/public-events.controller.ts)
+    *   **Purpose**: Listing events, registering for events.
+    *   **Security**: **Protected** (Requires Login via [AuthGuard](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/common/guard/firebase_auth.guard.ts#12-58)).
+
+2.  **Admin Events** ([EventsController](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/events-service/events-service.controller.ts#3-5))
+    *   **Path**: `/admin/events`
+    *   **File**: [events/events.controller.ts](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/events-service/events/events.controller.ts)
+    *   **Purpose**: Creating, updating, deleting events (Administrative tasks).
+    *   **Security**: **Protected** (Requires Login via [AuthGuard](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/common/guard/firebase_auth.guard.ts#12-58)).
+    *   *Note*: Likely implies Role-Based Access Control (RBAC) should be enforced here or in the microservice, though only [AuthGuard](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/common/guard/firebase_auth.guard.ts#12-58) is visible on the controller.
+
+## 5. Summary of Paths
+
+| Service | Feature | HTTP Path | Microservice Command | Auth Required |
+| :--- | :--- | :--- | :--- | :--- |
+| **ConTech** | Projects | `/contech/projects` | `create_project`, `find_all_projects` | Yes |
+| **Events** | Public View | `/events` | `find_all_events` | Yes |
+| **Events** | Registration | `/events/:id/register` | `create_registration` | Yes |
+| **Events** | Admin | `/admin/events` | `create_event`, `update_event` | Yes |
+
+## 6. Recommendations
+*   **Consistent Routing**: ConTech uses `RouterModule` for a clean `/contech` prefix. Events Service relies on individual controller paths (`/events`, `/admin/events`). Consider unifying this approach using `RouterModule` for all domain services.
+*   **RBAC**: Ensure [EventsController](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/src/events-service/events-service.controller.ts#3-5) (`/admin/events`) has role checks (e.g., `@Roles('ADMIN')`) in addition to basic authentication, as [AuthGuard](file:///c:/Users/X1/pro/alikohub/alikohub/domains/core-platform-services/api-gateway-service/common/guard/firebase_auth.guard.ts#12-58) only checks for a valid session.

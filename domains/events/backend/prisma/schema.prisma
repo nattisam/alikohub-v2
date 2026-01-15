@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  date          String
+  time          String
+  location      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  registrations Registration[]
+  updates       Update[]
+}
+
+model Registration {
+  id           String   @id @default(uuid())
+  name         String
+  email        String
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id])
+  registeredAt DateTime @default(now())
+}
+
+model Update {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  postedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Add User model for role persistence
+model EventsProfile {
+  id               String   @id
+  role             Role     @default(USER)
+  company          String?
+  registeredEvents String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ATTENDEE
+  ORGANIZER
+  SPONSOR
+  ADMIN
+}

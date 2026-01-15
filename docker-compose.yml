@@ -1,0 +1,109 @@
+
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: alikohub_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api-gateway:
+    build:
+      context: ./domains/core-platform-services/api-gateway-service
+      dockerfile: Dockerfile
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - ACADEMY_SERVICE_HOST=academy-service
+      - ACADEMY_SERVICE_PORT=3005
+      - CONTECH_SERVICE_HOST=con-tech-service
+      - CONTECH_SERVICE_PORT=3002
+      - EVENTS_SERVICE_HOST=events-service
+      - EVENTS_SERVICE_PORT=3004
+      - CAREERS_SERVICE_HOST=careers-service
+      - CAREERS_SERVICE_PORT=3008
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+    depends_on:
+      - auth-service
+      - academy-service
+      - con-tech-service
+      - events-service
+      - careers-service
+
+  auth-service:
+    build:
+      context: ./domains/core-platform-services/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - AUTH_SERVICE_PORT=3001
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+    depends_on:
+      - postgres
+
+  academy-service:
+    build:
+      context: ./domains/academy/backend
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+    depends_on:
+      - postgres
+
+  con-tech-service:
+    build:
+      context: ./domains/con-tech/backend
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+    depends_on:
+      - postgres
+
+  events-service:
+    build:
+      context: ./domains/events/backend
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - EVENTS_SERVICE_PORT=3004
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+    depends_on:
+      - postgres
+
+  careers-service:
+    build:
+      context: ./domains/core-platform-services/careers-service
+      dockerfile: Dockerfile
+    ports:
+      - "3008:3008"
+    environment:
+      - NODE_ENV=development
+      - CAREERS_SERVICE_PORT=3008
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
