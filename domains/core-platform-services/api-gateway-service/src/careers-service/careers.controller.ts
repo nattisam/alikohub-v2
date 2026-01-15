@@ -3,10 +3,12 @@ import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
+import { AdminAccessGuard } from '../common/guard/admin-access.guard';
 import { CareersRoleGuard } from '../common/roles/careers-role.guard';
 import { CareersRoles } from '../common/roles/careers-roles.decorator';
 import { CreateJobDto } from './dto/create-job.dto';
 import { ApplyJobDto } from './dto/apply-job.dto';
+import { CreateRecruiterDto } from './dto/create-recruiter.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Careers')
@@ -16,7 +18,35 @@ import { Public } from '../common/decorators/public.decorator';
 export class CareersController {
   constructor(
     @Inject('CAREERS_SERVICE') private readonly careersClient: ClientProxy,
+    @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
   ) {}
+
+  @Post('admin/recruiters')
+  @UseGuards(AdminAccessGuard)
+  @ApiOperation({ summary: 'Admin: Create a new recruiter account' })
+  async createRecruiter(@Body() createRecruiterDto: CreateRecruiterDto) {
+    const { department, ...authData } = createRecruiterDto;
+    
+    // 1. Create Recruiter User in Auth Service
+    const authResponse = await firstValueFrom(
+      this.authClient.send({ cmd: 'create_recruiter' }, authData)
+    );
+
+    const userId = authResponse.user.firebaseId;
+
+    // 2. Create Recruiter Profile in Careers Service
+    await firstValueFrom(
+      this.careersClient.send({ cmd: 'create_recruiter_profile' }, { 
+        userId, 
+        profileData: { department, isPrimaryRecruiter: false } 
+      })
+    );
+
+    return {
+      message: 'Recruiter created and profile initialized successfully',
+      user: authResponse.user
+    };
+  }
 
   @Post('jobs')
   @UseGuards(CareersRoleGuard)

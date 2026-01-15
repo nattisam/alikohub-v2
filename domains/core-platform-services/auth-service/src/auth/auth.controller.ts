@@ -22,6 +22,17 @@ export class AuthController {
 		return this.authService.register(dto);
 	}
 
+	@MessagePattern({ cmd: 'create_recruiter' })
+	@UsePipes(new JoiValidationPipe(Joi.object({
+		email: Joi.string().email().required().trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
+	})))
+	async createRecruiter(@Payload() dto: any) {
+		return this.authService.createRecruiter(dto);
+	}
+
 	@MessagePattern({ cmd: 'login' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required(),

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: auth-service
-        image: alikohub-auth-service:latest
+        image: 500234530871.dkr.ecr.us-east-1.amazonaws.com/alikohub-auth-service:latest
         ports:
         - containerPort: 3001
         env:

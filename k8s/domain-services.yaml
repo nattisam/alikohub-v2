@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: contech-service
-        image: alikohub-contech:latest
+        image: 500234530871.dkr.ecr.us-east-1.amazonaws.com/alikohub-contech:latest
         ports:
         - containerPort: 3002
         env:
@@ -62,7 +62,7 @@ spec:
     spec:
       containers:
       - name: academy-service
-        image: alikohub-academy:latest
+        image: 500234530871.dkr.ecr.us-east-1.amazonaws.com/alikohub-academy:latest
         ports:
         - containerPort: 3005
         env:
@@ -108,9 +108,9 @@ spec:
     spec:
       containers:
       - name: events-service
-        image: alikohub-events:latest
+        image: 500234530871.dkr.ecr.us-east-1.amazonaws.com/alikohub-events:latest
         ports:
-        - containerPort: 3003
+        - containerPort: 3004
         env:
         - name: AUTH_SERVICE_HOST
           value: "auth-service"
@@ -132,5 +132,51 @@ spec:
     app: events-service
   ports:
     - protocol: TCP
-      port: 3003
-      targetPort: 3003
+      port: 3004
+      targetPort: 3004
+
+---
+# Careers Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: careers-service
+  namespace: alikohub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: careers-service
+  template:
+    metadata:
+      labels:
+        app: careers-service
+    spec:
+      containers:
+      - name: careers-service
+        image: 500234530871.dkr.ecr.us-east-1.amazonaws.com/alikohub-careers:latest
+        ports:
+        - containerPort: 3008
+        env:
+        - name: AUTH_SERVICE_HOST
+          value: "auth-service"
+        - name: AUTH_SERVICE_PORT
+          value: "3001"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: alikohub-secrets
+              key: careers-db-url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: careers-service
+  namespace: alikohub
+spec:
+  selector:
+    app: careers-service
+  ports:
+    - protocol: TCP
+      port: 3008
+      targetPort: 3008

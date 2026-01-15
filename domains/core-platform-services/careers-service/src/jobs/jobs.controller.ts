@@ -45,4 +45,9 @@ export class JobsController {
   async getRecruiterProfile(@Payload() userId: string) {
     return this.jobsService.getRecruiterProfile(userId);
   }
+
+  @MessagePattern({ cmd: 'create_recruiter_profile' })
+  async createRecruiterProfile(@Payload() data: { userId: string; profileData: any }) {
+    return this.jobsService.createRecruiterProfile(data.userId, data.profileData);
+  }
 }

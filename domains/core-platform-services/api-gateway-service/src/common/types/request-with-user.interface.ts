@@ -8,6 +8,8 @@ export type AuthenticatedUser = {
   careersUser?: {
     role: string;
   };
+  careersRole?: string;
+  careersStatus?: string;
 };
 
 export interface RequestWithUser extends Request {

@@ -19,10 +19,9 @@ export class CareersRoleGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user: AuthenticatedUser = request.user;
+    const userRole = user?.careersRole || user?.careersUser?.role;
 
-    if (!user || !user.careersUser || !user.careersUser.role) {
-      // If user is ADMIN globally, allow access? 
-      // Usually Global ADMIN should override.
+    if (!user || !userRole) {
       if (user && user.globalRole === 'ADMIN') {
         return true;
       }
@@ -30,6 +29,6 @@ export class CareersRoleGuard implements CanActivate {
     }
 
     // Check if user has one of the required roles
-    return requiredRoles.includes(user.careersUser.role);
+    return requiredRoles.includes(userRole);
   }
 }
