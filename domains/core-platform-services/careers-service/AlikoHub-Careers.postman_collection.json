@@ -235,6 +235,45 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Create Recruiter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"recruiter@alikohub.com\",\n    \"firstname\": \"Alice\",\n    \"lastname\": \"Recruiter\",\n    \"password\": \"Recruiter123!\",\n    \"department\": \"Engineering\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/careers/admin/recruiters",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"careers",
+								"admin",
+								"recruiters"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
