@@ -43,7 +43,13 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     staleTime: 5 * 60 * 1000,      // 5 minutes - conservative cache setting
     gcTime: 10 * 60 * 1000,        // 10 minutes - garbage collection time
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: (failureCount, error: any) => {
+      // Don't retry on 429 - let axios handle it
+      if (error?.response?.status === 429) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
   
   // Fetch user's enrollments to show which courses are already enrolled

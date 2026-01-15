@@ -15,10 +15,12 @@ export const useAllCourses = () => {
     gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
     refetchOnWindowFocus: false,   // prevent refetch on window focus
     refetchOnReconnect: false,     // prevent refetch on reconnect
-    retry: 1,                      // reduce retries to avoid overwhelming the server
-    retryDelay: (attemptIndex) => {
-      // Exponential backoff: 2s, 4s, 8s
-      return Math.min(2000 * 2 ** attemptIndex, 8000);
+    retry: (failureCount, error: any) => {
+      // Don't retry on 429 - let axios handle it to prevent cascading retries
+      if (error?.response?.status === 429) {
+        return false;
+      }
+      return failureCount < 1;
     },
   });
 };

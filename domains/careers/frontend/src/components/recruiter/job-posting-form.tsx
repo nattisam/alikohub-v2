@@ -7,16 +7,18 @@ import { X } from "lucide-react"
 interface JobPostingFormProps {
   onSubmit: (data: any) => void
   onCancel: () => void
+  isSubmitting?: boolean
 }
 
-export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
+export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: JobPostingFormProps) {
   const [formData, setFormData] = useState({
     title: "",
-    department: "Engineering",
     description: "",
     requirements: "",
-    salaryMin: "",
-    salaryMax: "",
+    salaryRange: "",
+    location: "",
+    type: "FULL_TIME",
+    status: "OPEN",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -27,14 +29,20 @@ export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.title && formData.description) {
-      onSubmit(formData)
+      // Prepare the job data in the required format
+      const jobData = {
+        ...formData,
+        status: "OPEN", // Always set status to OPEN for new jobs
+      };
+      onSubmit(jobData)
       setFormData({
         title: "",
-        department: "Engineering",
         description: "",
         requirements: "",
-        salaryMin: "",
-        salaryMax: "",
+        salaryRange: "",
+        location: "",
+        type: "FULL_TIME",
+        status: "OPEN",
       })
     }
   }
@@ -47,6 +55,7 @@ export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
           type="button"
           onClick={onCancel}
           className="p-1 text-[#1C1800]/70 hover:text-[#1C1800] transition-colors"
+          disabled={isSubmitting}
         >
           <X className="w-5 h-5" />
         </button>
@@ -63,22 +72,20 @@ export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
             placeholder="e.g. Senior React Developer"
             className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
             required
+            disabled={isSubmitting}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#1C1800] mb-2">Department</label>
-          <select
-            name="department"
-            value={formData.department}
+          <label className="block text-sm font-medium text-[#1C1800] mb-2">Location</label>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
             onChange={handleChange}
+            placeholder="e.g. Remote, On-site, Hybrid"
             className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
-          >
-            <option>Engineering</option>
-            <option>Product</option>
-            <option>Design</option>
-            <option>Marketing</option>
-            <option>Sales</option>
-          </select>
+            disabled={isSubmitting}
+          />
         </div>
       </div>
 
@@ -92,6 +99,7 @@ export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
           rows={4}
           className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD] resize-none"
           required
+          disabled={isSubmitting}
         />
       </div>
 
@@ -104,31 +112,37 @@ export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
           placeholder="List required skills and qualifications"
           rows={3}
           className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD] resize-none"
+          disabled={isSubmitting}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div>
-          <label className="block text-sm font-medium text-[#1C1800] mb-2">Salary Min (USD)</label>
+          <label className="block text-sm font-medium text-[#1C1800] mb-2">Salary Range</label>
           <input
-            type="number"
-            name="salaryMin"
-            value={formData.salaryMin}
+            type="text"
+            name="salaryRange"
+            value={formData.salaryRange}
             onChange={handleChange}
-            placeholder="100000"
+            placeholder="e.g. $100k - $120k"
             className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
+            disabled={isSubmitting}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#1C1800] mb-2">Salary Max (USD)</label>
-          <input
-            type="number"
-            name="salaryMax"
-            value={formData.salaryMax}
+          <label className="block text-sm font-medium text-[#1C1800] mb-2">Job Type</label>
+          <select
+            name="type"
+            value={formData.type}
             onChange={handleChange}
-            placeholder="150000"
             className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
-          />
+            disabled={isSubmitting}
+          >
+            <option value="FULL_TIME">Full-time</option>
+            <option value="PART_TIME">Part-time</option>
+            <option value="CONTRACT">Contract</option>
+            <option value="INTERN">Internship</option>
+          </select>
         </div>
       </div>
 
@@ -136,13 +150,19 @@ export function JobPostingForm({ onSubmit, onCancel }: JobPostingFormProps) {
         <button
           type="submit"
           className="flex-1 px-6 py-3 bg-gradient-to-r from-[#E6D600] to-[#F2F296] text-[#1C1800] rounded-full hover:shadow-lg transition-all font-semibold"
+          disabled={isSubmitting}
         >
-          Publish Job Posting
+          {isSubmitting ? (
+            "Publishing..."
+          ) : (
+            "Publish Job Posting"
+          )}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="flex-1 px-6 py-3 border border-border text-[#1C1800] rounded-full hover:bg-[#F5F8F3] transition-all font-medium"
+          disabled={isSubmitting}
         >
           Cancel
         </button>

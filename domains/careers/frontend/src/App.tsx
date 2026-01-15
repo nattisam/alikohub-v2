@@ -13,16 +13,10 @@ export default function App() {
 
   // Map backend roles to UI roles used by layout/sidebar
   const userRole: UiRole =
-    user?.role === "ADMIN" ? "admin" : user?.role === "RECRUITER" ? "recruiter" : "applicant"
+    user?.role === "ADMIN" ? "admin" : user?.careersRole === "RECRUITER" ? "recruiter" : "applicant"
 
-  // Redirect to appropriate dashboard if user is on root and has a specific role
-  if (location.pathname === '/' && isAuthenticated) {
-    if (user?.role === 'ADMIN') {
-      return <Navigate to="/admin" replace />;
-    } else if (user?.role === 'RECRUITER') {
-      return <Navigate to="/recruiter" replace />;
-    }
-  }
+  // No automatic redirection from homepage - let users stay on /
+  // Admins and recruiters can navigate to their dashboards manually
 
   return (
     <ApplicationProvider>

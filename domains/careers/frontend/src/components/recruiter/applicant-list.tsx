@@ -1,16 +1,18 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronLeft, Eye, Download, Mail } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { ChevronLeft, Eye, Download, Mail, Loader2 } from "lucide-react"
+import { api } from "../../lib/api"
 
-interface Applicant {
-  id: string
-  name: string
-  email: string
-  phone: string
-  appliedDate: string
-  status: "new" | "reviewed" | "rejected"
-  score: number
+interface Application {
+  id: number
+  jobId: number
+  userId: string
+  coverLetter: string
+  resumeUrl: string
+  createdAt: string
+  status?: "new" | "reviewed" | "rejected"
 }
 
 interface ApplicantListProps {
@@ -19,39 +21,66 @@ interface ApplicantListProps {
   onBack: () => void
 }
 
-export function ApplicantList({ jobId, jobTitle, onBack }: ApplicantListProps) {
-  const [applicants, setApplicants] = useState<Applicant[]>([
-    {
-      id: "1",
-      name: "Alex Johnson",
-      email: "alex.johnson@email.com",
-      phone: "(555) 123-4567",
-      appliedDate: "2025-01-12",
-      status: "new",
-      score: 85,
-    },
-    {
-      id: "2",
-      name: "Jordan Smith",
-      email: "jordan.smith@email.com",
-      phone: "(555) 234-5678",
-      appliedDate: "2025-01-10",
-      status: "reviewed",
-      score: 78,
-    },
-    {
-      id: "3",
-      name: "Casey Williams",
-      email: "casey.w@email.com",
-      phone: "(555) 345-6789",
-      appliedDate: "2025-01-08",
-      status: "rejected",
-      score: 45,
-    },
-  ])
+// Service function to fetch applicants for a job
+async function fetchApplications(jobId: string): Promise<Application[]> {
+  const res = await api.get(`/careers/jobs/${jobId}/applications`);
+  return res.data;
+}
 
-  const handleStatusChange = (id: string, status: Applicant["status"]) => {
-    setApplicants(applicants.map((app) => (app.id === id ? { ...app, status } : app)))
+// Service function to update application status
+async function updateApplicationStatus(applicationId: number, status: string): Promise<any> {
+  const res = await api.patch(`/careers/applications/${applicationId}/status`, { status });
+  return res.data;
+}
+
+export function ApplicantList({ jobId, jobTitle, onBack }: ApplicantListProps) {
+  const queryClient = useQueryClient();
+  
+  // Fetch applications for the job
+  const { data: applications = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['applications', jobId],
+    queryFn: () => fetchApplications(jobId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+  
+  // Mutation for updating application status
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId, status }: { applicationId: number; status: string }) => 
+      updateApplicationStatus(applicationId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications', jobId] });
+    },
+  })
+
+  const handleStatusChange = (id: number, status: "new" | "reviewed" | "rejected") => {
+    updateStatusMutation.mutate({ applicationId: id, status });
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-0 md:p-6 lg:p-8 w-full max-w-full flex justify-center items-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-[#1175BD]" />
+          <p className="text-[#1C1800]/70">Loading applicants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-0 md:p-6 lg:p-8 w-full max-w-full">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <p className="text-red-700 font-medium">Failed to load applicants</p>
+          <button 
+            onClick={() => refetch()}
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -65,70 +94,96 @@ export function ApplicantList({ jobId, jobTitle, onBack }: ApplicantListProps) {
       </button>
 
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-[#1C1800] mb-2">Applicants for {jobTitle}</h2>
-        <p className="text-[#1C1800]/70">{applicants.length} total applications</p>
+        <h2 className="text-3xl font-bold text-[#1C1800] mb-2">Applications for {jobTitle}</h2>
+        <p className="text-[#1C1800]/70">{applications.length} total applications</p>
       </div>
 
       <div className="grid gap-4">
-        {applicants.map((applicant) => (
-          <div key={applicant.id} className="bg-white border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
+        {applications.map((application) => (
+          <div key={application.id} className="bg-white border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-bold text-[#1C1800]">{applicant.name}</h3>
+                  <h3 className="text-lg font-bold text-[#1C1800]">Application #{application.id}</h3>
                   <span
                     className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                      applicant.status === "new"
+                      (application.status || "new") === "new"
                         ? "bg-gradient-to-r from-[#1175BD] to-[#38A1FF] text-white"
-                        : applicant.status === "reviewed"
+                        : (application.status || "new") === "reviewed"
                           ? "bg-gradient-to-r from-[#E6D600] to-[#F2F296] text-[#1C1800]"
                           : "bg-gray-200 text-gray-700"
                     }`}
                   >
-                    {applicant.status}
+                    Status: {application.status || "New"}
                   </span>
                 </div>
-                <p className="text-[#1C1800]/70 text-sm mb-1">{applicant.email}</p>
-                <p className="text-[#1C1800]/70 text-sm mb-3">{applicant.phone}</p>
+                <p className="text-[#1C1800]/70 text-sm mb-1">User ID: {application.userId}</p>
+                <p className="text-[#1C1800]/70 text-sm mb-3">Applied: {new Date(application.createdAt).toLocaleDateString()}</p>
 
-                <div className="flex items-center gap-6 text-sm">
-                  <span className="text-[#1C1800]/70">
-                    Applied: <span className="text-[#1C1800] font-medium">{applicant.appliedDate}</span>
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#1C1800]/70">Match Score:</span>
-                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#1175BD] to-[#38A1FF] transition-all" style={{ width: `${applicant.score}%` }} />
-                    </div>
-                    <span className="text-[#1175BD] font-bold ml-2">{applicant.score}%</span>
-                  </div>
+                <div className="mb-3">
+                  <p className="text-[#1C1800] text-sm mb-2"><strong>Cover Letter:</strong></p>
+                  <p className="text-[#1C1800]/80 text-sm bg-[#F5F8F3] p-3 rounded-lg">
+                    {application.coverLetter}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[#1C1800]/70">Resume:</span>
+                  <a 
+                    href={application.resumeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[#1175BD] hover:underline text-sm break-all"
+                  >
+                    {application.resumeUrl}
+                  </a>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 ml-4">
-                <button className="p-2 text-[#1C1800]/70 hover:text-[#1175BD] transition-colors hover:bg-[#F5F8F3] rounded-lg">
+                <a 
+                  href={application.resumeUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 text-[#1C1800]/70 hover:text-[#1175BD] transition-colors hover:bg-[#F5F8F3] rounded-lg"
+                >
                   <Eye className="w-5 h-5" />
-                </button>
-                <button className="p-2 text-[#1C1800]/70 hover:text-[#1175BD] transition-colors hover:bg-[#F5F8F3] rounded-lg">
+                </a>
+                <a 
+                  href={application.resumeUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 text-[#1C1800]/70 hover:text-[#1175BD] transition-colors hover:bg-[#F5F8F3] rounded-lg"
+                >
                   <Download className="w-5 h-5" />
-                </button>
+                </a>
                 <button className="p-2 text-[#1C1800]/70 hover:text-[#1175BD] transition-colors hover:bg-[#F5F8F3] rounded-lg">
                   <Mail className="w-5 h-5" />
                 </button>
 
-                {applicant.status === "new" && (
+                {(application.status || "new") === "new" && (
                   <div className="flex gap-2 ml-4">
                     <button
-                      onClick={() => handleStatusChange(applicant.id, "reviewed")}
+                      onClick={() => handleStatusChange(application.id, "reviewed")}
                       className="px-4 py-2 text-xs font-medium bg-gradient-to-r from-[#1175BD] to-[#38A1FF] text-white rounded-lg hover:shadow-md transition-all"
+                      disabled={updateStatusMutation.isPending}
                     >
-                      Review
+                      {updateStatusMutation.isPending && updateStatusMutation.variables?.applicationId === application.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Review"
+                      )}
                     </button>
                     <button
-                      onClick={() => handleStatusChange(applicant.id, "rejected")}
+                      onClick={() => handleStatusChange(application.id, "rejected")}
                       className="px-4 py-2 text-xs font-medium border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-all"
+                      disabled={updateStatusMutation.isPending}
                     >
-                      Reject
+                      {updateStatusMutation.isPending && updateStatusMutation.variables?.applicationId === application.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Reject"
+                      )}
                     </button>
                   </div>
                 )}

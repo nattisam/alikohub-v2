@@ -33,7 +33,7 @@ export function Header({ userRole }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/70 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-20 ring-1 ring-black/5 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
         <div>
           <h2 className="text-xl font-semibold text-[#1C1800] leading-snug">

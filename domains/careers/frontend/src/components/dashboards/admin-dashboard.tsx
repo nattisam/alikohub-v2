@@ -7,7 +7,8 @@ export const AdminDashboard = () => {
     email: '',
     firstname: '',
     lastname: '',
-    password: ''
+    password: '',
+    department: 'General'
   });
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState('');
@@ -31,7 +32,8 @@ export const AdminDashboard = () => {
         firstname: formData.firstname,
         lastname: formData.lastname,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        department: formData.department
       };
       
       await createRecruiter(recruiterData);
@@ -41,7 +43,8 @@ export const AdminDashboard = () => {
         email: '',
         firstname: '',
         lastname: '',
-        password: ''
+        password: '',
+        department: 'General'
       });
     } catch (error) {
       setMessage('Error creating recruiter. Please try again.');
@@ -123,6 +126,20 @@ export const AdminDashboard = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Department
+            </label>
+            <input
+              type="text"
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              placeholder="e.g., Engineering, Marketing, HR"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

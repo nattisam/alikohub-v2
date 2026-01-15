@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MapPin, DollarSign, Briefcase } from "lucide-react"
+import { Search, MapPin, DollarSign, ArrowRight, Briefcase } from "lucide-react"
 
 export interface Job {
   id: string
@@ -74,105 +74,99 @@ export function JobSearch({ onSelectJob, jobs }: JobSearchProps) {
   )
 
   return (
-    <div className="w-full">
-      <div className="w-full space-y-8">
+    <div className="w-full min-h-screen bg-[#FFFFFF]">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
         {/* Header */}
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 border border-border/70 shadow-xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#0F4875]" />
-            <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#1C1800]/75">
-              Open roles
+        <div className="space-y-4 mb-10">
+          <div className="inline-flex items-center gap-2.5 rounded-full bg-primary/10 px-4 py-2 ring-1 ring-primary/20 hover:ring-primary/30 transition">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+              Open Opportunities
             </span>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[#1C1800]">
-              Find work that feels like a step forward.
+
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+              Find work that moves you forward
             </h1>
-            <p className="text-sm sm:text-base text-[#1C1800]/70 max-w-2xl">
-              Explore carefully curated roles across product, engineering, design, and more. Filter by
-              what matters to you, then move from interest to application in a few calm clicks.
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl font-light">
+              Explore curated roles across engineering, design, product and more.
             </p>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative rounded-2xl border border-border/80 bg-white/90 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 sm:px-5 sm:py-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1C1800]/40" />
+        {/* Search */}
+        <div className="mb-10">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition" />
+            <div className="relative rounded-xl bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/20 focus-within:ring-primary/30 transition">
+              <div className="flex items-center gap-3 px-6 py-4">
+                <Search className="w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by title, company, or location"
-                  className="w-full rounded-xl border-0 bg-transparent pl-9 pr-2 py-2.5 text-sm text-[#1C1800] placeholder:text-[#1C1800]/45 focus:outline-none focus:ring-0"
+                  placeholder="Search by title, company, or location..."
+                  className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-[#F5F8F3] px-3 py-1 text-[11px] font-medium text-[#1C1800]/70 border border-border/70">
-                  <MapPin className="mr-1.5 h-3 w-3 text-[#0F4875]" />
-                  Remote friendly
-                </span>
-                <span className="inline-flex items-center rounded-full bg-[#F5F8F3] px-3 py-1 text-[11px] font-medium text-[#1C1800]/70 border border-border/70">
-                  <Briefcase className="mr-1.5 h-3 w-3 text-[#0F4875]" />
-                  Product &amp; Engineering
-                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Job List */}
-        <div className="grid gap-4">
+        {/* Results */}
+        <div className="space-y-4">
           {filteredJobs.length === 0 ? (
-            <div className="bg-white/90 border border-dashed border-border rounded-2xl p-10 text-center shadow-xs">
-              <p className="text-sm text-[#1C1800]/70">
-                No roles match your search just yet. Try broadening your filters or check back soon.
+            <div className="rounded-xl bg-white/60 backdrop-blur p-14 text-center shadow-sm ring-1 ring-black/5">
+              <Briefcase className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                No roles match your search.
               </p>
             </div>
           ) : (
             filteredJobs.map((job) => (
-              <div
+              <button
                 key={job.id}
                 onClick={() => onSelectJob(job)}
-                className="group bg-white/90 border border-border rounded-2xl p-5 sm:p-6 hover:border-[#0F4875] hover:shadow-md hover:-translate-y-[1px] transition-all cursor-pointer"
+                className="group relative w-full text-left rounded-xl bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/25 hover:shadow-md transition overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-[#1C1800] mb-1.5">
-                      {job.title}
-                    </h3>
-                    <p className="text-xs font-medium text-[#0F4875] mb-2">
-                      {job.company} • {job.type}
-                    </p>
-                    <p className="text-xs sm:text-sm text-[#1C1800]/80 mb-3 line-clamp-2">
-                      {job.description}
-                    </p>
-                  </div>
-                  <button className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-full border border-[#0F4875]/15 bg-[#0F4875] text-xs font-semibold text-white shadow-xs group-hover:shadow-sm group-hover:-translate-y-px transition-all whitespace-nowrap ml-4">
-                    Apply Now
-                  </button>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition" />
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm pt-3 border-t border-border/70">
-                  <div className="flex items-center gap-2 text-[#1C1800]/80">
-                    <MapPin className="w-3.5 h-3.5 text-[#0F4875]" />
-                    <span className="truncate">{job.location}</span>
+                <div className="relative p-6 space-y-4">
+                  <div className="flex justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold group-hover:text-primary transition">
+                        {job.title}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-primary font-medium">{job.company}</span>
+                        <span className="text-muted-foreground">• {job.type}</span>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                        {job.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary">
+                      <ArrowRight className="w-5 h-5" />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[#1C1800]/80">
-                    <DollarSign className="w-3.5 h-3.5 text-[#0F4875]" />
-                    <span className="truncate">{job.salary}</span>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-2 text-[#1C1800]/80">
-                    <Briefcase className="w-3.5 h-3.5 text-[#0F4875]" />
-                    <span className="truncate">{job.type}</span>
-                  </div>
-                  <div className="flex sm:justify-end text-[#1C1800]/55 text-right sm:text-left">
-                    Posted {job.postedDate}
+
+                  <div className="flex items-center gap-6 pt-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      {job.location}
+                    </div>
+                    <div className="flex items-center gap-2 font-semibold text-foreground">
+                      <DollarSign className="w-4 h-4 text-primary" />
+                      {job.salary}
+                    </div>
+                    <span className="ml-auto text-xs">
+                      Posted {job.postedDate}
+                    </span>
                   </div>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
@@ -180,3 +174,4 @@ export function JobSearch({ onSelectJob, jobs }: JobSearchProps) {
     </div>
   )
 }
+

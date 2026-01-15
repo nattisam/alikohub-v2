@@ -26,8 +26,20 @@ export function RequireAuth({ children, roles }: RequireAuthProps) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to="/" replace />
+  // Check if user has the required roles
+  if (roles && user) {
+    // For admin access, check global role
+    if (roles.includes('ADMIN') && user.globalRole !== 'ADMIN') {
+      return <Navigate to="/" replace />
+    }
+    // For recruiter access, check careers-specific role
+    if (roles.includes('RECRUITER') && user.careersRole !== 'RECRUITER') {
+      return <Navigate to="/" replace />
+    }
+    // For general user access, check global role
+    if (roles.includes('USER') && user.globalRole !== 'USER' && user.globalRole !== 'ADMIN') {
+      return <Navigate to="/" replace />
+    }
   }
 
   return <>{children}</>

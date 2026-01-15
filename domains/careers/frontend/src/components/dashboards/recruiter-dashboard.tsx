@@ -1,57 +1,83 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Edit2, Trash2, Eye } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { Plus, Edit2, Trash2, Eye, Loader2 } from "lucide-react"
 import { JobPostingForm } from "../recruiter/job-posting-form"
 import { ApplicantList } from "../recruiter/applicant-list"
+import { getJobById, getAllJobs, createJob, deleteJob } from "../../services/job-service"
 
 export function RecruiterDashboard() {
   const [showForm, setShowForm] = useState(false)
   const [selectedJob, setSelectedJob] = useState<string | null>(null)
-  const [jobs, setJobs] = useState([
-    {
-      id: "1",
-      title: "Senior React Developer",
-      department: "Engineering",
-      status: "active",
-      applicants: 12,
-      postedDate: "2025-01-05",
-      description: "Looking for experienced React developers",
+  const queryClient = useQueryClient()
+  
+  // Fetch all jobs
+  const { data: jobs = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: getAllJobs,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+  
+  // Mutation for creating a job
+  const createJobMutation = useMutation({
+    mutationFn: createJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      setShowForm(false)
     },
-    {
-      id: "2",
-      title: "Product Manager",
-      department: "Product",
-      status: "active",
-      applicants: 8,
-      postedDate: "2025-01-08",
-      description: "Lead product strategy and roadmap",
+  })
+  
+  // Mutation for deleting a job
+  const deleteJobMutation = useMutation({
+    mutationFn: deleteJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['jobs'] })
     },
-    {
-      id: "3",
-      title: "UX Designer",
-      department: "Design",
-      status: "inactive",
-      applicants: 5,
-      postedDate: "2024-12-20",
-      description: "Create beautiful user experiences",
-    },
-  ])
-
+  })
+  
   const handleCreateJob = (jobData: any) => {
-    const newJob = {
-      id: String(jobs.length + 1),
-      ...jobData,
-      status: "active",
-      applicants: 0,
-      postedDate: new Date().toISOString().split("T")[0],
+    createJobMutation.mutate(jobData)
+  }
+  
+  const handleDeleteJob = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this job posting?')) {
+      deleteJobMutation.mutate(id)
     }
-    setJobs([newJob, ...jobs])
-    setShowForm(false)
+  }
+  
+  // Refetch jobs when selectedJob changes
+  useEffect(() => {
+    if (selectedJob) {
+      refetch();
+    }
+  }, [selectedJob, refetch]);
+
+  if (isLoading) {
+    return (
+      <div className="p-0 md:p-6 lg:p-8 w-full max-w-full flex justify-center items-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-[#1175BD]" />
+          <p className="text-[#1C1800]/70">Loading job postings...</p>
+        </div>
+      </div>
+    );
   }
 
-  const handleDeleteJob = (id: string) => {
-    setJobs(jobs.filter((job) => job.id !== id))
+  if (isError) {
+    return (
+      <div className="p-0 md:p-6 lg:p-8 w-full max-w-full">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <p className="text-red-700 font-medium">Failed to load job postings</p>
+          <button 
+            onClick={() => refetch()}
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -64,15 +90,29 @@ export function RecruiterDashboard() {
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#E6D600] to-[#F2F296] text-[#1C1800] rounded-full hover:shadow-lg transition-all font-semibold"
+          disabled={createJobMutation.isPending}
         >
-          <Plus className="w-5 h-5" />
-          New Job Posting
+          {createJobMutation.isPending ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            <>
+              <Plus className="w-5 h-5" />
+              New Job Posting
+            </>
+          )}
         </button>
       </div>
 
       {showForm && (
         <div className="mb-8 bg-white border border-border rounded-xl p-6 shadow-lg">
-          <JobPostingForm onSubmit={handleCreateJob} onCancel={() => setShowForm(false)} />
+          <JobPostingForm 
+            onSubmit={handleCreateJob} 
+            onCancel={() => setShowForm(false)} 
+            isSubmitting={createJobMutation.isPending}
+          />
         </div>
       )}
 
@@ -97,7 +137,7 @@ export function RecruiterDashboard() {
                       {job.status}
                     </span>
                   </div>
-                  <p className="text-[#1C1800]/70 text-sm mb-2">{job.department}</p>
+                  <p className="text-[#1C1800]/70 text-sm mb-2">{job.department || 'General'}</p>
                   <p className="text-[#1C1800] text-sm">{job.description}</p>
                 </div>
               </div>
@@ -106,11 +146,11 @@ export function RecruiterDashboard() {
                 <div className="flex items-center gap-6 text-sm">
                   <div>
                     <p className="text-[#1C1800]/60 text-xs uppercase tracking-wider">Applicants</p>
-                    <p className="text-lg font-bold text-[#1175BD]">{job.applicants}</p>
+                    <p className="text-lg font-bold text-[#1175BD]">{job.applicants || 0}</p>
                   </div>
                   <div>
                     <p className="text-[#1C1800]/60 text-xs uppercase tracking-wider">Posted</p>
-                    <p className="text-[#1C1800] text-sm">{job.postedDate}</p>
+                    <p className="text-[#1C1800] text-sm">{job.postedDate || 'N/A'}</p>
                   </div>
                 </div>
 
@@ -127,8 +167,13 @@ export function RecruiterDashboard() {
                   <button
                     onClick={() => handleDeleteJob(job.id)}
                     className="p-2 text-[#1C1800]/70 hover:text-red-600 transition-colors hover:bg-red-50 rounded-lg"
+                    disabled={deleteJobMutation.isPending}
                   >
-                    <Trash2 className="w-5 h-5" />
+                    {deleteJobMutation.isPending ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>

@@ -16,6 +16,8 @@ export interface AuthUser {
   lastname: string
   globalRole?: string
   role: AuthRole
+  careersRole?: string
+  careersStatus?: string
 }
 
 interface LoginPayload {
@@ -137,14 +139,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthSuccess = (data: AuthResponse) => {
     // Convert the user from the general auth service to our careers format
+    // Prioritize careers-specific role if available, otherwise use global role
+    const careersRole = data.user.careersRole || data.user.role;
+    const globalRole = data.user.globalRole;
+    
+    let mappedRole: AuthRole;
+    if (careersRole === 'RECRUITER') {
+      mappedRole = 'RECRUITER';
+    } else if (globalRole === 'ADMIN') {
+      mappedRole = 'ADMIN';
+    } else if (globalRole === 'USER') {
+      mappedRole = 'USER';
+    } else {
+      // Default to USER if user doesn't have proper global role
+      mappedRole = 'USER';
+    }
+    
     const careersUser: AuthUser = {
       id: data.user.id?.toString() || '',
       firebaseId: data.user.firebaseId,
       email: data.user.email,
       firstname: data.user.firstname,
       lastname: data.user.lastname,
-      globalRole: data.user.globalRole,
-      role: data.user.globalRole === 'ADMIN' ? 'ADMIN' : data.user.globalRole === 'RECRUITER' ? 'RECRUITER' : 'USER'
+      globalRole: globalRole,
+      careersRole: careersRole,
+      careersStatus: data.user.careersStatus,
+      role: mappedRole
     }
     
     setUser(careersUser)
@@ -227,6 +247,16 @@ export function useHasRole(required: AuthRole | AuthRole[]) {
   if (!user) return false
   const roles = Array.isArray(required) ? required : [required]
   return roles.includes(user.role)
+}
+
+export function useHasGlobalRole(globalRole: string) {
+  const { user } = useAuth()
+  return user?.globalRole === globalRole
+}
+
+export function useHasCareersRole(careersRole: string) {
+  const { user } = useAuth()
+  return user?.careersRole === careersRole
 }
 
 

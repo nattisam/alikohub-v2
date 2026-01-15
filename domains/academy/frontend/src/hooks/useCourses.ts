@@ -1,69 +1,61 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Course } from "../components/types.d";
 import { courseApi } from "../api/courseApi";
 
 export const useCourses = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCoursesAndCategories = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Fetch all published courses
-        const response = await courseApi.getPublishedCourses();
-        
-        // Handle different response formats
-        const coursesData = response.data.items || response.data;
-        const fetchedCourses = Array.isArray(coursesData) ? coursesData : [];
-        
-        setCourses(fetchedCourses);
-        
-        // Extract unique categories from the fetched courses
-        // Only include valid categories that match the expected types
-        const validCategories = ['Technology', 'STEM', 'Health'];
-        const uniqueCategories = Array.from(
-          new Set(
-            fetchedCourses
-              .map(course => course.category)
-              .filter((category): category is string => 
-                typeof category === 'string' && 
-                category.length > 0 && 
-                validCategories.includes(category)
-              )
-          )
-        );
-        
-        setCategories(uniqueCategories);
-        
-      } catch (error: any) {
-        console.error("Failed to fetch courses:", error);
-        
-        // Check if it's a 401 error (unauthorized)
-        if (error?.response?.status === 401) {
-          setError("Please log in to view courses.");
-          // Fallback to default categories if not authenticated
-          setCategories(["Technology", "STEM", "Health"]);
-        } else if (error?.response?.status === 429) {
-          setError("Too many requests. Please try again in a moment.");
-          // Fallback to default categories if rate limited
-          setCategories(["Technology", "STEM", "Health"]);
-        } else {
-          setError("Failed to load courses. Please try again later.");
-          // Fallback to default categories if API fails
-          setCategories(["Technology", "STEM", "Health"]);
-        }
-      } finally {
-        setLoading(false);
+  // Use React Query with the same queryKey as useAllCourses to share cache
+  const { data: courses = [], isLoading, isError, error: queryError } = useQuery({
+    queryKey: ["all-courses"],
+    queryFn: async () => {
+      const response = await courseApi.getPublishedCourses();
+      const coursesData = response.data.items || response.data;
+      return Array.isArray(coursesData) ? coursesData : [];
+    },
+    staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
+    gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
+    refetchOnWindowFocus: false,   // prevent refetch on window focus
+    refetchOnReconnect: false,     // prevent refetch on reconnect
+    retry: (failureCount, error: any) => {
+      // Don't retry on 429 - let axios handle it to prevent cascading retries
+      if (error?.response?.status === 429) {
+        return false;
       }
-    };
+      return failureCount < 1;
+    },
+  });
 
-    fetchCoursesAndCategories();
-  }, []);
+  // Extract categories from courses using useMemo for performance
+  const categories = useMemo(() => {
+    const validCategories = ['Technology', 'STEM', 'Health'];
+    const uniqueCategories = Array.from(
+      new Set(
+        courses
+          .map(course => course.category)
+          .filter((category): category is string => 
+            typeof category === 'string' && 
+            category.length > 0 && 
+            validCategories.includes(category)
+          )
+      )
+    );
+    
+    // Fallback to default categories if no valid categories found
+    return uniqueCategories.length > 0 ? uniqueCategories : ["Technology", "STEM", "Health"];
+  }, [courses]);
+
+  // Format error message
+  const error = useMemo(() => {
+    if (!isError) return null;
+    
+    const status = (queryError as any)?.response?.status;
+    if (status === 401) {
+      return "Please log in to view courses.";
+    } else if (status === 429) {
+      return "Too many requests. Please try again in a moment.";
+    }
+    return "Failed to load courses. Please try again later.";
+  }, [isError, queryError]);
 
   const filterCoursesByCategory = (targetCategory: string) => {
     // Only include courses with valid categories
@@ -74,5 +66,11 @@ export const useCourses = () => {
     });
   };
 
-  return { courses, categories, loading, error, filterCoursesByCategory };
+  return { 
+    courses, 
+    categories, 
+    loading: isLoading, 
+    error, 
+    filterCoursesByCategory 
+  };
 };

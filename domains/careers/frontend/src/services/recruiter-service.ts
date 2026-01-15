@@ -5,22 +5,20 @@ export interface RecruiterData {
   lastname: string;
   email: string;
   password: string;
+  department?: string;
 }
 
 export const createRecruiter = async (recruiterData: RecruiterData): Promise<any> => {
   try {
-    // TODO: Replace with actual endpoint when available
-    // const response = await api.post('/careers/recruiters', recruiterData);
-    // return response.data;
+    // Prepare the request payload with department defaulting to "General" if not provided
+    const payload = {
+      ...recruiterData,
+      department: recruiterData.department || "General"
+    };
     
-    // For now, simulate the API call
-    console.log('Creating recruiter:', recruiterData);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simulate success response
-    return { success: true, message: 'Recruiter created successfully!' };
+    // Make the actual API call to create a recruiter
+    const response = await api.post('/careers/admin/recruiters', payload);
+    return response.data;
   } catch (error) {
     console.error('Error creating recruiter:', error);
     throw error;

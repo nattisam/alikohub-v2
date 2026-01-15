@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/LoginPage"
 import { RegisterPage } from "./pages/RegisterPage"
 import { RequireAuth } from "./components/auth/RequireAuth"
 import { JobsHomePage } from "./pages/JobsHomePage"
+import { ApplicationsList } from "./components/recruiter/applications-list"
 
 export const router = createBrowserRouter([
   {
@@ -47,10 +48,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "recruiter/applications",
+        path: "applications",
         element: (
           <RequireAuth roles={["RECRUITER"]}>
-            <RecruiterDashboard />
+            <ApplicationsList />
           </RequireAuth>
         ),
       },
@@ -65,4 +66,3 @@ export const router = createBrowserRouter([
     ],
   },
 ])
-

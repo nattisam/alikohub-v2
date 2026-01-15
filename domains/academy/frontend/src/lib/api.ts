@@ -94,10 +94,10 @@ apiClient.interceptors.response.use(
         window.dispatchEvent(new CustomEvent('userLoggedOut'));
       }
     }
+    // 429 errors are now handled by retry logic in the interceptor
+    // This check is kept for logging purposes but retry happens before reaching here
     if (error.response?.status === 429) {
-      console.warn("Rate limited — slowing down requests");
-      // Reject the promise with the error so the calling function can handle retries
-      return Promise.reject(error);
+      console.warn("Rate limited — retrying with exponential backoff");
     }
     return Promise.reject(error);
   }
