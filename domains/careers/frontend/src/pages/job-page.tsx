@@ -102,7 +102,7 @@ export function JobPage() {
     
     return (
       <div className="p-0 md:p-6 lg:p-8 w-full max-w-full">
-        <div className="bg-white ring-1 ring-black/5 rounded-xl p-8 shadow-sm">
+        <div className="bg-white ring-1 ring-border rounded-xl p-8 shadow-sm">
           {isRateLimited ? (
             <>
               <h2 className="text-2xl font-bold text-[#1C1800] mb-2">Too Many Requests</h2>
@@ -147,7 +147,7 @@ export function JobPage() {
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="inline-flex items-center gap-2 rounded-full ring-1 ring-black/50 bg-white/80 px-3 py-1 text-[11px] font-medium text-[#1C1800]/70 hover:text-[#0F4875] hover:ring-[#0F4875]/60 hover:bg-[#F5F8F3] transition-colors"
+          className="inline-flex items-center gap-2 rounded-full ring-1 ring-border0 bg-white/80 px-3 py-1 text-[11px] font-medium text-[#1C1800]/70 hover:text-[#0F4875] hover:ring-[#0F4875]/60 hover:bg-[#F5F8F3] transition-colors"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-[#0F4875]" />
           Back to all roles
@@ -157,7 +157,7 @@ export function JobPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)] items-start">
         {/* Main content */}
         <div className="space-y-6">
-          <div className="bg-white/95 ring-1 ring-black/5 rounded-2xl p-5 sm:p-6 shadow-xs">
+          <div className="bg-white/95 ring-1 ring-border rounded-2xl p-5 sm:p-6 shadow-xs">
             <div className="mb-4 space-y-2">
               <h1 className="text-2xl sm:text-3xl font-semibold text-[#1C1800] tracking-tight">
                 {job.title}
@@ -190,7 +190,7 @@ export function JobPage() {
             </p>
           </div>
 
-          <div className="bg-white/95 ring-1 ring-black/5 rounded-2xl p-5 sm:p-6 shadow-xs">
+          <div className="bg-white/95 ring-1 ring-border rounded-2xl p-5 sm:p-6 shadow-xs">
             <h2 className="text-lg sm:text-xl font-semibold text-[#1C1800] mb-3">
               What you&apos;ll work on
             </h2>
@@ -200,7 +200,7 @@ export function JobPage() {
           </div>
 
           {job.requirements && (
-            <div className="bg-white/95 ring-1 ring-black/5 rounded-2xl p-5 sm:p-6 shadow-xs">
+            <div className="bg-white/95 ring-1 ring-border rounded-2xl p-5 sm:p-6 shadow-xs">
               <h2 className="text-lg sm:text-xl font-semibold text-[#1C1800] mb-3">
                 What makes you a great fit
               </h2>
@@ -213,7 +213,7 @@ export function JobPage() {
 
         {/* Sidebar */}
         <aside className="space-y-4 lg:sticky lg:top-20">
-          <div className="bg-white/95 ring-1 ring-black/5 rounded-2xl p-5 shadow-xs">
+          <div className="bg-white/95 ring-1 ring-border rounded-2xl p-5 shadow-xs">
             <p className="text-xs font-medium text-[#1C1800]/60 uppercase tracking-[0.16em] mb-2">
               Role snapshot
             </p>
@@ -239,7 +239,7 @@ export function JobPage() {
             </div>
           </div>
 
-          <div className="bg-white/95 ring-1 ring-black/5 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="bg-white/95 ring-1 ring-border rounded-2xl p-5 shadow-xs space-y-3">
             <p className="text-sm text-[#1C1800]/75">
               Ready to move forward? Share a bit about what you&apos;ve built and why this role feels
               like the right next step.

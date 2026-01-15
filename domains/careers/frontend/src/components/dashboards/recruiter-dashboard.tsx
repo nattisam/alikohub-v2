@@ -67,7 +67,7 @@ export function RecruiterDashboard() {
   if (isError) {
     return (
       <div className="p-0 md:p-6 lg:p-8 w-full max-w-full">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+        <div className="bg-red-50 ring-1 ring-red-200 rounded-xl p-6 text-center">
           <p className="text-red-700 font-medium">Failed to load job postings</p>
           <button 
             onClick={() => refetch()}
@@ -107,7 +107,7 @@ export function RecruiterDashboard() {
       </div>
 
       {showForm && (
-        <div className="mb-8 bg-white border border-border rounded-xl p-6 shadow-lg">
+        <div className="mb-8 bg-white/80 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
           <JobPostingForm 
             onSubmit={handleCreateJob} 
             onCancel={() => setShowForm(false)} 
@@ -121,7 +121,7 @@ export function RecruiterDashboard() {
           {jobs.map((job) => (
             <div
               key={job.id}
-              className="bg-white border border-border rounded-xl p-6 hover:border-[#1175BD] hover:shadow-lg transition-all"
+              className="bg-white ring-1 ring-border rounded-xl p-6 hover:ring-[#1175BD] hover:shadow-lg transition-all"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">

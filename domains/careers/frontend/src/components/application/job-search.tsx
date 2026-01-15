@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MapPin, DollarSign, ArrowRight, Briefcase } from "lucide-react"
+import { Search, MapPin, DollarSign, ArrowRight, Briefcase, X } from "lucide-react"
 
 export interface Job {
   id: string
@@ -64,14 +64,29 @@ const DEFAULT_JOBS: Job[] = [
 
 export function JobSearch({ onSelectJob, jobs }: JobSearchProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedLocation, setSelectedLocation] = useState<string>("")
+  const [selectedType, setSelectedType] = useState<string>("")
   const effectiveJobs = jobs && jobs.length > 0 ? jobs : DEFAULT_JOBS
 
+  // Get unique locations and types for filters
+  const locations = Array.from(new Set(effectiveJobs.map(job => job.location))).sort()
+  const types = Array.from(new Set(effectiveJobs.map(job => job.type))).sort()
+
   const filteredJobs = effectiveJobs.filter(
-    (job) =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase()),
+    (job) => {
+      const matchesSearch =
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.location.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesLocation = !selectedLocation || job.location === selectedLocation
+      const matchesType = !selectedType || job.type === selectedType
+
+      return matchesSearch && matchesLocation && matchesType
+    },
   )
+
+  const hasActiveFilters = selectedLocation || selectedType
 
   return (
     <div className="w-full min-h-screen bg-[#FFFFFF]">
@@ -90,26 +105,86 @@ export function JobSearch({ onSelectJob, jobs }: JobSearchProps) {
               Find work that moves you forward
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-3xl font-light">
-              Explore curated roles across engineering, design, product and more.
+              Discover opportunities across engineering, design, product, and more.
             </p>
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search and Filters */}
         <div className="mb-10">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition" />
-            <div className="relative rounded-xl bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/20 focus-within:ring-primary/30 transition">
-              <div className="flex items-center gap-3 px-6 py-4">
-                <Search className="w-5 h-5 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by title, company, or location..."
-                  className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-                />
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            {/* Search - Narrower */}
+            <div className="relative group flex-1 sm:flex-initial sm:max-w-md w-full">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent rounded-xl blur-xl opacity-0 group-focus-within:opacity-100 transition" />
+              <div className="relative rounded-xl bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/20 focus-within:ring-primary/30 transition">
+                <div className="flex items-center gap-3 px-6 py-4">
+                  <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by title, company, or location..."
+                    className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Location Filter */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent rounded-lg blur-xl opacity-0 group-focus-within:opacity-100 transition" />
+                <div className="relative rounded-lg bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/20 focus-within:ring-primary/30 transition">
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="appearance-none bg-transparent px-4 py-3 pr-8 text-sm text-foreground focus:outline-none cursor-pointer"
+                  >
+                    <option value="">All Locations</option>
+                    {locations.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                  <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Type Filter */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent rounded-lg blur-xl opacity-0 group-focus-within:opacity-100 transition" />
+                <div className="relative rounded-lg bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/20 focus-within:ring-primary/30 transition">
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="appearance-none bg-transparent px-4 py-3 pr-8 text-sm text-foreground focus:outline-none cursor-pointer"
+                  >
+                    <option value="">All Types</option>
+                    {types.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  <Briefcase className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    setSelectedLocation("")
+                    setSelectedType("")
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-3 rounded-lg bg-white/80 backdrop-blur shadow-sm ring-1 ring-black/5 hover:ring-primary/20 hover:bg-white/90 transition text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                  Clear Filter
+                </button>
+              )}
             </div>
           </div>
         </div>

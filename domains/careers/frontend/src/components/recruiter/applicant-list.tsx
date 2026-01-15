@@ -70,7 +70,7 @@ export function ApplicantList({ jobId, jobTitle, onBack }: ApplicantListProps) {
   if (isError) {
     return (
       <div className="p-0 md:p-6 lg:p-8 w-full max-w-full">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+        <div className="bg-red-50 ring-1 ring-red-200 rounded-xl p-6 text-center">
           <p className="text-red-700 font-medium">Failed to load applicants</p>
           <button 
             onClick={() => refetch()}
@@ -100,7 +100,7 @@ export function ApplicantList({ jobId, jobTitle, onBack }: ApplicantListProps) {
 
       <div className="grid gap-4">
         {applications.map((application) => (
-          <div key={application.id} className="bg-white border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
+          <div key={application.id} className="bg-white ring-1 ring-border rounded-xl p-6 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -176,7 +176,7 @@ export function ApplicantList({ jobId, jobTitle, onBack }: ApplicantListProps) {
                     </button>
                     <button
                       onClick={() => handleStatusChange(application.id, "rejected")}
-                      className="px-4 py-2 text-xs font-medium border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-all"
+                      className="px-4 py-2 text-xs font-medium ring-1 ring-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-all"
                       disabled={updateStatusMutation.isPending}
                     >
                       {updateStatusMutation.isPending && updateStatusMutation.variables?.applicationId === application.id ? (

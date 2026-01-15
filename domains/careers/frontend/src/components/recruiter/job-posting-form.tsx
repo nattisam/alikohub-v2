@@ -48,7 +48,8 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div className="ring-1 ring-black/5 shadow-sm backdrop-blur-sm rounded-xl bg-white/90 p-6">
+      <form onSubmit={handleSubmit}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-[#1C1800]">Create New Job Posting</h3>
         <button
@@ -70,7 +71,7 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
             value={formData.title}
             onChange={handleChange}
             placeholder="e.g. Senior React Developer"
-            className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
+            className="w-full px-4 py-3 bg-white ring-1 ring-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
             required
             disabled={isSubmitting}
           />
@@ -83,7 +84,7 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
             value={formData.location}
             onChange={handleChange}
             placeholder="e.g. Remote, On-site, Hybrid"
-            className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
+            className="w-full px-4 py-3 bg-white ring-1 ring-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
             disabled={isSubmitting}
           />
         </div>
@@ -97,7 +98,7 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
           onChange={handleChange}
           placeholder="Describe the job role and responsibilities"
           rows={4}
-          className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD] resize-none"
+          className="w-full px-4 py-3 bg-white ring-1 ring-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD] resize-none"
           required
           disabled={isSubmitting}
         />
@@ -111,7 +112,7 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
           onChange={handleChange}
           placeholder="List required skills and qualifications"
           rows={3}
-          className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD] resize-none"
+          className="w-full px-4 py-3 bg-white ring-1 ring-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD] resize-none"
           disabled={isSubmitting}
         />
       </div>
@@ -125,7 +126,7 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
             value={formData.salaryRange}
             onChange={handleChange}
             placeholder="e.g. $100k - $120k"
-            className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
+            className="w-full px-4 py-3 bg-white ring-1 ring-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
             disabled={isSubmitting}
           />
         </div>
@@ -135,7 +136,7 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full px-4 py-3 bg-white border border-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
+            className="w-full px-4 py-3 bg-white ring-1 ring-border rounded-lg text-[#1C1800] focus:outline-none focus:ring-2 focus:ring-[#1175BD] focus:border-[#1175BD]"
             disabled={isSubmitting}
           >
             <option value="FULL_TIME">Full-time</option>
@@ -161,12 +162,13 @@ export function JobPostingForm({ onSubmit, onCancel, isSubmitting = false }: Job
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-6 py-3 border border-border text-[#1C1800] rounded-full hover:bg-[#F5F8F3] transition-all font-medium"
+          className="flex-1 px-6 py-3 ring-1 ring-border text-[#1C1800] rounded-full hover:bg-[#F5F8F3] transition-all font-medium"
           disabled={isSubmitting}
         >
           Cancel
         </button>
       </div>
     </form>
+    </div>
   )
 }

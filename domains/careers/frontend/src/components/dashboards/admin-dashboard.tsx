@@ -83,7 +83,7 @@ export const AdminDashboard = () => {
                 value={formData.firstname}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             
@@ -97,7 +97,7 @@ export const AdminDashboard = () => {
                 value={formData.lastname}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -112,7 +112,7 @@ export const AdminDashboard = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           
@@ -126,7 +126,7 @@ export const AdminDashboard = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           
@@ -140,7 +140,7 @@ export const AdminDashboard = () => {
               value={formData.department}
               onChange={handleChange}
               placeholder="e.g., Engineering, Marketing, HR"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           
@@ -152,24 +152,6 @@ export const AdminDashboard = () => {
             {isCreating ? 'Creating...' : 'Create Recruiter'}
           </button>
         </form>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Admin Functions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-2">Manage Jobs</h3>
-            <p className="text-sm text-gray-600">View, edit, and manage job postings</p>
-          </div>
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-2">Manage Applications</h3>
-            <p className="text-sm text-gray-600">Review and process job applications</p>
-          </div>
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-2">Manage Users</h3>
-            <p className="text-sm text-gray-600">View and manage user accounts</p>
-          </div>
-        </div>
       </div>
     </div>
   );
