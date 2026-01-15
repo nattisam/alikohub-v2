@@ -177,11 +177,25 @@ export class CoursesService {
   }
 
   // REFACTORED: To enrich data with user info
-  async findAll(query: FindAllQuery) {
+  async findAll(query: FindAllQuery, user?: AuthenticatedUser) {
     try {
       // Build the where clause
       const where: any = {};
-      if (query.status) where.status = query.status;
+
+      // Check if user is admin
+      let isAdmin = false;
+      if (user) {
+        const profile = await this.userService.getOrCreateProfile(user);
+        isAdmin = profile.role === AcademyRole.ADMIN;
+      }
+
+      // Enforce visibility rules
+      if (!isAdmin) {
+        where.status = CourseStatus.PUBLISHED;
+      } else if (query.status) {
+        where.status = query.status;
+      }
+
       if (query.instructorId) where.instructorId = query.instructorId;
       if (query.category) where.category = query.category;
       if (query.q) {
@@ -251,9 +265,24 @@ export class CoursesService {
   }
 
   // REFACTORED: Use string ID and enrich data
-  async findOne(id: number) {
+  async findOne(id: number, user?: AuthenticatedUser) {
     const course = await this.prisma.course.findUnique({ where: { id } });
     if (!course) throw new NotFoundException('Course not found');
+
+    // Visibility Check: If not published, only Admin or Owner can view
+    if (course.status !== CourseStatus.PUBLISHED) {
+      let isAllowed = false;
+      if (user) {
+        const profile = await this.userService.getOrCreateProfile(user);
+        if (profile.role === AcademyRole.ADMIN || course.instructorId === user.firebaseId) {
+          isAllowed = true;
+        }
+      }
+
+      if (!isAllowed) {
+        throw new NotFoundException('Course not found');
+      }
+    }
 
     // Count enrollments for this course
     const enrollmentCount = await this.prisma.enrollment.count({

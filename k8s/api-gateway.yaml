@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: alikohub-api-gateway:latest
+        image: 500234530871.dkr.ecr.us-east-1.amazonaws.com/alikohub-api-gateway:latest
         ports:
         - containerPort: 3006
         env:
@@ -34,7 +34,11 @@ spec:
         - name: EVENTS_SERVICE_HOST
           value: "events-service"
         - name: EVENTS_SERVICE_PORT
-          value: "3003"
+          value: "3004"
+        - name: CAREERS_SERVICE_HOST
+          value: "careers-service"
+        - name: CAREERS_SERVICE_PORT
+          value: "3008"
         - name: PORT
           value: "3006"
 ---

@@ -29,8 +29,8 @@ import { CareersServiceModule } from './careers-service/careers.module';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get('AUTH_SERVICE_HOST'),
-            port: configService.get('AUTH_SERVICE_PORT'),
+            host: configService.get('AUTH_SERVICE_HOST') || 'localhost',
+            port: configService.get('AUTH_SERVICE_PORT') || 3001,
           },
         }),
       },
@@ -41,8 +41,8 @@ import { CareersServiceModule } from './careers-service/careers.module';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get('ACADEMY_SERVICE_HOST'),
-            port: configService.get('ACADEMY_SERVICE_PORT'),
+            host: configService.get('ACADEMY_SERVICE_HOST') || 'localhost',
+            port: configService.get('ACADEMY_SERVICE_PORT') || 3005,
           },
         }),
       },
@@ -53,8 +53,8 @@ import { CareersServiceModule } from './careers-service/careers.module';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get('CONTECH_SERVICE_HOST'),
-            port: configService.get('CONTECH_SERVICE_PORT'),
+            host: configService.get('CONTECH_SERVICE_HOST') || 'localhost',
+            port: configService.get('CONTECH_SERVICE_PORT') || 3002,
           },
         }),
       },
@@ -65,8 +65,8 @@ import { CareersServiceModule } from './careers-service/careers.module';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get('EVENTS_SERVICE_HOST'),
-            port: configService.get('EVENTS_SERVICE_PORT'),
+            host: configService.get('EVENTS_SERVICE_HOST') || 'localhost',
+            port: configService.get('EVENTS_SERVICE_PORT') || 3004,
           },
         }),
       },
@@ -77,7 +77,7 @@ import { CareersServiceModule } from './careers-service/careers.module';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get('CAREERS_SERVICE_HOST'),
+            host: configService.get('CAREERS_SERVICE_HOST') || 'localhost',
             port: Number(configService.get('CAREERS_SERVICE_PORT')) || 3008,
           },
         }),

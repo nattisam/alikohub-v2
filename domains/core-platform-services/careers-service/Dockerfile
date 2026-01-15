@@ -36,8 +36,7 @@ COPY --from=builder /usr/src/app/prisma ./prisma
 
 
 # Expose the port the app runs on
-EXPOSE 3002
+EXPOSE 3008
 
 # Command to run the application
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
-

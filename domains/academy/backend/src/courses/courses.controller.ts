@@ -22,12 +22,12 @@ export class CoursesController {
 
   @MessagePattern({ cmd: 'find_all_courses' })
   async findAll(@Payload() payload: { query: any; user: AuthenticatedUser }) {
-    return await this.coursesService.findAll(payload.query);
+    return await this.coursesService.findAll(payload.query, payload.user);
   }
 
   @MessagePattern({ cmd: 'find_course_by_id' })
   async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return await this.coursesService.findOne(payload.id);
+    return await this.coursesService.findOne(payload.id, payload.user);
   }
 
   @MessagePattern({ cmd: 'update_course' })

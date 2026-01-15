@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
 import { EmailService } from './email.service';
-import { AcademyRole, ContechRole, EventsRole, GlobalRole } from '@prisma/client';
+import { AcademyRole, ContechRole, EventsRole, GlobalRole, CareersRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -130,6 +130,77 @@ export class AuthService {
 		};
 	}
 
+	async createRecruiter(dto: any) {
+		this.logger.log(`Admin creating recruiter: ${dto.email}`);
+		
+		const firebase = this.firebaseService.getAuth();
+		let userRecord;
+		try {
+			userRecord = await firebase.createUser({
+				email: dto.email,
+				password: dto.password,
+				displayName: dto.firstname + (dto.lastname ? ' ' + dto.lastname : ''),
+			});
+			this.logger.log(`Firebase user created for recruiter: ${userRecord.uid}`);
+		} catch (e: any) {
+			this.logger.error(`Firebase createUser error (recruiter): ${e.code} - ${e.message}`);
+			if (e.code === 'auth/email-already-exists') {
+				throw new RpcException({
+					statusCode: HttpStatus.CONFLICT,
+					message: 'User with this email already exists',
+					error: 'Conflict',
+				});
+			}
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: e.message || 'Failed to create user',
+				error: 'Internal Server Error',
+			});
+		}
+
+		// Hash password for DB storage
+		const hashedPassword = dto.password ? await this.argon2Service.hash(dto.password) : undefined;
+
+		// Create user and domain profiles
+		await this.userService.createUser({
+			firebaseId: userRecord.uid,
+			email: userRecord.email,
+			firstname: dto.firstname,
+			lastname: dto.lastname,
+			password: hashedPassword,
+			globalRole: GlobalRole.USER,
+			status: 'ACTIVE',
+		});
+
+		// Create CareersUser record with RECRUITER role
+		await this.prisma.careersUser.create({
+			data: {
+				userId: userRecord.uid,
+				role: CareersRole.RECRUITER,
+				status: 'ACTIVE',
+			}
+		});
+
+		// Create other domain records with default USER role
+		await this.prisma.academyUser.create({
+			data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
+		});
+		await this.prisma.contechUser.create({
+			data: { userId: userRecord.uid, role: ContechRole.USER, status: 'ACTIVE' }
+		});
+		await this.prisma.eventsUser.create({
+			data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
+		});
+
+		const user = await this.userService.findByFirebaseId(userRecord.uid);
+		this.logger.log(`Recruiter created in database: ${user.id}`);
+		
+		return {
+			user: this.toPlain(user),
+			message: 'Recruiter created successfully',
+		};
+	}
+
 	async login(dto: any) {
 		this.logger.log(`Login attempt for email: ${dto.email}`);
 		
@@ -211,6 +282,11 @@ export class AuthService {
 			plain.eventsStatus = user.eventsUser.status;
 		}
 
+		if (user.careersUser) {
+			plain.careersRole = user.careersUser.role;
+			plain.careersStatus = user.careersUser.status;
+		}
+
 		return plain;
 	}
 
@@ -233,6 +309,8 @@ export class AuthService {
 			contechStatus: user.contechUser?.status,
 			eventsRole: user.eventsUser?.role,
 			eventsStatus: user.eventsUser?.status,
+			careersRole: user.careersUser?.role,
+			careersStatus: user.careersUser?.status,
 		};
 
 		const accessToken = this.jwtService.sign(payload);
