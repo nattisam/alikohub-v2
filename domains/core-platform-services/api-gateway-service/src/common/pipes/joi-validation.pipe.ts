@@ -17,8 +17,15 @@ export class JoiValidationPipe implements PipeTransform {
     });
     
     if (error) {
-      const messages = error.details.map(d => d.message).join(', ');
-      throw new BadRequestException(`Validation failed: ${messages}`);
+      const errors = error.details.map(d => ({
+        field: d.path.join('.'),
+        message: d.message,
+        type: d.type
+      }));
+      throw new BadRequestException({
+        message: 'Validation failed',
+        errors
+      });
     }
     
     return validatedValue;

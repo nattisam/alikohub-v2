@@ -9,6 +9,12 @@ export class JobsService {
 
   async createJob(data: any, userId: string) {
     this.logger.log(`Creating job: ${data.title} by user: ${userId}`);
+    
+    // Normalize JobType (e.g., if frontend sends INTERN instead of INTERNSHIP)
+    if (data.type === 'INTERN') {
+      data.type = 'INTERNSHIP';
+    }
+
     return this.prisma.job.create({
       data: {
         ...data,
@@ -39,25 +45,48 @@ export class JobsService {
     return job;
   }
 
-  async updateJob(id: number, data: any, userId: string) {
+  async updateJob(id: number, data: any, userId: string, isAdmin: boolean = false) {
     const job = await this.findOneJob(id);
     
-    // In a single company model, any recruiter can manage jobs, 
-    // but usually we check if they are the one who posted it or an admin.
-    // For now, let's just update.
+    // Ownership check: only the poster or an admin can update
+    if (!isAdmin && job.postedBy !== userId) {
+      this.logger.warn(`User ${userId} attempted to update job ${id} without permission`);
+      throw new ForbiddenException('You do not have permission to update this job');
+    }
+
+    // Normalize JobType
+    if (data.type === 'INTERN') {
+      data.type = 'INTERNSHIP';
+    }
+
     return this.prisma.job.update({
       where: { id },
       data,
     });
   }
 
-  async deleteJob(id: number) {
+  async deleteJob(id: number, userId: string, isAdmin: boolean = false) {
+    const job = await this.findOneJob(id);
+
+    // Ownership check
+    if (!isAdmin && job.postedBy !== userId) {
+       this.logger.warn(`User ${userId} attempted to delete job ${id} without permission`);
+       throw new ForbiddenException('You do not have permission to delete this job');
+    }
+
     return this.prisma.job.delete({
       where: { id },
     });
   }
 
   async applyToJob(jobId: number, userId: string, applicationData: { coverLetter?: string; resumeUrl: string }) {
+    // Validate resumeUrl
+    try {
+      new URL(applicationData.resumeUrl);
+    } catch (e) {
+      throw new ForbiddenException('Invalid resume URL provided');
+    }
+
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });
     if (!job || job.status !== 'OPEN') {
       throw new NotFoundException(`Job with ID ${jobId} is not available for applications`);

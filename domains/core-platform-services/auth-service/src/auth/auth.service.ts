@@ -133,8 +133,42 @@ export class AuthService {
 	async createRecruiter(dto: any) {
 		this.logger.log(`Admin creating recruiter: ${dto.email}`);
 		
+		// 1. Check if user already exists in Main DB
+		const existingUser = await this.userService.findByEmail(dto.email);
+		if (existingUser) {
+			throw new RpcException({
+				statusCode: HttpStatus.CONFLICT,
+				message: 'User with this email already exists in our database. Please use a different email or update the existing user.',
+				error: 'Conflict',
+			});
+		}
+
 		const firebase = this.firebaseService.getAuth();
 		let userRecord;
+
+		// 2. Check if user already exists in Firebase
+		try {
+			userRecord = await firebase.getUserByEmail(dto.email);
+			if (userRecord) {
+				throw new RpcException({
+					statusCode: HttpStatus.CONFLICT,
+					message: 'User with this email already exists in Firebase. Please sync the database or use a different email.',
+					error: 'Conflict',
+				});
+			}
+		} catch (e: any) {
+			// auth/user-not-found is what we expect
+			if (e.code !== 'auth/user-not-found') {
+				this.logger.error(`Error checking Firebase for email ${dto.email}:`, e);
+				throw new RpcException({
+					statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+					message: 'Error verifying user existence in external auth service',
+					error: 'Internal Server Error',
+				});
+			}
+		}
+
+		// 3. Create Firebase User
 		try {
 			userRecord = await firebase.createUser({
 				email: dto.email,
@@ -143,17 +177,10 @@ export class AuthService {
 			});
 			this.logger.log(`Firebase user created for recruiter: ${userRecord.uid}`);
 		} catch (e: any) {
-			this.logger.error(`Firebase createUser error (recruiter): ${e.code} - ${e.message}`);
-			if (e.code === 'auth/email-already-exists') {
-				throw new RpcException({
-					statusCode: HttpStatus.CONFLICT,
-					message: 'User with this email already exists',
-					error: 'Conflict',
-				});
-			}
+			this.logger.error(`Failed to create Firebase user: ${e.message}`, e);
 			throw new RpcException({
 				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-				message: e.message || 'Failed to create user',
+				message: e.message || 'Failed to create external user account',
 				error: 'Internal Server Error',
 			});
 		}
@@ -161,44 +188,64 @@ export class AuthService {
 		// Hash password for DB storage
 		const hashedPassword = dto.password ? await this.argon2Service.hash(dto.password) : undefined;
 
-		// Create user and domain profiles
-		await this.userService.createUser({
-			firebaseId: userRecord.uid,
-			email: userRecord.email,
-			firstname: dto.firstname,
-			lastname: dto.lastname,
-			password: hashedPassword,
-			globalRole: GlobalRole.USER,
-			status: 'ACTIVE',
-		});
+		// 4. Create user in Main DB - use a transaction to ensure all domain records are created
+		try {
+			return await this.prisma.$transaction(async (tx) => {
+				const newUser = await tx.user.create({
+					data: {
+						firebaseId: userRecord.uid,
+						email: userRecord.email,
+						firstname: dto.firstname,
+						lastname: dto.lastname,
+						password: hashedPassword,
+						globalRole: GlobalRole.USER,
+						status: 'ACTIVE',
+					}
+				});
 
-		// Create CareersUser record with RECRUITER role
-		await this.prisma.careersUser.create({
-			data: {
-				userId: userRecord.uid,
-				role: CareersRole.RECRUITER,
-				status: 'ACTIVE',
+				// Create CareersUser record with RECRUITER role
+				await tx.careersUser.create({
+					data: {
+						userId: userRecord.uid,
+						role: CareersRole.RECRUITER,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create other domain records with default USER role
+				await tx.academyUser.create({
+					data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
+				});
+				await tx.contechUser.create({
+					data: { userId: userRecord.uid, role: ContechRole.USER, status: 'ACTIVE' }
+				});
+				await tx.eventsUser.create({
+					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
+				});
+
+				this.logger.log(`Recruiter successfully created in database with ID: ${newUser.id}`);
+				
+				return {
+					user: this.toPlain(newUser),
+					message: 'Recruiter created successfully',
+				};
+			});
+		} catch (error: any) {
+			this.logger.error(`Failed to create recruiter records in database for user ${userRecord.uid}:`, error);
+			// Rollback Firebase user creation if DB creation fails to stay in sync
+			try {
+				await firebase.deleteUser(userRecord.uid);
+				this.logger.log(`Cleaned up Firebase user ${userRecord.uid} after DB failure`);
+			} catch (cleanupError) {
+				this.logger.error(`Failed to cleanup Firebase user ${userRecord.uid}:`, cleanupError);
 			}
-		});
-
-		// Create other domain records with default USER role
-		await this.prisma.academyUser.create({
-			data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
-		});
-		await this.prisma.contechUser.create({
-			data: { userId: userRecord.uid, role: ContechRole.USER, status: 'ACTIVE' }
-		});
-		await this.prisma.eventsUser.create({
-			data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
-		});
-
-		const user = await this.userService.findByFirebaseId(userRecord.uid);
-		this.logger.log(`Recruiter created in database: ${user.id}`);
-		
-		return {
-			user: this.toPlain(user),
-			message: 'Recruiter created successfully',
-		};
+			
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: 'Failed to initialize recruiter profile. Please try again.',
+				error: 'Internal Server Error',
+			});
+		}
 	}
 
 	async login(dto: any) {
@@ -542,12 +589,20 @@ export class AuthService {
 		return this.userService.getTeacherApplications();
 	}
 
-	async approveTeacherApplication(applicationId: string, requestingUserRole?: string) {
+	async approveTeacherApplication(applicationId: string, requestingUserRole?: string, reviewerId?: string, reviewNotes?: string) {
 		if (requestingUserRole !== 'ADMIN') {
 			throw new RpcException({
 				statusCode: HttpStatus.FORBIDDEN,
 				message: 'Only admins can approve teacher applications',
 				error: 'Forbidden',
+			});
+		}
+
+		if (!reviewNotes) {
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Review notes are required for approval',
+				error: 'Bad Request',
 			});
 		}
 
@@ -560,10 +615,18 @@ export class AuthService {
 			});
 		}
 
+		if (application.status !== 'PENDING') {
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: `Application is already ${application.status}`,
+				error: 'Bad Request',
+			});
+		}
+
 		const userId = application.userId;
 
-		// Update application status
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED');
+		// Update application status with reviewer info
+		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
 
 		// Assign instructor role to user
 		await this.userService.updateAcademyRole(userId, 'INSTRUCTOR', 'ACTIVE');
@@ -576,7 +639,7 @@ export class AuthService {
 		};
 	}
 
-	async rejectTeacherApplication(applicationId: string, requestingUserRole?: string) {
+	async rejectTeacherApplication(applicationId: string, requestingUserRole?: string, reviewerId?: string, reviewNotes?: string) {
 		if (requestingUserRole !== 'ADMIN') {
 			throw new RpcException({
 				statusCode: HttpStatus.FORBIDDEN,
@@ -585,8 +648,33 @@ export class AuthService {
 			});
 		}
 
-		// Update application status
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED');
+		if (!reviewNotes) {
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Review notes are required for rejection',
+				error: 'Bad Request',
+			});
+		}
+
+		const application = await this.userService.getTeacherApplication(applicationId);
+		if (!application) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'Application not found',
+				error: 'Not Found',
+			});
+		}
+
+		if (application.status !== 'PENDING') {
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: `Application is already ${application.status}`,
+				error: 'Bad Request',
+			});
+		}
+
+		// Update application status with reviewer info
+		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
 
 		return {
 			message: 'Teacher application rejected',

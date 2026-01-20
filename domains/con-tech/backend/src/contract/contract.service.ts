@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Assuming you have this service
 import { v2 as cloudinary } from 'cloudinary';
@@ -12,23 +12,22 @@ export class ContractService {
     private cloudinaryService: CloudinaryService, // Inject your Cloudinary service
   ) { }
 
-  async uploadAndCreateContract(
+  async createContract(
     projectId: number,
-    fileBuffer: Buffer,
-    originalName: string,
+    contractUrl: string,
   ) {
-    // 1. Upload the file to Cloudinary as a private raw file
-    const uploadResult = await this.cloudinaryService.uploadRaw(fileBuffer, {
-      resource_type: 'raw', // Important for non-image files
-      type: 'private',      // Important for security
-      public_id: `contracts/${projectId}/${Date.now()}-${originalName}`, // Organized folder structure
-    });
+    // Validate URL
+    try {
+      new URL(contractUrl);
+    } catch {
+      throw new BadRequestException('Invalid contract URL');
+    }
 
-    // 2. Save the metadata to the database
+    // Save the metadata to the database
     return this.prisma.contract.create({
       data: {
         projectId,
-        contractFile: uploadResult.secure_url,
+        contractFile: contractUrl,
         status: 'DRAFT', // Initial status
         changeOrders: [], // Initial empty array
       },

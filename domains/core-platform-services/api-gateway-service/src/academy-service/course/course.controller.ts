@@ -71,6 +71,21 @@ export class CourseController {
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
 
+  // Get pending courses (Admin only)
+  @Get('pending')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Get courses pending approval' })
+  @ApiResponse({ status: 200, description: 'List of pending courses' })
+  @ApiResponse({ status: 403, description: 'Admin role required' })
+  @ApiQuery({ name: 'page', required: false })
+  getPendingCourses(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = { 
+      query: { ...query, status: 'PENDING_APPROVAL' }, 
+      user: req.user 
+    };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
+  }
+
   // Get a course by ID
   @Get(':id')
   // @UseGuards(AuthGuard, CourseAccessGuard)

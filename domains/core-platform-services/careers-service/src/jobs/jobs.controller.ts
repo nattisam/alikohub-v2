@@ -27,8 +27,8 @@ export class JobsController {
   }
 
   @MessagePattern({ cmd: 'delete_job' })
-  async deleteJob(@Payload() id: number) {
-    return this.jobsService.deleteJob(id);
+  async deleteJob(@Payload() data: { id: number; userId: string; isAdmin: boolean }) {
+    return this.jobsService.deleteJob(data.id, data.userId, data.isAdmin);
   }
 
   @MessagePattern({ cmd: 'apply_job' })
