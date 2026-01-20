@@ -1,25 +1,36 @@
 import React from "react";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import RoleSelectionModal from "../auth/RoleSelectionModal";
-import AcademyStudentDashboard from "../../Pages/student/AcademyStudentDashboard";
-import StudentCourseOverview from "../../Pages/student/StudentCourseOverview";
-import StudentProfile from "../../Pages/student/StudentProfile";
+import AcademyStudentDashboard from "../../pages/student/AcademyStudentDashboard";
+import StudentCourseOverview from "../../pages/student/StudentCourseOverview";
+import StudentProfile from "../../pages/student/StudentProfile";
 import StudentDashboardLayout from "./StudentDashboardLayout";
-import StudentCertificatesPage from "../../Pages/student/StudentCertificatesPage";
-import ModulePage from "../../Pages/student/ModulePage";
-import LessonPage from "../../Pages/student/LessonPage";
+import StudentCertificatesPage from "../../pages/student/StudentCertificatesPage";
+import LessonPage from "../../pages/student/LessonPage";
 
 import NotFoundState from "../states/NotFoundState";
 
 const StudentDashboardRouter: React.FC = () => {
   const { user: currentUser } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
 
   // Check the active role from the user's academyUser
   const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
+  const hasSelectedRole = currentUser?.hasSelectedRole;
+  // Move redirection to useEffect
+  React.useEffect(() => {
+    // Check if user is trying to access student dashboard but has a different active role
+    if (currentUser && activeRole && activeRole !== 'STUDENT' && activeRole !== 'ADMIN') {
+      // Redirect to the appropriate dashboard based on their role
+      if (activeRole === 'INSTRUCTOR') {
+        navigate('/instructor');
+      } else {
+        // Redirect to role selection if they don't have the right role
+        navigate('/role');
+      }
+    }
+  }, [currentUser, activeRole]);
 
   // If user hasn't selected a role yet, show role selection modal
   if (currentUser && !hasSelectedRole) {
@@ -31,24 +42,16 @@ const StudentDashboardRouter: React.FC = () => {
             <p className="text-gray-600 mb-6">
               To access the student dashboard, please select the Student role.
             </p>
-            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+            <RoleSelectionModal onClose={() => navigate('/')} />
           </div>
         </div>
       </div>
     );
   }
 
-  // Check if user is trying to access student dashboard but has a different active role
+  // Return null if redirecting
   if (currentUser && activeRole && activeRole !== 'STUDENT' && activeRole !== 'ADMIN') {
-    // Redirect to the appropriate dashboard based on their role
-    if (activeRole === 'INSTRUCTOR') {
-      window.location.href = '/instructor';
-      return null;
-    } else {
-      // Redirect to role selection if they don't have the right role
-      window.location.href = '/role';
-      return null;
-    }
+    return null; 
   }
 
   return (

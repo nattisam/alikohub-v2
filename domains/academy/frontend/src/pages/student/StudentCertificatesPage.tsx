@@ -1,10 +1,11 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import EmptyState from '../../components/states/EmptyState';
 import { FaCertificate } from 'react-icons/fa';
 
 const StudentCertificatesPage: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="p-6">
@@ -20,7 +21,7 @@ const StudentCertificatesPage: React.FC = () => {
           icon={<FaCertificate className="text-blue-500 text-3xl" />}
           actionText="Browse Courses"
           showAction={true}
-          onAction={() => window.location.href = '/courses'}
+          onAction={() => navigate('/courses')}
         />
       </div>
     </div>

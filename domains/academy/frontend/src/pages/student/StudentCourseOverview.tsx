@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import type { Course } from "../../components/common/types.d.tsx";
 import AllCourses from "../../components/course/AllCourses";
 
 import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
@@ -10,14 +9,15 @@ import TeacherApplicationModal from "../../components/auth/TeacherApplicationMod
 const StudentCourseOverview = () => {
   const { user: currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [courseForModuleView, setCourseForModuleView] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
 
   // Check role access similar to dashboard
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      navigate('/auth/login');
+      return;
+    }
 
-    const userRole = currentUser.academyRole || currentUser.currentRole || currentUser.academyUser?.role;
     const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
     const pendingRole = currentUser.pendingRole;
     const instructorStatus = currentUser.roleStatus?.instructor;
@@ -31,8 +31,6 @@ const StudentCourseOverview = () => {
     if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
       return; // allowed to see application modal
     }
-
-
 
     // Redirect to role selection if user hasn't selected a role yet
     navigate("/role"); // Redirect to role selection page
@@ -50,23 +48,18 @@ const StudentCourseOverview = () => {
     );
   }
 
-  // If user is not logged in, redirect to login
+  // If user is not logged in, return null (redirection handled in useEffect)
   if (!currentUser) {
-    window.location.href = '/auth/login';
     return null;
   }
 
   // Check if user has selected a role and it's appropriate
-  const userRole = currentUser?.academyRole || currentUser?.currentRole || currentUser?.academyUser?.role;
   const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
+  const hasSelectedRole = (currentUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
   
   // Check if user wants to apply as instructor
   const pendingRole = currentUser?.pendingRole;
   const instructorStatus = currentUser?.roleStatus?.instructor;
-  
-  // Check if user has selected a role based on academyUser role
-  const academyUserRole = currentUser?.academyUser?.role;
   
   // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
   if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
@@ -120,6 +113,7 @@ const StudentCourseOverview = () => {
         </div>
 
         <AllCourses 
+          key={refreshKey}
           onViewCourseContent={handleViewCourseContent} 
           onEnrollmentComplete={handleEnrollmentComplete}
         />

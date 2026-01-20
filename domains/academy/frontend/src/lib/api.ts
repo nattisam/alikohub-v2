@@ -1,106 +1,79 @@
-import axios from 'axios';
+import axios, { AxiosError } from "axios"
 
+// Base API client for academy services
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006';
 
-// Create a map to track ongoing requests for deduplication
-const ongoingRequests = new Map<string, Promise<any>>();
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // Initial delay in ms
+const MAX_RETRY_DELAY = 10000; // Maximum delay in ms
 
-const apiClient = axios.create({
+// Helper function to calculate exponential backoff delay
+const getRetryDelay = (retryCount: number): number => {
+  const delay = Math.min(RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+  // Add jitter to prevent thundering herd
+  return delay + Math.random() * 1000;
+};
+
+// Helper function to add retry config to request
+const addRetryConfig = (config: any, retryCount: number = 0) => {
+  config.__retryCount = retryCount;
+  return config;
+};
+
+// Response interceptor for handling 429 errors with retry logic
+const createRetryInterceptor = (instance: typeof api | typeof publicApi) => {
+  instance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      const config = error.config as (any & { __retryCount?: number }) | undefined;
+      
+      // Only retry on 429 errors
+      if (error.response?.status === 429 && config) {
+        const retryCount = config.__retryCount || 0;
+        
+        if (retryCount < MAX_RETRIES) {
+          const delay = getRetryDelay(retryCount);
+          
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Update retry count and retry the request
+          const newConfig = addRetryConfig({ ...config }, retryCount + 1);
+          return instance.request(newConfig);
+        }
+      }
+      
+      return Promise.reject(error);
+    }
+  );
+};
+
+// API client for authenticated requests
+export const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 15000, // Increased timeout to 15 seconds
+  withCredentials: false,
+})
+
+// API client for public requests (no auth required)
+export const publicApi = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: false,
+})
+
+// Request interceptor for authenticated API client
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
-// Request interceptor to add Access Token for API authentication and handle deduplication
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    // Create a unique key for the request to enable deduplication
-    // Use URLSearchParams to ensure consistent ordering of parameters
-    const paramsString = config.params ? new URLSearchParams(config.params).toString() : '';
-    const requestKey = `${config.method?.toUpperCase()}_${config.url}_${paramsString}_${typeof config.data === 'string' ? config.data : JSON.stringify(config.data || '')}`;
-    
-    // If there's already an ongoing request with the same key, return its promise
-    if (ongoingRequests.has(requestKey)) {
-      console.log(`Deduplicating request for key: ${requestKey}`);
-      return ongoingRequests.get(requestKey);
-    }
-    
-    // Create a new promise for this request
-    const requestPromise = new Promise((resolve, reject) => {
-      // We'll resolve/reject this promise in the response interceptors
-      // Store the resolve/reject functions on the config temporarily
-      (config as any)._resolve = resolve;
-      (config as any)._reject = reject;
-    });
-    
-    // Store the promise in our map
-    ongoingRequests.set(requestKey, requestPromise);
-    
-    return config;
-  },
-  (error) => {
-    console.log('API Interceptor: Error in request interceptor', error);
-    return Promise.reject(error);
-  }
-);
+// Add retry interceptors to both API clients
+createRetryInterceptor(api);
+createRetryInterceptor(publicApi);
 
-// Response interceptor to handle successful responses and cleanup ongoing requests
-apiClient.interceptors.response.use(
-  (response) => {
-    // Clean up ongoing requests
-    const paramsString = response.config.params ? new URLSearchParams(response.config.params).toString() : '';
-    const requestKey = `${response.config.method?.toUpperCase()}_${response.config.url}_${paramsString}_${typeof response.config.data === 'string' ? response.config.data : JSON.stringify(response.config.data || '')}`;
-    
-    // Resolve the original promise
-    if ((response.config as any)._resolve) {
-      (response.config as any)._resolve(response);
-    }
-    
-    // Remove from ongoing requests
-    ongoingRequests.delete(requestKey);
-    return response;
-  },
-  (error) => {
-    // Clean up ongoing requests
-    if (error.config) {
-      const paramsString = error.config.params ? new URLSearchParams(error.config.params).toString() : '';
-      const requestKey = `${error.config.method?.toUpperCase()}_${error.config.url}_${paramsString}_${typeof error.config.data === 'string' ? error.config.data : JSON.stringify(error.config.data || '')}`;
-      
-      // Reject the original promise
-      if ((error.config as any)._reject) {
-        (error.config as any)._reject(error);
-      }
-      
-      // Remove from ongoing requests
-      ongoingRequests.delete(requestKey);
-    }
-    
-    if (error.response?.status === 401) {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        // Clear authentication data
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('firebaseCustomToken');
-        localStorage.removeItem('user');
-        
-        // Dispatch a custom event to notify other tabs about logout
-        window.dispatchEvent(new CustomEvent('userLoggedOut'));
-      }
-    }
-    // 429 errors are now handled by retry logic in the interceptor
-    // This check is kept for logging purposes but retry happens before reaching here
-    if (error.response?.status === 429) {
-      console.warn("Rate limited — retrying with exponential backoff");
-    }
-    return Promise.reject(error);
-  }
-);
-
-export default apiClient;
+// Default export for backward compatibility during refactor, but deprecated
+export default api;

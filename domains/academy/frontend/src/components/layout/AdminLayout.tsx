@@ -106,25 +106,6 @@ const AdminLayout = () => {
               })}
             </ul>
           </nav>
-          
-          <div className="p-4 border-t border-blue-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">{currentUser?.firstname} {currentUser?.lastname}</p>
-                <p className="text-xs text-blue-200">Admin User</p>
-              </div>
-              <button
-                onClick={() => {
-                  logout();
-                  navigate("/auth/login");
-                }}
-                className="p-2 text-blue-200 hover:bg-blue-700 rounded-full hover:text-white transition-colors"
-                title="Logout"
-              >
-                <FaSignOutAlt size={18} />
-              </button>
-            </div>
-          </div>
         </div>
       </aside>
 

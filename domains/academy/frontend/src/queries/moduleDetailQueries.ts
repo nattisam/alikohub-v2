@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { courseApi } from "../api/courseApi";
+import { courseService } from "../services/course-service";
 
 export const useCourseModulesOnly = (courseId: number) => {
   return useQuery({
     queryKey: ["course-modules-only", courseId],
     queryFn: async () => {
-      const modulesRes = await courseApi.getModules(courseId);
-      return modulesRes.data;
+      const modulesRes = await courseService.getModules(courseId);
+      return modulesRes;
     },
     enabled: !!courseId,
     staleTime: 15 * 60 * 1000,     // 15 minutes - longer cache

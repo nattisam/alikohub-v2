@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { academyAPI } from "../../services/api";
+import { authService } from "../../services/auth-service";
 import { FaCheckCircle } from "react-icons/fa";
 
 interface TeacherApplicationModalProps {
@@ -116,7 +116,7 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
         teachingCategories: filteredCategories,
       };
 
-      await academyAPI.applyTeacher(applicationData);
+      await authService.applyTeacher(applicationData);
       
       // After successful application, update the user's role status to pending
       if (currentUser) {

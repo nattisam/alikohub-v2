@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { academyApi } from "../api";
-import type { ITeachingSchedule } from "../components/types.d";
+import { progressService } from "../services/progress-service";
+import { api } from "../lib/api";
+import type { ITeachingSchedule } from "../components/common/types.d";
 
 export const useInstructorStats = () => {
   return useQuery({
     queryKey: ["instructor-stats"],
     queryFn: async () => {
-      const res = await academyApi.get("/academy/progress/instructor/stats");
-      return res.data;
+      const res = await progressService.getInstructorStats();
+      return res;
     },
   });
 };
@@ -17,7 +18,7 @@ export const useTeachingSchedules = () => {
     queryKey: ["teaching-schedules"],
     queryFn: async () => {
       try {
-        const response = await academyApi.get("/academy/teaching-schedules/instructor");
+        const response = await api.get("/academy/teaching-schedules/instructor");
         return response.data;
       } catch (error) {
         // Return empty array if user doesn't have permission

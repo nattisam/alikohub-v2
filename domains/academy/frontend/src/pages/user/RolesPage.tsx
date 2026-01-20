@@ -21,7 +21,7 @@ export default function RolesPage() {
   
   // If user is not logged in, redirect to login
   if (!currentUser) {
-    window.location.href = '/auth/login';
+    navigate('/auth/login');
     return null;
   }
 

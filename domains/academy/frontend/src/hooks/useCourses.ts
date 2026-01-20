@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Course } from "../components/types.d";
-import { courseApi } from "../api/courseApi";
+import type { Course } from "../services/course-service";
+import { courseService } from "../services/course-service";
 
 export const useCourses = () => {
   // Use React Query with the same queryKey as useAllCourses to share cache
   const { data: courses = [], isLoading, isError, error: queryError } = useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
-      const response = await courseApi.getPublishedCourses();
-      const coursesData = response.data.items || response.data;
+      const response = await courseService.getPublishedCourses();
+      const coursesData = response.items || response;
       return Array.isArray(coursesData) ? coursesData : [];
     },
     staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls

@@ -1,23 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { enrollmentApi } from "../api/enrollmentApi";
-import { courseApi } from "../api/courseApi";
-import type { Course } from "../components/types.d";
+import { enrollmentService } from "../services/enrollment-service";
+import { courseService } from "../services/course-service";
+import type { Course } from "../services/course-service";
 
 export const useAllCourses = () => {
   return useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
-      const response = await courseApi.getPublishedCourses();
-      const payload = (response.data && response.data.items) ? response.data.items : response.data;
+      const response = await courseService.getPublishedCourses();
+      const payload = (response && response.items) ? response.items : response;
       return Array.isArray(payload) ? payload : [];
     },
     staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
     gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
     refetchOnWindowFocus: false,   // prevent refetch on window focus
     refetchOnReconnect: false,     // prevent refetch on reconnect
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: Error | unknown) => {
       // Don't retry on 429 - let axios handle it to prevent cascading retries
-      if (error?.response?.status === 429) {
+      const err = error as { response?: { status?: number } };
+      if (err?.response?.status === 429) {
         return false;
       }
       return failureCount < 1;
@@ -36,9 +37,9 @@ export const useEnrolledCourses = (userId?: string) => {
       if (!userId) {
         return [];
       }
-      const response = await enrollmentApi.getEnrollmentsByUserId(userId);
+      const requestData = await enrollmentService.getEnrollmentsByUserId(userId);
       // Extract course data from the enrollment response
-      const coursesData = response.data.map((enrollment: any) => 
+      const coursesData = requestData.map((enrollment: { course: EnrollmentCourseData }) => 
         convertEnrollmentCourseToCourse(enrollment.course)
       );
       return coursesData;
@@ -55,7 +56,7 @@ export const useEnrollCourse = () => {
       const enrollmentData = {
         courseId: courseId
       };
-      return enrollmentApi.createEnrollment(enrollmentData);
+      return enrollmentService.createEnrollment(enrollmentData);
     },
     onSuccess: () => {
       // Invalidate enrolled courses to refresh the list
@@ -67,8 +68,19 @@ export const useEnrollCourse = () => {
   });
 };
 
+interface EnrollmentCourseData {
+  id: number;
+  title: string;
+  shortDescription?: string;
+  thumbnail: string;
+  category: string;
+  level?: string;
+  rating?: number;
+  price?: number;
+}
+
 // Helper function to convert enrollment course data to Course interface
-const convertEnrollmentCourseToCourse = (enrollmentCourse: any): Course => {
+const convertEnrollmentCourseToCourse = (enrollmentCourse: EnrollmentCourseData): Course => {
   return {
     id: enrollmentCourse.id,
     title: enrollmentCourse.title,

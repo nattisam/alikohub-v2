@@ -1,4 +1,4 @@
-import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useInstructorStats } from "../../queries/instructorStats";
 import { useInstructorCourses } from "../../queries/instructorCourses";
@@ -9,6 +9,7 @@ import AccessDenied from "../../components/states/AccessDenied";
 
 const InstructorDashboardMain: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   
   const instructorId = currentUser?.firebaseId;
   const { data: courses = [] } = useInstructorCourses(instructorId);
@@ -69,7 +70,7 @@ const InstructorDashboardMain: React.FC = () => {
           message="You haven't created any courses yet. Start by creating your first course."
           showAction={true}
           actionText="Create Course"
-          onAction={() => (window.location.href = "/instructor/create-course")}
+          onAction={() => navigate("/instructor/create-course")}
         />
       </div>
     );

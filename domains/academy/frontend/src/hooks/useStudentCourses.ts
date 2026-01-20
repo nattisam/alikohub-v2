@@ -1,6 +1,6 @@
 import { useAllCourses, useTrendingCourses, useEnrolledCourses, useEnrollCourse, getSimilarCourses } from "../queries/studentCourses";
 import { useAuth } from "../contexts/AuthContext";
-import type { Course } from "../components/types.d";
+import type { Course } from "../services/course-service";
 
 export const useStudentCourses = () => {
   const { user: currentUser } = useAuth();

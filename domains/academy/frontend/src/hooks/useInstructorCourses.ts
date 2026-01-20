@@ -1,7 +1,8 @@
 import { useInstructorCourses as useInstructorCoursesQuery, useCreateCourse, useUpdateCourse, useDeleteCourse } from "../queries/instructorCourses";
 import { useTeachingSchedules, useAddTeachingSchedule } from "../queries/instructorStats";
 import { useAuth } from "../contexts/AuthContext";
-import type { Course, ITeachingSchedule } from "../components/types.d";
+import type { Course } from "../services/course-service";
+import type { ITeachingSchedule } from "../components/common/types.d";
 
 export const useInstructorCourses = () => {
   const { user: currentUser } = useAuth();
@@ -27,7 +28,7 @@ export const useInstructorCourses = () => {
     createCourse: async (course: Partial<Course>) => {
       try {
         const response = await createCourseMutation.mutateAsync(course);
-        return response.data?.id || -1;
+        return response?.id || -1;
       } catch (error) {
         console.error("Error creating course:", error);
         return -1;

@@ -34,38 +34,38 @@ export function Header({ userRole }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-20 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
+    <header className="sticky top-0 z-20 bg-white/90 border-b border-gray-200 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
         <div>
-          <h2 className="text-xl font-semibold text-[#1C1800] leading-snug">
+          <h2 className="text-lg font-medium text-gray-900 leading-snug">
             {userRole === "applicant"
               ? "Discover roles that move your career forward."
               : "Manage roles, applicants, and hiring in one calm workspace."}
           </h2>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {!isAuthenticated ? (
             <div className="flex items-center gap-3">
               <Link to="/login">
-                <button className="px-4 py-2 text-sm font-medium text-[#0F4875] hover:text-[#1175BD] transition-colors">
+                <button className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0C69AD] transition-colors duration-300">
                   Login
                 </button>
               </Link>
               <Link to="/register">
-                <button className="px-4 py-2 text-sm font-medium bg-[#0F4875] text-white rounded-lg hover:bg-[#1175BD] transition-colors">
+                <button className="px-4 py-2.5 text-sm font-medium bg-[#0C69AD] text-white rounded-xl hover:bg-[#0A5FA0] hover:shadow-md transition-all duration-300">
                   Sign Up
                 </button>
               </Link>
             </div>
           ) : (
             <>
-              <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/80 bg-white text-[#1C1800]/70 hover:text-[#0F4875] hover:shadow-xs transition-colors">
+              <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-indigo-600 hover:border-indigo-500/30 hover:shadow-sm transition-all duration-300">
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-[#E6D600]" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-indigo-500" />
               </button>
               <div className="relative" ref={dropdownRef}>
                 <button 
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-[#0F4875] to-[#1175BD] text-white text-xs font-medium shadow-sm hover:opacity-90 transition-opacity"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-medium shadow-sm hover:bg-indigo-700 hover:shadow-md transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
                     setDropdownOpen(!dropdownOpen);
@@ -77,11 +77,11 @@ export function Header({ userRole }: HeaderProps) {
                 </button>
                 
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border border-border/60">
+                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50 border border-gray-100">
                     <div className="py-1">
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-300"
                       >
                         <LogOut className="w-4 h-4 mr-2" />
                         Logout

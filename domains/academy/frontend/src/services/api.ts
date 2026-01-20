@@ -24,10 +24,11 @@ export const authAPI = {
     try {
       await apiClient.post('/auth/login', { email, password: 'dummy-password' });
       return false;
-    } catch (error: any) {
-      if (error?.response?.status === 401) {
+    } catch (error: BaseError | unknown) {
+      const err = error as BaseError;
+      if (err?.response?.status === 401) {
         return false;
-      } else if (error?.response?.status === 400) {
+      } else if (err?.response?.status === 400) {
         return true;
       }
       return false;
@@ -39,6 +40,12 @@ export const authAPI = {
     return data;
   },
 };
+
+interface BaseError {
+  response?: {
+    status?: number;
+  };
+}
 
 export const academyAPI = {
   selectRole: async (role: string) => {
@@ -94,7 +101,7 @@ export const academyAPI = {
     return data;
   },
   
-  applyTeacher: async (applicationData: any) => {
+  applyTeacher: async (applicationData: Record<string, unknown>) => {
     const { data } = await apiClient.post('/auth/academy/apply-teacher', applicationData);
     return data;
   },

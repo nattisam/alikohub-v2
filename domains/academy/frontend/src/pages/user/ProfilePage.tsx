@@ -1,26 +1,27 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
-import { authAPI, academyAPI } from "../../services/api"; 
+import { api } from "../../lib/api"; 
 import {
-  FaUser,
   FaCamera,
-  FaSave,
-  FaTimes,
   FaEdit,
   FaExchangeAlt,
   FaUserPlus,
+  FaUser,
+  FaSave,
 } from "react-icons/fa";
 
 const ProfilePage = () => {
   const {
     user: currentUser,
     updateUser,
+    selectRole,
     isLoading,
+    switchRoleMutation,
     switchRole,
     isRoleSwitching,
-    switchRoleMutation,
   } = useAuth();
   
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const ProfilePage = () => {
 
   // If user is not logged in, redirect to login
   if (!currentUser) {
-    window.location.href = "/auth/login";
+    navigate("/auth/login");
     return null;
   }
 
@@ -86,7 +87,7 @@ const ProfilePage = () => {
             <p className="text-gray-600 mb-6">
               To access your profile, please select a role.
             </p>
-            <RoleSelectionModal onClose={() => (window.location.href = "/")} />
+            <RoleSelectionModal onClose={() => navigate("/")} />
           </div>
         </div>
       </div>
@@ -108,7 +109,7 @@ const ProfilePage = () => {
         lastname: currentUser.lastname || "",
         email: currentUser.email || "",
         bio: currentUser.bio || "",
-        title: (currentUser as any).title || "", // For instructors
+        title: (currentUser as unknown as { title: string }).title || "", // For instructors
       });
     }
   }, [currentUser]);
@@ -136,7 +137,7 @@ const ProfilePage = () => {
 
         // Upload the file to our file upload service through the API gateway
         // Use axios instead of fetch for consistency
-        const response = await academyAPI.post("/upload/image", formData, {
+        const response = await api.post("/upload/image", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -145,7 +146,7 @@ const ProfilePage = () => {
         if (response.data) {
           const result = response.data;
 
-          const updateResponse = await authAPI.patch(
+          const updateResponse = await api.patch(
             `/users/${currentUser.firebaseId}`,
             {
               profilePicture: result.url,
@@ -191,7 +192,7 @@ const ProfilePage = () => {
       ) {
         updateData.title = formData.title;
       }
-      const response = await authAPI.patch(
+      const response = await api.patch(
         `/users/${currentUser.firebaseId}`,
         updateData
       );
@@ -494,7 +495,7 @@ const ProfilePage = () => {
                           Title
                         </dt>
                         <dd className="mt-1 text-sm text-gray-900">
-                          {(currentUser as any).title || "Not provided"}
+                          {(currentUser as unknown as { title: string }).title || "Not provided"}
                         </dd>
                       </div>
                     )}

@@ -6,13 +6,13 @@ import React, {
   ReactNode,
 } from "react";
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
-import { authAPI, academyAPI } from "../services/api";
+import { authService } from "../services/auth-service";
 
 import type {
   CurrentUser,
   LoginCredentials,
   SignupCredentials,
-} from "../types";
+} from "../services/auth-service";
 
 type Role = "STUDENT" | "INSTRUCTOR" | "ADMIN";
 
@@ -130,7 +130,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
 
   const loginMutation = useMutation({
-    mutationFn: (c: LoginCredentials) => authAPI.login(c),
+    mutationFn: (c: LoginCredentials) => authService.login(c),
     onSuccess: async (data) => {
       // Store the token first to make it available for subsequent API calls
       localStorage.setItem("accessToken", data.accessToken);
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       try {
         // Use the user data from the response which may contain updated role information
-        const profile = await academyAPI.getProfile();
+        const profile = await authService.getProfile();
         const finalUser = buildUser(data.user);
 
         setUser(finalUser);
@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   const signupMutation = useMutation({
-    mutationFn: (c: SignupCredentials) => authAPI.register(c),
+    mutationFn: (c: SignupCredentials) => authService.register(c),
     onSuccess: async (data) => {
       // Store the token first to make it available for subsequent API calls
       localStorage.setItem("accessToken", data.accessToken);
@@ -164,7 +164,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       try {
         // Use the user data from the response which may contain updated role information
-        const profile = await academyAPI.getProfile();
+        const profile = await authService.getProfile();
         const finalUser = buildUser(data.user);
 
         setUser(finalUser);
@@ -196,11 +196,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setUser(updated);
         localStorage.setItem("user", JSON.stringify(updated));
         
-        return { error: "INSTRUCTOR_APPLICATION_REQUIRED" };
+        return Promise.resolve({ error: "INSTRUCTOR_APPLICATION_REQUIRED" });
       }
       
       // For non-instructor roles, make the API call
-      return academyAPI.selectRole(role);
+      return authService.selectRole(role);
     },
     onSuccess: async (res) => {
       // Check if this was an instructor application case
@@ -215,7 +215,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       // Use the user data from the response which contains the updated role information
-      const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
+      const updatedUserFromResponse = res.user || (await authService.getProfile());
       
       // When selecting a role for the first time, also set it as the active role by calling switchRole
       const updated = buildUser(updatedUserFromResponse);
@@ -225,9 +225,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       
       // After selecting a role, automatically switch to that role to make it the active role
       try {
-        const switchRes = await academyAPI.switchRole(updated.academyActiveRole as Role);
+        const switchRes = await authService.switchRole(updated.academyActiveRole as Role);
         // Use the user data from the switch response which contains the updated active role
-        const switchedUserFromResponse = switchRes.user || (await academyAPI.getProfile());
+        const switchedUserFromResponse = switchRes.user || (await authService.getProfile());
         const switchedUser = buildUser(switchedUserFromResponse);
         updateUser(switchedUser);
       } catch (error) {
@@ -252,9 +252,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     
     // Dispatch a custom event to notify other tabs about logout
     window.dispatchEvent(new CustomEvent('userLoggedOut'));
-    
-    // Redirect to login
-    window.location.href = '/auth/login';
   };
 
   const updateUser = (u: CurrentUser) => {
@@ -267,7 +264,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const switchRoleMutation = useMutation({
-    mutationFn: (role: Role) => academyAPI.switchRole(role),
+    mutationFn: (role: Role) => authService.switchRole(role),
     onMutate: () => {
       setIsRoleSwitching(true);
     },
@@ -277,7 +274,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       // Use the user data from the response which contains the updated active role
-      const updatedUserFromResponse = res.user || (await academyAPI.getProfile());
+      const updatedUserFromResponse = res.user || (await authService.getProfile());
 
       // Build user with the response data which contains the correct active role
       const updated = buildUser(updatedUserFromResponse);
@@ -302,14 +299,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const refreshProfile = async () => {
     if (!user) return null;
-    const profile = await academyAPI.getProfile();
+
+    const profile = await authService.getProfile();
     const updated = buildUser(profile);
     updateUser(updated);
     return updated;
   };
 
   const applyAsInstructorMutation = useMutation({
-    mutationFn: (data: any) => academyAPI.applyTeacher(data),
+    mutationFn: (data: any) => authService.applyTeacher(data),
     onSuccess: async () => {
       // Refresh profile to get updated role status
       await refreshProfile();

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { useCreateCourse } from "../../queries/instructorCourses";
 import type { Course } from "../../components/common/types.d";
 
@@ -25,6 +26,22 @@ const InstructorCreateCourse: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const createCourseMutation = useCreateCourse();
+  
+  // Check if user is an instructor
+  const { user: currentUser, isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth/login');
+      return;
+    }
+    
+    if (!currentUser || !currentUser.academyUser || currentUser.academyActiveRole !== 'INSTRUCTOR') {
+      alert('Access denied. You must be logged in as an instructor to create a course.');
+      navigate('/dashboard');
+      return;
+    }
+  }, [currentUser, isAuthenticated, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -38,8 +55,38 @@ const InstructorCreateCourse: React.FC = () => {
     e.preventDefault();
     
     try {
-      const response = await createCourseMutation.mutateAsync(course as Partial<Course>);
-      const courseId = response.data?.id || -1;
+      // Get instructor ID from auth context
+      const storedUser = window.localStorage.getItem('user');
+      if (!storedUser) {
+        alert("User session not found. Please log in again.");
+        return;
+      }
+      
+      const user = JSON.parse(storedUser);
+      const instructorId = user.academyUser?.id;
+      
+      if (!instructorId) {
+        alert("Instructor ID not found. Please make sure you're logged in as an instructor.");
+        return;
+      }
+      
+      // Prepare course data with only the fields the backend expects
+      // Based on working Postman request: title, shortDescription, longDescription, thumbnail, category, status
+      const courseData = {
+        title: course.title,
+        shortDescription: course.shortDescription,
+        longDescription: course.longDescription,
+        thumbnail: course.thumbnail,
+        category: course.category,
+        status: course.status,
+      };
+      
+      console.log("Sending course data:", courseData); // Debug log
+      
+      const response = await createCourseMutation.mutateAsync(courseData as Partial<Course>);
+      console.log("Create course response:", response); // Debug log
+      
+      const courseId = response.id || response.data?.id || -1;
       
       if (courseId > 0) {
         alert("Course created successfully!");
@@ -47,9 +94,29 @@ const InstructorCreateCourse: React.FC = () => {
       } else {
         alert("Failed to create course. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating course:", error);
-      alert("Failed to create course. Please try again.");
+      
+      // More specific error handling
+      let errorMessage = "Failed to create course. Please try again.";
+      
+      if (error.response) {
+        // Server responded with error status
+        console.error("Server error:", error.response.status, error.response.data);
+        if (error.response.data?.message) {
+          errorMessage = `Error: ${error.response.data.message}`;
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error("Network error:", error.request);
+        errorMessage = "Network error. Please check your connection and try again.";
+      } else {
+        // Something else happened
+        console.error("Request setup error:", error.message);
+        errorMessage = `Request error: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     }
   };
 

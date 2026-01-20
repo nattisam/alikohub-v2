@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/auth-context"
 import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm'

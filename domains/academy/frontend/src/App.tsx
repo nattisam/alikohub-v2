@@ -1,9 +1,7 @@
-import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
   Outlet,
   useLocation,
   useNavigate,
@@ -12,28 +10,28 @@ import { useAuth } from './contexts/AuthContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NotFoundState from './components/states/NotFoundState';
 
-import LoginPage from './Pages/auth/LoginPage';
+import LoginPage from './pages/auth/LoginPage';
 import RedirectIfAuthenticated from './components/auth/RedirectIfAuthenticated';
-import SignupPage from "./Pages/auth/SignupPage";
-import AcademyHomePage from "./Pages/user/AcademyHomePage";
-import AcademyAboutPage from "./Pages/user/AcademyAboutPage";
-import AcademyContactUsPage from "./Pages/user/AcademyContactUsPage";
-import AcademyStudentDashboard from "./Pages/student/AcademyStudentDashboard";
+import SignupPage from "./pages/auth/SignupPage";
+import AcademyHomePage from "./pages/user/AcademyHomePage";
+import AcademyAboutPage from "./pages/user/AcademyAboutPage";
+import AcademyContactUsPage from "./pages/user/AcademyContactUsPage";
+
 import InstructorDashboardRouter from "./components/layout/InstructorDashboardRouter";
 import StudentDashboardRouter from "./components/layout/StudentDashboardRouter";
-import CoursesPage from "./Pages/user/CoursesPage";
-import CourseDetailsPage from "./Pages/user/CourseDetailsPage";
+import CoursesPage from "./pages/user/CoursesPage";
+import CourseDetailsPage from "./pages/user/CourseDetailsPage";
 import AcademyHeader from "./components/layout/AcademyHeader";
-import EventDetailsPage from "./Pages/user/EventDetailsPage";
-import ProtectedRoute from "./components/common/ProtectedRoute";
+import EventDetailsPage from "./pages/user/EventDetailsPage";
+
 import DashboardRouter from "./components/layout/DashboardRouter";
-import RolesPage from "./Pages/user/RolesPage";
-import ProfilePage from "./Pages/user/ProfilePage";
-import SettingsPage from "./Pages/user/SettingsPage";
+import RolesPage from "./pages/user/RolesPage";
+import ProfilePage from "./pages/user/ProfilePage";
+import SettingsPage from "./pages/user/SettingsPage";
 import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
 import AdminDashboard from "./admin/AdminDashboard";
 import CoursesManagementPage from "./admin/CoursesManagementPage";
-import ModulePage from "./Pages/student/ModulePage";
+import ModulePage from "./pages/student/ModulePage";
 
 import AppRoute from "./components/common/AppRoute";
 import AdminRoute from "./components/common/AdminRoute";

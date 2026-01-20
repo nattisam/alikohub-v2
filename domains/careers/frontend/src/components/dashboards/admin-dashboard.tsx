@@ -55,103 +55,111 @@ export const AdminDashboard = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+    <div className="w-full min-h-screen bg-stone-50">
+      {/* Decorative background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
+      </div>
       
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Create New Recruiter</h2>
+      <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-10">Admin Dashboard</h1>
         
-        {message && (
-          <div className={`mb-4 p-3 rounded ${
-            message.includes('successfully') 
-              ? 'bg-green-100 text-green-700' 
-              : 'bg-red-100 text-red-700'
-          }`}>
-            {message}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Recruiter</h2>
+          
+          {message && (
+            <div className={`mb-6 p-4 rounded-xl ${
+              message.includes('successfully') 
+                ? 'bg-green-50 border border-green-200 text-green-700' 
+                : 'bg-red-50 border border-red-200 text-red-700'
+            }`}>
+              {message}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name *
+                </label>
+                <input
+                  type="text"
+                  name="firstname"
+                  value={formData.firstname}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name *
+                </label>
+                <input
+                  type="text"
+                  name="lastname"
+                  value={formData.lastname}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300"
+                />
+              </div>
+            </div>
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email *
               </label>
               <input
-                type="text"
-                name="firstname"
-                value={formData.firstname}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password *
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department
               </label>
               <input
                 type="text"
-                name="lastname"
-                value={formData.lastname}
+                name="department"
+                value={formData.department}
                 onChange={handleChange}
-                required
-                className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Engineering, Marketing, HR"
+                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300"
               />
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Department
-            </label>
-            <input
-              type="text"
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              placeholder="e.g., Engineering, Marketing, HR"
-              className="w-full px-3 py-2 ring-1 ring-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <button
-            type="submit"
-            disabled={isCreating}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isCreating ? 'Creating...' : 'Create Recruiter'}
-          </button>
-        </form>
+            
+            <button
+              type="submit"
+              disabled={isCreating}
+              className="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 hover:shadow-lg transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+            >
+              {isCreating ? 'Creating...' : 'Create Recruiter'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

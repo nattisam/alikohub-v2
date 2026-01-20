@@ -1,18 +1,18 @@
-import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import RoleSelectionModal from "../auth/RoleSelectionModal";
-import InstructorDashboardMain from "../../Pages/instructor/InstructorDashboard";
-import InstructorMyCourses from "../../Pages/instructor/InstructorMyCourses";
-import InstructorCreateCourse from "../../Pages/instructor/InstructorCreateCourse";
-import InstructorAnalytics from "../../Pages/instructor/InstructorAnalytics";
+import InstructorDashboardMain from "../../pages/instructor/InstructorDashboard";
+import InstructorMyCourses from "../../pages/instructor/InstructorMyCourses";
+import InstructorCreateCourse from "../../pages/instructor/InstructorCreateCourse";
+import InstructorAnalytics from "../../pages/instructor/InstructorAnalytics";
 import InstructorDashboardLayout from "./InstructorDashboardLayout";
-import ManageCoursePage from "../../Pages/instructor/ManageCoursePage";
+import ManageCoursePage from "../../pages/instructor/ManageCoursePage";
 import NotFoundState from "../states/NotFoundState";
 
 const InstructorDashboardRouter: React.FC = () => {
   const { user: currentUser } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check the active role from the user's academyUser
   const activeRole = currentUser?.academyUser?.activeRole;
@@ -28,7 +28,7 @@ const InstructorDashboardRouter: React.FC = () => {
             <p className="text-gray-600 mb-6">
               To access the instructor dashboard, please select the Instructor role.
             </p>
-            <RoleSelectionModal onClose={() => window.location.href = '/'} />
+            <RoleSelectionModal onClose={() => navigate('/')} />
           </div>
         </div>
       </div>

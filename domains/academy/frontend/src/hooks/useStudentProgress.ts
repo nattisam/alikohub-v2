@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { academyApi } from "../api";
+import { progressService } from "../services/progress-service";
 
 interface ProgressItem {
     moduleId: number;
@@ -31,10 +31,8 @@ export const useStudentProgress = (courseId: number, userId: string) => {
                 setError(null);
 
                 // Fetch detailed progress
-                const progressResponse = await academyApi.get(
-                    `/progress/course/${courseId}/user/${userId}`
-                );
-                setProgress(progressResponse.data);
+                const progressResponse = await progressService.getDetailedStudentProgress(courseId, userId);
+                setProgress(progressResponse);
             } catch (err: any) {
                 console.error("Error fetching student progress:", err);
                 setError(err.message || "Failed to load progress data");
@@ -81,18 +79,20 @@ export const useStudentProgress = (courseId: number, userId: string) => {
         score?: number
     ) => {
         try {
-            const response = await academyApi.post(
-                `/progress/course/${courseId}/module/${moduleId}/lesson/${lessonId}/content/${contentId}`,
-                { status, score }
+            const response = await progressService.updateContentProgress(
+                courseId,
+                moduleId,
+                lessonId,
+                contentId,
+                status,
+                score
             );
 
             // Refresh progress data
-            const progressResponse = await academyApi.get(
-                `/progress/course/${courseId}/user/${userId}`
-            );
-            setProgress(progressResponse.data);
+            const progressResponse = await progressService.getDetailedStudentProgress(courseId, userId);
+            setProgress(progressResponse);
 
-            return response.data;
+            return response;
         } catch (err: any) {
             console.error("Error updating content progress:", err);
             throw new Error(err.message || "Failed to update progress");
@@ -112,10 +112,8 @@ export const useStudentProgress = (courseId: number, userId: string) => {
                     setLoading(true);
                     setError(null);
 
-                    const progressResponse = await academyApi.get(
-                        `/progress/course/${courseId}/user/${userId}`
-                    );
-                    setProgress(progressResponse.data);
+                    const progressResponse = await progressService.getDetailedStudentProgress(courseId, userId);
+                    setProgress(progressResponse);
                 } catch (err: any) {
                     console.error("Error fetching student progress:", err);
                     setError(err.message || "Failed to load progress data");

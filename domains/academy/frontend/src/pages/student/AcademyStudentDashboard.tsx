@@ -1,13 +1,10 @@
-import ContinueLearning from "../../components/student/ContinueLearning";
-import QuickActions from "../../components/instructor/QuickActions";
-import SidebarStats from "../../components/instructor/SidebarStats";
-import { useAuth } from "../../contexts/AuthContext";
 import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext"; // Restore useAuth
 import { enrollmentApi } from "../../api/enrollmentApi";
 import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
-import type { Course } from "../../components/common/types.d.tsx";
+import type { Course } from "../../components/common/types.d.tsx"; // Ensure this matches usage or update usage
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
 import { useNavigate } from "react-router-dom";
@@ -15,17 +12,27 @@ import ErrorState from "../../components/states/ErrorState";
 import EmptyState from "../../components/states/EmptyState";
 
 const AcademyStudentDashboard = () => {
-  const { user: currentUser, isLoading, refetchCurrentUser } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  
+
+  // State definitions (Moved to top to avoid conditional hook errors)
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Auth and Role check effect
   useEffect(() => {
-    if (!currentUser) return;
+    if (isLoading) return;
+    
+    if (!currentUser) {
+      navigate('/auth/login');
+      return;
+    }
 
     // Check if user has selected a role and it's appropriate for student dashboard
-    const userRole = currentUser.academyRole || currentUser.currentRole || currentUser.academyUser?.role;
-    const hasSelectedRole = currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole;
-    const academyUserRole = currentUser.academyUser?.role;
     const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
     
     // Check if user wants to apply as instructor
@@ -42,77 +49,9 @@ const AcademyStudentDashboard = () => {
       return; // allowed to see application modal
     }
 
-
-
     // Redirect to role selection if user hasn't selected a role yet
     navigate("/role"); // Redirect to role selection page
-  }, [currentUser, navigate]);
-
-  // If user is loading, show loading indicator
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is not logged in, redirect to login
-  if (!currentUser) {
-    window.location.href = '/auth/login';
-    return null;
-  }
-
-  // Check if user has selected a role and it's appropriate for student dashboard
-  const userRole = currentUser?.academyRole || currentUser?.currentRole || currentUser?.academyUser?.role;
-  const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = (currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
-  
-  // Check if user wants to apply as instructor
-  const pendingRole = currentUser?.pendingRole;
-  const instructorStatus = currentUser?.roleStatus?.instructor;
-  
-  // Check if user has selected a role based on academyUser role
-  const academyUserRole = currentUser?.academyUser?.role;
-  
-  // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
-  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
-    // Show role selection modal
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
-            <p className="text-gray-600 mb-6">
-              To access the student dashboard, please select the Student role.
-            </p>
-            <RoleSelectionModal onClose={() => navigate('/role')} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Only show the instructor application modal if the user is not already a student
-  // If user is a student, show the student dashboard even if there was a previous instructor intent
-  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <TeacherApplicationModal standalone={true} />
-      </div>
-    );
-  }
-
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [courseForModuleView, setCourseForModuleView] = useState<Course | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
+  }, [currentUser, isLoading, navigate]);
 
   const fetchDashboardData = async () => {
     const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
@@ -142,7 +81,7 @@ const AcademyStudentDashboard = () => {
                     enrollmentItem.progress ??
                     enrollmentItem.course.progress ??
                     0,
-                });
+                } as unknown as Course);
               }
             } else if (item && typeof item === "object") {
               detectedCourses.push(item as Course);
@@ -181,8 +120,61 @@ const AcademyStudentDashboard = () => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [refreshKey]);
+    if (currentUser) {
+      fetchDashboardData();
+    }
+  }, [refreshKey, currentUser]);
+
+  // If user is loading, show loading indicator
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, return null (redirection handled in effect)
+  if (!currentUser) {
+    return null;
+  }
+
+  // Logic to determine what to show
+  const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+  const hasSelectedRole = (currentUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
+  
+  const pendingRole = currentUser?.pendingRole;
+  const instructorStatus = currentUser?.roleStatus?.instructor;
+  
+  // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
+  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
+    // Show role selection modal
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
+            <p className="text-gray-600 mb-6">
+              To access the student dashboard, please select the Student role.
+            </p>
+            <RoleSelectionModal onClose={() => navigate('/role')} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show the instructor application modal if the user is not already a student
+  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <TeacherApplicationModal standalone={true} />
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -232,7 +224,7 @@ const AcademyStudentDashboard = () => {
               <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="p-6">
                   <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                  <p className="text-gray-500 mt-1">{course.description}</p>
+                  <p className="text-gray-500 mt-1">{course.shortDescription}</p>
                   <div className="mt-4">
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div 

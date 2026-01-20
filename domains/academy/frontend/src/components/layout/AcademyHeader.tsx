@@ -48,10 +48,19 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   }, []);
 
   const handleLogout = () => {
-    logout();
-    onLogout?.();
-    navigate("/");
-    onLogoutComplete?.();
+    // Priority to onLogout if provided, otherwise use local logout
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+    }
+    
+    // Priority to onLogoutComplete if provided, otherwise navigate to home
+    if (onLogoutComplete) {
+      onLogoutComplete();
+    } else {
+      navigate("/");
+    }
   };
 
   return (

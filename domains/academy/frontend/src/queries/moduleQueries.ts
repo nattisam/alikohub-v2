@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { courseApi } from "../api/courseApi";
+import { courseService } from "../services/course-service";
 
 export const useCourseModules = (courseId: number) => {
   return useQuery({
     queryKey: ["course-modules", courseId],
     queryFn: async () => {
-      const modulesRes = await courseApi.getModules(courseId);
+      const modulesRes = await courseService.getModules(courseId);
 
       // Fetch all lessons for all modules in parallel to reduce the number of requests
-      const allLessonsPromises = modulesRes.data.map(async (module: any) => {
+      const allLessonsPromises = modulesRes.map(async (module: { id: number; [key: string]: unknown }) => {
         try {
-          const lessonsRes = await courseApi.getLessons(module.id);
-          return { moduleId: module.id, lessons: lessonsRes.data };
+          const lessonsRes = await courseService.getLessons(module.id);
+          return { moduleId: module.id, lessons: lessonsRes };
         } catch {
           return { moduleId: module.id, lessons: [] };
         }
@@ -20,7 +20,7 @@ export const useCourseModules = (courseId: number) => {
       const allLessonsResults = await Promise.all(allLessonsPromises);
       
       // Combine modules with their respective lessons
-      const modulesWithLessons = modulesRes.data.map((module: any) => {
+      const modulesWithLessons = modulesRes.map((module: { id: number; [key: string]: unknown }) => {
         const lessonData = allLessonsResults.find(result => result.moduleId === module.id);
         return { ...module, lessons: lessonData?.lessons || [] };
       });

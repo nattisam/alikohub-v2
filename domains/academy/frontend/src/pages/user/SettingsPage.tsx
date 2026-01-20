@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { FaCog, FaBell, FaLock, FaPalette, FaGlobe } from 'react-icons/fa';
 
 const SettingsPage = () => {
   const { user: currentUser, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('notifications');
 
   // If user is loading, show loading indicator
@@ -20,7 +22,7 @@ const SettingsPage = () => {
 
   // If user is not logged in, redirect to login
   if (!currentUser) {
-    window.location.href = '/auth/login';
+    navigate('/auth/login');
     return null;
   }
 

@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/auth-context"
-import { Mail, Lock, Home, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 export function LoginPage() {
   const { login } = useAuth()

@@ -1,19 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { courseApi } from '../api/courseApi';
-
-interface User {
-  id: number;
-  firebaseId: string;
-  firstname: string;
-  lastname: string;
-  email: string;
-  globalRole: string;
-  profilePicture: string | null;
-  bio: string | null;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface Course {
   id: number;
@@ -59,7 +45,7 @@ interface Course {
       createdAt: string;
       updatedAt: string;
     };
-    consultancyUser: any;
+    consultancyUser: unknown;
     contechUser: {
       id: string;
       userId: string;
@@ -76,16 +62,8 @@ interface Course {
       createdAt: string;
       updatedAt: string;
     };
-    careersUser: any;
+    careersUser: unknown;
   };
-}
-
-interface ApiResponse {
-  items: Course[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
 }
 
 const CoursesManagementPage = () => {

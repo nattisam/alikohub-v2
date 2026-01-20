@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { academyAPI } from '../services/api';
+import React, { useState } from 'react';
+
+import { authService } from '../services/auth-service';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Define TypeScript interfaces
@@ -34,24 +34,24 @@ interface TeacherApplication {
 }
 
 const TeacherApplicationsDashboard: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  // const { user: currentUser } = useAuth(); // Unused
   const queryClient = useQueryClient();
   
   // State for applications and UI
   const { data: applications = [], isLoading, isError, refetch, error } = useQuery<TeacherApplication[]>({
     queryKey: ['teacherApplications'],
-    queryFn: academyAPI.getTeacherApplications,
+    queryFn: authService.getTeacherApplications,
   });
   
   const approveMutation = useMutation({
-    mutationFn: academyAPI.approveTeacher,
+    mutationFn: authService.approveTeacher,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacherApplications'] });
     },
   });
   
   const rejectMutation = useMutation({
-    mutationFn: academyAPI.rejectTeacher,
+    mutationFn: authService.rejectTeacher,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacherApplications'] });
     },
@@ -98,7 +98,8 @@ const TeacherApplicationsDashboard: React.FC = () => {
   // Error state
   if (isError) {
     // Check if the error is a permissions error (401 or 403)
-    const isPermissionError = error?.response?.status === 401 || error?.response?.status === 403;
+    const err = error as { response?: { status?: number } };
+    const isPermissionError = err?.response?.status === 401 || err?.response?.status === 403;
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
