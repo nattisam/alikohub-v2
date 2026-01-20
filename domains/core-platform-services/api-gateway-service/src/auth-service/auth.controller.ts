@@ -177,11 +177,13 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
-  async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string) {
+  async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'approve_teacher_application' }, { 
         applicationId, 
-        requestingUserRole: req.user.globalRole 
+        requestingUserRole: req.user.globalRole,
+        reviewerId: req.user.firebaseId,
+        reviewNotes: body.reviewNotes
       }).pipe(
         timeout(10000),
         catchError(error => {
@@ -196,11 +198,13 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
-  async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string) {
+  async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'reject_teacher_application' }, { 
         applicationId, 
-        requestingUserRole: req.user.globalRole 
+        requestingUserRole: req.user.globalRole,
+        reviewerId: req.user.firebaseId,
+        reviewNotes: body.reviewNotes
       }).pipe(
         timeout(10000),
         catchError(error => {

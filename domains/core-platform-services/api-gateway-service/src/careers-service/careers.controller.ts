@@ -81,8 +81,14 @@ export class CareersController {
   @CareersRoles('RECRUITER', 'ADMIN')
   @ApiOperation({ summary: 'Update a job posting (Recruiter/Admin)' })
   async updateJob(@Request() req: any, @Param('id') id: string, @Body() updateJobDto: any) {
+    const isAdmin = req.user.globalRole === 'ADMIN' || req.user.careersRole === 'ADMIN';
     return firstValueFrom(
-      this.careersClient.send({ cmd: 'update_job' }, { id: parseInt(id), jobData: updateJobDto, userId: req.user.firebaseId })
+      this.careersClient.send({ cmd: 'update_job' }, { 
+        id: parseInt(id), 
+        jobData: updateJobDto, 
+        userId: req.user.firebaseId,
+        isAdmin 
+      })
     );
   }
 
@@ -90,9 +96,14 @@ export class CareersController {
   @UseGuards(CareersRoleGuard)
   @CareersRoles('RECRUITER', 'ADMIN')
   @ApiOperation({ summary: 'Delete a job posting (Recruiter/Admin)' })
-  async deleteJob(@Param('id') id: string) {
+  async deleteJob(@Request() req: any, @Param('id') id: string) {
+    const isAdmin = req.user.globalRole === 'ADMIN' || req.user.careersRole === 'ADMIN';
     return firstValueFrom(
-      this.careersClient.send({ cmd: 'delete_job' }, parseInt(id))
+      this.careersClient.send({ cmd: 'delete_job' }, { 
+        id: parseInt(id), 
+        userId: req.user.firebaseId,
+        isAdmin 
+      })
     );
   }
 

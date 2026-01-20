@@ -64,11 +64,6 @@ export class UserService {
 			return user;
 		} catch (error: any) {
 			this.logger.error(`Failed to create user with email: ${data.email}`, error);
-			if (error.code === 'P2002') {
-				// Unique constraint failed, return existing user
-				this.logger.log(`User already exists, returning existing user for email: ${data.email}`);
-				return this.prisma.user.findUnique({ where: { email: data.email } });
-			}
 			throw error;
 		}
 	}
@@ -105,6 +100,15 @@ export class UserService {
 	async createTeacherApplication(applicationData: any) {
 		const { userId, ...formData } = applicationData;
 		
+		// Validate resumeUrl if present
+		if (applicationData.resumeUrl) {
+			try {
+				new URL(applicationData.resumeUrl);
+			} catch (e) {
+				throw new Error('Invalid resume URL provided');
+			}
+		}
+
 		// Find user's firebaseId since application model uses it as a relation
 		const user = await this.prisma.user.findUnique({
 			where: { id: parseInt(userId) }
@@ -142,29 +146,55 @@ export class UserService {
 				requestedRole: 'INSTRUCTOR'
 			},
 			include: {
-				user: true
+				user: {
+					select: {
+						id: true,
+						firebaseId: true, // Needed for role assignment but not sensitive like hash
+						firstname: true,
+						lastname: true,
+						email: true,
+						profilePicture: true,
+						createdAt: true,
+						status: true
+					}
+				}
 			}
 		});
 	}
 
 	async getTeacherApplication(applicationId: string) {
-        if (applicationId.startsWith('mock-id')) return null;
-        
+		if (applicationId.startsWith('mock-id')) return null;
+		
 		return this.prisma.application.findUnique({
 			where: { id: parseInt(applicationId) },
-			include: { user: true }
+			include: { 
+				user: {
+					select: {
+						id: true,
+						firebaseId: true,
+						firstname: true,
+						lastname: true,
+						email: true,
+						profilePicture: true,
+						createdAt: true,
+						status: true
+					}
+				}
+			}
 		});
 	}
 
-	async updateTeacherApplicationStatus(applicationId: string, status: string) {
-        if (applicationId.startsWith('mock-id')) return { id: applicationId, status };
+	async updateTeacherApplicationStatus(applicationId: string, status: string, reviewedBy?: string, reviewNotes?: string) {
+		if (applicationId.startsWith('mock-id')) return { id: applicationId, status };
 
 		return this.prisma.application.update({
 			where: { id: parseInt(applicationId) },
 			data: { 
-                status: status as any,
-                updatedAt: new Date()
-            }
+				status: status as any,
+				reviewedBy,
+				reviewNotes,
+				updatedAt: new Date()
+			}
 		});
 	}
 
@@ -210,6 +240,16 @@ export class UserService {
 				bio: data.bio,
 			}
 		});
+
+		if (data.profilePicture) {
+			try {
+				new URL(data.profilePicture);
+			} catch (e) {
+				// Log warning but allow update for now, or throw error -> deciding to just log for existing flexibility
+				this.logger.warn(`Invalid profile picture URL for user ${firebaseId}: ${data.profilePicture}`);
+			}
+		}
+
 		return user;
 	}
 

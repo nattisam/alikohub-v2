@@ -25,6 +25,7 @@ export class EventsService {
                 date: createEventDto.date,
                 time: createEventDto.time,
                 location: createEventDto.location,
+                bannerUrl: (createEventDto as any).bannerUrl,
             },
         });
     }
@@ -51,6 +52,7 @@ export class EventsService {
         if (updateEventDto.date !== undefined) data.date = updateEventDto.date;
         if (updateEventDto.time !== undefined) data.time = updateEventDto.time;
         if (updateEventDto.location !== undefined) data.location = updateEventDto.location;
+        if ((updateEventDto as any).bannerUrl !== undefined) data.bannerUrl = (updateEventDto as any).bannerUrl;
         
         return this.prisma.event.update({
             where: { id },

@@ -11,6 +11,7 @@ import { AcademyServiceModule } from './academy-service';
 import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
 import { CareersServiceModule } from './careers-service/careers.module';
+import { FileUploadModule } from './file-upload-service/file-upload.module';
 
 
 @Global()
@@ -90,6 +91,7 @@ import { CareersServiceModule } from './careers-service/careers.module';
     ConTechServiceModule,
     EventsServiceModule,
     CareersServiceModule,
+    FileUploadModule,
   ],
   providers: [
     // Global rate limiter guard

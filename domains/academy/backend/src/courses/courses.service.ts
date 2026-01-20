@@ -35,6 +35,15 @@ export class CoursesService {
       where: { title: dto.title, instructorId: instructorId },
     });
     if (exists) throw new BadRequestException('You already have a course with this title');
+ 
+    // Validate URL if provided
+    if (dto.thumbnail) {
+      try {
+        new URL(dto.thumbnail);
+      } catch (e) {
+        throw new BadRequestException('Invalid thumbnail URL');
+      }
+    }
 
     // Create course with only the fields that exist in the Prisma model
     // Automatically set status to PUBLISHED for instructors to make courses visible on homepage
