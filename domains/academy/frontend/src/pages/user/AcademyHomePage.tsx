@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useCourses } from "../../hooks/useCourses"; 
 
 const AcademyHomePage = () => {
-  const { data: courses = [], isLoading: isLoadingCourses } = useAllCourses();
+  const { data: courses = [] } = useAllCourses();
   const trendingCourses = useTrendingCourses(courses);
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -27,8 +27,6 @@ const AcademyHomePage = () => {
     filterCoursesByCategory 
   } = useCourses();
 
-  // Ensure courses is an array before trying to filter it
-  const validCourses = Array.isArray(courses) ? courses : [];
   const validTrendingCourses = Array.isArray(trendingCourses) ? trendingCourses : [];
 
   const handleGetStarted = () => {

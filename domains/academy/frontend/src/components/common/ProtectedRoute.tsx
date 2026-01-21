@@ -52,7 +52,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // Check various role properties to determine if user has required role
     // Active role should be the primary check
     const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-    const mainRole = currentUser.academyRole || currentUser.academyUser?.role;
     
     const hasRequiredRole = (activeRole === requiredRole) || 
                            (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application

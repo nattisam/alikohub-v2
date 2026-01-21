@@ -8,7 +8,6 @@ interface PublicRouteProps {
 
 const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { user: currentUser, isLoading, isAuthenticated } = useAuth();
-  const location = useLocation();
 
   // If we're still loading, show a loading indicator
   if (isLoading) {

@@ -19,7 +19,7 @@ const CoursesList = ({
   const navigate = useNavigate();
   
   // Fetch user's enrolled courses
-  const { data: enrolledCourses = [], isLoading: enrolledCoursesLoading } = useQuery({
+  const { data: enrolledCourses = [] } = useQuery({
     queryKey: ['userEnrollments', currentUser?.firebaseId],
     queryFn: async () => {
       if (!currentUser) return [];
@@ -37,7 +37,7 @@ const CoursesList = ({
   
   // Function to check if user is enrolled in a specific course
   const isUserEnrolled = (courseId: number) => {
-    return enrolledCourses.some((enrollment: any) => enrollment.id === courseId);
+    return enrolledCourses.some((enrollment: { id: number }) => enrollment.id === courseId);
   };
   
   // Ensure courses is an array

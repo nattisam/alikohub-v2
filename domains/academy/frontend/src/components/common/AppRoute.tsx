@@ -38,12 +38,12 @@ const AppRoute: React.FC<AppRouteProps> = ({
   }
 
   // If user hasn't selected a role yet, redirect to role selection page
-  if (currentUser && !(currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
+  if (currentUser && !(currentUser.selectedRole || currentUser.academyUser?.selectedRole)) {
     return <Navigate to="/role" state={{ from: location }} replace />;
   }
 
   // Check if user has pending or rejected instructor application but is trying to access instructor-only resources
-  if (requiredRole === "INSTRUCTOR" && 
+  if (requiredRole === "INSTRUCTOR" && currentUser &&
       (currentUser.roleStatus?.instructor === "pending" || currentUser.roleStatus?.instructor === "rejected" || currentUser.roleStatus?.instructor === "not_applied")) {
     // Don't allow access to instructor dashboard if application is pending, not applied, or rejected
     return <AccessDenied 
@@ -71,7 +71,7 @@ const AppRoute: React.FC<AppRouteProps> = ({
   }
 
   // If no required role is specified, allow access to authenticated users who have selected a role
-  if (!requiredRole && (currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
+  if (!requiredRole && currentUser && (currentUser.selectedRole || currentUser.academyUser?.selectedRole)) {
     return <>{children}</>;
   }
 

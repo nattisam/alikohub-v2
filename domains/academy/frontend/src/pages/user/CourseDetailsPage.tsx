@@ -14,10 +14,10 @@ import {
 const CourseDetailsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const [enrolling, setEnrolling] = useState(false);
-  const { user: currentUser, isLoading: authLoading } = useAuth();
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
-  const { data: course, isLoading, isError, error: queryError } = useCourse(parseInt(courseId || '0'));
+  const { data: course, isLoading, isError } = useCourse(parseInt(courseId || '0'));
 
   // Check if user has selected a role
   const hasRole = (currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole) !== undefined;
@@ -28,8 +28,7 @@ const CourseDetailsPage: React.FC = () => {
   const [userEnrollments, setUserEnrollments] = useState<Enrollment[]>([]);
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true);
 
-  // State for modules and lessons
-  const [lessonsByModule, setLessonsByModule] = useState<Record<number, CourseLesson[]>>({});
+
   
   // State for filters
   const [selectedCategories, setSelectedCategories] = useState<Record<string, boolean>>({});
@@ -48,14 +47,10 @@ const CourseDetailsPage: React.FC = () => {
             try {
               const response = await enrollmentApi.getMyCourses();
               // Handle response structure: if data has items array, use it, otherwise use data directly
-              if (response.data.items && Array.isArray(response.data.items)) {
-                setUserEnrollments(response.data.items);
-              } else {
-                // If response is directly the array of enrollments
-                setUserEnrollments(response.data);
-              }
+              // Assuming response.data is the array of enrollments
+              setUserEnrollments(response.data);
               return; // Success, exit the retry loop
-            } catch (err: any) {
+            } catch (err: unknown) {
               console.error("Error fetching user enrollments:", err);
               
               // Check if it's a 429 error (Too Many Requests)
@@ -84,7 +79,7 @@ const CourseDetailsPage: React.FC = () => {
     fetchUserEnrollments();
   }, [currentUser]);
 
-  const { data: modulesFromQuery = [], isLoading: areModulesLoading, isError: modulesError } = useCourseModules(parseInt(courseId || '0'));
+  const { data: modulesFromQuery = [], isError: modulesError } = useCourseModules(parseInt(courseId || '0'));
   
   if (modulesError) {
     console.error("Error fetching course modules");
@@ -128,14 +123,10 @@ const CourseDetailsPage: React.FC = () => {
             try {
               const enrollmentResponse = await enrollmentApi.getMyCourses();
               // Handle response structure: if data has items array, use it, otherwise use data directly
-              if (enrollmentResponse.data.items && Array.isArray(enrollmentResponse.data.items)) {
-                setUserEnrollments(enrollmentResponse.data.items);
-              } else {
-                // If response is directly the array of enrollments
-                setUserEnrollments(enrollmentResponse.data);
-              }
+              // Assuming response.data is the array of enrollments
+              setUserEnrollments(enrollmentResponse.data);
               return; // Success, exit the retry loop
-            } catch (err: any) {
+            } catch (err: unknown) {
               console.error("Error refreshing user enrollments after enrollment:", err);
               
               // Check if it's a 429 error (Too Many Requests)
@@ -153,7 +144,8 @@ const CourseDetailsPage: React.FC = () => {
         
         await fetchEnrollmentsWithRetry();
       }
-    } catch (err: any) {
+    }
+    catch (err: unknown) {
       console.error("Error enrolling in course:", err);
       
       // Check for specific error types
@@ -315,7 +307,7 @@ const CourseDetailsPage: React.FC = () => {
                       <FaDownload size={14} />
                    </div>
                    <div>
-                      <p className="text-xl font-black">{modulesFromQuery.reduce((total, module) => total + (module.lessons?.length || 0), 0)}</p>
+                      <p className="text-xl font-black">{modulesFromQuery.reduce<number>((total, module: CourseModule) => total + (module.lessons?.length || 0), 0)}</p>
                       <p className="text-[10px] text-gray-500 font-bold uppercase">Lessons</p>
                    </div>
                 </div>
@@ -351,7 +343,7 @@ const CourseDetailsPage: React.FC = () => {
              </div>
 
              <div className="space-y-4">
-                {modulesFromQuery.map((module, idx) => {
+                {modulesFromQuery.map((module: CourseModule, idx: number) => {
                   // Calculate lesson count and duration for this module
                   const lessonCount = module.lessons ? module.lessons.length : 0;
                   // Calculate approximate duration based on number of lessons
@@ -373,7 +365,7 @@ const CourseDetailsPage: React.FC = () => {
                       </div>
                       {module.lessons && module.lessons.length > 0 && (
                         <div className="px-6 pb-6 space-y-4 border-t border-gray-50 pt-4">
-                          {module.lessons.map((lesson, lessonIdx) => (
+                          {module.lessons.map((lesson: CourseLesson) => (
                             <div key={lesson.id} className="flex items-center justify-between text-sm font-bold text-gray-600">
                               <div className="flex items-center gap-3">
                                 <FaPlay size={12} className="text-blue-600" /> {lesson.title}
@@ -436,7 +428,7 @@ const CourseDetailsPage: React.FC = () => {
                   <div className="flex items-center gap-3"><FaInfinity className="text-blue-600" /> Lifetime access</div>
                   <div className="flex items-center gap-3"><FaCertificate className="text-blue-600" /> Verified Certificate</div>
                   <div className="flex items-center gap-3"><FaMobileAlt className="text-blue-600" /> Access on mobile and TV</div>
-                  <div className="flex items-center gap-3"><FaDownload className="text-blue-600" /> {modulesFromQuery.reduce((total, module) => total + (module.lessons?.length || 0), 0)} Downloadable resources</div>
+                  <div className="flex items-center gap-3"><FaDownload className="text-blue-600" /> {modulesFromQuery.reduce<number>((total, module: CourseModule) => total + (module.lessons?.length || 0), 0)} Downloadable resources</div>
                 </div>
               </div>
 

@@ -39,9 +39,14 @@ export const useEnrolledCourses = (userId?: string) => {
       }
       const requestData = await enrollmentService.getEnrollmentsByUserId(userId);
       // Extract course data from the enrollment response
-      const coursesData = requestData.map((enrollment: { course: EnrollmentCourseData }) => 
-        convertEnrollmentCourseToCourse(enrollment.course)
-      );
+      const coursesData = requestData.map((enrollment: { course: EnrollmentCourseData }) => {
+        // Ensure thumbnail is a string or provide a default
+        const courseData = {
+          ...enrollment.course,
+          thumbnail: enrollment.course.thumbnail || ""
+        };
+        return convertEnrollmentCourseToCourse(courseData);
+      });
       return coursesData;
     },
     enabled: !!userId,
@@ -123,7 +128,7 @@ export const getSimilarCourses = (refCourse: Course, allCourses: Course[]): Cour
   
   return allCourses.filter(course => {
     if (course.category === refCourse.category && course.id !== refCourse.id) {
-      return refCourse.skills.some(skill => course.skills.includes(skill));
+      return refCourse.skills?.some(skill => course.skills?.includes(skill));
     }
     return false;
   });

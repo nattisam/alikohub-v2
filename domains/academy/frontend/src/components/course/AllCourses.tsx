@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { courseApi, enrollmentApi } from "../../api/courseApi";
 import { useAuth } from "../../contexts/AuthContext";
-import type { Course } from "../common/types.d";
+
 import courseImg from "../../assets/courses.png";
 import { FaUsers, FaStar } from "react-icons/fa";
 import EnrollmentModal from "../instructor/EnrollmentModal";
@@ -21,7 +21,7 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   const [enrolling, setEnrolling] = useState<number | null>(null);
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [courseToEnroll, setCourseToEnroll] = useState<number | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   
   const { user: currentUser } = useAuth();
   
@@ -31,8 +31,7 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   const {
     data: courses = [],
     isLoading,
-    isError,
-    error: queryError
+    isError
   } = useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
@@ -43,7 +42,7 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     staleTime: 5 * 60 * 1000,      // 5 minutes - conservative cache setting
     gcTime: 10 * 60 * 1000,        // 10 minutes - garbage collection time
     refetchOnWindowFocus: false,
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: { response?: { status: number } }) => {
       // Don't retry on 429 - let axios handle it
       if (error?.response?.status === 429) {
         return false;
@@ -61,7 +60,7 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     queryFn: async () => {
       try {
         const enrollmentResponse = await enrollmentApi.getMyEnrollments();
-        return enrollmentResponse.data.map((enrollment: any) => enrollment.courseId);
+        return enrollmentResponse.data.map((enrollment: { courseId: number }) => enrollment.courseId);
       } catch (enrollmentError) {
         console.error("Error fetching enrollments:", enrollmentError);
         return [];
@@ -120,7 +119,7 @@ const AllCourses: React.FC<AllCoursesProps> = ({
       
       
       // Try to enroll
-      const enrollResponse = await enrollmentApi.createEnrollment(enrollmentData);
+      const response = await enrollmentApi.createEnrollment(enrollmentData);
       
       // Show success message
       alert("Successfully enrolled in the course!");
@@ -133,16 +132,20 @@ const AllCourses: React.FC<AllCoursesProps> = ({
       // Invalidate the enrollment query to refetch the updated data
       await queryClient.invalidateQueries({ queryKey: ["user-enrollments"] });
       await queryClient.invalidateQueries({ queryKey: ["all-courses"] });
-    } catch (err: any) {
+      
+      return response;
+    } catch (err: unknown) {
       console.error("Error enrolling in course:", err);
-      console.error("Error response:", err.response);
+      if (err && typeof err === 'object' && 'response' in err) {
+        console.error("Error response:", (err as any).response);
+      }
       
       // Try to get a more detailed error message
       let errorMessage = "Failed to enroll in course. Please try again.";
-      if (err.response?.data?.message) {
+      if ((err as any).response?.data?.message) {
         errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
+      } else if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
+        errorMessage = (err as any).message;
       }
       
       alert(`Failed to enroll in course: ${errorMessage}`);

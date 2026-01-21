@@ -34,6 +34,17 @@ export const courseApi = {
       throw error;
     }
   },
+  
+  // Get pending courses for approval workflow
+  getPendingCourses: async (params?: Record<string, unknown>) => {
+    try {
+      const response = await academyApi.get("/academy/courses/pending", { params });
+      return response;
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error;
+    }
+  },
   getCourse: async (courseId: number) => {
     // Use authenticated API directly - backend handles authorization
     return academyApi.get(`/academy/courses/${courseId}`);

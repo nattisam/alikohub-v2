@@ -16,7 +16,7 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
   onClose, 
   allowAdditionalRoles = false // Default to false to maintain existing behavior
 }) => {
-  const { user, selectRole, isLoading: authLoading, selectRoleMutation } = useAuth();
+  const { user, isLoading: authLoading, selectRoleMutation } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [error, setError] = useState<string>("");

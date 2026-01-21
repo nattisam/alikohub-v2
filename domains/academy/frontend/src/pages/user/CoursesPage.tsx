@@ -6,7 +6,7 @@ import { FaBook, FaStar, FaUsers, FaClock, FaTag } from "react-icons/fa";
 import { courseApi } from "../../api/courseApi";
 
 const CoursesPage: React.FC = () => {
-  const { user: currentUser, isLoading: authLoading } = useAuth();
+  const { user: currentUser } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,9 +15,6 @@ const CoursesPage: React.FC = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [searchParams] = useSearchParams();
 
-  // Check if user has selected a role
-  const hasRole = (currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole) !== undefined;
-  const isStudent = (currentUser?.academyActiveRole === 'STUDENT' || currentUser?.academyUser?.activeRole === 'STUDENT');
   
   // Create a stable identifier for user changes
   const userId = currentUser?.firebaseId || currentUser?.id;
@@ -34,7 +31,7 @@ const CoursesPage: React.FC = () => {
         // Handle different response formats
         const coursesData = response.data.items || response.data;
         setCourses(Array.isArray(coursesData) ? coursesData : []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         
         // Check if it's a 401 error (unauthorized)
         if (err?.response?.status === 401) {

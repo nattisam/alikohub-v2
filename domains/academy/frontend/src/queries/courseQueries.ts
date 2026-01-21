@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { courseService } from "../services/course-service";
-import type { Course } from "../services/course-service";
 
 export const useCourse = (courseId: number) => {
   return useQuery({
@@ -18,7 +17,9 @@ export const useCourse = (courseId: number) => {
 };
 
 // Preload course data to prevent multiple requests
-export const prefetchCourse = async (queryClient: any, courseId: number) => {
+import type { QueryClient } from "@tanstack/react-query";
+
+export const prefetchCourse = async (queryClient: QueryClient, courseId: number) => {
   await queryClient.prefetchQuery({
     queryKey: ["course", courseId],
     queryFn: async () => {

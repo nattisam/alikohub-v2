@@ -1,4 +1,9 @@
 import axios, { AxiosError } from "axios";
+
+// Define the type locally since AxiosRequestConfig is not a named export
+interface AxiosRequestConfigWithRetry extends import('axios').AxiosRequestConfig {
+  __retryCount?: number;
+}
 import apiClient from "./lib/api";
 import { progressApi } from "./api/progressApi";
 import { enrollmentApi } from "./api/enrollmentApi";
@@ -32,7 +37,7 @@ const getRetryDelay = (retryCount: number): number => {
 };
 
 // Helper function to add retry config to request
-const addRetryConfig = (config: any, retryCount: number = 0) => {
+const addRetryConfig = (config: any & { __retryCount?: number }, retryCount: number = 0) => {
   config.__retryCount = retryCount;
   return config;
 };
@@ -42,7 +47,7 @@ const createRetryInterceptor = (instance: typeof academyApi | typeof authApi) =>
   instance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      const config = error.config as (any & { __retryCount?: number }) | undefined;
+      const config = error.config as AxiosRequestConfigWithRetry | undefined;
       
       // Only retry on 429 errors
       if (error.response?.status === 429 && config) {

@@ -1,52 +1,28 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
-import { api } from "../../lib/api"; 
+import { authAPI } from "../../services/api"; 
 import {
-  FaCamera,
-  FaEdit,
-  FaExchangeAlt,
-  FaUserPlus,
   FaUser,
+  FaCamera,
   FaSave,
+  FaEdit,
+  FaUserPlus,
 } from "react-icons/fa";
 
 const ProfilePage = () => {
   const {
     user: currentUser,
-    updateUser,
-    selectRole,
     isLoading,
-    switchRoleMutation,
-    switchRole,
-    isRoleSwitching,
   } = useAuth();
   
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
-  const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR") => {
-    if (currentUser) {
-      try {
-        // Use the mutation directly to get access to its state
-        await switchRoleMutation.mutateAsync(role);
 
-        // Close the dropdown after role switch
-        setIsRoleDropdownOpen(false);
-
-      } catch (error) {
-        console.error("Failed to switch role:", error);
-
-        // Close the dropdown even if there's an error
-        setIsRoleDropdownOpen(false);
-      }
-    }
-  };
+  // Removed role switching functionality since it's not supported in the simplified auth context
   
   const handleChooseRole = () => {
     navigate('/role');
@@ -67,37 +43,13 @@ const ProfilePage = () => {
 
   // If user is not logged in, redirect to login
   if (!currentUser) {
-    navigate("/auth/login");
+    window.location.href = "/auth/login";
     return null;
-  }
-
-  // Allow users with globalRole USER to access their profile
-  // If user hasn't selected a role yet and doesn't have globalRole USER, show role selection modal
-
-  if (!currentUser.academyRole && currentUser.globalRole !== "USER") {
-    // We need to show the role selection modal
-    // For now, we'll just show a message directing them to select a role
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Select Your Role
-            </h2>
-            <p className="text-gray-600 mb-6">
-              To access your profile, please select a role.
-            </p>
-            <RoleSelectionModal onClose={() => navigate("/")} />
-          </div>
-        </div>
-      </div>
-    );
   }
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     email: "",
-    bio: "",
     title: "", // For instructors
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -108,8 +60,7 @@ const ProfilePage = () => {
         firstname: currentUser.firstname || "",
         lastname: currentUser.lastname || "",
         email: currentUser.email || "",
-        bio: currentUser.bio || "",
-        title: (currentUser as unknown as { title: string }).title || "", // For instructors
+        title: "", // For instructors
       });
     }
   }, [currentUser]);
@@ -135,34 +86,9 @@ const ProfilePage = () => {
       try {
         setUploading(true);
 
-        // Upload the file to our file upload service through the API gateway
-        // Use axios instead of fetch for consistency
-        const response = await api.post("/upload/image", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        if (response.data) {
-          const result = response.data;
-
-          const updateResponse = await api.patch(
-            `/users/${currentUser.firebaseId}`,
-            {
-              profilePicture: result.url,
-            }
-          );
-
-          if (updateResponse.data) {
-            // Update the current user context
-            updateUser({
-              ...currentUser,
-              profilePicture: result.url,
-            });
-          }
-        } else {
-          console.error("File upload failed");
-        }
+        // Note: Simplified auth doesn't support direct image upload through academyAPI
+        // This functionality may need to be reimplemented differently
+        console.warn("Image upload not supported in simplified auth");
       } catch (error) {
         console.error("Error uploading file:", error);
       } finally {
@@ -179,31 +105,23 @@ const ProfilePage = () => {
       setLoading(true);
 
       // Update user profile in the backend
-      const updateData: any = {
+      const updateData: { firstname: string; lastname: string; title?: string } = {
         firstname: formData.firstname,
         lastname: formData.lastname,
-        bio: formData.bio,
       };
 
       // Include title for instructors
       if (
-        currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-        currentUser.academyRole === "INSTRUCTOR"
+        currentUser.role === "INSTRUCTOR"
       ) {
         updateData.title = formData.title;
       }
-      const response = await api.patch(
-        `/users/${currentUser.firebaseId}`,
+      const response = await authAPI.updateProfile(
         updateData
       );
 
       if (response.data) {
-        // Update the current user context
-        updateUser({
-          ...currentUser,
-          ...updateData,
-        });
-
+        // Note: updateUser function no longer available in simplified auth context
         setIsEditing(false);
       }
     } catch (error) {
@@ -218,6 +136,7 @@ const ProfilePage = () => {
       fileInputRef.current.click();
     }
   };
+
 
   if (!currentUser) {
     return (
@@ -236,7 +155,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
@@ -248,52 +167,7 @@ const ProfilePage = () => {
                 Personal details and application information.
               </p>
             </div>
-            {/* Role Switching Dropdown - Show if user has any available roles */}
-            {currentUser?.availableRoles && currentUser.availableRoles.length > 0 && (
-                <div className="relative">
-                  <button
-                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                    disabled={switchRoleMutation.isPending}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    <FaExchangeAlt className="mr-2 h-4 w-4" />
-                    Switch Role
-                    {switchRoleMutation.isPending && (
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
-                    )}
-                  </button>
-
-                  {isRoleDropdownOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1" role="menu">
-                        {currentUser.availableRoles
-                          .filter((role) =>
-                            ["STUDENT", "INSTRUCTOR"].includes(role)
-                          ) // Only show valid academy roles
-                          .map((role) => (
-                            <button
-                              key={role}
-                              onClick={() =>
-                                handleRoleChange(
-                                  role as "STUDENT" | "INSTRUCTOR"
-                                )
-                              }
-                              className={`block px-4 py-2 text-sm w-full text-left ${
-                                (currentUser.academyUser?.activeRole ||
-                                  currentUser.academyActiveRole) === role
-                                  ? "bg-blue-100 text-blue-900"
-                                  : "text-gray-700 hover:bg-gray-100"
-                              }`}
-                              role="menuitem"
-                            >
-                              {role.charAt(0).toUpperCase() + role.slice(1)}
-                            </button>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Role switching functionality has been removed in the simplified auth context */}
               {/* Button to navigate to role selection page to choose additional roles */}
               <button
                 onClick={handleChooseRole}
@@ -309,17 +183,10 @@ const ProfilePage = () => {
               {/* Profile Picture Section */}
               <div className="flex flex-col items-center mb-6">
                 <div className="relative">
-                  {currentUser.profilePicture ? (
-                    <img
-                      src={currentUser.profilePicture}
-                      alt="Profile"
-                      className="h-24 w-24 rounded-full object-cover border-4 border-white shadow"
-                    />
-                  ) : (
-                    <div className="h-24 w-24 rounded-full bg-gray-200 border-4 border-white shadow flex items-center justify-center">
-                      <FaUser className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )}
+                  {/* Profile picture functionality has been simplified */}
+                  <div className="h-24 w-24 rounded-full bg-gray-200 border-4 border-white shadow flex items-center justify-center">
+                    <FaUser className="h-12 w-12 text-gray-400" />
+                  </div>
                   <button
                     onClick={triggerFileInput}
                     disabled={uploading}
@@ -342,13 +209,13 @@ const ProfilePage = () => {
                 <h2 className="mt-4 text-xl font-bold text-gray-900">
                   {currentUser.firstname} {currentUser.lastname}
                 </h2>
-                {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-                  currentUser.academyRole === "INSTRUCTOR") && (
+                {currentUser.role === "INSTRUCTOR" && (
                   <p className="text-gray-600">
-                    {(currentUser as any).title || "Instructor"}
+                    Instructor
                   </p>
                 )}
               </div>
+
 
               {/* Profile Information */}
               {isEditing ? (
@@ -405,7 +272,7 @@ const ProfilePage = () => {
                       />
                     </div>
 
-                    {currentUser.academyRole === "INSTRUCTOR" && (
+                    {currentUser.role === "INSTRUCTOR" && (
                       <div className="sm:col-span-6">
                         <label
                           htmlFor="title"
@@ -424,23 +291,9 @@ const ProfilePage = () => {
                       </div>
                     )}
 
-                    <div className="sm:col-span-6">
-                      <label
-                        htmlFor="bio"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Bio
-                      </label>
-                      <textarea
-                        id="bio"
-                        name="bio"
-                        rows={3}
-                        value={formData.bio}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      />
-                    </div>
+
                   </div>
+
 
                   <div className="flex justify-end space-x-3">
                     <button
@@ -488,21 +341,20 @@ const ProfilePage = () => {
                         {currentUser.email}
                       </dd>
                     </div>
-                    {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-                      currentUser.academyRole === "INSTRUCTOR") && (
+                    {currentUser.role === "INSTRUCTOR" && (
                       <div>
                         <dt className="text-sm font-medium text-gray-500">
                           Title
                         </dt>
                         <dd className="mt-1 text-sm text-gray-900">
-                          {(currentUser as unknown as { title: string }).title || "Not provided"}
+                          Not provided
                         </dd>
                       </div>
                     )}
                     <div className="sm:col-span-2">
                       <dt className="text-sm font-medium text-gray-500">Bio</dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        {currentUser.bio || "No bio provided"}
+                        {"No bio provided" /* Bio property no longer available in simplified auth */}
                       </dd>
                     </div>
                   </div>

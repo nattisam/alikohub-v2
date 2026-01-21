@@ -20,9 +20,10 @@ export const useTeachingSchedules = () => {
       try {
         const response = await api.get("/academy/teaching-schedules/instructor");
         return response.data;
-      } catch (error) {
+      } catch (error: unknown) {
         // Return empty array if user doesn't have permission
-        if (error?.response?.status === 403 || error?.response?.status === 401) {
+        if (error && typeof error === 'object' && 'response' in error && 
+            ((error as any).response?.status === 403 || (error as any).response?.status === 401)) {
           return [];
         }
         // Re-throw other errors
