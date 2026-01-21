@@ -41,7 +41,7 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
       firstname: currentUser?.firstname || "",
       lastname: currentUser?.lastname || "",
       email: currentUser?.email || "",
-      phone: currentUser?.phone || "",
+      phone: (currentUser as any)?.phone || "",
     },
     teachingCategories: [""],
     resumeUrl: "",

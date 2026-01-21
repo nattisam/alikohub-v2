@@ -12,7 +12,7 @@ const InstructorDashboardMain: React.FC = () => {
   const navigate = useNavigate();
   
   const instructorId = currentUser?.firebaseId;
-  const { data: courses = [] } = useInstructorCourses(instructorId);
+  useInstructorCourses(instructorId);
   const {
     data: instructorStats,
     isLoading,

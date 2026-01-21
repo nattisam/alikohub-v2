@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 
 
 const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user: currentUser, logout } = useAuth();
+  const { logout } = useAuth();
   const location = useLocation();
 
 

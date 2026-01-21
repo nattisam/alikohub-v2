@@ -78,8 +78,8 @@ const AcademyStudentDashboard = () => {
                 detectedCourses.push({
                   ...enrollmentItem.course,
                   progress:
-                    enrollmentItem.progress ??
-                    enrollmentItem.course.progress ??
+                    (enrollmentItem as any).progress ??
+                    (enrollmentItem.course as any).progress ??
                     0,
                 } as unknown as Course);
               }
@@ -205,7 +205,7 @@ const AcademyStudentDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Welcome, {currentUser?.firstName || currentUser?.email}</span>
+            <span className="text-gray-600">Welcome, {(currentUser?.firstName as string) || currentUser?.email}</span>
           </div>
         </div>
       </header>

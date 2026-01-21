@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { academyApi } from "../../api";
-import type { Course } from "../types.d";
+import type { Course } from "../common/types.d";
 import { FaCheckCircle, FaCircle, FaPlayCircle } from "react-icons/fa";
 
 interface ProgressItem {

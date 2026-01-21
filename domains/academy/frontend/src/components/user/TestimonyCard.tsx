@@ -1,5 +1,5 @@
 import Card from "../../../../../../libraries/ui-libraries/components/Card";
-import type { TestimonyCardProps } from "../types.d";
+import type { TestimonyCardProps } from "../common/types.d";
 
 const TestimonyCard = ({image, name, testimony, className, cardColor, style}:TestimonyCardProps) => {
     return(

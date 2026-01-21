@@ -17,7 +17,7 @@ const LessonPage: React.FC = () => {
   const [moduleLessons, setModuleLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentContentIndex, setCurrentContentIndex] = useState(0);
+  const [currentContentIndex] = useState(0);
 
   useEffect(() => {
     if (lessonIdNum) fetchLesson(lessonIdNum);

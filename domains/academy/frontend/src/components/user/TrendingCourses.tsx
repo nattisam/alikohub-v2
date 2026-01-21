@@ -1,5 +1,5 @@
 import TrendingCourseCard from "./TrendingCourseCard";
-import type { Course } from "../types.d";
+import type { Course } from "../common/types.d";
 import { useEnrollCourse } from "../../queries/studentCourses";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,13 +12,13 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
   const navigate = useNavigate();
   
   // Fetch user's enrolled courses
-  const { data: enrolledCourses = [], isLoading: enrolledCoursesLoading } = useQuery({
+  const { data: enrolledCourses = [] } = useQuery({
     queryKey: ['userEnrollments', currentUser?.firebaseId],
     queryFn: async () => {
       if (!currentUser) return [];
       try {
         const response = await enrollmentApi.getMyCourses();
-        return Array.isArray(response.data.items) ? response.data.items : response.data;
+        return Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error('Error fetching enrolled courses:', error);
         return [];

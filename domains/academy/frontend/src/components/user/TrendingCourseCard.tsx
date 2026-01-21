@@ -1,19 +1,20 @@
 import { useState } from "react";
 import Card from "../../../../../../libraries/ui-libraries/components/Card";
-import type { TrendingCourseCardProps } from "../types.d";
+import type { TrendingCourseCardProps } from "../common/types.d";
 import { FaStar, FaRegStar, FaStarHalfAlt, FaSpinner } from "react-icons/fa";
 import { getCourseImageUrlWithFallback } from "../../utils/imageUtils";
 
 const TrendingCourseCard = ({ course, onEnroll, isEnrolled = false }: TrendingCourseCardProps) => {
-  const { title, thumbnail, rating, price } = course;
+  const { title, thumbnail, rating = 0, price = 0 } = course;
+  const safeRating = rating ?? 0;
   const [isEnrolling, setIsEnrolling] = useState(false);
   
-  const fullStars = Array(Math.floor(rating))
+  const fullStars = Array(Math.floor(safeRating))
     .fill(0)
     .map((_, index) => <FaStar key={index} color="gold" />);
   const halfStar =
-    rating % 1 !== 0 ? [<FaStarHalfAlt key={"half"} color="gold" />] : [];
-  const emptyStars = Array(5 - Math.ceil(rating))
+    safeRating % 1 !== 0 ? [<FaStarHalfAlt key={"half"} color="gold" />] : [];
+  const emptyStars = Array(5 - Math.ceil(safeRating))
     .fill(0)
     .map((_, index) => <FaRegStar key={`e${index}`} color="gold" />);
   const allStars = [...fullStars, ...halfStar, ...emptyStars];

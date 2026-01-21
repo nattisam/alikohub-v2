@@ -1,15 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { enrollmentService } from "../services/enrollment-service";
-import { courseService } from "../services/course-service";
-import type { Course } from "../services/course-service";
+import { enrollmentService, type EnrollmentWithCourse } from "../services/enrollment-service";
+import { courseService, type Course } from "../services/course-service";
 
 export const useAllCourses = () => {
   return useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
       const response = await courseService.getPublishedCourses();
-      const payload = (response && response.items) ? response.items : response;
-      return Array.isArray(payload) ? payload : [];
+      const coursesData = (response as any).items || response;
+      return Array.isArray(coursesData) ? coursesData : [];
     },
     staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
     gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
@@ -26,8 +25,9 @@ export const useAllCourses = () => {
   });
 };
 
-export const useTrendingCourses = (allCourses: Course[] = []) => {
-  return allCourses.slice(0, 5);
+export const useTrendingCourses = (allCourses: any = []) => {
+  const payload = allCourses?.items || allCourses;
+  return Array.isArray(payload) ? payload.slice(0, 5) : [];
 };
 
 export const useEnrolledCourses = (userId?: string) => {
@@ -39,7 +39,7 @@ export const useEnrolledCourses = (userId?: string) => {
       }
       const requestData = await enrollmentService.getEnrollmentsByUserId(userId);
       // Extract course data from the enrollment response
-      const coursesData = requestData.map((enrollment: { course: EnrollmentCourseData }) => {
+      const coursesData = requestData.map((enrollment: EnrollmentWithCourse) => {
         // Ensure thumbnail is a string or provide a default
         const courseData = {
           ...enrollment.course,
@@ -128,7 +128,7 @@ export const getSimilarCourses = (refCourse: Course, allCourses: Course[]): Cour
   
   return allCourses.filter(course => {
     if (course.category === refCourse.category && course.id !== refCourse.id) {
-      return refCourse.skills?.some(skill => course.skills?.includes(skill));
+      return refCourse.skills?.some((skill: string) => course.skills?.includes(skill));
     }
     return false;
   });

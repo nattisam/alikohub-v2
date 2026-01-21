@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Course } from "../services/course-service";
 import { courseService } from "../services/course-service";
 
 export const useCourses = () => {
@@ -9,8 +8,7 @@ export const useCourses = () => {
     queryKey: ["all-courses"],
     queryFn: async () => {
       const response = await courseService.getPublishedCourses();
-      const coursesData = response.items || response;
-      return Array.isArray(coursesData) ? coursesData : [];
+      return Array.isArray(response) ? response : [];
     },
     staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
     gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
@@ -32,7 +30,7 @@ export const useCourses = () => {
       new Set(
         courses
           .map(course => course.category)
-          .filter((category): category is string => 
+          .filter((category): category is any => 
             typeof category === 'string' && 
             category.length > 0 && 
             validCategories.includes(category)

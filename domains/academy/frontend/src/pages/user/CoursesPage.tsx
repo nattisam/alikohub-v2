@@ -31,7 +31,7 @@ const CoursesPage: React.FC = () => {
         // Handle different response formats
         const coursesData = response.data.items || response.data;
         setCourses(Array.isArray(coursesData) ? coursesData : []);
-      } catch (err: unknown) {
+      } catch (err: any) {
         
         // Check if it's a 401 error (unauthorized)
         if (err?.response?.status === 401) {

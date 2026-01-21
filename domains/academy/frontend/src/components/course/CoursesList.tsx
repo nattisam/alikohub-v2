@@ -2,7 +2,7 @@ import { useEnrollCourse } from "../../queries/studentCourses";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import CourseCard from "../student/StudentCourseCard";
-import type { Course } from "../types.d";
+import type { Course } from "../common/types.d";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { useQuery } from "@tanstack/react-query";
 
@@ -25,7 +25,8 @@ const CoursesList = ({
       if (!currentUser) return [];
       try {
         const response = await enrollmentApi.getMyCourses();
-        return Array.isArray(response.data.items) ? response.data.items : response.data;
+        const responseData = response.data as any;
+        return Array.isArray(responseData.items) ? responseData.items : responseData;
       } catch (error) {
         console.error('Error fetching enrolled courses:', error);
         return [];

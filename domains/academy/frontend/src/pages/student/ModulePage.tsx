@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { courseApi } from "../../api/courseApi";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useCourse } from "../../queries/courseQueries";
 import { useCourseModules } from "../../queries/moduleQueries";
 import {
@@ -15,7 +14,6 @@ import type { CourseModule, CourseLesson } from "../../components/common/types.d
 const ModulePage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Handle both numeric courseId and course title format (course-title-id)
   const parsedCourseId = isNaN(Number(courseId)) ? parseInt(courseId?.split('-').pop() || '0') : Number(courseId);
@@ -23,8 +21,8 @@ const ModulePage: React.FC = () => {
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
   const [selectedLesson, setSelectedLesson] = useState<CourseLesson | null>(null);
   const [currentContentIndex, setCurrentContentIndex] = useState(0);
-  const [completedLessons, setCompletedLessons] = useState<number[]>([]);
-  const [error, setError] = useState("");
+  const [completedLessons] = useState<number[]>([]);
+  const [error] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Get selected lesson ID from URL params
@@ -39,7 +37,7 @@ const ModulePage: React.FC = () => {
       if (selectedLessonId) {
         const lessonIdNum = parseInt(selectedLessonId);
         for (const module of modules) {
-          const foundLesson = module.lessons.find(lesson => lesson.id === lessonIdNum);
+          const foundLesson = module.lessons.find((lesson: CourseLesson) => lesson.id === lessonIdNum);
           if (foundLesson) {
             setSelectedLesson(foundLesson);
             return;
@@ -126,9 +124,9 @@ const ModulePage: React.FC = () => {
   };
 
   const calculateProgress = () => {
-    const lessons = modules.flatMap((m) => m.lessons);
-    if (!lessons.length) return 0;
-    const completed = lessons.filter((l) =>
+    const lessons = modules.flatMap((m: CourseModule) => m.lessons);
+    
+    const completed = lessons.filter((l: CourseLesson) =>
       completedLessons.includes(l.id)
     ).length;
     return Math.round((completed / lessons.length) * 100);
@@ -225,7 +223,7 @@ const ModulePage: React.FC = () => {
 
               <div className="mt-2 text-sm text-gray-500 flex gap-4">
                 <span className="flex items-center gap-1">
-                  <span>⏱</span> {(selectedLesson?.title.length % 12) + 5}:{(selectedLesson?.title.length * 7 % 60).toString().padStart(2, '0')}
+                  <span>⏱</span> {(selectedLesson?.title?.length ?? 0 % 12) + 5}:{( (selectedLesson?.title?.length ?? 0) * 7 % 60).toString().padStart(2, '0')}
                 </span>
                 <span className="flex items-center gap-1">
                   <span>📅</span> Updated recently
@@ -234,7 +232,7 @@ const ModulePage: React.FC = () => {
 
               {selectedLesson?.contents && selectedLesson.contents.length > 1 && (
                 <div className="mt-4 flex gap-2">
-                  {selectedLesson.contents.map((content, index) => (
+                  {selectedLesson.contents.map((_content, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentContentIndex(index)}

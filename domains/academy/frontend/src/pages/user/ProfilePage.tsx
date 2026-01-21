@@ -57,8 +57,8 @@ const ProfilePage = () => {
   useEffect(() => {
     if (currentUser) {
       setFormData({
-        firstname: currentUser.firstname || "",
-        lastname: currentUser.lastname || "",
+        firstname: currentUser.firstname || currentUser.firstName || "",
+        lastname: currentUser.lastname || currentUser.lastName || "",
         email: currentUser.email || "",
         title: "", // For instructors
       });
@@ -207,7 +207,7 @@ const ProfilePage = () => {
                   />
                 </div>
                 <h2 className="mt-4 text-xl font-bold text-gray-900">
-                  {currentUser.firstname} {currentUser.lastname}
+                  {currentUser.firstname || currentUser.firstName} {currentUser.lastname || currentUser.lastName}
                 </h2>
                 {currentUser.role === "INSTRUCTOR" && (
                   <p className="text-gray-600">
@@ -330,7 +330,7 @@ const ProfilePage = () => {
                         Full name
                       </dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        {currentUser.firstname} {currentUser.lastname}
+                        {currentUser.firstname || currentUser.firstName} {currentUser.lastname || currentUser.lastName}
                       </dd>
                     </div>
                     <div>

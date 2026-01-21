@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { courseApi, enrollmentApi } from "../../api/courseApi";
+import type { Course } from "../common/types.d";
 import { useAuth } from "../../contexts/AuthContext";
 
 import courseImg from "../../assets/courses.png";
@@ -18,7 +19,6 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   onViewCourseContent,
   onEnrollmentComplete // Add this new prop
 }) => {
-  const [enrolling, setEnrolling] = useState<number | null>(null);
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [courseToEnroll, setCourseToEnroll] = useState<number | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -102,57 +102,6 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     // Call the enrollment complete callback if provided
     if (onEnrollmentComplete) {
       onEnrollmentComplete();
-    }
-  };
-
-  const handleConfirmEnroll = async () => {
-    if (courseToEnroll === null) return;
-    
-    setEnrolling(courseToEnroll);
-    
-    try {
-      // Simplified enrollment - just need courseId, backend will handle cohort logic
-      const enrollmentData = {
-        courseId: courseToEnroll
-        // No need to specify cohortId, backend will allow direct course enrollment
-      };
-      
-      
-      // Try to enroll
-      const response = await enrollmentApi.createEnrollment(enrollmentData);
-      
-      // Show success message
-      alert("Successfully enrolled in the course!");
-      
-      // Close the modal and refresh the enrollment data
-      setShowEnrollmentModal(false);
-      setCourseToEnroll(null);
-      setSelectedCourse(null);
-      
-      // Invalidate the enrollment query to refetch the updated data
-      await queryClient.invalidateQueries({ queryKey: ["user-enrollments"] });
-      await queryClient.invalidateQueries({ queryKey: ["all-courses"] });
-      
-      return response;
-    } catch (err: unknown) {
-      console.error("Error enrolling in course:", err);
-      if (err && typeof err === 'object' && 'response' in err) {
-        console.error("Error response:", (err as any).response);
-      }
-      
-      // Try to get a more detailed error message
-      let errorMessage = "Failed to enroll in course. Please try again.";
-      if ((err as any).response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
-        errorMessage = (err as any).message;
-      }
-      
-      alert(`Failed to enroll in course: ${errorMessage}`);
-    } finally {
-      setEnrolling(null);
-      setCourseToEnroll(null);
-      setSelectedCourse(null);
     }
   };
 
@@ -256,10 +205,9 @@ const AllCourses: React.FC<AllCoursesProps> = ({
                       <button 
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition-colors"
                         onClick={() => handleEnrollClick(course.id)}
-                        disabled={enrolling === course.id}
                         data-prevent-menu-close
                       >
-                        {enrolling === course.id ? "Enrolling..." : "Enroll"}
+                        Enroll
                       </button>
                     )}
                   </div>

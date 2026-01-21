@@ -20,7 +20,6 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [showInstructorApplication, setShowInstructorApplication] = useState<boolean>(false);
 
   const handleRoleSelect = (role: "STUDENT" | "INSTRUCTOR") => {
@@ -35,12 +34,10 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
     }
     
     setError("");
-    setIsSubmitting(true);
     
     if (selectedRole === "INSTRUCTOR") {
       // For instructor, show the application modal directly instead of calling selectRole
       setShowInstructorApplication(true);
-      setIsSubmitting(false);
       return;
     }
     
@@ -59,8 +56,6 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
     } catch (err: any) {
       console.error("Error selecting role:", err);
       setError("Failed to select role. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

@@ -1,7 +1,9 @@
 import axios, { AxiosError } from "axios";
 
+import type { AxiosRequestConfig } from "axios";
+
 // Define the type locally since AxiosRequestConfig is not a named export
-interface AxiosRequestConfigWithRetry extends import('axios').AxiosRequestConfig {
+interface AxiosRequestConfigWithRetry extends AxiosRequestConfig {
   __retryCount?: number;
 }
 import apiClient from "./lib/api";

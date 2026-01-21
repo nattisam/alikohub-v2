@@ -4,7 +4,9 @@ export interface User {
   id: number;
   firebaseId: string;
   firstname: string;
+  firstName?: string;
   lastname?: string;
+  lastName?: string;
   email: string;
   /**
    * globalRole is role of the user over all alikohub platform
@@ -14,11 +16,24 @@ export interface User {
    * role is alikohub academy specific role of the user.
    */
   role?: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+  selectedRole?: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+  hasSelectedRole?: boolean;
   profilePicture?: string | null;
   bio?: string | null;
   status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
+  academyUser?: {
+    id: string;
+    userId: string;
+    role: string;
+    activeRole: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    hasSelectedRole?: boolean;
+    selectedRole?: string;
+  } | null;
 }
 
 export interface Instructor extends User {
@@ -91,13 +106,14 @@ export interface CourseModule {
 
 export type LessonType = "QUIZ" | "VIDEO" | "WEBINAR" | "ASSIGNMENT";
 
-export type ContentType = "VIDEO" | "PDF" | "QUIZ" | "ASSIGNMENT";
+export type ContentType = "VIDEO" | "PDF" | "QUIZ" | "ASSIGNMENT" | "TEXT";
 
 export interface CourseLesson {
   id: number;
   title: string;
   moduleId: number;
   type: LessonType;
+  description?: string;
   contents: LessonContent[];
   maxScore?: number;
   passingScore?: number;
@@ -137,6 +153,7 @@ export interface LessonContent {
 export interface TrendingCourseCardProps {
   course: Course;
   onEnroll: () => void;
+  isEnrolled?: boolean;
 }
 
 export interface TestimonyCardProps {

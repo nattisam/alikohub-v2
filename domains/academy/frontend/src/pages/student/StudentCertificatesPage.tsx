@@ -4,7 +4,7 @@ import EmptyState from '../../components/states/EmptyState';
 import { FaCertificate } from 'react-icons/fa';
 
 const StudentCertificatesPage: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  useAuth();
   const navigate = useNavigate();
 
   return (

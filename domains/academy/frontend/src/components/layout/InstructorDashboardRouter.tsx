@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import RoleSelectionModal from "../auth/RoleSelectionModal";
 import InstructorDashboardMain from "../../pages/instructor/InstructorDashboard";
@@ -11,11 +11,9 @@ import NotFoundState from "../states/NotFoundState";
 
 const InstructorDashboardRouter: React.FC = () => {
   const { user: currentUser } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
 
   // Check the active role from the user's academyUser
-  const activeRole = currentUser?.academyUser?.activeRole;
   const hasSelectedRole = currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
 
   // If user hasn't selected a role yet, show role selection modal

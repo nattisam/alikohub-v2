@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Course } from '../types.d';
+import type { Course } from '../common/types.d';
 import { FaBook, FaUsers, FaStar, FaClock } from 'react-icons/fa';
 
 interface CourseStatsProps {

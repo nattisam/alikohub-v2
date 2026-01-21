@@ -1,4 +1,27 @@
-import type { CardProps } from "../../common-data-types/types";
+import React, { type ReactNode } from "react";
+
+export interface CardAction {
+  label: ReactNode;
+  onClick: () => void;
+  className?: string;
+}
+
+export interface CardProps {
+  img?: string;
+  title?: string;
+  style?: React.CSSProperties;
+  content?: string;
+  className?: string;
+  actions?: CardAction[];
+  imgClassName?: string;
+  titleClassName?: string;
+  contentClassName?: string;
+  actionsClassName?: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onClick?: () => void;
+  children?: ReactNode;
+}
 
 export default function Card({
   img,
@@ -35,7 +58,7 @@ export default function Card({
       )}
       {actions && actions.length > 1 && (
         <div className={actionsClassName}>
-          {actions.map((action, index) => (
+          {actions.map((action: any, index: number) => (
             <button
               key={index}
               className={action?.className}

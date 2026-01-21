@@ -17,7 +17,9 @@ export interface CurrentUser {
   id: number;
   firebaseId: string;
   firstname: string;
+  firstName?: string;
   lastname: string;
+  lastName?: string;
   email: string;
   globalRole: string;
   profilePicture: string | null;
@@ -33,6 +35,8 @@ export interface CurrentUser {
     status: string;
     createdAt: string;
     updatedAt: string;
+    hasSelectedRole?: boolean;
+    selectedRole?: string;
   } | null;
   consultancyUser: {
     id: string;

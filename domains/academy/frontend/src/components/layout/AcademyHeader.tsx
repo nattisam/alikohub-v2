@@ -32,7 +32,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { logout, refreshProfile } = useAuth();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

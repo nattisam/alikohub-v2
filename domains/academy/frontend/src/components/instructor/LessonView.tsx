@@ -18,7 +18,7 @@ const LessonView: React.FC<LessonViewProps> = ({
   lessonId, 
   moduleId,
   onClose, 
-  onEdit,
+  onEdit: _onEdit,
   isInstructorView = false 
 }) => {
   const [lesson, setLesson] = useState<CourseLesson | null>(null);

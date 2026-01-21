@@ -9,7 +9,7 @@ import SignupForm from '../../../../../../libraries/ui-libraries/components/auth
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { signup, isLoading: signupLoading, loginError: signupError, logout } = useAuth();
+  const { signup, isLoading: signupLoading, signupError, logout } = useAuth();
 
   const handleSignup = async (data: SignupFormData) => {
     try {

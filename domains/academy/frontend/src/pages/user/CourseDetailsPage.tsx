@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { courseApi } from "../../api/courseApi";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCourse } from "../../queries/courseQueries";
 import { useCourseModules } from "../../queries/moduleQueries";
-import type { Course, Enrollment, CourseModule, CourseLesson } from "../../components/common/types.d";
+import type { CourseModule, CourseLesson, Course } from "../../components/common/types.d";
 import { 
   FaStar, FaChevronDown, FaPlay, FaRegHeart, FaShareAlt, 
   FaInfinity, FaCertificate, FaMobileAlt, FaDownload, FaShieldAlt 
@@ -25,7 +24,7 @@ const CourseDetailsPage: React.FC = () => {
   
   // Check if user is already enrolled
   // Since the Course type doesn't include enrollments, we'll need to fetch them separately
-  const [userEnrollments, setUserEnrollments] = useState<Enrollment[]>([]);
+  const [userEnrollments, setUserEnrollments] = useState<Course[]>([]);
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true);
 
 
@@ -50,7 +49,7 @@ const CourseDetailsPage: React.FC = () => {
               // Assuming response.data is the array of enrollments
               setUserEnrollments(response.data);
               return; // Success, exit the retry loop
-            } catch (err: unknown) {
+            } catch (err: any) {
               console.error("Error fetching user enrollments:", err);
               
               // Check if it's a 429 error (Too Many Requests)
@@ -126,7 +125,7 @@ const CourseDetailsPage: React.FC = () => {
               // Assuming response.data is the array of enrollments
               setUserEnrollments(enrollmentResponse.data);
               return; // Success, exit the retry loop
-            } catch (err: unknown) {
+            } catch (err: any) {
               console.error("Error refreshing user enrollments after enrollment:", err);
               
               // Check if it's a 429 error (Too Many Requests)
@@ -145,7 +144,7 @@ const CourseDetailsPage: React.FC = () => {
         await fetchEnrollmentsWithRetry();
       }
     }
-    catch (err: unknown) {
+    catch (err: any) {
       console.error("Error enrolling in course:", err);
       
       // Check for specific error types
@@ -211,7 +210,7 @@ const CourseDetailsPage: React.FC = () => {
   }
 
   const isEnrolled = !enrollmentsLoading && userEnrollments.some(
-    (enrollment: Enrollment) => enrollment.courseId === course.id
+    (c: Course) => c.id === course.id
   );
 
   return (
@@ -428,7 +427,7 @@ const CourseDetailsPage: React.FC = () => {
                   <div className="flex items-center gap-3"><FaInfinity className="text-blue-600" /> Lifetime access</div>
                   <div className="flex items-center gap-3"><FaCertificate className="text-blue-600" /> Verified Certificate</div>
                   <div className="flex items-center gap-3"><FaMobileAlt className="text-blue-600" /> Access on mobile and TV</div>
-                  <div className="flex items-center gap-3"><FaDownload className="text-blue-600" /> {modulesFromQuery.reduce<number>((total, module: CourseModule) => total + (module.lessons?.length || 0), 0)} Downloadable resources</div>
+                  <div className="flex items-center gap-3"><FaDownload className="text-blue-600" /> {(modulesFromQuery || []).reduce((total: number, module: CourseModule) => total + (module.lessons?.length || 0), 0)} Downloadable resources</div>
                 </div>
               </div>
 

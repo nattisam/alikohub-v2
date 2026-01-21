@@ -11,7 +11,8 @@ export const useInstructorCourses = (instructorId?: string) => {
       }
       
       const res = await courseService.getCourses({ instructorId });
-      return res.items ?? res;
+      const coursesData = (res as any).items || res;
+      return Array.isArray(coursesData) ? coursesData : [];
     },
     enabled: !!instructorId,
   });

@@ -3,7 +3,7 @@ import React, {
   useContext,
   useEffect,
   useState,
-  ReactNode,
+  type ReactNode,
 } from "react";
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 import { authService } from "../services/auth-service";
@@ -34,6 +34,8 @@ interface AuthContextType {
   selectRoleMutation: UseMutationResult<any, any, { role: Role }, unknown>;
   switchRoleMutation: UseMutationResult<any, any, Role, unknown>;
   applyAsInstructorMutation: UseMutationResult<any, any, any, unknown>;
+  loginError: string | null;
+  signupError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +72,8 @@ const buildUser = (user: any): CurrentUser => {
 
   return {
     ...user,
+    firstName: user.firstname || user.firstName,
+    lastName: user.lastname || user.lastName,
     academyUser: convertedAcademyUser,
     academyRole: convertRoleToUppercase(academyUser?.role) ?? 'USER',
     academyActiveRole: convertRoleToUppercase(user.academyActiveRole) ?? convertRoleToUppercase(academyUser?.activeRole) ?? convertRoleToUppercase(academyUser?.role) ?? 'USER',
@@ -138,7 +142,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       try {
         // Use the user data from the response which may contain updated role information
-        const profile = await authService.getProfile();
+        await authService.getProfile();
         const finalUser = buildUser(data.user);
 
         setUser(finalUser);
@@ -164,7 +168,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       try {
         // Use the user data from the response which may contain updated role information
-        const profile = await authService.getProfile();
+        await authService.getProfile();
         const finalUser = buildUser(data.user);
 
         setUser(finalUser);
@@ -183,22 +187,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const selectRoleMutation = useMutation({
     mutationFn: ({ role }: { role: Role }) => {
-      if (role === "INSTRUCTOR") {
-        if (!user) return { error: "INSTRUCTOR_APPLICATION_REQUIRED" };
-        
-        const updated = {
-          ...user,
-          pendingRole: role,
-          roleStatus: { ...user.roleStatus, instructor: "not_applied" },
-        };
-        
-        // Update context and local storage
-        setUser(updated);
-        localStorage.setItem("user", JSON.stringify(updated));
-        
-        return Promise.resolve({ error: "INSTRUCTOR_APPLICATION_REQUIRED" });
-      }
-      
       // For non-instructor roles, make the API call
       return authService.selectRole(role);
     },
@@ -299,9 +287,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const refreshProfile = async () => {
     if (!user) return null;
-
-    const profile = await authService.getProfile();
-    const updated = buildUser(profile);
+    
+    await authService.getProfile();
+    // Profile is already updated if the service updates some internal state, 
+    // but here we just want to refresh. Actually, we should use the result.
+    const updated = buildUser(await authService.getProfile());
     updateUser(updated);
     return updated;
   };
@@ -318,6 +308,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (!user) return;
     await applyAsInstructorMutation.mutateAsync(data);
   };
+
+  const loginError = loginMutation.error ? (loginMutation.error as any).response?.data?.message || loginMutation.error.message : null;
+  const signupError = signupMutation.error ? (signupMutation.error as any).response?.data?.message || signupMutation.error.message : null;
 
   return (
     <AuthContext.Provider
@@ -339,6 +332,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         selectRoleMutation,
         switchRoleMutation,
         applyAsInstructorMutation,
+        loginError,
+        signupError,
       }}
     >
       {children}

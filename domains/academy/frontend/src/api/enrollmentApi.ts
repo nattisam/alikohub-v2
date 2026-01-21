@@ -1,5 +1,5 @@
 import { academyApi } from "../api";
-import type { Course } from "../components/types.d";
+import type { Course } from "../components/common/types.d";
 
 // Define the enrollment types
 export interface Enrollment {

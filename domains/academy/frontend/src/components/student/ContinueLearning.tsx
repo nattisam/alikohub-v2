@@ -61,12 +61,12 @@ export default function ContinueLearning({
   // Map enrollments to the format expected by the UI
   const coursesWithDetails = courses.map((item) => {
     if (isEnrollmentWithCourse(item)) {
-      const course = item.course || item.cohort?.course;
+      const course = item.course;
       return {
         courseId: item.courseId,
-        title: course?.title || item.courseId,
+        title: course?.title || String(item.courseId),
         thumbnail: course?.thumbnail,
-        percentage: item.progress || course?.progress || 0,
+        percentage: item.progress || 0,
       };
     }
 

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { FaTachometerAlt, FaUsers, FaChalkboardTeacher, FaBook, FaCalendarAlt, FaComments, FaCog, FaSignOutAlt, FaBars, FaTimes } from "react-icons/fa";
+import { FaTachometerAlt, FaChalkboardTeacher, FaBook, FaBars, FaTimes } from "react-icons/fa";
 
 const AdminLayout = () => {
   const { user: currentUser, logout, isLoading } = useAuth();

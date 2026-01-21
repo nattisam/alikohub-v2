@@ -23,7 +23,6 @@ const InstructorCreateCourse: React.FC = () => {
     status: "PUBLISHED",
   });
   
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const createCourseMutation = useCreateCourse();
   
@@ -86,7 +85,7 @@ const InstructorCreateCourse: React.FC = () => {
       const response = await createCourseMutation.mutateAsync(courseData as Partial<Course>);
       console.log("Create course response:", response); // Debug log
       
-      const courseId = response.id || response.data?.id || -1;
+      const courseId = (response as any).id || (response as any).data?.id || -1;
       
       if (courseId > 0) {
         alert("Course created successfully!");

@@ -6,7 +6,6 @@ import LoginForm from '../../../../../../libraries/ui-libraries/components/auth/
 import ErrorModal from '../../../../../../libraries/ui-libraries/components/auth/ErrorModal';
 import type { LoginFormData } from '../../../../../../libraries/ui-libraries/components/auth/LoginForm';
 import { useAuth } from '../../contexts/AuthContext';
-import { useEffect } from 'react';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();

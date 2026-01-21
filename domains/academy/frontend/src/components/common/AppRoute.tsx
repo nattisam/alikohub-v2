@@ -38,7 +38,7 @@ const AppRoute: React.FC<AppRouteProps> = ({
   }
 
   // If user hasn't selected a role yet, redirect to role selection page
-  if (currentUser && !(currentUser.selectedRole || currentUser.academyUser?.selectedRole)) {
+  if (currentUser && !(currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
     return <Navigate to="/role" state={{ from: location }} replace />;
   }
 
@@ -54,9 +54,8 @@ const AppRoute: React.FC<AppRouteProps> = ({
 
   // If a required role is specified, check if user has it
   if (requiredRole && currentUser) {
-    // Check various role properties to determine if user has required role
     // Active role should be the primary check
-    const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
+    const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
     
     const hasRequiredRole = (activeRole === requiredRole) || 
                            (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application
@@ -71,13 +70,13 @@ const AppRoute: React.FC<AppRouteProps> = ({
   }
 
   // If no required role is specified, allow access to authenticated users who have selected a role
-  if (!requiredRole && currentUser && (currentUser.selectedRole || currentUser.academyUser?.selectedRole)) {
+  if (!requiredRole && currentUser && (currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
     return <>{children}</>;
   }
 
   // If user has the required role, render the children
   if (requiredRole && currentUser) {
-    const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
+    const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
     
     const hasRequiredRole = (activeRole === requiredRole) || 
                            (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application

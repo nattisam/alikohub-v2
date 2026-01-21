@@ -2,7 +2,7 @@ import type { HTMLAttributes } from "react";
 import { useState } from "react";
 import Card from "../../../../../../libraries/ui-libraries/components/Card";
 import { FaStar, FaRegStar, FaStarHalfAlt, FaSpinner } from "react-icons/fa";
-import type { Course } from "../types.d";
+import type { Course } from "../common/types.d";
 import { getCourseImageUrlWithFallback } from "../../utils/imageUtils";
 export default function CourseCard({
   course,

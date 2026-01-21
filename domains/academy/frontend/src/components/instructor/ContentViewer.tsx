@@ -140,7 +140,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ lessonId, moduleId, onClo
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  onError={(e) => {
+                  onError={() => {
                     console.error("Error loading YouTube video:", content.url);
                   }}
                   onLoad={() => {
@@ -209,7 +209,7 @@ const ContentViewer: React.FC<ContentViewerProps> = ({ lessonId, moduleId, onClo
               src={content.url} 
               className="w-full h-96 rounded-xl border border-gray-200"
               title={`PDF Content - ${content.title}`}
-              onError={(e) => {
+              onError={() => {
                 console.error("Error loading PDF:", content.url);
               }}
               onLoad={() => {

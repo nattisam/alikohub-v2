@@ -33,7 +33,7 @@ export const useStudentCourses = () => {
     // Course enrollment
     enrollCourse: async (courseId: number) => {
       try {
-        const response = await enrollCourseMutation.mutateAsync(courseId);
+        await enrollCourseMutation.mutateAsync(courseId);
         return true;
       } catch (error) {
         console.error("Error enrolling course:", error);

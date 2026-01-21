@@ -38,7 +38,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check if user has pending or rejected instructor application but is trying to access instructor-only resources
-  if (requiredRole === "INSTRUCTOR" && 
+  if (requiredRole === "INSTRUCTOR" && currentUser &&
       (currentUser.roleStatus?.instructor === "pending" || currentUser.roleStatus?.instructor === "rejected" || currentUser.roleStatus?.instructor === "not_applied")) {
     // Don't allow access to instructor dashboard if application is pending, not applied, or rejected
     return <AccessDenied 
@@ -66,7 +66,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // If user is an admin, allow access to all routes
-  const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
+  const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
   
   if (activeRole === "ADMIN") {
     return <>{children}</>;
@@ -74,13 +74,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // If no required role is specified, allow access to authenticated users who have selected a role
-  if (!requiredRole && (currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
+  if (!requiredRole && currentUser && (currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
     return <>{children}</>;
   }
 
   // If user has the required role, render the children
   if (requiredRole && currentUser) {
-    const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
+    const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
     
     const hasRequiredRole = (activeRole === requiredRole) || 
                            (requiredRole === 'INSTRUCTOR' && (currentUser.roleStatus?.instructor === 'not_applied' || currentUser.roleStatus?.instructor === 'pending')); // User can access instructor application

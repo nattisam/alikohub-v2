@@ -1,7 +1,7 @@
  import React, { useState, useEffect } from "react";
-import { FaChevronDown, FaChevronRight, FaFile, FaVideo, FaFilePdf } from "react-icons/fa";
+import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { academyApi } from "../../api";
-import type { CourseModule, LessonContent } from "../common/types.d.tsx";
+import type { CourseModule } from "../common/types.d.tsx";
 import LessonView from "../instructor/LessonView";
 
 interface StudentModuleViewProps {
@@ -66,17 +66,6 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
   const handleViewLesson = (lessonId: number, moduleId: number) => {
     setSelectedLessonId(lessonId);
     setModuleIdForLesson(moduleId);
-  };
-
-  const getContentIcon = (type: string) => {
-    switch (type) {
-      case "VIDEO":
-        return <FaVideo className="text-red-500" />;
-      case "PDF":
-        return <FaFilePdf className="text-red-600" />;
-      default:
-        return <FaFile className="text-blue-500" />;
-    }
   };
 
   if (loading) {

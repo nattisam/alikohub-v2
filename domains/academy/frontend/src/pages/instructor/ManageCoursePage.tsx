@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { CourseModule, CourseLesson } from '../../components/types.d';
+import type { CourseModule, CourseLesson } from '../../components/common/types.d';
 import { courseApi } from '../../api/courseApi';
 import AddLessonModal from '../../components/instructor/AddLessonModal';
 import AddModuleModal from '../../components/instructor/AddModuleModal';
@@ -20,8 +20,7 @@ import {
   FileText,
   Video,
   File,
-  Clock,
-  Award
+  Clock
 } from 'lucide-react';
 
 const ManageCoursePage: React.FC = () => {

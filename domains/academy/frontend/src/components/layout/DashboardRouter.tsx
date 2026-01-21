@@ -28,7 +28,7 @@ const DashboardRouter: React.FC = () => {
 
   // If user hasn't selected a role yet (using hasSelectedRole as the primary indicator), redirect to role selection page
   // According to the experience lesson, always check hasSelectedRole instead of academyRole
-  const hasSelectedRole = currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole;
+  const hasSelectedRole = currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
   
   if (!hasSelectedRole) {
     return <Navigate to="/role" replace />;
