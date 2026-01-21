@@ -52,7 +52,6 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006'
-const STORAGE_KEY = "careers_auth"
 
 // Create API client for general auth
 const authApiClient = axios.create({
@@ -120,7 +119,7 @@ function writeStoredAuth(data: { token: string; user: AuthUser } | null) {
   
   localStorage.setItem('user', JSON.stringify(data.user))
   localStorage.setItem('accessToken', data.token)
-  localStorage.setItem('firebaseCustomToken', data.user.firebaseCustomToken || '')
+  localStorage.setItem('firebaseCustomToken', (data.user as any).firebaseCustomToken || '')
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

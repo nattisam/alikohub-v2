@@ -8,7 +8,7 @@ import { useAuth } from "./context/auth-context"
 type UiRole = "recruiter" | "admin" | "applicant"
 
 export default function App() {
-  const { user, isAuthenticated } = useAuth()
+  const { user } = useAuth()
 
   // Map backend roles to UI roles used by layout/sidebar
   const userRole: UiRole =

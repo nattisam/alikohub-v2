@@ -11,15 +11,13 @@ type ApplicationStep = "search" | "form" | "success" | "error"
 export function JobApplicationFlow() {
   const [currentStep, setCurrentStep] = useState<ApplicationStep>("search")
   const [selectedJob, setSelectedJob] = useState<any>(null)
-  const [applicationData, setApplicationData] = useState<any>(null)
 
   const handleSelectJob = (job: any) => {
     setSelectedJob(job)
     setCurrentStep("form")
   }
 
-  const handleSubmitApplication = (data: any) => {
-    setApplicationData(data)
+  const handleSubmitApplication = (_data: any) => {
     // Simulate random success/error for demo
     const isSuccess = Math.random() > 0.2
     setCurrentStep(isSuccess ? "success" : "error")
@@ -28,7 +26,6 @@ export function JobApplicationFlow() {
   const handleStartOver = () => {
     setCurrentStep("search")
     setSelectedJob(null)
-    setApplicationData(null)
   }
 
   switch (currentStep) {

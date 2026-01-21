@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus, Edit2, Trash2, Eye, Loader2 } from "lucide-react"
 import { JobPostingForm } from "../recruiter/job-posting-form"
 import { ApplicantList } from "../recruiter/applicant-list"
-import { getJobById, getAllJobs, createJob, deleteJob } from "../../services/job-service"
+import { getAllJobs, createJob, deleteJob } from "../../services/job-service"
 
 export function RecruiterDashboard() {
   const [showForm, setShowForm] = useState(false)
