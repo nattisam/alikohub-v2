@@ -71,6 +71,19 @@ export class CourseController {
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
 
+  // Get all courses with all statuses (Admin only)
+  @Get('all')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Get all courses regardless of status' })
+  @ApiResponse({ status: 200, description: 'List of all courses' })
+  getAllCourses(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = { 
+      query: { ...query }, 
+      user: req.user 
+    };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
+  }
+
   // Get pending courses (Admin only)
   @Get('pending')
   @UseGuards(AuthGuard, AdminAccessGuard)
@@ -81,6 +94,39 @@ export class CourseController {
   getPendingCourses(@Request() req: RequestWithUser, @Query() query: any) {
     const payload = { 
       query: { ...query, status: 'PENDING_APPROVAL' }, 
+      user: req.user 
+    };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
+  }
+
+  // Get draft courses (Admin only)
+  @Get('draft')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Get courses in draft status' })
+  @ApiResponse({ status: 200, description: 'List of draft courses' })
+  @ApiResponse({ status: 403, description: 'Admin role required' })
+  @ApiQuery({ name: 'page', required: false })
+  getDraftCourses(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = { 
+      query: { ...query, status: 'DRAFT' }, 
+      user: req.user 
+    };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
+  }
+
+  // Get courses by status (Admin only for non-published)
+  @Get('status/:status')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Get courses by specific status' })
+  @ApiResponse({ status: 200, description: 'List of courses' })
+  @ApiParam({ name: 'status', type: String })
+  getCoursesByStatus(
+    @Request() req: RequestWithUser,
+    @Param('status') status: string,
+    @Query() query: any,
+  ) {
+    const payload = { 
+      query: { ...query, status }, 
       user: req.user 
     };
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
