@@ -1,100 +1,57 @@
-name: Deploy to AWS EKS
+name: Deploy to cPanel
 
 on:
   push:
-    branches:
-      - main
-
-env:
-  AWS_REGION: us-east-1                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY_PREFIX: alikohub         # common prefix for ECR repos
-  EKS_CLUSTER_NAME: alikohub-cluster      # set this to your cluster name
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to EKS
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write # This is required for requesting the JWT
-      contents: read  # This is required for actions/checkout
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        role-to-assume: arn:aws:iam::500234530871:role/github-actions-role # Update with your IAM Role ARN
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Build and Push Docker Images
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        # Build and Push Auth Service
-        docker build -t $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-auth-service:$IMAGE_TAG ./domains/core-platform-services/auth-service
-        docker push $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-auth-service:$IMAGE_TAG
-        
-        # Build and Push Academy Service
-        docker build -t $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-academy:$IMAGE_TAG ./domains/academy/backend
-        docker push $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-academy:$IMAGE_TAG
-        
-        # Build and Push Con-Tech Service
-        docker build -t $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-contech:$IMAGE_TAG ./domains/con-tech/backend
-        docker push $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-contech:$IMAGE_TAG
-        
-        # Build and Push Events Service
-        docker build -t $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-events:$IMAGE_TAG ./domains/events/backend
-        docker push $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-events:$IMAGE_TAG
-        
-        # Build and Push Careers Service
-        docker build -t $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-careers:$IMAGE_TAG ./domains/core-platform-services/careers-service
-        docker push $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-careers:$IMAGE_TAG
-        
-        # Build and Push API Gateway
-        docker build -t $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-api-gateway:$IMAGE_TAG ./domains/core-platform-services/api-gateway-service
-        docker push $ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-api-gateway:$IMAGE_TAG
+      # Example: Build API Gateway. Repeat for other services or use nx run-many
+      - name: Build API Gateway
+        run: npx nx build api-gateway-service
 
-    - name: Update Kubeconfig
-      run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+      - name: Build File Upload Service
+        run: npx nx build file-upload-service
+      
+      # Add other build steps as needed...
 
-    - name: Deploy to EKS
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        # Replace placeholders in manifests with actual image tags
-        # Note: In a real setup, consider using Kustomize or Helm. for now, we use sed.
-        
-        # We need to replace the generic "latest" tag in the files with the specific SHA tag
-        # OR just update the deployments to use the new image.
-        
-        # Since the manifests have <AWS_ACCOUNT_ID> placeholders, we should replace them dynamically
-        # But `kubectl set image` is safer if the resources already exist.
-        
-        # Apply strict manifests first
-        kubectl apply -f k8s/namespace.yaml
-        kubectl apply -f k8s/secrets.yaml
-        kubectl apply -f k8s/postgres.yaml
-        
-        # Apply services
-        kubectl apply -f k8s/auth-service.yaml
-        kubectl apply -f k8s/domain-services.yaml
-        kubectl apply -f k8s/api-gateway.yaml
-        
-        # Force update images
-        kubectl set image deployment/auth-service auth-service=$ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-auth-service:$IMAGE_TAG -n alikohub
-        kubectl set image deployment/academy-service academy-service=$ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-academy:$IMAGE_TAG -n alikohub
-        kubectl set image deployment/contech-service contech-service=$ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-contech:$IMAGE_TAG -n alikohub
-        kubectl set image deployment/events-service events-service=$ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-events:$IMAGE_TAG -n alikohub
-        kubectl set image deployment/careers-service careers-service=$ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-careers:$IMAGE_TAG -n alikohub
-        kubectl set image deployment/api-gateway api-gateway=$ECR_REGISTRY/${ECR_REPOSITORY_PREFIX}-api-gateway:$IMAGE_TAG -n alikohub
-        
-        # Restart check
-        kubectl rollout status deployment/api-gateway -n alikohub
+      - name: Deploy to cPanel via Rsync
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          source: "dist/,package.json,package-lock.json"
+          target: "~/public_html/api-backend" # Customize this path
+          strip_components: 0
+
+      - name: Install Production Deps & Restart on Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          script: |
+            cd ~/public_html/api-backend
+            npm install --production
+            # Restart via PM2 or touch tmp/restart.txt if using cPanel Node App
+            # pm2 restart ecosystem.config.js
+            mkdir -p tmp
+            touch tmp/restart.txt

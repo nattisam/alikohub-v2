@@ -260,12 +260,25 @@ export class CoursesService {
         instructor: instructors.find((i) => i.firebaseId === course.instructorId) || null,
       }));
 
+      let statusCounts = {};
+      if (isAdmin) {
+        const counts = await this.prisma.course.groupBy({
+          by: ['status'],
+          _count: true,
+        });
+        statusCounts = counts.reduce((acc, curr) => {
+          acc[curr.status] = curr._count;
+          return acc;
+        }, {});
+      }
+
       return {
         items,
         total,
         page,
         pageSize,
-        totalPages: Math.ceil(total / pageSize)
+        totalPages: Math.ceil(total / pageSize),
+        statusCounts: isAdmin ? statusCounts : undefined,
       };
     } catch (error) {
       console.error('Error in findAll:', error);
