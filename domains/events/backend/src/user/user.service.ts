@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { EventsProfile, Role } from '@prisma/client';
+import { EventsProfile, EventsRole } from '@prisma/client';
 import { firstValueFrom } from 'rxjs';
 import { PrismaService } from '../database/prisma.service';
 
@@ -44,7 +44,7 @@ export class UserService {
     });
 
     if (!profile) {
-      const roleToAssign = user.globalRole === 'ADMIN' ? Role.ADMIN : Role.USER;
+      const roleToAssign = user.globalRole === 'ADMIN' ? EventsRole.ADMIN : EventsRole.USER;
       profile = await this.prisma.eventsProfile.create({
         data: {
           id: user.firebaseId,
@@ -56,38 +56,37 @@ export class UserService {
     return profile;
   }
 
+  async updateRole(userId: string, role: EventsRole) {
+    return this.prisma.eventsProfile.update({
+      where: { id: userId },
+      data: { role },
+    });
+  }
+
   private async syncFromAuth(userId: string) {
     try {
       const authRecord: any = await firstValueFrom(
         this.authClient.send({ cmd: 'sync_events_user' }, { userId }),
       );
 
-        if (authRecord) {
-         // Priority: 1. activeRole (if switched), 2. role (base role)
-         // Note: activeRole might not be in the initial schema return if not selected, 
-         // so we check if it exists.
-        const effectiveRole = authRecord.role; // Events service typically has simpler role logic, but we follow the pattern
+      if (authRecord) {
+        const effectiveRole = authRecord.role;
 
-        // If your Auth Service returns `eventsRole`, use that. 
-        // Based on Auth Service code:
-        // return eventsUser; -> { userId, role, status }
-        
         if (effectiveRole) {
-           await this.prisma.eventsProfile.upsert({
+          await this.prisma.eventsProfile.upsert({
             where: { id: userId },
             create: {
               id: userId,
-              role: effectiveRole as Role,
+              role: effectiveRole as EventsRole,
             },
             update: {
-              role: effectiveRole as Role,
+              role: effectiveRole as EventsRole,
             },
           });
         }
       }
     } catch (error) {
-       // Silent fail or log warning if auth service is down, relies on local data
-      this.logger.warn(`Failed to sync user ${userId} from auth service user might not be exist in auth service`);
+      this.logger.warn(`Failed to sync user ${userId} from auth service`);
     }
   }
 }
