@@ -25,23 +25,23 @@ export class ContractController {
   @UseGuards(RoleGuard)
   @Roles('PROJECT_MANAGER', 'ADMIN', 'CLIENT')
   updateStatus(@Payload() payload: { id: number; user: AuthenticatedUser } & UpdateContractStatusDto) {
-    return this.contractsService.updateStatus(payload.id, payload.status);
+    return this.contractsService.updateStatus(payload.id, payload.status, payload.user);
   }
 
   @MessagePattern({ cmd: 'addChangeOrder' })
   @UseGuards(RoleGuard)
   @Roles('PROJECT_MANAGER', 'ADMIN')
   addChangeOrder(@Payload() payload: { id: number; addChangeOrderDto: AddChangeOrderDto; user: AuthenticatedUser }) {
-    return this.contractsService.addChangeOrder(payload.id, payload.addChangeOrderDto);
+    return this.contractsService.addChangeOrder(payload.id, payload.addChangeOrderDto, payload.user);
   }
 
   @MessagePattern({ cmd: 'getContractViewUrl' })
   getSecureViewUrl(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return this.contractsService.generateSignedUrl(payload.id);
+    return this.contractsService.generateSignedUrl(payload.id, payload.user);
   }
 
   @MessagePattern({ cmd: 'getContractsByProjectId' })
   getContractsByProjectId(@Payload() payload: { projectId: number; user: AuthenticatedUser }) {
-    return this.contractsService.findByProjectId(payload.projectId);
+    return this.contractsService.findByProjectId(payload.projectId, payload.user);
   }
 }

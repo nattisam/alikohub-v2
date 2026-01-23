@@ -27,4 +27,12 @@ export class CreateProjectDto {
     @IsString()
     @IsOptional()
     location?: string;
+
+    @IsString()
+    @IsOptional()
+    contractorId?: string;
+
+    @IsString()
+    @IsOptional()
+    inspectorId?: string;
 }

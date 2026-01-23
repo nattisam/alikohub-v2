@@ -16,38 +16,38 @@ export class MilestonesController {
     @UseGuards(RoleGuard)
     @Roles('PROJECT_MANAGER', 'ADMIN')
     create(@Payload() payload: { createMilestoneDto: CreateMilestoneDto; user: AuthenticatedUser }) {
-        return this.milestonesService.create(payload.createMilestoneDto);
+        return this.milestonesService.create(payload.createMilestoneDto, payload.user);
     }
 
     @MessagePattern({cmd: 'findAll_milestones'})
     findAll(@Payload() payload: { projectId: number; user: AuthenticatedUser }) {
-        return this.milestonesService.findAll(payload.projectId);
+        return this.milestonesService.findAll(payload.projectId, payload.user);
     }
 
     @MessagePattern({cmd: 'findOne_milestones'})
     findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-        return this.milestonesService.findOne(payload.id);
+        return this.milestonesService.findOne(payload.id, payload.user);
     }
 
     @MessagePattern({cmd: 'update_milestones'})
     @UseGuards(RoleGuard)
     @Roles('PROJECT_MANAGER', 'ADMIN', 'CONTRACTOR')
     update(@Payload() payload: { id: number; updateMilestoneDto: UpdateMilestoneDto; user: AuthenticatedUser }) {
-        return this.milestonesService.update(payload.id, payload.updateMilestoneDto);
+        return this.milestonesService.update(payload.id, payload.updateMilestoneDto, payload.user);
     }
 
     @MessagePattern({cmd: 'remove_milestones'})
     @UseGuards(RoleGuard)
     @Roles('PROJECT_MANAGER', 'ADMIN')
     remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-        return this.milestonesService.remove(payload.id);
+        return this.milestonesService.remove(payload.id, payload.user);
     }
 
     @MessagePattern({cmd: 'submit_milestones'})
     @UseGuards(RoleGuard)
     @Roles('PROJECT_MANAGER', 'ADMIN', 'CONTRACTOR')
     submitForReview(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-        return this.milestonesService.submitForReview(payload.id);
+        return this.milestonesService.submitForReview(payload.id, payload.user);
     }
 
 }

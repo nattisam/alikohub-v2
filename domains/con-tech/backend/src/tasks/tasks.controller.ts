@@ -20,12 +20,12 @@ export class TasksController {
 
     @MessagePattern({ cmd: 'find_tasks_by_project' })
     async findByProject(@Payload() payload: { projectId: number; query: any; user: AuthenticatedUser }) {
-        return await this.tasksService.findByProject(payload.projectId, payload.query);
+        return await this.tasksService.findByProject(payload.projectId, payload.query, payload.user);
     }
 
     @MessagePattern({ cmd: 'find_task_by_id' })
     async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-        return await this.tasksService.findOne(payload.id);
+        return await this.tasksService.findOne(payload.id, payload.user);
     }
 
     @MessagePattern({ cmd: 'update_task' })

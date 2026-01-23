@@ -21,11 +21,11 @@ export class ClientReportController {
 
   @MessagePattern({ cmd: 'findAllClientReportsByProjectId' })
   findAllByProjectId(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return this.clientReportsService.findAllByProjectId(payload.id);
+    return this.clientReportsService.findAllByProjectId(payload.id, payload.user);
   }
 
   @MessagePattern({ cmd: 'findOneClientReportById' })
   findOneById(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return this.clientReportsService.findOneById(payload.id);
+    return this.clientReportsService.findOneById(payload.id, payload.user);
   }
 }

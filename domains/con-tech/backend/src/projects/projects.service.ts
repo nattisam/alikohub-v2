@@ -42,14 +42,23 @@ export class ProjectsService {
         throw new RpcException('You do not have permission to create projects.');
       }
 
+      // Ensure client exists if provided
+      if (dto.clientId) await this.userService.ensureProfileExists(dto.clientId);
+      if (dto.contractorId) await this.userService.ensureProfileExists(dto.contractorId);
+
       // Check if project with same name exists for this manager
       const result = await this.prisma.project.create({
         data: {
           ...dto,
           manager: user.firebaseId,
-          contractorId: user.firebaseId,
-          inspectorId: user.firebaseId,
-          endDate: dto.endDate ? new Date(dto.endDate) : new Date(), // Fallback if missing, but schema requires it
+          // contractorId: user.firebaseId, // REMOVE: This was likely a placeholder bug.
+          // inspectorId: user.firebaseId, // REMOVE: Placeholder logic?
+          // Wait, if not provided in DTO, it shouldn't default to Creator unless intended.
+          // Reverting to safe logic: usage of spread ...dto takes precedence if verified, but let's be careful.
+          // The creation logic seemed to force contractorId = user.firebaseId. I should fix this.
+          contractorId: dto.contractorId, 
+          inspectorId: dto.inspectorId,
+          endDate: dto.endDate ? new Date(dto.endDate) : new Date(), // Fallback
           startDate: new Date(dto.startDate),
           status: 'PLANNED',
           createdBy: user.firebaseId,
@@ -78,12 +87,24 @@ export class ProjectsService {
     })
   }
 
-  async findAll(query: FindAllQuery) {
+  async findAll(query: FindAllQuery, user: AuthenticatedUser) {
+    const profile = await this.userService.getOrCreateProfile(user);
+    winstonLogger.info(`FindAll Projects for user ${user.firebaseId} with role ${profile.role}`);
+
     const page = query.page || 1;
     const pageSize = Math.min(query.pageSize || 10, 50);
     const skip = (page - 1) * pageSize;
 
     const where: any = {};
+    
+    // RBAC Filtering
+    if (profile.role === 'CONTRACTOR') {
+      where.contractorId = user.firebaseId;
+    } else if (profile.role === 'CLIENT') {
+      where.clientId = user.firebaseId;
+    }
+    // ADMIN and PROJECT_MANAGER see all (or use query filters)
+
     if (query.status) where.status = query.status;
     if (query.manager) where.manager = query.manager;
     if (query.search) {
@@ -142,7 +163,7 @@ export class ProjectsService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user: AuthenticatedUser) {
     const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
@@ -152,6 +173,15 @@ export class ProjectsService {
 
     if (!project) {
       throw new NotFoundException('Project not found');
+    }
+
+    // RBAC Check
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view this project.');
+    }
+    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+       throw new ForbiddenException('You do not have permission to view this project.');
     }
 
     // Enrich with manager data
@@ -231,9 +261,13 @@ export class ProjectsService {
     }
 
     // Check permissions
+    const isManager = project.manager === user.firebaseId;
+    const isContractor = project.contractorId === user.firebaseId;
+
     if (
       contechProfile.role !== 'ADMIN' &&
-      project.manager !== user.firebaseId
+      !isManager &&
+      !(contechProfile.role === 'CONTRACTOR' && isContractor)
     ) {
       throw new ForbiddenException(
         'You do not have permission to update this project status',
@@ -246,6 +280,34 @@ export class ProjectsService {
         status: status as string,
         updatedBy: user.firebaseId,
       },
+    });
+  }
+
+  async updatePhotos(id: number, photos: string[], user: AuthenticatedUser) {
+    const contechProfile = await this.userService.getOrCreateProfile(user);
+    const project = await this.prisma.project.findUnique({ where: { id } });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    // Check permissions
+    const isManager = project.manager === user.firebaseId;
+    const isContractor = project.contractorId === user.firebaseId;
+
+    if (
+      contechProfile.role !== 'ADMIN' &&
+      !isManager &&
+      !(contechProfile.role === 'CONTRACTOR' && isContractor)
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to update photos for this project',
+      );
+    }
+
+    return await this.prisma.project.update({
+        where: { id },
+        data: { photos, updatedBy: user.firebaseId }
     });
   }
 

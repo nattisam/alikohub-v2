@@ -1,15 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Assuming you have this service
 import { v2 as cloudinary } from 'cloudinary';
 import { ContractStatus } from '@prisma/client';
 import { AddChangeOrderDto } from './dto/add-change-order.dto';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
 export class ContractService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService, // Inject your Cloudinary service
+    private userService: UserService,
   ) { }
 
   async createContract(
@@ -34,50 +36,72 @@ export class ContractService {
     });
   }
 
-  async updateStatus(id: number, status: string) {
-    await this.findContractById(id); // Ensure contract exists
+  async updateStatus(id: number, status: string, user: AuthenticatedUser) {
+    const contract = await this.findContractById(id, user); // RBAC included
+
+    // Extra check: Only Pm/Admin/Client can update status. 
+    // Contractor probably shouldn't update contract status.
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CONTRACTOR') {
+      throw new ForbiddenException('Contractors cannot update contract status.');
+    }
+
     return this.prisma.contract.update({
       where: { id },
       data: { status },
     });
   }
 
-  async addChangeOrder(id: number, changeOrderDto: AddChangeOrderDto) {
-    const contract = await this.findContractById(id);
-
-    // Safely append to the JSON array
-    const existingOrders = (contract.changeOrders as any[]) || [];
-    const newChangeOrders = [...existingOrders, {
-      ...changeOrderDto,
-      createdAt: new Date().toISOString(),
-    }];
+  async addChangeOrder(id: number, changeOrderDto: AddChangeOrderDto, user: AuthenticatedUser) {
+    const contract = await this.findContractById(id, user);
 
     return this.prisma.contract.update({
       where: { id },
-      data: { changeOrders: newChangeOrders },
+      data: { changeOrders: [...(contract.changeOrders as any[] || []), { ...changeOrderDto, createdAt: new Date() }] },
     });
   }
 
-  async generateSignedUrl(id: number): Promise<{ signedUrl: string }> {
-    const contract = await this.findContractById(id);
-
-    // Since publicId is not in the schema anymore, we might need a workaround or just use the secureUrl
-    // For now, I'll return the contractFile as the signedUrl if we can't generate a real one without publicId
+  async generateSignedUrl(id: number, user: AuthenticatedUser): Promise<{ signedUrl: string }> {
+    const contract = await this.findContractById(id, user);
     return { signedUrl: contract.contractFile };
   }
 
-  async findByProjectId(projectId: number) {
+  async findByProjectId(projectId: number, user: AuthenticatedUser) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view contracts for this project.');
+    }
+    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view contracts for this project.');
+    }
+
     return this.prisma.contract.findMany({
       where: { projectId },
     });
   }
 
   // Helper to prevent code duplication
-  private async findContractById(id: number) {
-    const contract = await this.prisma.contract.findUnique({ where: { id } });
+  private async findContractById(id: number, user: AuthenticatedUser) {
+    const contract = await this.prisma.contract.findUnique({ 
+        where: { id },
+        include: { Project: true }
+    });
     if (!contract) {
       throw new NotFoundException(`Contract with ID ${id} not found.`);
     }
+
+    const project = (contract as any).Project;
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+       throw new ForbiddenException('You do not have permission to access this contract.');
+    }
+    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+       throw new ForbiddenException('You do not have permission to access this contract.');
+    }
+
     return contract;
   }
 }

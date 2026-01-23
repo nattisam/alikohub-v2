@@ -1,45 +1,104 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMilestoneDto } from './dto/create-milestone.dto';
 import { UpdateMilestoneDto } from './dto/update-milestone.dto';
 import { CreateMilestoneReviewDto } from './dto/create-milestone-review.dto';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
 export class MilestonesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+      private prisma: PrismaService,
+      private userService: UserService,
+    ) {}
 
-  async create(createMilestoneDto: CreateMilestoneDto) {
+  async create(createMilestoneDto: CreateMilestoneDto, user: AuthenticatedUser) {
+    const project = await this.prisma.project.findUnique({ where: { id: createMilestoneDto.projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role !== 'ADMIN' && project.manager !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to create milestones for this project.');
+    }
+
     const milestone = await this.prisma.milestone.create({ data: createMilestoneDto });
     await this.updateProjectProgress(milestone.projectId);
     return milestone;
   }
 
-  findAll(projectId: number) {
+  async findAll(projectId: number, user: AuthenticatedUser) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view milestones for this project.');
+    }
+    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view milestones for this project.');
+    }
+
     return this.prisma.milestone.findMany({ where: { projectId } });
   }
 
-  findOne(id: number) {
-    return this.prisma.milestone.findUnique({ where: { id } });
+  async findOne(id: number, user: AuthenticatedUser) {
+    const milestone = await this.prisma.milestone.findUnique({
+      where: { id },
+      include: { Project: true }
+    });
+    if (!milestone) throw new NotFoundException('Milestone not found');
+
+    const project = (milestone as any).Project;
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view this milestone.');
+    }
+    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+      throw new ForbiddenException('You do not have permission to view this milestone.');
+    }
+
+    return milestone;
   }
 
-  update(id: number, updateMilestoneDto: UpdateMilestoneDto) {
+  async update(id: number, updateMilestoneDto: UpdateMilestoneDto, user: AuthenticatedUser) {
+    const milestone = await this.findOne(id, user); // RBAC Check
+    
+    // Only Admin/PM/Contractor can update milestone details (e.g. progress)
+    // Client is Read-Only
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT') {
+      throw new ForbiddenException('Clients cannot update milestones.');
+    }
+
     return this.prisma.milestone.update({
       where: { id },
       data: updateMilestoneDto,
     });
   }
 
-  async remove(id: number) {
-    const milestone = await this.prisma.milestone.findUnique({ where: { id } });
-    if (milestone) {
-      const deletedMilestone = await this.prisma.milestone.delete({ where: { id } });
-      await this.updateProjectProgress(milestone.projectId);
-      return deletedMilestone;
+  async remove(id: number, user: AuthenticatedUser) {
+    const milestone = await this.findOne(id, user); // RBAC check
+    
+    const profile = await this.userService.getOrCreateProfile(user);
+    // Only Admin/PM can remove. Controller already checks @Roles but double check here if needed.
+    // If CONTRACTOR tries to remove via message, catch here.
+    if (profile.role === 'CONTRACTOR' || profile.role === 'CLIENT') {
+       throw new ForbiddenException('You do not have permission to delete milestones.');
     }
-    return null;
+
+    const deletedMilestone = await this.prisma.milestone.delete({ where: { id } });
+    await this.updateProjectProgress(milestone.projectId);
+    return deletedMilestone;
   }
 
-  submitForReview(id: number) {
+  async submitForReview(id: number, user: AuthenticatedUser) {
+    const milestone = await this.findOne(id, user); // RBAC
+    
+    const profile = await this.userService.getOrCreateProfile(user);
+    if (profile.role === 'CLIENT') {
+       throw new ForbiddenException('Clients cannot submit milestones for review.');
+    }
+
     return this.prisma.milestone.update({
       where: { id },
       data: { status: 'IN_REVIEW' },

@@ -23,12 +23,12 @@ export class ProjectsController {
 
   @MessagePattern({ cmd: 'find_all_projects' })
   async findAll(@Payload() payload: { query: any; user: AuthenticatedUser }) {
-    return await this.projectsService.findAll(payload.query);
+    return await this.projectsService.findAll(payload.query, payload.user);
   }
 
   @MessagePattern({ cmd: 'find_project_by_id' })
   async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return await this.projectsService.findOne(payload.id);
+    return await this.projectsService.findOne(payload.id, payload.user);
   }
   @MessagePattern({cmd: 'find_contractor'})
   @UseGuards(RoleGuard)
@@ -71,7 +71,7 @@ export class ProjectsController {
 
   @MessagePattern({ cmd: 'update_project_status' })
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN')
+  @Roles('PROJECT_MANAGER', 'ADMIN', 'CONTRACTOR')
   async updateStatus(
     @Payload()
     payload: {
@@ -85,6 +85,15 @@ export class ProjectsController {
       payload.status,
       payload.user,
     );
+  }
+
+  @MessagePattern({ cmd: 'update_project_photos' })
+  @UseGuards(RoleGuard)
+  @Roles('PROJECT_MANAGER', 'ADMIN', 'CONTRACTOR')
+  async updatePhotos(
+    @Payload() payload: { id: number; photos: string[]; user: AuthenticatedUser },
+  ) {
+    return await this.projectsService.updatePhotos(payload.id, payload.photos, payload.user);
   }
 
   @MessagePattern({ cmd: 'get_project_stats' })
