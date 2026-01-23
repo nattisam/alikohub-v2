@@ -5,10 +5,33 @@ import type { Course } from "../components/common/types.d";
 export interface Enrollment {
   id: number;
   userId: string;
-  cohortId: number;
+  cohortId: number | null;
   courseId: number;
-  progress: number;
   enrolledAt: string;
+  progress: number;
+  enrollmentType: string;
+  paymentStatus: string;
+  status: string;
+  cohort?: any;
+  user?: {
+    id: number;
+    firebaseId: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    profilePicture: string | null;
+    globalRole: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    academyUser?: {
+      id: string;
+      userId: string;
+      role: string;
+      activeRole: string;
+      status: string;
+    };
+  };
 }
 
 export interface CreateEnrollmentDto {

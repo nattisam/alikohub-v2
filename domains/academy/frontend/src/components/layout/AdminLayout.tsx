@@ -1,55 +1,23 @@
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { FaTachometerAlt, FaChalkboardTeacher, FaBook, FaBars, FaTimes } from "react-icons/fa";
+import { 
+  LayoutDashboard, 
+  Users, 
+  BookOpen, 
+  Menu,
+  X,
+  LogOut,
+  Settings
+} from "lucide-react";
+import { cn } from "../../lib/utils";
+import { Button } from "../ui/button";
 
 const AdminLayout = () => {
   const { user: currentUser, logout, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <div className="fixed inset-y-0 left-0 z-30 hidden lg:flex lg:w-64 bg-gradient-to-b from-blue-800 to-indigo-900">
-          <div className="w-full p-4">
-            <div className="h-10 w-40 bg-gray-200 animate-pulse rounded mb-8" />
-            <div className="space-y-3">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-10 bg-gray-200 animate-pulse rounded" />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 lg:ml-64">
-          <header className="bg-white shadow-md">
-            <div className="container mx-auto px-4 py-3">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center space-x-4">
-                  <div className="h-8 w-24 bg-gray-200 animate-pulse rounded" />
-                </div>
-                <div className="flex space-x-4">
-                  <div className="h-8 w-16 bg-gray-200 animate-pulse rounded" />
-                  <div className="h-8 w-20 bg-gray-200 animate-pulse rounded" />
-                </div>
-              </div>
-            </div>
-          </header>
-          <main className="p-4 pt-16">
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    );
-  }
-
-  // Define admin navigation items
-  const menuItems = [
-    { path: "/admin", label: "Dashboard", icon: FaTachometerAlt },
-    { path: "/admin/teacher-applications", label: "Teacher Applications", icon: FaChalkboardTeacher },
-    { path: "/admin/courses", label: "Manage Courses", icon: FaBook },
-  ];
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/admin") {
@@ -58,87 +26,152 @@ const AdminLayout = () => {
     return location.pathname.startsWith(path);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <div className="fixed inset-y-0 left-0 z-30 hidden lg:flex lg:w-64 bg-[#0D72BA]">
+          <div className="w-full p-6">
+            <div className="h-10 w-40 bg-white/10 animate-pulse rounded mb-8" />
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-12 bg-white/10 animate-pulse rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 lg:ml-64">
+          <header className="sticky top-0 border-b border-border bg-card px-4 md:px-8 py-4 flex items-center justify-between h-[73px]">
+            <div className="h-8 w-48 bg-gray-200 animate-pulse rounded" />
+            <div className="h-10 w-24 bg-gray-200 animate-pulse rounded-lg" />
+          </header>
+          <main className="p-4 md:p-8">
+            <div className="h-64 bg-gray-100 animate-pulse rounded-xl" />
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  const menuItems = [
+    { path: "/admin", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
+    { path: "/admin/teacher-applications", label: "Teacher Applications", icon: <Users className="w-5 h-5" /> },
+    { path: "/admin/courses", label: "Manage Courses", icon: <BookOpen className="w-5 h-5" /> },
+  ];
+
+  const settingsNavItems = [
+    { label: 'Settings', path: '/admin/settings', icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  const NavLink = ({ item }: { item: typeof menuItems[0] }) => {
+    const active = isActive(item.path);
+    return (
+      <Link
+        to={item.path}
+        onClick={() => setSidebarOpen(false)}
+        className={cn(
+          'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium',
+          active
+            ? 'bg-[#3E92D1] text-white shadow-md'
+            : 'text-white/70 hover:bg-white/10 hover:text-white'
+        )}
+      >
+        {item.icon}
+        <span>{item.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Mobile sidebar toggle */}
-      <div className="lg:hidden fixed top-4 left-4 z-20">
+      {/* Mobile menu button */}
+      <div className="fixed top-0 left-0 right-0 z-40 lg:hidden bg-white border-b border-border flex items-center justify-between p-4">
+        <h1 className="text-lg font-bold text-[#0D72BA]">Admin Panel</h1>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg"
         >
-          {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed lg:relative inset-y-0 left-0 z-10 w-64 bg-gradient-to-b from-blue-800 to-indigo-900 text-white transition-transform duration-300 ease-in-out transform ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 h-screen w-64 bg-[#0D72BA] border-r border-sidebar-border',
+          'flex flex-col gap-6 p-6 overflow-y-auto',
+          'transition-all duration-300 z-30',
+          'lg:sticky lg:translate-x-0 lg:top-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        )}
       >
-        <div className="h-full flex flex-col">
-          <div className="p-5 border-b border-blue-600">
-            <h1 className="text-xl font-bold flex items-center">
-              <span>Admin Panel</span>
-            </h1>
+        {/* Logo */}
+        <div className="hidden lg:flex items-center gap-2 pb-4 border-b border-white/10">
+          <div className="w-8 h-8 rounded bg-[#3E92D1] flex items-center justify-center">
+            <span className="text-white font-bold text-sm">AP</span>
           </div>
-          
-          <nav className="flex-1 overflow-y-auto py-4 px-2">
-            <ul className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.path);
-                return (
-                  <li key={item.path}>
-                    <Link
-                      to={item.path}
-                      className={`flex items-center px-4 py-3 rounded-lg transition-all ${
-                        active
-                          ? 'bg-white text-blue-800 font-medium shadow-md'
-                          : 'text-blue-100 hover:bg-blue-700 hover:text-white'
-                      }`}
-                    >
-                      <Icon className={`mr-3 h-5 w-5 ${active ? 'text-blue-800' : 'text-blue-200'}`} />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <span className="font-bold text-white text-lg">Admin Panel</span>
+        </div>
+
+        {/* Main Navigation */}
+        <nav className="flex-1">
+          <div className="space-y-2">
+            {menuItems.map((item) => (
+              <NavLink key={item.path} item={item} />
+            ))}
+          </div>
+        </nav>
+
+        {/* Settings Navigation */}
+        <nav className="pt-4 border-t border-white/10">
+          <div className="space-y-2">
+            {settingsNavItems.map((item) => (
+              <NavLink key={item.path} item={item} />
+            ))}
+          </div>
+        </nav>
+
+        {/* User Info */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
+            <div className="w-8 h-8 rounded-full bg-[#3E92D1] flex items-center justify-center text-white text-sm font-bold">
+              {currentUser?.firstname?.[0] || 'A'}{currentUser?.lastname?.[0] || 'U'}
+            </div>
+            <div className="text-sm truncate">
+              <div className="font-medium text-white truncate">
+                {currentUser?.firstname} {currentUser?.lastname}
+              </div>
+              <div className="text-xs text-white/50 truncate">
+                {currentUser?.email || 'admin@example.com'}
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col lg:ml-0">
-        <header className="bg-white shadow-md z-0">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-xl font-bold text-gray-800">
-                  {menuItems.find(item => isActive(item.path))?.label || "Admin Dashboard"}
-                </h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="hidden sm:inline text-sm text-gray-600">
-                  Admin: {currentUser?.firstname} {currentUser?.lastname}
-                </span>
-                <button
-                  onClick={() => {
-                    logout();
-                    navigate("/auth/login");
-                  }}
-                  className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="sticky top-0 z-20 border-b border-gray-300 bg-[#FFFFFF] px-4 md:px-8 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {menuItems.find(item => isActive(item.path))?.label || "Dashboard"}
+          </h1>
+
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all font-semibold"
+              onClick={() => {
+                logout();
+                navigate("/auth/login");
+              }}
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </Button>
           </div>
         </header>
-        
-        <main className="flex-1 p-4 pt-4 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
+
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>
         </main>
@@ -146,10 +179,10 @@ const AdminLayout = () => {
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-0"
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
-        ></div>
+        />
       )}
     </div>
   );
