@@ -23,13 +23,13 @@ export class InspectionsController {
 
   @MessagePattern({cmd: 'findAllInspections'})
   async findAll(@Payload() data: { projectId: number; pagination?: { skip?: number; take?: number }; user: AuthenticatedUser }) {
-    const { projectId, pagination = {} } = data;
-    return this.inspectionsService.findAllForProject(projectId, pagination);
+    const { projectId, pagination = {}, user } = data;
+    return this.inspectionsService.findAllForProject(projectId, pagination, user);
   }
 
   @MessagePattern('findOneInspection')
   async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return this.inspectionsService.findOne(payload.id);
+    return this.inspectionsService.findOne(payload.id, payload.user);
   }
 
   @MessagePattern('updateInspection')
@@ -42,13 +42,13 @@ export class InspectionsController {
     
     // Check if updateInspectionDto has id, if not use payload.id
     const dto = { ...payload.updateInspectionDto, id: payload.id };
-    return this.inspectionsService.update(dto.id, dto);
+    return this.inspectionsService.update(dto.id, dto, payload.user);
   }
 
   @MessagePattern('removeInspection')
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
   async remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    return this.inspectionsService.remove(payload.id);
+    return this.inspectionsService.remove(payload.id, payload.user);
   }
 }

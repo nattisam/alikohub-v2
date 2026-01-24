@@ -47,4 +47,7 @@ export class UpdateProjectDto extends PartialType(CreateProjectDto) {
     @IsString()
     @IsOptional()
     contractorId?: string;
+
+    @IsOptional()
+    photos?: string[];
 }

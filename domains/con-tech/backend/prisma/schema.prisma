@@ -41,6 +41,8 @@ model Project {
   contractorId String?
   site         String?
   description  String?
+  clientId     String?
+  photos       String[]
   status       String?        @default("PLANNED")
   progress     Float?         @default(0.0)
   createdAt    DateTime       @default(now())
@@ -59,6 +61,7 @@ model Project {
 
   @@index([manager])
   @@index([contractorId])
+  @@index([clientId])
 }
 
 model Task {

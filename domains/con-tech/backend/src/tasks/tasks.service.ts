@@ -52,7 +52,22 @@ export class TasksService {
         });
     }
 
-    async findByProject(projectId: number, query: FindTasksQuery) {
+    async findByProject(projectId: number, query: FindTasksQuery, user: AuthenticatedUser) {
+        const contechProfile = await this.userService.getOrCreateProfile(user);
+        const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+        if (!project) throw new NotFoundException('Project not found');
+
+        // RBAC Check
+        if (contechProfile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+            throw new ForbiddenException('You do not have permission to view tasks for this project');
+        }
+        if (contechProfile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+            // Contractors can only see tasks of their assigned project.
+            // Assumption: If I am the contractor of the project, I see ALL tasks? Or only assigned?
+            // Usually Contractor manages the project tasks. So checks project.contractorId is enough.
+            throw new ForbiddenException('You do not have permission to view tasks for this project');
+        }
+
         const page = query.page || 1;
         const pageSize = Math.min(query.pageSize || 20, 50);
         const skip = (page - 1) * pageSize;
@@ -75,11 +90,23 @@ export class TasksService {
         return { items: enrichedTasks, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
     }
 
-    async findOne(id: number) {
+    async findOne(id: number, user: AuthenticatedUser) {
         const task = await this.prisma.task.findUnique({
             where: { id },
-            include: { Project: { select: { id: true, name: true, contractorId: true } } },
+            include: { Project: true }, // Include full project to check clientId/contractorId
         });
+        if (!task) throw new NotFoundException('Task not found');
+        
+        const contechProfile = await this.userService.getOrCreateProfile(user);
+        const project = (task as any).Project; 
+        
+        // RBAC Check
+        if (contechProfile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+             throw new ForbiddenException('You do not have permission to view this task');
+        }
+        if (contechProfile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId && task.assignedTo !== user.firebaseId) {
+             throw new ForbiddenException('You do not have permission to view this task');
+        }
 
         if (!task) throw new NotFoundException('Task not found');
 
