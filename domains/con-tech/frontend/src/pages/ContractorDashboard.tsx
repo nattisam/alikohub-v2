@@ -5,20 +5,24 @@ import { DashboardGrid } from "../components/DashboardGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { useContractorDashboardData } from "../queries/dashboard";
 import ProgressBar from "../components/charts/ProgressBar";
+import type { ContractorDashboardData } from "../components/types";
 
 const ContractorDashboard = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
   
+  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN";
+  const isContractor = currentUser?.role === "CONTRACTOR";
+
   useEffect(() => {
-    // Redirect users who don't have CONTRACTOR role away from this page
-    if (currentUser && currentUser.contechRole !== "CONTRACTOR") {
+    // Redirect users who don't have CONTRACTOR or ADMIN permissions away from this page
+    if (currentUser && !isContractor && !isAdmin) {
       navigate("/");
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, isContractor, isAdmin]);
   
-  if (!currentUser || currentUser.contechRole !== "CONTRACTOR") {
-    // Don't render if user doesn't have CONTRACTOR role
+  if (!currentUser || (!isContractor && !isAdmin)) {
+    // Don't render if user doesn't have appropriate permissions
     return null;
   }
   
@@ -42,7 +46,7 @@ const ContractorDashboard = () => {
   }
   
   // Use mock data if no actual data is available
-  const contractorData = dashboardData || {
+  const contractorData: ContractorDashboardData = dashboardData || {
     assignedTasks: 8,
     overdueTasks: 3,
     pendingTasks: 5,

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useUser } from '../hooks';
 import { useProjects } from '../queries/projects';
 import { useContracts } from '../queries/contracts';
-import type { ExtendedCurrentUser } from '../components/type';
+import type { ExtendedCurrentUser } from '../components/types';
 import { FaDownload } from 'react-icons/fa';
-import type { Project } from './type';
+import type { Project } from './types';
 
 interface Document {
   name: string;

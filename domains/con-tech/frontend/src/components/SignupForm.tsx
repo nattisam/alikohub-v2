@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../hooks";
 import { FiLoader } from "react-icons/fi";
-import type { SignupCredentials as SignupFormType } from "../type";
+import type { SignupCredentials as SignupFormType } from "../types";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import ReCAPTCHA from 'react-google-recaptcha';

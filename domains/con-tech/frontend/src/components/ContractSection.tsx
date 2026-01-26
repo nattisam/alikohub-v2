@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Contract } from "./type";
+import type { Contract } from "./types";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { ContractCard } from "./ContractCard";
 

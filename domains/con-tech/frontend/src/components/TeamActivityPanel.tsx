@@ -1,5 +1,5 @@
 import TeamActivityCard from "./TeamActivityCard";
-import type {Activity} from "./type"
+import type {Activity} from "./types"
 const TeamActivityPanel = ({ activities }:{activities: Activity[]}) => {
   return (
     <section className="flex-1 bg-white rounded-lg shadow-md p-4">

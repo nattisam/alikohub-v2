@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import TaskColumn from "./TaskColumn";
-import { TaskStatus, type Task } from "./type";
+import { TaskStatus, type Task } from "./types";
 import TaskCreationModal from "./AddTaskForm";
 import { useDashboard } from '../hooks';
 const TaskBoard = ({ tasks,className }: {className: string, tasks: Task[] }) => {

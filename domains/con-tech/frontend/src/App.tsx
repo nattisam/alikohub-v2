@@ -22,7 +22,7 @@ import InspectionsPage from "./pages/InspectionsPage";
 import ReportsPage from "./pages/ReportsPage";
 import UserApplicationsPage from "./pages/UserApplicationsPage";
 import ProfilePage from "./pages/ProfilePage";
-import Dashboard from "./pages/Dashboard";
+// import Dashboard from "./pages/Dashboard";
 import FinancialTracking from "./pages/FinancialTracking";
 import ClientApproval from "./pages/ClientApprovals";
 import CreateProjectForm from "./components/CreateProjectForm";
@@ -34,7 +34,7 @@ import PMDashboard from "./pages/PMDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
-import DashboardHome from "./pages/DashboardHome";
+// import DashboardHome from "./pages/DashboardHome";
 
 
 
@@ -63,34 +63,31 @@ function RoleSelectionWrapper() {
   const navigate = useNavigate();
   
   const handleCloseModal = () => {
+    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
     // Close modal and redirect to appropriate dashboard based on role
-    if (currentUser?.role === "CLIENT") {
-      navigate("/client-dashboard");
+    if (isGlobalAdmin || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN") {
+      navigate("/admin");
     } else if (currentUser?.role === "CONTRACTOR") {
-      navigate("/contractor-dashboard");
-    } else if (currentUser?.role === "PROJECT_MANAGER") {
-      navigate("/pm-dashboard");
+      navigate("/contractor");
+    } else if (currentUser?.role === "CLIENT") {
+      navigate("/client");
     } else {
-      navigate("/dashboard");
+      navigate("/");
     }
   };
   
   // If user has selected a role, redirect away from role selection
-  if (currentUser?.hasSelectedRole) {
-    if (currentUser?.role === "CLIENT") {
-      navigate("/client-dashboard");
-    } else if (currentUser?.role === "CONTRACTOR") {
-      navigate("/contractor-dashboard");
-    } else if (currentUser?.role === "PROJECT_MANAGER") {
-      navigate("/pm-dashboard");
-    } else {
-      navigate("/dashboard");
-    }
-    return <Navigate to={
-      currentUser?.role === "CLIENT" ? "/client-dashboard" :
-      currentUser?.role === "CONTRACTOR" ? "/contractor-dashboard" :
-      currentUser?.role === "PROJECT_MANAGER" ? "/pm-dashboard" : "/dashboard"
-    } replace />;
+  if (currentUser?.hasSelectedRole || currentUser?.globalRole === 'ADMIN') {
+    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+    const destination = isGlobalAdmin || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN" 
+      ? "/admin" 
+      : currentUser?.role === "CONTRACTOR" 
+        ? "/contractor" 
+        : currentUser?.role === "CLIENT" 
+          ? "/client" 
+          : "/";
+          
+    return <Navigate to={destination} replace />;
   }
   
   // If user hasn't selected a role, show the role selection modal
@@ -104,21 +101,6 @@ function LoginLayout() {
     </div>
   );
 }
-
-const RoleProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser } = useUser();
-  
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // If user hasn't selected a role, they should go through role selection first
-  if (!currentUser.hasSelectedRole) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return <>{children}</>;
-};
 
 export default function App() {
   const { currentUser } = useUser();
@@ -146,231 +128,72 @@ export default function App() {
       children: [{ index: true, element: <CSignupForm /> }],
     },
     {
-      path: "/client-dashboard",
-      element: <DashboardLayout />,
-      children: [
-        {
-          index: true,
-          element: (
-            <ProtectedRoute requiredRole="CLIENT">
-              <ClientDashboard />
-            </ProtectedRoute>
-          ),
-        }
-      ]
-    },
-    {
-      path: "/contractor-dashboard",
-      element: <DashboardLayout />,
-      children: [
-        {
-          index: true,
-          element: (
-            <ProtectedRoute requiredRole="CONTRACTOR">
-              <ContractorDashboard />
-            </ProtectedRoute>
-          ),
-        }
-      ]
-    },
-    {
-      path: "/pm-dashboard",
-      element: <DashboardLayout />,
-      children: [
-        {
-          index: true,
-          element: (
-            <ProtectedRoute requiredRole="PROJECT_MANAGER">
-              <DashboardHome />
-            </ProtectedRoute>
-          ),
-        }
-      ]
-    },
-    {
       path: "/role-selection",
       element: <RoleSelectionWrapper />,
     },
+    // Admin Dashboard Routes
     {
-      path: "/profile",
-      element: <DashboardLayout />,
+      path: "/admin",
+      element: (
+        <ProtectedRoute requiredRole="PROJECT_MANAGER">
+          <DashboardLayout />
+        </ProtectedRoute>
+      ),
       children: [
-        {
-          index: true,
-          element: (
-            <RoleProtectedRoute>
-              <ProfilePage />
-            </RoleProtectedRoute>
-          )
-        }
+        { index: true, element: <PMDashboard /> },
+        { path: "projects", element: <ProjectsPage /> },
+        { path: "projects/new", element: <CreateProjectForm /> },
+        { path: "projects/:projectId", element: <ProjectDetails /> },
+        { path: "contractors", element: <UserApplicationsPage /> }, // Assuming this manages contractors
+        { path: "clients", element: <UserApplicationsPage /> }, // Assuming this manages clients
+        { path: "reports", element: <ReportsPage /> },
+        { path: "profile", element: <ProfilePage /> },
       ]
     },
+    // Contractor Dashboard Routes
     {
-      path: "/dashboard",
-      element: <DashboardLayout />,
+      path: "/contractor",
+      element: (
+        <ProtectedRoute requiredRole="CONTRACTOR">
+          <DashboardLayout />
+        </ProtectedRoute>
+      ),
       children: [
-        {
-          index: true,
-          element: (
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "client",
-          element: (
-            <ProtectedRoute requiredRole="CLIENT">
-              <ClientDashboard />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "pm",
-          element: (
-            <ProtectedRoute requiredRole="PROJECT_MANAGER">
-              <PMDashboard />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "contractor",
-          element: (
-            <ProtectedRoute requiredRole="CONTRACTOR">
-              <ContractorDashboard />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "projects",
-          element: (
-            <ProtectedRoute>
-              <ProjectsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "projects/new",
-          element: (
-            <ProtectedRoute>
-              <CreateProjectForm />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "projects/:projectId",
-          element: (
-            <ProtectedRoute>
-              <ProjectDetails />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "tasks",
-          element: (
-            <ProtectedRoute>
-              <TasksPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "tasks/:taskId",
-          element: (
-            <ProtectedRoute>
-              <TasksPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "inspections",
-          element: (
-            <ProtectedRoute>
-              <InspectionsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "inspections/:inspectionId",
-          element: (
-            <ProtectedRoute>
-              <InspectionsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "contracts",
-          element: (
-            <ProtectedRoute>
-              <ContractsPage />
-            </ProtectedRoute>
-          )
-        },
-        {
-          path: "reports",
-          element: (
-            <ProtectedRoute>
-              <ReportsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "reports/:reportId",
-          element: (
-            <ProtectedRoute>
-              <ReportsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "applications",
-          element: (
-            <ProtectedRoute>
-              <UserApplicationsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "applications/:applicationId",
-          element: (
-            <ProtectedRoute>
-              <UserApplicationsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "profile",
-          element: (
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "inspection-reports",
-          element: (
-            <ProtectedRoute>
-              <InspectionsPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "financial-tracking",
-          element: (
-            <ProtectedRoute>
-              <FinancialTracking />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: "approvals",
-          element: (
-            <ProtectedRoute>
-              <ClientApproval />
-            </ProtectedRoute>
-          ),
-        },
-      ],
+        { index: true, element: <ContractorDashboard /> },
+        { path: "projects", element: <ProjectsPage /> },
+        { path: "projects/:projectId", element: <ProjectDetails /> },
+        { path: "tasks", element: <TasksPage /> },
+        { path: "inspections", element: <InspectionsPage /> },
+        { path: "contracts", element: <ContractsPage /> },
+        { path: "profile", element: <ProfilePage /> },
+      ]
     },
+    // Client Dashboard Routes
+    {
+      path: "/client",
+      element: (
+        <ProtectedRoute requiredRole="CLIENT">
+          <DashboardLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        { index: true, element: <ClientDashboard /> },
+        { path: "projects", element: <ProjectsPage /> },
+        { path: "projects/:projectId", element: <ProjectDetails /> },
+        { path: "approvals", element: <ClientApproval /> },
+        { path: "financials", element: <FinancialTracking /> },
+        { path: "profile", element: <ProfilePage /> },
+      ]
+    },
+    // Legacy Dashboard Redirect (for backward compatibility during migration)
+    {
+      path: "/dashboard/*",
+      element: <Navigate to="/role-selection" replace />,
+    },
+    {
+      path: "/profile",
+      element: <Navigate to="/role-selection" replace />,
+    }
   ]);
 
   return <RouterProvider router={router} />;

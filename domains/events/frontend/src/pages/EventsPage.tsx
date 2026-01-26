@@ -1,109 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import UpcomingEvents from '../components/UpcomingEvents';
-import FeaturedEvent from '../components/FeaturedEvent';
-import EventsApiService from '../services/eventsApi';
-import { handleApiError } from '../services/apiClient';
-import type { EventSummary } from '../types/api';
+import { useQuery } from '@tanstack/react-query';
+import { PostList } from '../components/PostList';
+import { getPublishedPostsByType } from '../services/post-service';
+import { PostType } from '../types/post';
 
-const EventsPage: React.FC = () => {
-  const [events, setEvents] = useState<EventSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await EventsApiService.getUpcomingEvents();
-      if (response.success) {
-        setEvents(response.data || []);
-      } else {
-        throw new Error(response.error?.error || 'Failed to fetch events');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      console.error('Error fetching events:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateEvent = () => {
-    // Navigate to create event page
-    navigate('/events/create');
-  };
+export default function EventsPage() {
+  const { data: posts = [], isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['published-posts', PostType.EVENT],
+    queryFn: () => getPublishedPostsByType(PostType.EVENT),
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Events</h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Discover and participate in our upcoming events, conferences, and workshops
+    <div className="bg-white min-h-screen">
+      {/* Page Header */}
+      <div className="bg-gray-50 border-b border-gray-200">
+        <div className="container mx-auto px-4 py-16 md:py-24 text-center">
+          <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight mb-6">
+            Explore <span className="text-blue-600">Events</span>
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-medium leading-relaxed">
+            Discover community gatherings, workshops, and ecosystem events. Stay engaged with the AlikoHub community.
           </p>
-          <button 
-            onClick={handleCreateEvent}
-            className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            Create New Event
-          </button>
         </div>
       </div>
 
-      {/* Featured Event */}
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold text-center mb-8">Featured Event</h2>
-        <FeaturedEvent />
-      </div>
-
-      {/* All Events */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">All Events</h2>
-          <div className="flex space-x-4">
-            <input
-              type="text"
-              placeholder="Search events..."
-              className="px-4 py-2 border border-gray-300 rounded-lg"
-            />
-            <select className="px-4 py-2 border border-gray-300 rounded-lg">
-              <option>All Categories</option>
-              <option>Conference</option>
-              <option>Workshop</option>
-              <option>Webinar</option>
-            </select>
+      {/* Events Feed Section */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex items-center justify-between mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 border-l-4 border-blue-600 pl-4 uppercase tracking-widest text-sm">Upcoming & Past</h2>
+          <div className="hidden md:flex gap-4">
+             {/* Simple filter buttons if needed later */}
+             <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Chronological Order</span>
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Error! </strong>
-            <span className="block sm:inline">{error}</span>
-            <button 
-              onClick={fetchEvents}
-              className="mt-2 text-red-800 hover:text-red-900 underline"
-            >
-              Try again
-            </button>
-          </div>
-        ) : (
-          <UpcomingEvents events={events} />
-        )}
+        <PostList 
+          posts={posts} 
+          isLoading={isLoading} 
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+          emptyMessage="No events found at the moment. Please check back soon!"
+        />
       </div>
     </div>
   );
-};
-
-export default EventsPage;
+}

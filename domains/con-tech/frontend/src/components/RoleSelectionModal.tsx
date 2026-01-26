@@ -36,14 +36,14 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
       onClose();
       // Redirect to the appropriate dashboard based on selected role
       if (selectedRole === "CLIENT") {
-        navigate("/client-dashboard");
+        navigate("/client");
       } else if (selectedRole === "CONTRACTOR") {
-        navigate("/contractor-dashboard");
-      } else if (selectedRole === "PROJECT_MANAGER") {
-        navigate("/pm-dashboard");
+        navigate("/contractor");
+      } else if (selectedRole === "PROJECT_MANAGER" || selectedRole === "ADMIN") {
+        navigate("/admin");
       } else {
         // For other roles, go to the default dashboard
-        navigate("/dashboard");
+        navigate("/");
       }
     } catch (err) {
       setError("Failed to select role. Please try again.");
@@ -92,34 +92,6 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onClose }) => {
             <div className="font-medium text-gray-900">Contractor</div>
             <div className="text-sm text-gray-600">
               Execute project tasks, submit reports, and manage work assignments
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleRoleSelect("PROJECT_MANAGER")}
-            className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-              selectedRole === "PROJECT_MANAGER"
-                ? "border-[#FFC107] bg-[#FFC107]/10"
-                : "border-gray-200 hover:border-[#C2B58F]"
-            }`}
-          >
-            <div className="font-medium text-gray-900">Project Manager</div>
-            <div className="text-sm text-gray-600">
-              Oversee projects, coordinate teams, and ensure project delivery
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleRoleSelect("ADMIN")}
-            className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-              selectedRole === "ADMIN"
-                ? "border-[#FFC107] bg-[#FFC107]/10"
-                : "border-gray-200 hover:border-[#C2B58F]"
-            }`}
-          >
-            <div className="font-medium text-gray-900">Admin</div>
-            <div className="text-sm text-gray-600">
-              Manage the platform, users, and system configurations
             </div>
           </button>
         </div>

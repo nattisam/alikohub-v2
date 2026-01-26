@@ -3,7 +3,7 @@ import { useUser } from '../hooks';
 import { useProjects } from '../queries/projects';
 import { useTasks } from '../queries/tasks';
 import { useInspections } from '../queries/inspections';
-import type { ExtendedCurrentUser } from '../components/type';
+import type { ExtendedCurrentUser } from '../components/types';
 import { FaUserCircle } from 'react-icons/fa';
 
 interface Activity {

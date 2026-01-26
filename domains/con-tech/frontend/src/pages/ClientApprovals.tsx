@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from "../hooks";
 import { useProjects } from '../queries/projects';
 import { useTasks } from '../queries/tasks';
-import type { ExtendedCurrentUser } from '../components/type';
-import { TaskStatus, type Project, type Task } from '../components/type';
+import type { ExtendedCurrentUser } from '../components/types';
+import { TaskStatus, type Project, type Task } from '../components/types';
 
 
 const ClientApprovals: React.FC = () => {

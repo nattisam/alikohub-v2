@@ -1,4 +1,4 @@
-import { TaskStatus, type Task } from "./type";
+import { TaskStatus, type Task } from "./types";
 import { FaUserCircle } from "react-icons/fa";
 import { MdMoreVert } from "react-icons/md";
 import { useDashboard } from "../hooks";

@@ -6,20 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { useClientDashboardData } from "../queries/dashboard";
 import BudgetChart from "../components/charts/BudgetChart";
 import ProgressBar from "../components/charts/ProgressBar";
+import type { ClientDashboardData } from "../components/types";
 
 const ClientDashboard = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
   
+  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN";
+  const isClient = currentUser?.role === "CLIENT";
+
   useEffect(() => {
-    // Redirect users who don't have CLIENT role away from this page
-    if (currentUser && currentUser.contechRole !== "CLIENT") {
+    // Redirect users who don't have CLIENT or ADMIN permissions away from this page
+    if (currentUser && !isClient && !isAdmin) {
       navigate("/");
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, isClient, isAdmin]);
   
-  if (!currentUser || currentUser.contechRole !== "CLIENT") {
-    // Don't render if user doesn't have CLIENT role
+  if (!currentUser || (!isClient && !isAdmin)) {
+    // Don't render if user doesn't have appropriate permissions
     return null;
   }
   
@@ -43,7 +47,7 @@ const ClientDashboard = () => {
   }
   
   // Use mock data if no actual data is available
-  const clientData = dashboardData || {
+  const clientData: ClientDashboardData = dashboardData || {
     projectProgress: 65,
     budget: 245000,
     spent: 168500,

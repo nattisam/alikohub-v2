@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { TaskPriority, TaskStatus, type Task } from "./type";
+import { TaskPriority, TaskStatus, type Task } from "./types";
 import { FaX } from "react-icons/fa6";
 interface TaskCreationModalProps {
   onClose: () => void;

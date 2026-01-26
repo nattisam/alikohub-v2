@@ -1,5 +1,5 @@
 import { FaDownload } from 'react-icons/fa';
-import type { Document } from './type';
+import type { Document } from './types';
 
 interface Props {
   document: Document;

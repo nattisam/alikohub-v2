@@ -11,15 +11,17 @@ const PMDashboard = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
   
+  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN";
+  
   useEffect(() => {
-    // Redirect users who don't have PROJECT_MANAGER role away from this page
-    if (currentUser && currentUser.contechRole !== "PROJECT_MANAGER") {
+    // Redirect users who don't have Admin permissions away from this page
+    if (currentUser && !isAdmin) {
       navigate("/");
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, isAdmin]);
   
-  if (!currentUser || currentUser.contechRole !== "PROJECT_MANAGER") {
-    // Don't render if user doesn't have PROJECT_MANAGER role
+  if (!currentUser || !isAdmin) {
+    // Don't render if user doesn't have Admin permissions
     return null;
   }
   

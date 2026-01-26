@@ -1,5 +1,5 @@
 import React from "react";
-import type { Project } from "./type";
+import type { Project } from "./types";
 
 interface ProjectWithStats extends Project {
   taskStats?: {

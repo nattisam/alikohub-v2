@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
-import { useDashboard } from "../hooks";
-import type { Contract } from "../components/type";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { useDashboard, useUser } from "../hooks";
+import type { Contract } from "../components/types";
 import { ContractForm } from "../components/ContractForm";
 import { useNavigate } from "react-router";
 import { useContracts, useUploadContract } from "../queries/contracts";
@@ -10,6 +10,21 @@ const ContractsPage = () => {
   const { projects } = useDashboard();
   const { data: allContracts = [], isLoading } = useContracts();
   const uploadContractMutation = useUploadContract();
+  const { currentUser } = useUser();
+  const navigate = useNavigate();
+
+  const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+  const userRole = currentUser?.role;
+  const isAdmin = isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN';
+  const isContractor = userRole === 'CONTRACTOR';
+  const isClient = userRole === 'CLIENT';
+
+  const prefix = useMemo(() => {
+    if (isAdmin) return "/admin";
+    if (isContractor) return "/contractor";
+    if (isClient) return "/client";
+    return "/dashboard";
+  }, [isAdmin, isContractor, isClient]);
 
   const [contracts, setContracts] = useState<
     Array<{ contractProject: string; contracts: Contract[] }>
@@ -17,8 +32,6 @@ const ContractsPage = () => {
 
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [createNewContract, setCreateNewContract] = useState<boolean>(false);
-
-  const navigate = useNavigate();
 
   const projectsRef = useRef(projects);
   const allContractsRef = useRef(allContracts);
@@ -55,35 +68,39 @@ const ContractsPage = () => {
   }, [projects, allContracts]);
 
   return (
-    <div className="w-full h-full">
-      <h2 className="font-bold text-xl">Contracts</h2>
+    <div className="w-full h-full space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold text-gray-900">Contracts</h2>
+      </div>
 
       {isLoading && (
-        <div className="w-full flex items-center justify-center">
-          <div className="animate-spin w-20 h-20 bg-blue-500"></div>
+        <div className="flex justify-center items-center py-20 w-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       )}
 
       {!isLoading && contracts.length > 0 ? (
-        <div className="w-full">
+        <div className="grid grid-cols-1 gap-6">
           {contracts.map((contractSection) => (
-            <ContractSection
-              key={contractSection.contractProject}
-              projectName={contractSection.contractProject}
-              contracts={contractSection.contracts}
-            />
+            <div key={contractSection.contractProject} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <ContractSection
+                projectName={contractSection.contractProject}
+                contracts={contractSection.contracts}
+              />
+            </div>
           ))}
         </div>
       ) : (
-        <div className="w-full text-2xl">
-          <p>No Contracts signed!</p>
+        <div className="bg-white rounded-2xl border-2 border-dashed border-gray-100 p-16 text-center shadow-sm">
+          <p className="text-xl font-bold text-gray-900 mb-6">No Contracts signed yet!</p>
 
-          {Array.isArray(projects) && projects.length > 0 && (
-            <form>
-              <p>Select Project To Sign or Create Contract for Project</p>
+          {Array.isArray(projects) && projects.length > 0 ? (
+            <div className="max-w-md mx-auto space-y-4">
+              <p className="text-gray-500">Select a project to initiate a new contract.</p>
               <select
                 value={selectedProject}
                 onChange={(e) => setSelectedProject(e.target.value)}
+                className="block w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
               >
                 <option value="">Select Project</option>
                 {projects.map((project) => (
@@ -96,23 +113,28 @@ const ContractsPage = () => {
               <button
                 type="button"
                 onClick={() => setCreateNewContract(true)}
+                disabled={!selectedProject}
+                className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-100"
               >
-                Continue
+                Continue to Contract
               </button>
-            </form>
-          )}
-
-          {(!projects || !Array.isArray(projects)) && (
-            <div>
-              <p>
-                First create projects before you sign contracts for a project
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <p className="text-gray-500 max-w-sm mx-auto">
+                You need to have at least one active project before signing or creating contracts.
               </p>
-              <button
-                className="bg-blue-500 text-white text-xl rounded px-4 py-2"
-                onClick={() => navigate("/dashboard/projects/new")}
-              >
-                Create New Project
-              </button>
+              {(isAdmin || isClient) && (
+                <button
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                  onClick={() => navigate(`${prefix}/projects/new`)}
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create New Project
+                </button>
+              )}
             </div>
           )}
         </div>

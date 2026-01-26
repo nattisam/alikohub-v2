@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '../hooks';
 import { useProjects } from '../queries/projects';
 import { useInspections } from '../queries/inspections';
-import type { ExtendedCurrentUser } from '../components/type';
+import type { ExtendedCurrentUser } from '../components/types';
 
 interface ProgressGalleryProps {
   className?: string;

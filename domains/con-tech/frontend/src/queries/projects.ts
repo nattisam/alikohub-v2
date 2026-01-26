@@ -1,16 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
-import type { Project } from "../components/type";
+import type { Project } from "../components/types";
 
 export const useProjects = () => {
-  return useQuery({
+  return useQuery<Project[]>({
     queryKey: ["projects"],
     queryFn: async () => {
       const response = await contechAPI.getProjects();
       return response;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: true,
@@ -18,7 +18,7 @@ export const useProjects = () => {
 };
 
 export const useProject = (id: number) => {
-  return useQuery({
+  return useQuery<Project>({
     queryKey: ["project", id],
     queryFn: async () => {
       const response = await contechAPI.getProject(id);

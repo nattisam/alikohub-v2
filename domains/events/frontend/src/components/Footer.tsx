@@ -74,4 +74,4 @@ const Icons=[
       </footer>
    );
 };
- export default Footer;
+ export { Footer };

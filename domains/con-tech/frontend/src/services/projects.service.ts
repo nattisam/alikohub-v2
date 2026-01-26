@@ -1,5 +1,5 @@
 import { contechApi } from "../api";
-import type { Project, Milestone } from "../components/type";
+import type { Project, Milestone } from "../components/types";
 import { AuthService } from "./auth.service";
 
 export interface ProjectStats {

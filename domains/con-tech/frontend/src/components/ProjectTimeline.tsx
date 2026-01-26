@@ -1,5 +1,5 @@
 import TimelineItem from "./TimelineItem";
-import type { Milestone } from "./type";
+import type { Milestone } from "./types";
 
 interface Props {
   stages: Milestone[];

@@ -1,5 +1,5 @@
 import { contechApi } from "../api";
-import type { CurrentUser } from "../components/type";
+import type { CurrentUser } from "../components/types";
 import { AuthService } from "./auth.service";
 
 export class UsersService {

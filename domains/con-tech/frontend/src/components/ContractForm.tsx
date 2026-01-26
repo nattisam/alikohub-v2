@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { type AddChangeOrderDto } from '../components/type';
+import { type AddChangeOrderDto } from '../components/types';
 import { useUploadContract, useUpdateContractStatus } from '../queries/contracts';
 import FileUploadModal from './FileUploadForm';
 

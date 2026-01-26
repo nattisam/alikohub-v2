@@ -3,8 +3,8 @@ import React, {
   useContext,
   useEffect,
   useState,
-  ReactNode,
 } from "react";
+import type { ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authAPI } from "../services/api";
 import { contechAPI } from "../services/api";
@@ -13,11 +13,10 @@ import type {
   CurrentUser,
   LoginCredentials,
   SignupCredentials,
-} from "../components/type";
+} from "../components/types";
 
 
 
-type Role = "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "ADMIN";
 
 interface AuthContextType {
   user: CurrentUser | null;
@@ -201,13 +200,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (userData && userData.hasSelectedRole) {
           // If user has already selected a role, redirect to appropriate dashboard
           if (userData.role === 'CLIENT') {
-            window.location.href = "/client-dashboard";
+            window.location.href = "/client";
           } else if (userData.role === 'CONTRACTOR') {
-            window.location.href = "/contractor-dashboard";
-          } else if (userData.role === 'PROJECT_MANAGER') {
-            window.location.href = "/pm-dashboard";
+            window.location.href = "/contractor";
+          } else if (userData.role === 'PROJECT_MANAGER' || userData.role === 'ADMIN') {
+            window.location.href = "/admin";
           } else {
-            window.location.href = "/dashboard";
+            window.location.href = "/";
           }
         } else {
           // If user hasn't selected a role, redirect to role selection
@@ -219,13 +218,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (userData && userData.hasSelectedRole) {
         // If user has already selected a role, redirect to appropriate dashboard
         if (userData.role === 'CLIENT') {
-          window.location.href = "/client-dashboard";
+          window.location.href = "/client";
         } else if (userData.role === 'CONTRACTOR') {
-          window.location.href = "/contractor-dashboard";
-        } else if (userData.role === 'PROJECT_MANAGER') {
-          window.location.href = "/pm-dashboard";
+          window.location.href = "/contractor";
+        } else if (userData.role === 'PROJECT_MANAGER' || userData.role === 'ADMIN') {
+          window.location.href = "/admin";
         } else {
-          window.location.href = "/dashboard";
+          window.location.href = "/";
         }
       } else {
         // If user hasn't selected a role, redirect to role selection
@@ -244,13 +243,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (userData && userData.hasSelectedRole) {
       // If user has already selected a role, redirect to appropriate dashboard
       if (userData.role === 'CLIENT') {
-        window.location.href = "/client-dashboard";
+        window.location.href = "/client";
       } else if (userData.role === 'CONTRACTOR') {
-        window.location.href = "/contractor-dashboard";
-      } else if (userData.role === 'PROJECT_MANAGER') {
-        window.location.href = "/pm-dashboard";
+        window.location.href = "/contractor";
+      } else if (userData.role === 'PROJECT_MANAGER' || userData.role === 'ADMIN') {
+        window.location.href = "/admin";
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     } else {
       // If user hasn't selected a role, redirect to role selection

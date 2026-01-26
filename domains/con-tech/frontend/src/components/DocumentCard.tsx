@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Document } from './type';
+import type { Document } from './types';
 import { calcAge } from '../functions';
 
 const DocumentCard = ({doc}: {doc:Document}) => {

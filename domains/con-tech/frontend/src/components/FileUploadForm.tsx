@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaX } from "react-icons/fa6";
-import type { FileWithMetadata } from "./type";
+import type { FileWithMetadata } from "./types";
 
 interface FileUploadModalProps {
   onClose: () => void;

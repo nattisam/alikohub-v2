@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { calcAge } from "../functions";
-import type { User } from "./type";
+import type { User } from "./types";
 
 const TeamActivityCard = ({
   avatar,

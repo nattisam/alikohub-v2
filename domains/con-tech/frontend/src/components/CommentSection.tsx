@@ -3,7 +3,7 @@ import { FaUserCircle } from 'react-icons/fa';
 import { useDashboard } from '../hooks';
 import { useUser } from '../hooks';
 import { useProjects } from '../queries/projects';
-import type { ExtendedCurrentUser } from '../components/type';
+import type { ExtendedCurrentUser } from '../components/types';
 
 interface Comment {
   author: { name: string; avatar: string };

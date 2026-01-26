@@ -1,7 +1,7 @@
 import { contechApi } from "../api";
 import DocumentCard from "./DocumentCard";
 import FileUploadModal from "./FileUploadForm";
-import type { Document, FileWithMetadata } from "./type";
+import type { Document, FileWithMetadata } from "./types";
 import { useState } from "react"; 
 
 const RecentDocuments = ({ documents }: { documents: Document[] }) => {

@@ -1,5 +1,5 @@
 import { useAuth } from "../contexts/AuthContext";
-import type { UserContextType } from "../components/type";
+import type { UserContextType } from "../components/types";
 
 const useUser = (): UserContextType => {
   const auth = useAuth();

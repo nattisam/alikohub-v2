@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FaFolder,
   FaProjectDiagram,
@@ -8,8 +8,10 @@ import {
   FaHome,
   FaBars,
   FaTimes,
+  FaUserFriends,
 } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
+import { useUser } from "../hooks";
 
 interface SidebarItem {
   id: string;
@@ -20,7 +22,14 @@ interface SidebarItem {
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const { currentUser } = useUser();
   const [isOpen, setIsOpen] = useState(true);
+
+  const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+  const userRole = currentUser?.role;
+  const isAdmin = isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN';
+  const isContractor = userRole === 'CONTRACTOR';
+  const isClient = userRole === 'CLIENT';
 
   // Toggle sidebar visibility
   const toggleSidebar = () => {
@@ -50,44 +59,85 @@ const Sidebar: React.FC = () => {
     };
   }, [isOpen]);
 
-  const sidebarItems: SidebarItem[] = [
-    {
+  const sidebarItems = useMemo(() => {
+    const items: SidebarItem[] = [];
+    const prefix = isAdmin ? "/admin" : isContractor ? "/contractor" : isClient ? "/client" : "";
+
+    if (!prefix) return items;
+
+    items.push({
       id: "Dashboard",
       label: "Dashboard",
       icon: <FaHome />,
-      path: "/dashboard",
-    },
-    {
+      path: prefix,
+    });
+
+    items.push({
       id: "Projects",
       label: "Projects",
       icon: <FaProjectDiagram />,
-      path: "/dashboard/projects",
-    },
-    {
-      id: "Contracts",
-      label: "Contracts",
-      icon: <FaFolder />,
-      path: "/dashboard/contracts",
-    },
-    {
-      id: "Financials",
-      label: "Financial Tracking",
-      icon: <FaDollarSign />,
-      path: "/dashboard/financial-tracking",
-    },
-    {
-      id: "Reports",
-      label: "Inspection Reports",
-      icon: <FaFileAlt />,
-      path: "/dashboard/inspections",
-    },
-    {
-      id: "Approvals",
-      label: "Approvals",
-      icon: <FaClipboardList />,
-      path: "/dashboard/approvals",
-    },
-  ];
+      path: `${prefix}/projects`,
+    });
+
+    if (isAdmin) {
+      items.push({
+        id: "Contractors",
+        label: "Contractors",
+        icon: <FaUserFriends />,
+        path: "/admin/contractors",
+      });
+      items.push({
+        id: "Clients",
+        label: "Clients",
+        icon: <FaUserFriends />,
+        path: "/admin/clients",
+      });
+      items.push({
+        id: "Reports",
+        label: "System Reports",
+        icon: <FaFileAlt />,
+        path: "/admin/reports",
+      });
+    }
+
+    if (isContractor) {
+      items.push({
+        id: "Tasks",
+        label: "My Tasks",
+        icon: <FaClipboardList />,
+        path: "/contractor/tasks",
+      });
+      items.push({
+        id: "Inspections",
+        label: "Inspections",
+        icon: <FaFileAlt />,
+        path: "/contractor/inspections",
+      });
+      items.push({
+        id: "Contracts",
+        label: "Contracts",
+        icon: <FaFolder />,
+        path: "/contractor/contracts",
+      });
+    }
+
+    if (isClient) {
+      items.push({
+        id: "Approvals",
+        label: "Approvals",
+        icon: <FaClipboardList />,
+        path: "/client/approvals",
+      });
+      items.push({
+        id: "Financials",
+        label: "Financial Tracking",
+        icon: <FaDollarSign />,
+        path: "/client/financials",
+      });
+    }
+
+    return items;
+  }, [isAdmin, isContractor, isClient]);
 
   return (
     <>
@@ -109,23 +159,23 @@ const Sidebar: React.FC = () => {
             : "not-md:opacity-0 -translate-x-full md:translate-x-0 md:w-64"
         } md:block`}
       >
-        <h2 className="text-xl font-bold text-gray-800">Menu</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Menu</h2>
         <ul className="space-y-2">
           {sidebarItems.map((item) => (
             <li
               key={item.id}
               className={`flex items-center space-x-2 p-2 rounded cursor-pointer ${
-                location.pathname === item.path.split("?")[0]
-                  ? "bg-blue-100"
-                  : "hover:bg-gray-100"
+                location.pathname === item.path
+                  ? "bg-blue-100 text-blue-700"
+                  : "hover:bg-gray-100 text-gray-600"
               }`}
             >
               <Link
                 to={item.path}
                 className="flex items-center space-x-2 w-full"
               >
-                {item.icon}
-                <span>{item.label}</span>
+                <span className="text-lg">{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
               </Link>
             </li>
           ))}

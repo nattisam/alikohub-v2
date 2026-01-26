@@ -1,11 +1,9 @@
-import React, { useEffect } from "react";
-import { useDashboard, useUser } from "../hooks";
-import type { ExtendedCurrentUser } from "../components/type";
+import React from "react";
+import { useDashboard } from "../hooks";
 import ProjectSection from "../components/ProjectSection";
-import { ProjectStatus } from "../components/type";
+import { ProjectStatus } from "../components/types";
 const DashboardHome: React.FC = () => {
-  const { currentUser } = useUser() as { currentUser: ExtendedCurrentUser };
-  const { projects, loadProjects, loadingProjects, errorProjects } = useDashboard();
+  const { projects, loadingProjects, errorProjects } = useDashboard();
 
   if (loadingProjects) {
     return (

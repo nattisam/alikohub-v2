@@ -1,4 +1,4 @@
-import type {Milestone} from "./type";
+import type {Milestone} from "./types";
 interface Props {
   stage: Milestone;
 

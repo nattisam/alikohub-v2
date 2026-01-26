@@ -1,5 +1,5 @@
 import NotificationCard from "./NotificationCard";
-import type { Notification } from "./type";
+import type { Notification } from "./types";
 const NotificationsPanel = ({
   notifications,
 }: {

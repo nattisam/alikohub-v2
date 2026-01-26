@@ -5,10 +5,11 @@ import { useComments } from '../queries/comments';
 import { useCreateTask, useUpdateTask } from '../queries/tasks';
 import useUser from './useUser';
 import { useState } from 'react';
+import type { Project, Task, Inspection, Comment, Notification } from '../components/types';
 
 interface DashboardHookValue {
   // Project related
-  projects: any[];
+  projects: Project[];
   loadProjects: () => void;
   loadingProjects: boolean;
   errorProjects: any;
@@ -22,12 +23,12 @@ interface DashboardHookValue {
   canInspect: boolean;
   
   // Comment related
-  comments: any[];
+  comments: Comment[];
   
   // Notification related
-  notifications: any[];
+  notifications: Notification[];
   addNotification: (notification: any) => void;
-  removeNotification: (id: string) => void;
+  removeNotification: (id: string | number) => void;
 }
 
 const useDashboard = (): DashboardHookValue => {
@@ -39,10 +40,10 @@ const useDashboard = (): DashboardHookValue => {
 
   const { currentUser } = useUser();
   
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   
-  const canCreateTask = currentUser?.permissions?.includes('create_task') || false;
-  const canInspect = currentUser?.permissions?.includes('inspect') || false;
+  const canCreateTask = currentUser?.role === 'PROJECT_MANAGER' || currentUser?.globalRole === 'ADMIN';
+  const canInspect = currentUser?.role === 'PROJECT_MANAGER' || currentUser?.role === 'CONTRACTOR' || currentUser?.globalRole === 'ADMIN';
   
   const loadProjects = () => {
     // Projects are loaded via the useProjects hook
@@ -72,8 +73,8 @@ const useDashboard = (): DashboardHookValue => {
     addNotification: (notification: any) => {
       setNotifications(prev => [...prev, { ...notification, id: Date.now().toString() }]);
     },
-    removeNotification: (id: string) => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
+    removeNotification: (id: string | number) => {
+      setNotifications(prev => prev.filter(n => (n as any).id !== id));
     },
   };
 };

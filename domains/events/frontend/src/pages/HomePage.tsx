@@ -1,21 +1,70 @@
-import Hero from "../components/Hero";
-import FeaturedEvent from "../components/FeaturedEvent";
-import LatestTopics from "../components/LatestTopics";
-import UpcomingEvents from "../components/UpcomingEvents";
-import EventBanner from "../components/EventBanner";
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { PostList } from '../components/PostList';
+import Hero from '../components/Hero';
+import { FeaturedEvents } from '../components/FeaturedEvents';
+import { getAllPublishedPosts } from '../services/post-service';
+import { PostType } from '../types/post';
 
-const EventsHomePage = () => {
+export default function HomePage() {
+  const navigate = useNavigate();
+  
+  const { data: posts = [], isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['published-posts', 'home'],
+    queryFn: getAllPublishedPosts,
+  });
+
+  const featuredEvents = posts.filter(post => post.type === PostType.EVENT).slice(0, 2);
+
   return (
-    <>
-      <Hero />
-      <FeaturedEvent />
-      <div className="relative not-md:-top-44 -mb-32">
-        <LatestTopics />
-        <UpcomingEvents />
-        <EventBanner />
-      </div>
-    </>
-  );
-};
+    <div className="bg-white">
+      <Hero/>
 
-export default EventsHomePage;
+      {featuredEvents.length > 0 && (
+        <FeaturedEvents events={featuredEvents} />
+      )}
+
+      {/* Latest Content Feed */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div>
+            <span className="text-blue-600 font-black uppercase tracking-widest text-sm">Feed</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Latest Updates</h2>
+          </div>
+          <p className="text-gray-500 max-w-md md:text-right">
+            Stay in the loop with the most recent developments across the AlikoHub ecosystem.
+          </p>
+        </div>
+        
+        <PostList 
+          posts={posts} 
+          isLoading={isLoading} 
+          isError={isError}
+          error={error}
+          onRetry={refetch}
+          emptyMessage="No updates published yet."
+        />
+      </section>
+
+      {/* Promotion Call to Action */}
+      <section className="bg-blue-50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="bg-blue-600 rounded-[3rem] p-8 md:p-16 flex flex-col md:flex-row items-center justify-between shadow-2xl shadow-blue-200">
+            <div className="mb-8 md:mb-0 md:mr-8 text-center md:text-left">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">Want to promote your content?</h2>
+              <p className="text-blue-100 text-lg md:text-xl max-w-xl">
+                External companies can request to publish events or announcements on our platform.
+              </p>
+            </div>
+            <button 
+              onClick={() => navigate('/promotion-request')}
+              className="bg-white text-blue-600 px-10 py-5 rounded-2xl text-xl font-black hover:bg-gray-100 transition shadow-xl transform active:scale-95"
+            >
+              Submit Request
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

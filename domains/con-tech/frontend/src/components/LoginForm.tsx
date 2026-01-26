@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../hooks";
 import { FiLoader } from "react-icons/fi";
-import type { LoginCredentials } from "./type";
+import type { LoginCredentials } from "./types";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 

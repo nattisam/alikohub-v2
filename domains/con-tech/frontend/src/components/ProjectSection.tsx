@@ -1,5 +1,5 @@
 import DocumentsSection from "./DocumentsSection";
-import type { Document, Milestone, ProjectWithStats } from "./type";
+import type { Document, Milestone, ProjectWithStats } from "./types";
 import Timeline from "./ProjectTimeline";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import {type  Contract, ContractStatus } from "./type";
+import {type  Contract, ContractStatus } from "./types";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 
 const statusColors: Record<ContractStatus, string> = {

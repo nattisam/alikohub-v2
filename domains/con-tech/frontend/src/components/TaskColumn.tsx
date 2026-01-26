@@ -1,6 +1,6 @@
 import { FaPlus } from 'react-icons/fa';
 import TaskCard from './TaskCard.tsx';
-import type { Task } from './type';
+import type { Task } from './types';
 import { useDashboard } from '../hooks';
 
 interface Props {

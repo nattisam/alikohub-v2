@@ -3,7 +3,7 @@ import type {
   Contract,
   AddChangeOrderDto,
   ContractStatus,
-} from "../components/type";
+} from "../components/types";
 
 export class ContractsService {
   private static instance: ContractsService;

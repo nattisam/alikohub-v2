@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { type Project, ProjectStatus, type User } from "./type";
+import { type Project, ProjectStatus, type User } from "./types";
 import {
   FaBold,
   FaCode,
