@@ -1,22 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUser } from "../hooks";
 import { FiLoader } from "react-icons/fi";
 import type { LoginCredentials } from "./types";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-
 const LoginForm = () => {
-  const { login, loginLoading, loginError, currentUser } = useUser();
+  const { login, isLoading } = useUser();
   const [userInfo, setUserInfo] = useState<LoginCredentials>({
     email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-
 
   const validateUser = (userInfo: LoginCredentials) => {
     const errors: string[] = [];
@@ -54,23 +48,7 @@ const LoginForm = () => {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {loginError && !loginLoading && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Sign in failed. Please check your credentials and try again.
-                  </h3>
-                </div>
-              </div>
-            </div>
-          )}
-
+          
           <div className="rounded-md space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -150,10 +128,10 @@ const LoginForm = () => {
           <div>
             <button
               type="submit"
-              disabled={loginLoading}
+              disabled={isLoading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-[#FFC107]/70 hover:bg-[#FFC107]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFC107] transition duration-300 disabled:opacity-50"
             >
-              {loginLoading ? (
+              {isLoading ? (
                 <span className="flex items-center">
                   <FiLoader className="animate-spin -ml-1 mr-2 h-4 w-4" />
                   Signing in...
@@ -164,12 +142,9 @@ const LoginForm = () => {
             </button>
           </div>
         </form>
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link to="/signup" className="font-medium text-[#FFC107] hover:text-[#FFC107]/80 transition duration-300">
-              Sign up
-            </Link>
+        <div className="text-center mt-6">
+          <p className="text-xs text-gray-500 italic">
+            Aliko ConTech is an internal platform. If you need access, please contact your administrator.
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardGrid } from "../components/DashboardGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { useContractorDashboardData } from "../queries/dashboard";
-import ProgressBar from "../components/charts/ProgressBar";
+import { FaProjectDiagram } from "react-icons/fa";
 import type { ContractorDashboardData } from "../components/types";
 
 const ContractorDashboard = () => {
@@ -30,103 +30,119 @@ const ContractorDashboard = () => {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
+        <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-xs font-black text-slate-400 uppercase tracking-widest">Syncing Site Data...</p>
       </div>
     );
   }
   
-  if (isError) {
-    return (
-      <div className="text-center py-10">
-        <h3 className="text-lg font-medium text-red-600">Error loading dashboard data</h3>
-        <p className="text-gray-500">Please try again later</p>
-      </div>
-    );
-  }
-  
-  // Use mock data if no actual data is available
+  // Use real data if available, otherwise default empty state
   const contractorData: ContractorDashboardData = dashboardData || {
-    assignedTasks: 8,
-    overdueTasks: 3,
-    pendingTasks: 5,
-    todayInspections: [
-      { id: 1, title: "Foundation Check", time: "9:00 AM", location: "Site A" },
-      { id: 2, title: "Electrical Safety", time: "2:00 PM", location: "Site B" },
-    ],
+    assignedTasks: 0,
+    overdueTasks: 0,
+    pendingTasks: 0,
+    todayInspections: [],
     openIssues: {
-      total: 5,
-      critical: 2,
-      minor: 3,
+      total: 0,
+      critical: 0,
+      minor: 0,
     },
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-800">Contractor Dashboard</h2>
-        <div className="text-sm text-gray-600">Welcome, {currentUser?.firstname}</div>
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Contractor Hub</h2>
+          <p className="text-slate-500 text-xs mt-1 font-serif italic">Operational overview for your assigned project scopes</p>
+        </div>
+        <div className="flex gap-2">
+          <div className={`px-5 py-2 ${isError ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'} rounded-2xl border flex items-center gap-2 transition-colors`}>
+            <span className={`w-2 h-2 rounded-full ${isError ? 'bg-red-600' : 'bg-blue-600 animate-pulse'}`}></span>
+            <span className={`text-[10px] font-black ${isError ? 'text-red-700' : 'text-blue-700'} uppercase tracking-widest leading-none`}>
+              {isError ? 'Sync Error' : 'Live Sync'}
+            </span>
+          </div>
+        </div>
       </div>
       
       <DashboardGrid>
-        {/* Assigned tasks */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Assigned Tasks</CardTitle>
+        {/* Pending tasks */}
+        <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500 group-hover:w-2 transition-all"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Pending Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{contractorData.assignedTasks}</div>
-            <p className="text-sm text-gray-500">{contractorData.overdueTasks} overdue, {contractorData.pendingTasks} pending</p>
+            <div className="text-5xl font-black text-slate-900">{contractorData.pendingTasks}</div>
+            <p className="text-[10px] font-bold text-amber-600 mt-2 uppercase tracking-tight flex items-center gap-1">
+               Requires Immediate Attention
+            </p>
           </CardContent>
         </Card>
         
-        {/* Today's inspections */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Today's Inspections</CardTitle>
+        {/* Active Scope */}
+        <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 group-hover:w-2 transition-all"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Active Pipeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="text-5xl font-black text-slate-900">{contractorData.assignedTasks}</div>
+            <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tight">Total Assigned Items</p>
+          </CardContent>
+        </Card>
+
+        {/* Notifications / Communication Summary */}
+        <Card className="md:col-span-2 border-none shadow-xl shadow-slate-200/50 bg-slate-900 rounded-[2rem] overflow-hidden p-2 text-white relative">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <FaProjectDiagram size={120} />
+          </div>
+          <CardHeader>
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400">Client Communication & Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex justify-between items-center hover:bg-white/10 transition-all cursor-pointer group">
+                <div>
+                  <p className="text-xs font-bold text-white uppercase tracking-tight">Foundation Milestone Approval</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 italic">Client feedback received 2h ago</p>
+                </div>
+                <span className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center text-[10px] font-black border border-amber-500/50 group-hover:scale-110 transition-transform">!</span>
+              </div>
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex justify-between items-center hover:bg-white/10 transition-all cursor-pointer group">
+                <div>
+                  <p className="text-xs font-bold text-white uppercase tracking-tight">Site Photo Request: Zone B</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 italic">Admin request for documentation</p>
+                </div>
+                <span className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-[10px] font-black border border-blue-500/50 group-hover:scale-110 transition-transform">i</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Inspections Summary (Simplified) */}
+        <Card className="md:col-span-2 border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-900">Today's Operating Schedule</CardTitle>
+              <span className="text-[10px] font-black text-slate-400 uppercase italic">January 26, 2026</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
               {(contractorData.todayInspections || []).map((inspection) => (
-                <div key={inspection.id} className="p-2 bg-gray-50 rounded">
-                  <p className="text-sm font-medium">{inspection.title}</p>
-                  <p className="text-xs text-gray-500">{inspection.time} - {inspection.location}</p>
+                <div key={inspection.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-blue-500/5 transition-all group/item">
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-sm font-black text-slate-900 group-hover/item:text-blue-600 transition-colors uppercase tracking-tight">{inspection.title}</p>
+                    <span className="text-[10px] font-bold text-slate-400 underline decoration-blue-500/30 decoration-2 underline-offset-4 tracking-tighter">{inspection.time}</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-widest">
+                    <span className="w-1 h-1 rounded-full bg-slate-300"></span> Site Location: {inspection.location}
+                  </p>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Open issues */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Open Issues</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{contractorData.openIssues.total}</div>
-            <p className="text-sm text-gray-500">{contractorData.openIssues.critical} critical, {contractorData.openIssues.minor} minor</p>
-          </CardContent>
-        </Card>
-        
-        {/* Upload photos / reports */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Photos/Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-32 flex items-center justify-center bg-gray-100 rounded border-2 border-dashed border-gray-300">
-              <p className="text-gray-500 text-center px-4">Drag & drop files or click to upload</p>
-            </div>
-          </CardContent>
-        </Card>
-        {/* Productivity chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Productivity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ProgressBar percentage={85} label="Weekly Productivity" />
             </div>
           </CardContent>
         </Card>

@@ -2,6 +2,8 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useUser } from "../hooks";
 
+import AccessDenied from "./common/AccessDenied";
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "ADMIN";
@@ -17,11 +19,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If we're still loading, show a loading indicator
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4 w-full">
+        <div className="relative">
+          <div className="h-20 w-20 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-4 w-4 bg-blue-600 rounded-full animate-pulse"></div>
+          </div>
         </div>
+        <p className="mt-6 text-slate-500 font-bold animate-pulse tracking-widest uppercase text-[10px]">Authing...</p>
       </div>
     );
   }
@@ -57,15 +62,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     
     if (!hasRequiredRole) {
       // Show access denied state if user doesn't have required role
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Access Denied</h2>
-            <p className="text-gray-600">You do not have permission to access this page.</p>
-            <p className="text-gray-500 mt-2">Required role: {requiredRole}</p>
-          </div>
-        </div>
-      );
+      return <AccessDenied requiredRole={requiredRole} />;
     }
   }
 

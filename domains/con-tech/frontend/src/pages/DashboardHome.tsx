@@ -2,25 +2,31 @@ import React from "react";
 import { useDashboard } from "../hooks";
 import ProjectSection from "../components/ProjectSection";
 import { ProjectStatus } from "../components/types";
+import ErrorState from "../components/common/ErrorState";
+import EmptyState from "../components/common/EmptyState";
 const DashboardHome: React.FC = () => {
   const { projects, loadingProjects, errorProjects } = useDashboard();
 
   if (loadingProjects) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100 w-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="flex flex-col justify-center items-center py-32 w-full bg-slate-50/50 min-h-[60vh]">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-50 border-t-blue-600"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-2 w-2 bg-blue-600 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+        <p className="mt-4 text-slate-500 font-medium animate-pulse">Loading dashboard...</p>
       </div>
     );
   }
 
   if (errorProjects) {
     return (
-      <div className="min-h-screen bg-gray-100 p-6 w-full">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Error! </strong>
-          <span className="block sm:inline">{errorProjects.message || 'Failed to load projects'}</span>
-        </div>
-      </div>
+      <ErrorState 
+        message={errorProjects.message || 'Failed to load projects'} 
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
@@ -66,10 +72,10 @@ const DashboardHome: React.FC = () => {
       </div>
 
       {(projectsArray.length === 0) && (
-        <div className="bg-white rounded shadow p-8 text-center">
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">No Projects Found</h3>
-          <p className="text-gray-500">You don't have any projects assigned yet.</p>
-        </div>
+        <EmptyState 
+          title="No Projects Found"
+          message="You don't have any projects assigned yet."
+        />
       )}
       
       {(projectsArray && projectsArray.length > 0 && (

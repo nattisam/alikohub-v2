@@ -81,14 +81,15 @@ const CoursesManagementPage = () => {
       try {
         const response = await courseApi.getCourses();
         
-        // Handle the expected response structure
+        // Handle the expected response structure robustly
+        const responseData = response?.data;
         let coursesData: Course[] = [];
-        if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
-          coursesData = response.data.items;
-        } else if (Array.isArray(response.data)) {
-          coursesData = response.data;
+        
+        if (responseData && typeof responseData === 'object' && Array.isArray(responseData.items)) {
+          coursesData = responseData.items;
+        } else if (Array.isArray(responseData)) {
+          coursesData = responseData;
         } else {
-          console.error('Unexpected response structure:', response);
           coursesData = [];
         }
         
@@ -122,14 +123,15 @@ const CoursesManagementPage = () => {
       // Refresh the courses list
       const response = await courseApi.getCourses();
       
-      // Handle the expected response structure
+      // Handle the expected response structure robustly
+      const responseData = response?.data;
       let coursesData: Course[] = [];
-      if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
-        coursesData = response.data.items;
-      } else if (Array.isArray(response.data)) {
-        coursesData = response.data;
+      
+      if (responseData && typeof responseData === 'object' && Array.isArray(responseData.items)) {
+        coursesData = responseData.items;
+      } else if (Array.isArray(responseData)) {
+        coursesData = responseData;
       } else {
-        console.error('Unexpected response structure:', response);
         coursesData = [];
       }
       
@@ -149,14 +151,15 @@ const CoursesManagementPage = () => {
         // Refresh the courses list
         const response = await courseApi.getCourses();
         
-        // Handle the expected response structure
+        // Handle the expected response structure robustly
+        const responseData = response?.data;
         let coursesData: Course[] = [];
-        if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
-          coursesData = response.data.items;
-        } else if (Array.isArray(response.data)) {
-          coursesData = response.data;
+        
+        if (responseData && typeof responseData === 'object' && Array.isArray(responseData.items)) {
+          coursesData = responseData.items;
+        } else if (Array.isArray(responseData)) {
+          coursesData = responseData;
         } else {
-          console.error('Unexpected response structure:', response);
           coursesData = [];
         }
         
@@ -175,14 +178,15 @@ const CoursesManagementPage = () => {
       // Refresh the courses list
       const response = await courseApi.getCourses();
       
-      // Handle the expected response structure
+      // Handle the expected response structure robustly
+      const responseData = response?.data;
       let coursesData: Course[] = [];
-      if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
-        coursesData = response.data.items;
-      } else if (Array.isArray(response.data)) {
-        coursesData = response.data;
+      
+      if (responseData && typeof responseData === 'object' && Array.isArray(responseData.items)) {
+        coursesData = responseData.items;
+      } else if (Array.isArray(responseData)) {
+        coursesData = responseData;
       } else {
-        console.error('Unexpected response structure:', response);
         coursesData = [];
       }
       
@@ -200,14 +204,15 @@ const CoursesManagementPage = () => {
       // Refresh the courses list
       const response = await courseApi.getCourses();
       
-      // Handle the expected response structure
+      // Handle the expected response structure robustly
+      const responseData = response?.data;
       let coursesData: Course[] = [];
-      if (response.data && typeof response.data === 'object' && Array.isArray(response.data.items)) {
-        coursesData = response.data.items;
-      } else if (Array.isArray(response.data)) {
-        coursesData = response.data;
+      
+      if (responseData && typeof responseData === 'object' && Array.isArray(responseData.items)) {
+        coursesData = responseData.items;
+      } else if (Array.isArray(responseData)) {
+        coursesData = responseData;
       } else {
-        console.error('Unexpected response structure:', response);
         coursesData = [];
       }
       

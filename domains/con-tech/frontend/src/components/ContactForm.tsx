@@ -1,9 +1,10 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 
 interface ContactFormState {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   request: string;
 }
 
@@ -12,6 +13,7 @@ const ContactForm = () => {
     firstName: "",
     lastName: "",
     email: "",
+    phone: "",
     request: "",
   });
 
@@ -72,7 +74,22 @@ const ContactForm = () => {
           placeholder="Your Email"
           value={form.email}
           onChange={handleChange}
-          className="bg-white/50 rounded-sm w-[65%] px-2 py-1"
+          className="bg-white/50 rounded-sm w-[65%] px-2 py-1 placeholder:text-gray-100"
+          required
+        />
+      </div>
+
+      <div className="flex flex-col my-2">
+        <label htmlFor="phone">
+          Phone Number<span className="text-red-500">*</span>
+        </label>
+        <input
+          id="phone"
+          type="tel"
+          placeholder="Your Phone Number"
+          value={form.phone}
+          onChange={handleChange}
+          className="bg-white/50 rounded-sm w-[65%] px-2 py-1 placeholder:text-gray-100"
           required
         />
       </div>
@@ -83,11 +100,11 @@ const ContactForm = () => {
         </label>
         <textarea
           id="request"
-          placeholder="Your Request Here"
+          placeholder="Describe your project or inquiry..."
           rows={2}
           value={form.request}
           onChange={handleChange}
-          className="bg-white/50 rounded-sm w-[70%] px-2 py-1.5"
+          className="bg-white/50 rounded-sm w-[70%] px-2 py-1.5 placeholder:text-gray-100"
           required
         />
       </div>

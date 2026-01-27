@@ -47,8 +47,9 @@ export const useCourses = () => {
     if (!isError) return null;
     
     const status = (queryError as any)?.response?.status;
-    if (status === 401) {
-      return "Please log in to view courses.";
+    if (status === 401 || status === 404) {
+      // 401 (Unauthorized) and 404 (Not Found) are not "fatal" errors for the course list
+      return null;
     } else if (status === 429) {
       return "Too many requests. Please try again in a moment.";
     }

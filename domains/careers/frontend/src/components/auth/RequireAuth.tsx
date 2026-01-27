@@ -10,14 +10,17 @@ interface RequireAuthProps {
   roles?: AuthRole[]
 }
 
+import AccessDenied from "../common/AccessDenied";
+
 export function RequireAuth({ children, roles }: RequireAuthProps) {
   const { user, isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#F5F8F3]">
-        <div className="text-sm text-[#1C1800]/70">Loading...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-stone-50 text-stone-400 gap-4">
+        <div className="w-12 h-12 border-4 border-stone-200 border-t-stone-800 rounded-full animate-spin"></div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Verifying Access</p>
       </div>
     )
   }
@@ -28,17 +31,23 @@ export function RequireAuth({ children, roles }: RequireAuthProps) {
 
   // Check if user has the required roles
   if (roles && user) {
+    let hasAccess = false;
+
     // For admin access, check global role
-    if (roles.includes('ADMIN') && user.globalRole !== 'ADMIN') {
-      return <Navigate to="/" replace />
-    }
+    if (roles.includes('ADMIN')) {
+      hasAccess = user.globalRole === 'ADMIN';
+    } 
     // For recruiter access, check careers-specific role
-    if (roles.includes('RECRUITER') && user.careersRole !== 'RECRUITER') {
-      return <Navigate to="/" replace />
+    else if (roles.includes('RECRUITER')) {
+      hasAccess = user.careersRole === 'RECRUITER' || user.globalRole === 'ADMIN';
     }
     // For general user access, check global role
-    if (roles.includes('USER') && user.globalRole !== 'USER' && user.globalRole !== 'ADMIN') {
-      return <Navigate to="/" replace />
+    else if (roles.includes('USER')) {
+      hasAccess = true; // Any authenticated user
+    }
+
+    if (!hasAccess) {
+      return <AccessDenied />;
     }
   }
 

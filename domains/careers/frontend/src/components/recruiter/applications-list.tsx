@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { ChevronLeft, Eye, Download, Mail } from "lucide-react"
 import { api } from "../../lib/api"
+import ErrorState from "../common/ErrorState"
+import EmptyState from "../common/EmptyState"
 
 interface Application {
   id: number;
@@ -15,15 +17,11 @@ interface ApplicationsListProps {
   onBack?: () => void;
 }
 
-// Service function to fetch all applications
-// First get all jobs, then fetch applications for each job
 async function fetchAllApplications(): Promise<Application[]> {
   try {
-    // Get all jobs first
     const jobsRes = await api.get('/careers/jobs');
     const jobs = jobsRes.data;
     
-    // Then fetch applications for each job
     const allApplications: Application[] = [];
     for (const job of jobs) {
       try {
@@ -54,45 +52,35 @@ export function ApplicationsList({ onBack }: ApplicationsListProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-stone-50">
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="flex justify-center items-center py-20">
-            <div className="flex flex-col items-center gap-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <p className="text-gray-500">Loading applications...</p>
-            </div>
+      <div className="w-full min-h-screen bg-stone-50 flex flex-col items-center justify-center py-20 translate-y-[-10%]">
+        <div className="relative">
+          <div className="h-20 w-20 rounded-full border-4 border-stone-100 border-t-stone-900 animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-4 w-4 bg-stone-900 rounded-full animate-pulse"></div>
           </div>
         </div>
+        <p className="mt-6 text-stone-500 font-medium animate-pulse tracking-wide uppercase text-[10px] font-black">Loading Applications...</p>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="w-full min-h-screen bg-stone-50">
-        {/* Decorative background elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="rounded-2xl bg-white border border-gray-200 p-12 text-center shadow-sm">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-100 mb-6">
-              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Failed to load applications</h2>
-            <p className="text-gray-500 mb-6">Something went wrong while loading the applications.</p>
-            <button 
-              onClick={() => refetch()}
-              className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 hover:shadow-md transition-all duration-300"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
+      <div className="w-full min-h-screen bg-stone-50 pt-20">
+        <ErrorState onRetry={() => refetch()} />
+      </div>
+    );
+  }
+
+  if (applications.length === 0) {
+    return (
+      <div className="w-full min-h-screen bg-stone-50 pt-20">
+        <EmptyState 
+          title="No Applications Yet" 
+          message="There are no job applications to review at this time. New applications will appear here when they arrive."
+          actionText={onBack ? "Back to Dashboard" : undefined}
+          onAction={onBack}
+        />
       </div>
     );
   }
@@ -122,7 +110,7 @@ export function ApplicationsList({ onBack }: ApplicationsListProps) {
         </div>
 
         <div className="grid gap-6">
-          {applications.map((application) => (
+          {applications.map((application: Application) => (
             <div key={application.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-300">
               <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
                 <div className="flex-1">

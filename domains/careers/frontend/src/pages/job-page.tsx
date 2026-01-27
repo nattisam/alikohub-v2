@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { api, publicApi } from "../lib/api"
 import { ApplicationForm } from "../components/application/application-form"
+import ErrorState from "../components/common/ErrorState"
+import EmptyState from "../components/common/EmptyState"
 
 interface JobDetail {
   id: string
@@ -27,28 +29,14 @@ export function JobPage() {
   const { id } = useParams<{ id: string }>()
   const [showForm, setShowForm] = useState(false)
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["job", id],
     queryFn: () => fetchJobById(id as string),
     enabled: !!id,
     retry: (failureCount, error: any) => {
-      // Retry on 429 errors
-      if (error?.response?.status === 429) {
-        return failureCount < 3;
-      }
-      // Don't retry on 404 or other client errors
-      if (error?.response?.status >= 400 && error?.response?.status < 500) {
-        return false;
-      }
+      if (error?.response?.status === 429) return failureCount < 3;
+      if (error?.response?.status >= 400 && error?.response?.status < 500) return false;
       return failureCount < 3;
-    },
-    retryDelay: (attemptIndex, error: any) => {
-      if (error?.response?.status === 429) {
-        const baseDelay = 1000;
-        const maxDelay = 10000;
-        return Math.min(baseDelay * Math.pow(2, attemptIndex), maxDelay) + Math.random() * 1000;
-      }
-      return Math.min(1000 * Math.pow(2, attemptIndex), 30000);
     },
   })
 
@@ -60,7 +48,6 @@ export function JobPage() {
         throw new Error('Job ID is required');
       }
       
-      // Validate URL format before sending
       try {
         new URL(applicationData.resumeUrl);
       } catch (urlError) {
@@ -90,64 +77,45 @@ export function JobPage() {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-stone-50">
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="flex justify-center items-center py-20">
-            <p className="text-sm text-gray-500">Loading job details...</p>
+      <div className="w-full min-h-screen bg-stone-50 flex flex-col items-center justify-center py-20">
+        <div className="relative">
+          <div className="h-20 w-20 rounded-full border-4 border-stone-100 border-t-stone-900 animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-4 w-4 bg-stone-900 rounded-full animate-pulse"></div>
           </div>
         </div>
+        <p className="mt-6 text-stone-500 font-medium animate-pulse tracking-wide uppercase text-[10px] font-black">Loading Position...</p>
       </div>
     )
   }
 
-  if (isError || !job) {
+  if (isError) {
     const errorStatus = (error as any)?.response?.status;
-    const isRateLimited = errorStatus === 429;
     
+    if (errorStatus === 404) {
+      return (
+        <div className="w-full min-h-screen bg-stone-50 pt-20">
+          <EmptyState 
+            title="Position Not Found" 
+            message="We couldn't find this specific opening. It may have been recently filled or closed."
+            actionText="Browse jobs"
+            onAction={() => window.history.back()}
+          />
+        </div>
+      )
+    }
+
     return (
-      <div className="w-full min-h-screen bg-stone-50">
-        {/* Decorative background elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="rounded-2xl bg-white border border-gray-200 p-12 text-center shadow-sm">
-            {isRateLimited ? (
-              <>
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-100 mb-6">
-                  <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Too Many Requests</h2>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  The server is currently handling too many requests. Please wait a moment and try again.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 hover:shadow-md transition-all duration-300"
-                >
-                  Retry
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 mb-6">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47.881-6.08 2.324M12 4.014a7.963 7.963 0 00-6.08 2.325m12.16 0A7.963 7.963 0 0112 4.014" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Job not found</h2>
-                <p className="text-gray-500 max-w-sm mx-auto">We couldn&apos;t find this job. It may have been removed.</p>
-              </>
-            )}
-          </div>
-        </div>
+      <div className="w-full min-h-screen bg-stone-50 pt-20">
+        <ErrorState 
+          message={errorStatus === 429 ? "The server is currently handling too many requests. Please wait a moment." : "Failed to load job details."} 
+          onRetry={() => refetch()} 
+        />
       </div>
     )
   }
+
+  if (!job) return null;
 
   if (showForm) {
     return (

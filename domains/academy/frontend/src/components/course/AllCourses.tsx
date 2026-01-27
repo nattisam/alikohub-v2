@@ -31,12 +31,14 @@ const AllCourses: React.FC<AllCoursesProps> = ({
   const {
     data: courses = [],
     isLoading,
-    isError
+    isError,
+    error: queryError
   } = useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
       const response = await courseApi.getPublishedCourses();
-      const coursesData = response.data.items || response.data;
+      const responseData = response?.data;
+      const coursesData = responseData?.items || responseData;
       return Array.isArray(coursesData) ? coursesData : [];
     },
     staleTime: 5 * 60 * 1000,      // 5 minutes - conservative cache setting
@@ -50,6 +52,9 @@ const AllCourses: React.FC<AllCoursesProps> = ({
       return failureCount < 1;
     },
   });
+
+  // Calculate if we should show a specific error
+  const shouldShowError = isError && (queryError as any)?.response?.status !== 404 && (queryError as any)?.response?.status !== 401;
   
   // Fetch user's enrollments to show which courses are already enrolled
   const {
@@ -116,13 +121,19 @@ const AllCourses: React.FC<AllCoursesProps> = ({
     );
   }
 
-  if (isError) {
+  if (shouldShowError) {
     return (
       <div className={`${className} bg-white rounded-lg shadow p-6`}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-900">All Courses</h2>
         </div>
-        <p className="text-red-500">Failed to load courses</p>
+        <p className="text-red-500">Failed to load courses. Please try again later.</p>
+        <button 
+          onClick={() => queryClient.invalidateQueries({ queryKey: ["all-courses"] })}
+          className="mt-2 text-blue-600 hover:underline text-sm"
+        >
+          Try Again
+        </button>
       </div>
     );
   }

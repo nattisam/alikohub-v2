@@ -50,7 +50,7 @@ function DashboardLayout() {
       <Navbar />
       <div className="flex flex-row min-h-[calc(100vh-120px)]">
         {showSidebar && <Sidebar />}
-        <main className={`${showSidebar ? "ml-0 md:ml-64" : ""} flex-1 p-6 transition-all duration-300`}>
+        <main className={`${showSidebar ? "ml-0 md:ml-16" : ""} flex-1 p-6 transition-all duration-300`}>
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

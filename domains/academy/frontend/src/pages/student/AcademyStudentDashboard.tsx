@@ -61,10 +61,13 @@ const AcademyStudentDashboard = () => {
         try {
           // Fetch enrolled courses
           const coursesResponse = await enrollmentApi.getMyCourses();
-          const rawItems = Array.isArray(coursesResponse.data)
-            ? coursesResponse.data
-            : Array.isArray((coursesResponse.data as any)?.items)
-              ? (coursesResponse.data as any).items
+          
+          // Robustly handle different response formats and potential null values
+          const responseData = coursesResponse?.data;
+          const rawItems = Array.isArray(responseData)
+            ? responseData
+            : Array.isArray((responseData as any)?.items)
+              ? (responseData as any).items
               : [];
 
           const detectedEnrollments: EnrollmentWithCourse[] = [];
@@ -93,9 +96,19 @@ const AcademyStudentDashboard = () => {
           setError(null); // Clear any previous error
           return; // Success, exit the retry loop
         } catch (error: any) {
+          // Check for status codes that shouldn't be treated as "fatal" dashboard errors
+          const status = error.response?.status;
+          
+          if (status === 401 || status === 404) {
+            // These mean either unauthorized (handled elsewhere) or nothing found
+            setEnrollments([]);
+            setCourses([]);
+            setError(null);
+            return;
+          }
 
           // Check if it's a 429 error (Too Many Requests)
-          if (error.response?.status === 429 && retries < maxRetries) {
+          if (status === 429 && retries < maxRetries) {
             // Exponential backoff: wait longer after each retry
             await new Promise((resolve) =>
               setTimeout(resolve, delay * Math.pow(2, retries))
@@ -189,64 +202,91 @@ const AcademyStudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading dashboard...</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4 w-full">
+        <div className="relative">
+          <div className="h-20 w-20 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-4 w-4 bg-blue-600 rounded-full animate-pulse"></div>
+          </div>
         </div>
+        <p className="mt-6 text-slate-500 font-bold animate-pulse tracking-widest uppercase text-[10px]">Loading Dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
+    <div className="min-h-screen bg-slate-50 transition-all duration-500">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Welcome, {(currentUser?.firstName as string) || currentUser?.email}</span>
+      <header className="bg-white border-b border-slate-100 pt-16">
+        <div className="max-w-7xl mx-auto px-6 py-10 sm:px-8 lg:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Academy Dashboard</h1>
+            <p className="text-slate-500 mt-2 font-medium italic">Welcome back, {(currentUser?.firstName as string) || currentUser?.email}</p>
+          </div>
+          <div className="flex bg-blue-50/50 p-1.5 rounded-2xl border border-blue-100 mb-2">
+            <div className="px-4 py-2 bg-white rounded-xl shadow-sm text-xs font-black text-blue-600 uppercase tracking-wider">
+              Enrolled: {enrollments.length}
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-6 py-10 sm:px-8 lg:px-10">
         {enrollments.length === 0 ? (
           <EmptyState 
             title="No Enrollments Found"
-            message="You haven't enrolled in any courses yet."
-            actionText="Browse Courses"
+            message="You haven't enrolled in any courses yet. Start your learning journey today."
+            actionText="Find a Course"
             onAction={() => navigate('/courses')}
+            icon={
+              <svg className="h-10 w-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            }
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {courses.map((course) => (
-              <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-6">
-                  <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                  <p className="text-gray-500 mt-1">{course.shortDescription}</p>
-                  <div className="mt-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-blue-600 h-2.5 rounded-full" 
-                        style={{ width: `${course.progress || 0}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">{course.progress || 0}% complete</p>
+              <div key={course.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 group relative flex flex-col">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                
+                <div className="p-8 flex-1 flex flex-col">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-slate-800 transition-colors group-hover:text-blue-600 line-clamp-1">{course.title}</h3>
+                    <p className="text-slate-500 text-sm mt-3 line-clamp-2 leading-relaxed h-10">{course.shortDescription}</p>
                   </div>
-                  <div className="mt-4 flex space-x-3">
-                    <button 
-                      onClick={() => setSelectedCourse(course)}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      View Progress
-                    </button>
-                    <button 
-                      onClick={() => navigate(`/student-dashboard/mycourses/${course.id}/modules`)}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    >
-                      Continue
-                    </button>
+                  
+                  <div className="mt-auto space-y-6">
+                    <div>
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</span>
+                        <span className="text-[10px] font-black text-blue-600">{course.progress || 0}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">
+                        <div 
+                          className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out" 
+                          style={{ width: `${course.progress || 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => setSelectedCourse(course)}
+                        className="flex-1 px-4 py-4 bg-slate-50 text-slate-700 rounded-2xl font-bold text-xs hover:bg-slate-100 transition-all active:scale-95 border border-slate-100"
+                      >
+                        Stats
+                      </button>
+                      <button 
+                        onClick={() => navigate(`/student-dashboard/mycourses/${course.id}/modules`)}
+                        className="flex-[2] px-4 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        Resume 
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7-7 7M3 12h18" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

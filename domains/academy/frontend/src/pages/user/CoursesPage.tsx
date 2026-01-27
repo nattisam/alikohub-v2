@@ -25,14 +25,22 @@ const CoursesPage: React.FC = () => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         const response = await courseApi.getPublishedCourses();
         
-        // Handle different response formats
-        const coursesData = response.data.items || response.data;
-        setCourses(Array.isArray(coursesData) ? coursesData : []);
-      } catch (err: any) {
+        // Handle different response formats robustly
+        const responseData = response?.data;
+        const coursesData = responseData?.items || responseData;
         
+        if (Array.isArray(coursesData)) {
+          setCourses(coursesData);
+        } else {
+          // If it's not an array, treat it as empty but don't show an error
+          // unless it's clearly a failure
+          setCourses([]);
+        }
+      } catch (err: any) {
         // Check if it's a 401 error (unauthorized)
         if (err?.response?.status === 401) {
           // For 401 errors, we still try to continue but with empty courses
@@ -41,6 +49,9 @@ const CoursesPage: React.FC = () => {
         } else if (err?.response?.status === 429) {
           // For 429 errors, show a more specific message
           setError("Too many requests. Please try again in a moment.");
+        } else if (err?.response?.status === 404) {
+          // 404 can sometimes mean "no courses found" in some API designs
+          setCourses([]);
         } else {
           setError("Failed to load courses. Please try again later.");
         }

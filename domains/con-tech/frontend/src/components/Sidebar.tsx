@@ -1,10 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  FaFolder,
   FaProjectDiagram,
   FaFileAlt,
-  FaClipboardList,
-  FaDollarSign,
   FaHome,
   FaBars,
   FaTimes,
@@ -25,18 +22,16 @@ const Sidebar: React.FC = () => {
   const { currentUser } = useUser();
   const [isOpen, setIsOpen] = useState(true);
 
-  const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+  const isGlobalAdmin = currentUser?.globalRole === "ADMIN";
   const userRole = currentUser?.role;
-  const isAdmin = isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN';
-  const isContractor = userRole === 'CONTRACTOR';
-  const isClient = userRole === 'CLIENT';
+  const isAdmin = isGlobalAdmin || userRole === "PROJECT_MANAGER" || userRole === "ADMIN";
+  const isContractor = userRole === "CONTRACTOR";
+  const isClient = userRole === "CLIENT";
 
-  // Toggle sidebar visibility
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
 
-  // Close sidebar when clicking outside (for mobile)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById("sidebar");
@@ -101,39 +96,11 @@ const Sidebar: React.FC = () => {
     }
 
     if (isContractor) {
-      items.push({
-        id: "Tasks",
-        label: "My Tasks",
-        icon: <FaClipboardList />,
-        path: "/contractor/tasks",
-      });
-      items.push({
-        id: "Inspections",
-        label: "Inspections",
-        icon: <FaFileAlt />,
-        path: "/contractor/inspections",
-      });
-      items.push({
-        id: "Contracts",
-        label: "Contracts",
-        icon: <FaFolder />,
-        path: "/contractor/contracts",
-      });
+      // Contractors mainly interact through projects in this simplified version
     }
 
     if (isClient) {
-      items.push({
-        id: "Approvals",
-        label: "Approvals",
-        icon: <FaClipboardList />,
-        path: "/client/approvals",
-      });
-      items.push({
-        id: "Financials",
-        label: "Financial Tracking",
-        icon: <FaDollarSign />,
-        path: "/client/financials",
-      });
+      // Clients mainly interact through projects in this simplified version
     }
 
     return items;
@@ -141,53 +108,76 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Toggle button - visible on mobile and when sidebar is closed */}
+      {/* Toggle Button */}
       <button
         id="sidebar-toggle"
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-md"
+        className="md:hidden fixed top-5 left-5 z-50 p-2.5 rounded-lg bg-white text-slate-700 shadow-lg hover:bg-slate-50 transition-colors duration-200"
         onClick={toggleSidebar}
+        aria-label="Toggle sidebar"
       >
-        {isOpen ? <FaTimes /> : <FaBars />}
+        {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>
 
       {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed not-md:top-14 md:relative z-40 h-full overflow-auto bg-white shadow-md p-4 transition-all duration-300 ease-in-out ${
-          isOpen
-            ? "not-md:w-64 translate-x-0"
-            : "not-md:opacity-0 -translate-x-full md:translate-x-0 md:w-64"
-        } md:block`}
+        className={`fixed md:relative top-0 left-0 z-40 h-screen w-64 overflow-y-auto bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 transition-all duration-300 ease-in-out
+          ${
+            isOpen
+              ? "md:translate-x-0 translate-x-0"
+              : "md:translate-x-0 -translate-x-full"
+          }
+        `}
       >
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Menu</h2>
-        <ul className="space-y-2">
-          {sidebarItems.map((item) => (
-            <li
-              key={item.id}
-              className={`flex items-center space-x-2 p-2 rounded cursor-pointer ${
-                location.pathname === item.path
-                  ? "bg-blue-100 text-blue-700"
-                  : "hover:bg-gray-100 text-gray-600"
-              }`}
-            >
-              <Link
-                to={item.path}
-                className="flex items-center space-x-2 w-full"
-              >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* Header */}
+        <div className="sticky top-0 px-6 py-6 bg-white border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Menu</h2>
+          <p className="text-xs text-slate-500 mt-1">Navigation</p>
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="px-3 py-6">
+          <ul className="space-y-1">
+            {sidebarItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <li key={item.id}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 group
+                      ${
+                        isActive
+                          ? "bg-blue-50 text-blue-700 shadow-sm"
+                          : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                      }
+                    `}
+                  >
+                    <span
+                      className={`text-base transition-colors ${
+                        isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                    {isActive && (
+                      <span className="ml-auto w-2 h-2 rounded-full bg-blue-600" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </aside>
 
-      {/* Overlay for mobile when sidebar is open */}
+      {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 backdrop-blur-md bg-opacity-50 z-30"
+          className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30 transition-opacity duration-300"
           onClick={toggleSidebar}
-        ></div>
+          aria-hidden="true"
+        />
       )}
     </>
   );

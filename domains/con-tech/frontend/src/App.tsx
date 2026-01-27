@@ -17,17 +17,11 @@ import LoginForm from "./components/LoginForm";
 import CSignupForm from "./components/SignupForm";
 import RoleSelectionModal from "./components/RoleSelectionModal";
 import ProjectsPage from "./pages/ProjectsPage";
-import TasksPage from "./pages/TasksPage";
-import InspectionsPage from "./pages/InspectionsPage";
 import ReportsPage from "./pages/ReportsPage";
-import UserApplicationsPage from "./pages/UserApplicationsPage";
+import UserManagementPage from "./pages/UserManagementPage";
 import ProfilePage from "./pages/ProfilePage";
-// import Dashboard from "./pages/Dashboard";
-import FinancialTracking from "./pages/FinancialTracking";
-import ClientApproval from "./pages/ClientApprovals";
 import CreateProjectForm from "./components/CreateProjectForm";
 import ConTechServicesPage from "./pages/ConTechServicesPage";
-import ContractsPage from "./pages/ContractsPage";
 import ClientDashboard from "./pages/ClientDashboard";
 import ContractorDashboard from "./pages/ContractorDashboard";
 import PMDashboard from "./pages/PMDashboard";
@@ -144,8 +138,8 @@ export default function App() {
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/new", element: <CreateProjectForm /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
-        { path: "contractors", element: <UserApplicationsPage /> }, // Assuming this manages contractors
-        { path: "clients", element: <UserApplicationsPage /> }, // Assuming this manages clients
+        { path: "contractors", element: <UserManagementPage /> },
+        { path: "clients", element: <UserManagementPage /> },
         { path: "reports", element: <ReportsPage /> },
         { path: "profile", element: <ProfilePage /> },
       ]
@@ -162,9 +156,6 @@ export default function App() {
         { index: true, element: <ContractorDashboard /> },
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
-        { path: "tasks", element: <TasksPage /> },
-        { path: "inspections", element: <InspectionsPage /> },
-        { path: "contracts", element: <ContractsPage /> },
         { path: "profile", element: <ProfilePage /> },
       ]
     },
@@ -180,8 +171,6 @@ export default function App() {
         { index: true, element: <ClientDashboard /> },
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
-        { path: "approvals", element: <ClientApproval /> },
-        { path: "financials", element: <FinancialTracking /> },
         { path: "profile", element: <ProfilePage /> },
       ]
     },

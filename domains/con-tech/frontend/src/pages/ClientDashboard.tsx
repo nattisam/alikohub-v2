@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { DashboardGrid } from "../components/DashboardGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { useClientDashboardData } from "../queries/dashboard";
-import BudgetChart from "../components/charts/BudgetChart";
-import ProgressBar from "../components/charts/ProgressBar";
 import type { ClientDashboardData } from "../components/types";
 
 const ClientDashboard = () => {
@@ -31,117 +29,93 @@ const ClientDashboard = () => {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
+        <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-xs font-black text-slate-400 uppercase tracking-widest">Retrieving Project Status...</p>
       </div>
     );
   }
   
-  if (isError) {
-    return (
-      <div className="text-center py-10">
-        <h3 className="text-lg font-medium text-red-600">Error loading dashboard data</h3>
-        <p className="text-gray-500">Please try again later</p>
-      </div>
-    );
-  }
-  
-  // Use mock data if no actual data is available
+  // Use real data if available, otherwise default empty state
   const clientData: ClientDashboardData = dashboardData || {
-    projectProgress: 65,
-    budget: 245000,
-    spent: 168500,
-    remaining: 76500,
-    recentUpdates: [
-      { id: 1, title: "Project Phase 2 completed", time: "2 hours ago" },
-      { id: 2, title: "New inspection scheduled", time: "1 day ago" },
-      { id: 3, title: "Change order approved", time: "2 days ago" },
-    ],
+    projectProgress: 0,
+    budget: 0,
+    spent: 0,
+    remaining: 0,
+    recentUpdates: [],
     inspectionSummary: {
-      passed: 12,
-      failed: 3,
-      pending: 2,
+      passed: 0,
+      failed: 0,
+      pending: 0,
     },
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-800">Client Dashboard</h2>
-        <div className="text-sm text-gray-600">Welcome, {currentUser?.firstname}</div>
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Project Oversight</h2>
+          <p className="text-slate-500 text-xs mt-1 font-medium font-serif italic">Operational transparency and consolidated progress for clients</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {isError && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-100 rounded-lg animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+              <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Sync Issue</span>
+            </div>
+          )}
+          <div className="text-sm font-bold text-slate-400 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 italic">
+            Client: {currentUser?.firstname} {currentUser?.lastname}
+          </div>
+        </div>
       </div>
       
       <DashboardGrid>
-        {/* Project progress (%)) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Progress</CardTitle>
+        {/* Project progress */}
+        <Card className="border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Consolidated Progress</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ProgressBar percentage={clientData.projectProgress} label="Project Progress" />
-          </CardContent>
-        </Card>
-        
-        {/* Timeline summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Timeline Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-40">
-              <ProgressBar percentage={75} label="Overall Timeline" />
+          <CardContent className="pb-8">
+            <div className="flex items-end gap-2">
+              <div className="text-5xl font-black text-slate-900 leading-none">{clientData.projectProgress}</div>
+              <div className="text-xl font-black text-blue-600 pb-1">%</div>
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Budget vs spent */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Budget vs Spent</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <BudgetChart budget={clientData.budget} spent={clientData.spent} />
+            <div className="mt-6 w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500 transition-all duration-1000" 
+                style={{ width: `${clientData.projectProgress}%` }}
+              ></div>
             </div>
+            <p className="text-[10px] font-bold text-slate-400 mt-4 uppercase tracking-widest italic">Live construction metrics</p>
           </CardContent>
         </Card>
         
-        {/* Recent updates */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Updates</CardTitle>
+        {/* Timeline updates */}
+        <Card className="md:col-span-2 border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-500"></div>
+          <CardHeader className="border-b border-slate-50 px-8 py-6">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-900">Latest Project Activity</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {(clientData.recentUpdates || []).slice(0, 3).map((update) => (
-                <div key={update.id} className="p-2 bg-gray-50 rounded">
-                  <p className="text-sm font-medium">{update.title}</p>
-                  <p className="text-xs text-gray-500">{update.time}</p>
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-50 max-h-[350px] overflow-auto">
+              {(clientData.recentUpdates || []).length > 0 ? (clientData.recentUpdates || []).map((update) => (
+                <div key={update.id} className="px-8 py-6 hover:bg-slate-50 transition-colors flex justify-between items-center group/item text-slate-800">
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover/item:scale-150 transition-transform"></div>
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-tight">{update.title}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Verification System • {update.time}</p>
+                    </div>
+                  </div>
+                  <button className="px-4 py-2 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all">
+                    Details
+                  </button>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Inspection summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Inspection Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Passed</span>
-                <span className="font-medium">{clientData.inspectionSummary?.passed || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Failed</span>
-                <span className="font-medium text-red-500">{clientData.inspectionSummary?.failed || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Pending</span>
-                <span className="font-medium">{clientData.inspectionSummary?.pending || 0}</span>
-              </div>
+              )) : (
+                <div className="p-10 text-center text-slate-400 text-xs font-medium italic">No recent activities logged from construction sites.</div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -12,7 +12,7 @@ const Header = ({
   navLinks: { label: string; link: string }[];
   currentPage: string;
 }) => {
-  const { currentUser, verifyingUser } = useUser();
+  const { currentUser, isLoading } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
@@ -85,7 +85,7 @@ const Header = ({
               </Link>
             ))}
           </nav>
-          {verifyingUser ?
+          {isLoading ?
             <button className="w-32 py-1 px-3 bg-[#FFC107]/70 text-black  rounded-md hover:bg-[#FFC107]/90 transition duration-300 ">
               <FiLoader className='text-gray-600 text-3xl' />
             </button>
@@ -93,9 +93,9 @@ const Header = ({
             !currentUser
               ?
               (
-                <Link to="/signup">
+                <Link to="/login">
                   <button className="w-32 py-1 px-3 bg-[#FFC107]/70 text-black  rounded-md hover:bg-[#FFC107]/90 transition duration-300 ">
-                    {"Sign Up"}
+                    {"Login"}
                   </button>
                 </Link>
               ) : (
@@ -168,14 +168,14 @@ const Header = ({
               </Link>
             ))}
           </nav>
-          {verifyingUser ?
+          {isLoading ?
             <button className="w-32 py-1 px-3 bg-[#FFC107]/70 text-black  rounded-md hover:bg-[#FFC107]/90 transition duration-300 ">
               <FiLoader className='text-gray-600 text-3xl' />
             </button>
             : !currentUser ? (
-              <Link to="/signup" onClick={() => setIsOpen(!isOpen)}>
+              <Link to="/login" onClick={() => setIsOpen(!isOpen)}>
                 <button className="w-32 mt-5 py-1 px-3 bg-[#FFC107]/70 text-black  rounded-md hover:bg-[#FFC107]/90 transition duration-300 ">
-                  Sign Up
+                  Login
                 </button>
               </Link>
             ) : (

@@ -69,16 +69,10 @@ const ProfilePage = () => {
   }
   console.log(profile);
   return (
-    <div className="flex items-center justify-center w-full h-screen bg-gray-50">
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-            <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-          </div>
-        </header>
+   <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+<main className="bg-white p-8 rounded-lg shadow-sm border border-slate-100">
+          <div className="overflow-hidden">
 
-        <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900">User Profile</h3>
               <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application information.</p>
@@ -219,7 +213,6 @@ const ProfilePage = () => {
           </div>
         </main>
       </div>
-    </div>
   );
 };
 
