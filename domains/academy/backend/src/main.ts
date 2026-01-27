@@ -30,32 +30,12 @@ async function bootstrap() {
     },
   });
 
-  // (Optional) RabbitMQ connection example
-  // const rmqUrl = configService.get<string>('RABBITMQ_URL');
-  // if (rmqUrl) {
-  //   app.connectMicroservice({
-  //     transport: Transport.RMQ,
-  //     options: {
-  //       urls: [rmqUrl],
-  //       queue: 'application_queue',
-  //       noAck: true,
-  //     },
-  //   });
-  //   console.log(`Academy microservice connecting to RabbitMQ at ${rmqUrl}`);
-  // } else {
-  //   console.warn('RABBITMQ_URL not found in environment, skipping RabbitMQ connection');
-  // }
-  
-
   // Apply global guard
   app.useGlobalGuards(app.get(AcademyProfileGuard));
 
   // Start microservice listeners
   await app.startAllMicroservices();
 
-  console.log(
-    `Academy microservice listening on TCP port ${PORT}` +
-      ` and connected to RabbitMQ if configured`,
-  );
+  console.log(`Academy microservice listening on TCP port ${PORT}`);
 }
 bootstrap();

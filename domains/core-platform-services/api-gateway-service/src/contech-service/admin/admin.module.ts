@@ -4,25 +4,7 @@ import { AdminController } from './admin.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [
-    ClientsModule.registerAsync([
-      {
-        name: 'CONTECH_SERVICE',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [configService.get<string>('RABBITMQ_URL') || 'amqp://localhost:5672'],
-            queue: 'contech_queue',
-            queueOptions: {
-              durable: false,
-            },
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
-  ],
+  imports: [],
   controllers: [AdminController],
 })
 export class AdminModule {}

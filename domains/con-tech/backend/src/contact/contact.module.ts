@@ -8,13 +8,10 @@ import { ContactService } from './contact.service';
     ClientsModule.register([
       {
         name: 'AUTH_SERVICE',
-        transport: Transport.RMQ,
+        transport: Transport.TCP,
         options: {
-          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
-          queue: 'auth_queue',
-          queueOptions: {
-            durable: false,
-          },
+          host: process.env.AUTH_SERVICE_HOST || 'localhost',
+          port: parseInt(process.env.AUTH_SERVICE_PORT as string) || 3001,
         },
       },
     ]),
