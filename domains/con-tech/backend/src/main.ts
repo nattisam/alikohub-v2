@@ -24,21 +24,12 @@ async function bootstrap() {
     },
   });
 
-  // app.connectMicroservice({
-  //   transport: Transport.RMQ,
-  //   options: {
-  //     urls: [configService.get<string>("RABBITMQ_URL")],
-  //     queue: 'application_queue',
-  //     noAck: true,
-  //   }
-  // });
-
   app.useGlobalGuards(app.get(ConTechProfileGuard));
 
   await app.startAllMicroservices();
 
   console.log(
-    `ConTech microservice listening on TCP running on PORT:${PORT} and connected to both TCP and RabbitMQ`,
+    `ConTech microservice listening on TCP running on PORT:${PORT}`,
   );
 }
 bootstrap();
