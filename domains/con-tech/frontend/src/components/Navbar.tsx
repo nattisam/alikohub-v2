@@ -19,7 +19,7 @@ const Navbar: React.FC<NavbarProps> = () => {
   const userRole = currentUser?.role;
 
   const dashboardPath = useMemo(() => {
-    if (isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN') return '/admin';
+    if (isGlobalAdmin || userRole === 'ADMIN') return '/admin';
     if (userRole === 'CONTRACTOR') return '/contractor';
     if (userRole === 'CLIENT') return '/client';
     return '/role-selection';

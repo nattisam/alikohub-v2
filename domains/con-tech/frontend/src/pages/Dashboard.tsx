@@ -10,11 +10,11 @@ const Dashboard = () => {
   useEffect(() => {
     // Redirect users with specific roles to their appropriate dashboards
     if (currentUser?.role === "CLIENT") {
-      navigate("/client-dashboard");
+      navigate("/client");
     } else if (currentUser?.role === "CONTRACTOR") {
-      navigate("/contractor-dashboard");
-    } else if (currentUser?.role === "PROJECT_MANAGER") {
-      navigate("/pm-dashboard");
+      navigate("/contractor");
+    } else if (currentUser?.role === "ADMIN") {
+      navigate("/admin");
     }
   }, [currentUser, navigate]);
   

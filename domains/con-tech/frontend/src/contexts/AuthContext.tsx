@@ -203,7 +203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             window.location.href = "/client";
           } else if (userData.role === 'CONTRACTOR') {
             window.location.href = "/contractor";
-          } else if (userData.role === 'PROJECT_MANAGER' || userData.role === 'ADMIN') {
+          } else if (userData.role === 'ADMIN') {
             window.location.href = "/admin";
           } else {
             window.location.href = "/";
@@ -221,7 +221,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           window.location.href = "/client";
         } else if (userData.role === 'CONTRACTOR') {
           window.location.href = "/contractor";
-        } else if (userData.role === 'PROJECT_MANAGER' || userData.role === 'ADMIN') {
+        } else if (userData.role === 'ADMIN') {
           window.location.href = "/admin";
         } else {
           window.location.href = "/";
@@ -246,7 +246,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         window.location.href = "/client";
       } else if (userData.role === 'CONTRACTOR') {
         window.location.href = "/contractor";
-      } else if (userData.role === 'PROJECT_MANAGER' || userData.role === 'ADMIN') {
+      } else if (userData.role === 'ADMIN') {
         window.location.href = "/admin";
       } else {
         window.location.href = "/";

@@ -28,7 +28,6 @@ import PMDashboard from "./pages/PMDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
-// import DashboardHome from "./pages/DashboardHome";
 
 
 
@@ -59,7 +58,7 @@ function RoleSelectionWrapper() {
   const handleCloseModal = () => {
     const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
     // Close modal and redirect to appropriate dashboard based on role
-    if (isGlobalAdmin || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN") {
+    if (isGlobalAdmin || currentUser?.role === "ADMIN") {
       navigate("/admin");
     } else if (currentUser?.role === "CONTRACTOR") {
       navigate("/contractor");
@@ -73,7 +72,7 @@ function RoleSelectionWrapper() {
   // If user has selected a role, redirect away from role selection
   if (currentUser?.hasSelectedRole || currentUser?.globalRole === 'ADMIN') {
     const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
-    const destination = isGlobalAdmin || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN" 
+    const destination = isGlobalAdmin || currentUser?.role === "ADMIN" 
       ? "/admin" 
       : currentUser?.role === "CONTRACTOR" 
         ? "/contractor" 
@@ -129,7 +128,7 @@ export default function App() {
     {
       path: "/admin",
       element: (
-        <ProtectedRoute requiredRole="PROJECT_MANAGER">
+        <ProtectedRoute requiredRole="ADMIN">
           <DashboardLayout />
         </ProtectedRoute>
       ),

@@ -2,6 +2,7 @@
 // GENERAL INTERFACES
 // =========================
 export interface Notification {
+  id: number | string;
   title: string;
   description: string;
   priority?: "High" | "Medium" | "Completed";
@@ -25,7 +26,7 @@ export interface User {
 
 export interface CurrentUser extends User {
   email: string;
-  role: "ADMIN" | "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "USER";
+  role: "ADMIN" | "CLIENT" | "CONTRACTOR" | "USER";
   globalRole: string;
   contechRole?: string;
   bio?: string | null;

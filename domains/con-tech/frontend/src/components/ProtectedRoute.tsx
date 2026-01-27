@@ -6,7 +6,7 @@ import AccessDenied from "./common/AccessDenied";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "ADMIN";
+  requiredRole?: "CLIENT" | "CONTRACTOR" | "ADMIN";
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
@@ -41,7 +41,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const hasSelectedRole = currentUser?.hasSelectedRole;
 
   // Admin access via globalRole or normalized role
-  const isAdmin = isGlobalAdmin || userRole === 'ADMIN' || userRole === 'PROJECT_MANAGER';
+  const isAdmin = isGlobalAdmin || userRole === 'ADMIN';
 
   // If user hasn't selected a role yet and no specific role is required, redirect to role selection
   // EXCEPT for global admins who should probably have a role or we handle them specially

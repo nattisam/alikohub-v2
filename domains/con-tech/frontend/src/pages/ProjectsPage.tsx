@@ -21,7 +21,7 @@ const ProjectsPage = () => {
 
   const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
   const userRole = currentUser?.role;
-  const isAdmin = isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN';
+  const isAdmin = isGlobalAdmin || userRole === 'ADMIN';
   const isContractor = userRole === 'CONTRACTOR';
   const isClient = userRole === 'CLIENT';
 

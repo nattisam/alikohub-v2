@@ -11,7 +11,7 @@ const PMDashboard = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
   
-  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN";
+  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "ADMIN";
   
   useEffect(() => {
     // Redirect users who don't have Admin permissions away from this page
