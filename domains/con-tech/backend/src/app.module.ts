@@ -11,6 +11,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ClientReportModule } from './client-report/client-report.module';
 import { ContractModule } from './contract/contract.module';
+import { ContactModule } from './contact/contact.module';
 import { MilestonesModule } from './milestones/milestones.module';
 
 @Module({
@@ -29,7 +30,8 @@ import { MilestonesModule } from './milestones/milestones.module';
     UserApplicationModule,
     ClientReportModule,
     ContractModule,
-    MilestonesModule
+    MilestonesModule,
+    ContactModule
   ],
   providers: [CloudinaryService],
 })

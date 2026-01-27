@@ -33,6 +33,30 @@ export class AuthController {
 		return this.authService.createRecruiter(dto);
 	}
 
+	@MessagePattern({ cmd: 'create_contech_user' })
+	@UsePipes(new JoiValidationPipe(Joi.object({
+		email: Joi.string().email().required().trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
+		role: Joi.string().valid('ADMIN', 'CONTRACTOR', 'CLIENT').required(),
+	})))
+	async createContechUser(@Payload() dto: any) {
+		return this.authService.createContechUser(dto);
+	}
+
+	@MessagePattern({ cmd: 'create_events_user' })
+	@UsePipes(new JoiValidationPipe(Joi.object({
+		email: Joi.string().email().required().trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
+		role: Joi.string().valid('ADMIN', 'CONTENT_MANAGER', 'USER').required(),
+	})))
+	async createEventsUser(@Payload() dto: any) {
+		return this.authService.createEventsUser(dto);
+	}
+
 	@MessagePattern({ cmd: 'login' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required(),
@@ -125,5 +149,19 @@ export class AuthController {
 	@MessagePattern({ cmd: 'sync_academy_user' })
 	async handleSyncAcademyUser(@Payload() data: { userId: string }) {
 		return this.authService.syncAcademyUser(data.userId);
+	}
+	@MessagePattern({ cmd: 'send_contact_email' })
+	async handleSendContactEmail(@Payload() dto: any) {
+		return this.authService.sendContactEmail(dto);
+	}
+
+	@MessagePattern({ cmd: 'update_status' })
+	async handleUpdateStatus(@Payload() data: { firebaseId: string; status: string }) {
+		return this.authService.updateStatus(data.firebaseId, data.status);
+	}
+
+	@MessagePattern({ cmd: 'delete_user' })
+	async handleDeleteUser(@Payload() data: { firebaseId: string }) {
+		return this.authService.deleteUser(data.firebaseId);
 	}
 }

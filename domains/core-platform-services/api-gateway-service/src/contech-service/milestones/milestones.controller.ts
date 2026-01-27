@@ -102,7 +102,7 @@ export class MilestonesController {
   ) {
     const payload = { user: req.user, createMilestoneReviewDto };
     return lastValueFrom(
-      this.contechClient.send({ cmd: 'createReview' }, payload),
+      this.contechClient.send({ cmd: 'create_milestone_review' }, payload),
     );
   }
 

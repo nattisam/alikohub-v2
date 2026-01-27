@@ -12,7 +12,7 @@ export class ClientReportController {
 
   @MessagePattern({ cmd: 'createClientReport' })
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN')
+  @Roles('ADMIN')
   create(
     @Payload() payload: { dto: CreateClientReportDto; user: AuthenticatedUser },
   ) {

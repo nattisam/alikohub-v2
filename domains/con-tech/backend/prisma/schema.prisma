@@ -17,7 +17,7 @@ datasource db {
 model ContechProfile {
   id              Int         @id @default(autoincrement())
   userId          String      @unique
-  role            ContechRole @default(USER)
+  role            ContechRole @default(CLIENT)
   hasSelectedRole Boolean     @default(false)
   bio             String?
   companyName     String?
@@ -32,8 +32,8 @@ model Project {
   id           Int            @id @default(autoincrement())
   name         String
   manager      String
-  startDate    DateTime
-  endDate      DateTime
+  startDate    DateTime?
+  endDate      DateTime?
   
   // Custom fields kept for functionality
   subtitle     String?
@@ -58,10 +58,43 @@ model Project {
   clientReports ClientReport[]
   milestones    Milestone[]
   comments      Comment[]
+  updates       ProjectUpdate[]
+  documents     ProjectDocument[]
 
   @@index([manager])
   @@index([contractorId])
   @@index([clientId])
+}
+
+model ProjectUpdate {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  authorId    String
+  text        String
+  isVisibleToClient Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  Project     Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([authorId])
+}
+
+model ProjectDocument {
+  id              Int      @id @default(autoincrement())
+  projectId       Int
+  title           String
+  url             String
+  fileType        String?  // PDF, IMAGE, DOC
+  uploadedBy      String
+  isVisibleToClient Boolean @default(false)
+  createdAt       DateTime @default(now())
+  
+  Project         Project  @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
 }
 
 model Task {
@@ -210,10 +243,7 @@ enum ChecklistItemStatus {
 }
 
 enum ContechRole {
-  USER
-  CLIENT
-  CONTRACTOR
-  PROJECT_MANAGER
-  STAKEHOLDER
   ADMIN
+  CONTRACTOR
+  CLIENT
 }

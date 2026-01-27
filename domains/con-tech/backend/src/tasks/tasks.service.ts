@@ -31,7 +31,7 @@ export class TasksService {
         const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
         if (!project) throw new NotFoundException('Project not found');
 
-        if (contechProfile.role !== 'ADMIN' && project.manager !== user.firebaseId) {
+        if (contechProfile.role !== 'ADMIN' && project.contractorId !== user.firebaseId && project.manager !== user.firebaseId) {
             throw new ForbiddenException('You do not have permission to create tasks for this project');
         }
 

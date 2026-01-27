@@ -56,7 +56,7 @@ export class UserService {
       profile = await this.prisma.contechProfile.create({
         data: {
           userId: user.firebaseId,
-          role: ContechRole.USER,
+          role: ContechRole.CLIENT,
           hasSelectedRole: false,
         },
       });
@@ -83,7 +83,7 @@ export class UserService {
       update: {},
       create: {
         userId,
-        role: ContechRole.USER,
+        role: ContechRole.CLIENT,
         hasSelectedRole: false,
       },
     });
@@ -207,5 +207,46 @@ export class UserService {
       this.logger.error('Error in selectRole', error);
       throw error;
     }
+  }
+
+  async countByRole(role: ContechRole) {
+    return this.prisma.contechProfile.count({
+      where: { role },
+    });
+  }
+
+  async findProfilesByRole(role: ContechRole, page = 1, pageSize = 20) {
+    const skip = (page - 1) * pageSize;
+    
+    const [profiles, total] = await Promise.all([
+      this.prisma.contechProfile.findMany({
+        where: { role },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.contechProfile.count({ where: { role } }),
+    ]);
+
+    const userIds = profiles.map(p => p.userId);
+    const authUsers = await this.getUsersByIds(userIds);
+
+    const enrichedProfiles = profiles.map(profile => {
+      const authUser = authUsers.find(au => au.firebaseId === profile.userId);
+      return {
+        ...profile,
+        email: authUser?.email,
+        firstname: authUser?.firstname,
+        lastname: authUser?.lastname,
+        status: authUser?.status,
+      };
+    });
+
+    return {
+      items: enrichedProfiles,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 }
