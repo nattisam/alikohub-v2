@@ -62,4 +62,20 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   location?: string;
+
+  @ApiPropertyOptional({
+    description: 'Contractor ID assigned to the project',
+    example: 'user_contractor_123',
+  })
+  @IsString()
+  @IsOptional()
+  contractorId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Inspector ID assigned to the project',
+    example: 'user_inspector_456',
+  })
+  @IsString()
+  @IsOptional()
+  inspectorId?: string;
 }

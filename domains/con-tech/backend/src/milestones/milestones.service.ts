@@ -17,7 +17,7 @@ export class MilestonesService {
     if (!project) throw new NotFoundException('Project not found');
 
     const profile = await this.userService.getOrCreateProfile(user);
-    if (profile.role !== 'ADMIN' && project.manager !== user.firebaseId) {
+    if (profile.role !== 'ADMIN' && project.contractorId !== user.firebaseId && project.manager !== user.firebaseId) {
       throw new ForbiddenException('You do not have permission to create milestones for this project.');
     }
 
@@ -70,10 +70,12 @@ export class MilestonesService {
       throw new ForbiddenException('Clients cannot update milestones.');
     }
 
-    return this.prisma.milestone.update({
+    const result = await this.prisma.milestone.update({
       where: { id },
       data: updateMilestoneDto,
     });
+    await this.updateProjectProgress(result.projectId);
+    return result;
   }
 
   async remove(id: number, user: AuthenticatedUser) {
@@ -99,10 +101,32 @@ export class MilestonesService {
        throw new ForbiddenException('Clients cannot submit milestones for review.');
     }
 
-    return this.prisma.milestone.update({
+    const result = await this.prisma.milestone.update({
       where: { id },
       data: { status: 'IN_REVIEW' },
     });
+    await this.updateProjectProgress(result.projectId);
+    return result;
+  }
+
+  async createReview(id: number, dto: CreateMilestoneReviewDto, user: AuthenticatedUser) {
+    const milestone = await this.findOne(id, user); // RBAC
+    const profile = await this.userService.getOrCreateProfile(user);
+    
+    if (profile.role !== 'ADMIN') {
+      throw new ForbiddenException('Only Admins can review milestones.');
+    }
+
+    const updatedMilestone = await this.prisma.milestone.update({
+      where: { id },
+      data: { 
+        status: dto.status as any,
+        // Any other notes?
+      },
+    });
+
+    await this.updateProjectProgress(updatedMilestone.projectId);
+    return updatedMilestone;
   }
 
 

@@ -54,10 +54,9 @@ export class ProjectsService {
           // Reverting to safe logic: usage of spread ...dto takes precedence if verified, but let's be careful.
           // The creation logic seemed to force contractorId = user.firebaseId. I should fix this.
           contractorId: dto.contractorId, 
-          inspectorId: dto.inspectorId,
           endDate: dto.endDate ? new Date(dto.endDate) : null,
           startDate: dto.startDate ? new Date(dto.startDate) : null,
-          status: 'PLANNED',
+          status: 'ACTIVE',
           createdBy: user.firebaseId,
           updatedBy: user.firebaseId,
         },
@@ -181,12 +180,16 @@ export class ProjectsService {
        throw new ForbiddenException('You do not have permission to view this project.');
     }
 
-    // Enrich with manager data
-    const manager = await this.userService.getUserById(project.manager);
+    // Enrich with manager and client data
+    const [manager, client] = await Promise.all([
+      this.userService.getUserById(project.manager),
+      project.clientId ? this.userService.getUserById(project.clientId) : Promise.resolve(null),
+    ]);
 
     return {
       ...project,
       manager,
+      client,
     };
   }
 

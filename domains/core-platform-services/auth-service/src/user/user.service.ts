@@ -304,4 +304,20 @@ export class UserService {
 		this.logger.log(`ConTech role updated successfully for user ${userId}`);
 		return user;
 	}
+
+	async updateUserGlobalRole(firebaseId: string, role: string) {
+		this.logger.log(`Updating global role for user ${firebaseId} to ${role}`);
+		return this.prisma.user.update({
+			where: { firebaseId },
+			data: { globalRole: role as any },
+		});
+	}
+
+	async updateStatus(firebaseId: string, status: string) {
+		this.logger.log(`Updating status for user ${firebaseId} to ${status}`);
+		return this.prisma.user.update({
+			where: { firebaseId },
+			data: { status: status as any },
+		});
+	}
 }

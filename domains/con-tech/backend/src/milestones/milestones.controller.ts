@@ -50,4 +50,11 @@ export class MilestonesController {
         return this.milestonesService.submitForReview(payload.id, payload.user);
     }
 
+    @MessagePattern({cmd: 'create_milestone_review'})
+    @UseGuards(RoleGuard)
+    @Roles('ADMIN')
+    createReview(@Payload() payload: { id: number; createMilestoneReviewDto: CreateMilestoneReviewDto; user: AuthenticatedUser }) {
+        return this.milestonesService.createReview(payload.id, payload.createMilestoneReviewDto, payload.user);
+    }
+
 }

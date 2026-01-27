@@ -109,6 +109,22 @@ export class ProjectsController {
     return this.contechClient.send({ cmd: 'update_project_status' }, payload);
   }
 
+  @ApiOperation({ summary: 'Update project photos' })
+  @ApiBody({ schema: { example: { photos: ['https://link-to-photo.jpg'] } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Project photos updated successfully',
+  })
+  @Patch(':id/photos')
+  updateProjectPhotos(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('photos') photos: string[],
+  ) {
+    const payload = { id, photos, user: req.user };
+    return this.contechClient.send({ cmd: 'update_project_photos' }, payload);
+  }
+
   @ApiOperation({ summary: 'Get all contractors' })
   @ApiResponse({
     status: 200,
@@ -118,17 +134,6 @@ export class ProjectsController {
   findAllContractors(@Request() req: RequestWithUser) {
     const payload = { user: req.user };
     return this.contechClient.send({ cmd: 'find_contractor' }, payload);
-  }
-
-  @ApiOperation({ summary: 'Get all inspectors' })
-  @ApiResponse({
-    status: 200,
-    description: 'Inspectors retrieved successfully',
-  })
-  @Get('inspector')
-  findAllInspectors(@Request() req: RequestWithUser) {
-    const payload = { user: req.user };
-    return this.contechClient.send({ cmd: 'find_inspector' }, payload);
   }
 
   @ApiOperation({ summary: 'Update project progress' })
@@ -247,5 +252,40 @@ export class ProjectsController {
   ) {
     const payload = { projectId: id, page, pageSize, user: req.user };
     return this.contechClient.send({ cmd: 'get_project_documents' }, payload);
+  }
+
+  @ApiOperation({ summary: 'Create a project comment' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', example: 'This is a comment' },
+      },
+      required: ['text'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Comment created successfully',
+  })
+  @Post(':id/comments')
+  createComment(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('text') text: string,
+  ) {
+    const payload = { projectId: id, text, user: req.user };
+    return this.contechClient.send({ cmd: 'create_project_comment' }, payload);
+  }
+
+  @ApiOperation({ summary: 'Get project comments' })
+  @ApiResponse({
+    status: 200,
+    description: 'Comments retrieved successfully',
+  })
+  @Get(':id/comments')
+  findAllComments(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    const payload = { projectId: id, user: req.user };
+    return this.contechClient.send({ cmd: 'get_project_comments' }, payload);
   }
 }

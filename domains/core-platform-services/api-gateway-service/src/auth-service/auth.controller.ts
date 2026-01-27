@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes } from '@nestjs/common';
+import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes, Patch, Delete } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
@@ -322,6 +322,72 @@ export class AuthController {
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Verify Auth');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('contech/user')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a ConTech user (Admin only)' })
+  @ApiResponse({ status: 201, description: 'ConTech user created successfully' })
+  async createContechUser(@Body() dto: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'create_contech_user' }, dto).pipe(
+        timeout(30000),
+        catchError(error => {
+          this.handleError(error, 'Create ConTech User');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('events/user')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create an Events user/content manager (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Events user created successfully' })
+  async createEventsUser(@Body() dto: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'create_events_user' }, dto).pipe(
+        timeout(30000),
+        catchError(error => {
+          this.handleError(error, 'Create Events User');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Patch('user/:id/status')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user status (Admin only)' })
+  async updateStatus(@Param('id') firebaseId: string, @Body('status') status: string) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'update_status' }, { firebaseId, status }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Update Status');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Delete('user/:id')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete user account (Admin only)' })
+  async deleteUser(@Param('id') firebaseId: string) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'delete_user' }, { firebaseId }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Delete User');
           return throwError(() => error);
         }),
       )
