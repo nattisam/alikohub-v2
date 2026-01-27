@@ -14,7 +14,7 @@ export class MilestonesController {
 
     @MessagePattern({cmd: 'create_milestone'})
     @UseGuards(RoleGuard)
-    @Roles('PROJECT_MANAGER', 'ADMIN')
+    @Roles('ADMIN')
     create(@Payload() payload: { createMilestoneDto: CreateMilestoneDto; user: AuthenticatedUser }) {
         return this.milestonesService.create(payload.createMilestoneDto, payload.user);
     }
@@ -31,21 +31,21 @@ export class MilestonesController {
 
     @MessagePattern({cmd: 'update_milestones'})
     @UseGuards(RoleGuard)
-    @Roles('PROJECT_MANAGER', 'ADMIN', 'CONTRACTOR')
+    @Roles('ADMIN', 'CONTRACTOR')
     update(@Payload() payload: { id: number; updateMilestoneDto: UpdateMilestoneDto; user: AuthenticatedUser }) {
         return this.milestonesService.update(payload.id, payload.updateMilestoneDto, payload.user);
     }
 
     @MessagePattern({cmd: 'remove_milestones'})
     @UseGuards(RoleGuard)
-    @Roles('PROJECT_MANAGER', 'ADMIN')
+    @Roles('ADMIN')
     remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
         return this.milestonesService.remove(payload.id, payload.user);
     }
 
     @MessagePattern({cmd: 'submit_milestones'})
     @UseGuards(RoleGuard)
-    @Roles('PROJECT_MANAGER', 'ADMIN', 'CONTRACTOR')
+    @Roles('ADMIN', 'CONTRACTOR')
     submitForReview(@Payload() payload: { id: number; user: AuthenticatedUser }) {
         return this.milestonesService.submitForReview(payload.id, payload.user);
     }

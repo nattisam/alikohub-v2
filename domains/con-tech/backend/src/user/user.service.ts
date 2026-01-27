@@ -56,7 +56,7 @@ export class UserService {
       profile = await this.prisma.contechProfile.create({
         data: {
           userId: user.firebaseId,
-          role: ContechRole.USER,
+          role: ContechRole.CLIENT,
           hasSelectedRole: false,
         },
       });
@@ -83,7 +83,7 @@ export class UserService {
       update: {},
       create: {
         userId,
-        role: ContechRole.USER,
+        role: ContechRole.CLIENT,
         hasSelectedRole: false,
       },
     });

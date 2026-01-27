@@ -82,7 +82,7 @@ export class AuthService {
             await this.prisma.contechUser.create({
                 data: {
                     userId: userRecord.uid,
-                    role: ContechRole.USER,
+                    role: ContechRole.CLIENT,
                     status: 'ACTIVE',
                 }
             });
@@ -217,7 +217,7 @@ export class AuthService {
 					data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
 				});
 				await tx.contechUser.create({
-					data: { userId: userRecord.uid, role: ContechRole.USER, status: 'ACTIVE' }
+					data: { userId: userRecord.uid, role: ContechRole.CLIENT, status: 'ACTIVE' }
 				});
 				await tx.eventsUser.create({
 					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
@@ -243,6 +243,90 @@ export class AuthService {
 			throw new RpcException({
 				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
 				message: 'Failed to initialize recruiter profile. Please try again.',
+				error: 'Internal Server Error',
+			});
+		}
+	}
+
+	async createContechUser(dto: any) {
+		this.logger.log(`Admin creating ConTech user: ${dto.email} with role ${dto.role}`);
+		
+		const existingUser = await this.userService.findByEmail(dto.email);
+		if (existingUser) {
+			throw new RpcException({
+				statusCode: HttpStatus.CONFLICT,
+				message: 'User with this email already exists',
+				error: 'Conflict',
+			});
+		}
+
+		const firebase = this.firebaseService.getAuth();
+		let userRecord;
+
+		try {
+			userRecord = await firebase.createUser({
+				email: dto.email,
+				password: dto.password,
+				displayName: dto.firstname + (dto.lastname ? ' ' + dto.lastname : ''),
+			});
+			this.logger.log(`Firebase user created for ConTech: ${userRecord.uid}`);
+		} catch (e: any) {
+			this.logger.error(`Failed to create Firebase user: ${e.message}`, e);
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: e.message || 'Failed to create external user account',
+				error: 'Internal Server Error',
+			});
+		}
+
+		const hashedPassword = dto.password ? await this.argon2Service.hash(dto.password) : undefined;
+
+		try {
+			return await this.prisma.$transaction(async (tx) => {
+				const newUser = await tx.user.create({
+					data: {
+						firebaseId: userRecord.uid,
+						email: userRecord.email,
+						firstname: dto.firstname,
+						lastname: dto.lastname,
+						password: hashedPassword,
+						globalRole: GlobalRole.USER,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create ContechUser record with specified role
+				await tx.contechUser.create({
+					data: {
+						userId: userRecord.uid,
+						role: dto.role as ContechRole,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create other domain records with default roles
+				await tx.academyUser.create({
+					data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
+				});
+				await tx.eventsUser.create({
+					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
+				});
+
+				this.logger.log(`ConTech user successfully created in database with ID: ${newUser.id}`);
+				
+				return {
+					user: this.toPlain(newUser),
+					message: 'ConTech user created successfully',
+				};
+			});
+		} catch (error: any) {
+			this.logger.error(`Failed to create ConTech user records in database for user ${userRecord.uid}:`, error);
+			try {
+				await firebase.deleteUser(userRecord.uid);
+			} catch (cleanupError) {}
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: 'Failed to initialize ConTech profile',
 				error: 'Internal Server Error',
 			});
 		}
@@ -407,7 +491,7 @@ export class AuthService {
             await this.prisma.contechUser.create({
                 data: {
                     userId: decoded.uid,
-                    role: ContechRole.USER,
+                    role: ContechRole.CLIENT,
                     status: 'ACTIVE',
                 }
             });
@@ -801,7 +885,7 @@ export class AuthService {
 			contechUser = await this.prisma.contechUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: ContechRole.USER,
+					role: ContechRole.CLIENT,
 					status: 'ACTIVE',
 				}
 			});
@@ -868,5 +952,9 @@ export class AuthService {
 			...academyUser,
 			globalRole: user.globalRole,
 		};
+	}
+
+	async sendContactEmail(dto: any) {
+		return this.emailService.sendContactEmail(dto);
 	}
 }

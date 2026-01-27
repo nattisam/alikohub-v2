@@ -124,6 +124,35 @@ export class EmailService {
 		return this.sendEmail(to, subject, htmlContent);
 	}
 
+	async sendContactEmail(dto: { name: string; email: string; phone: string; message: string }): Promise<boolean> {
+		const subject = `New Contact Form Submission - Aliko ConTech`;
+		const adminEmail = process.env.CONTECH_ADMIN_EMAIL || 'admin@alikohub.com';
+		const htmlContent = `
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="utf-8">
+				<title>Contact Form Submission</title>
+			</head>
+			<body>
+				<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+					<h2 style="color: #667eea;">New ConTech Inquiry</h2>
+					<p><strong>Name:</strong> ${dto.name}</p>
+					<p><strong>Email:</strong> ${dto.email}</p>
+					<p><strong>Phone:</strong> ${dto.phone}</p>
+					<p><strong>Message:</strong></p>
+					<div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
+						${dto.message.replace(/\n/g, '<br>')}
+					</div>
+					<p style="margin-top: 20px; font-size: 12px; color: #666;">This message was sent from the Aliko ConTech public contact form.</p>
+				</div>
+			</body>
+			</html>
+		`;
+
+		return this.sendEmail(adminEmail, subject, htmlContent);
+	}
+
 	private async sendEmail(to: string, subject: string, htmlContent: string): Promise<boolean> {
 		const fromEmail = process.env.SMTP_FROM || 'noreply@alikohub.com';
 

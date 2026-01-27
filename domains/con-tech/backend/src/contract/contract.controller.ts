@@ -13,7 +13,7 @@ export class ContractController {
 
   @MessagePattern({ cmd: 'uploadContract' })
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN')
+  @Roles('ADMIN')
   uploadContract(@Payload() payload: { projectId: number; contractUrl: string; user: AuthenticatedUser }) {
     return this.contractsService.createContract(
       payload.projectId,
@@ -23,14 +23,14 @@ export class ContractController {
 
   @MessagePattern({ cmd: 'updateContractStatus' })
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN', 'CLIENT')
+  @Roles('ADMIN', 'CLIENT')
   updateStatus(@Payload() payload: { id: number; user: AuthenticatedUser } & UpdateContractStatusDto) {
     return this.contractsService.updateStatus(payload.id, payload.status, payload.user);
   }
 
   @MessagePattern({ cmd: 'addChangeOrder' })
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN')
+  @Roles('ADMIN')
   addChangeOrder(@Payload() payload: { id: number; addChangeOrderDto: AddChangeOrderDto; user: AuthenticatedUser }) {
     return this.contractsService.addChangeOrder(payload.id, payload.addChangeOrderDto, payload.user);
   }

@@ -14,7 +14,7 @@ export class InspectionsController {
 
   @MessagePattern({cmd: 'create_Inspection'})
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN')
+  @Roles('ADMIN')
   create(@Payload() payload: { dto: CreateInspectionDto; files: any[]; user: AuthenticatedUser }) {
     const {dto, files} = payload
     // You might want to pass user to service if needed, currently not used in service based on previous signature
@@ -34,7 +34,7 @@ export class InspectionsController {
 
   @MessagePattern('updateInspection')
   @UseGuards(RoleGuard)
-  @Roles('PROJECT_MANAGER', 'ADMIN')
+  @Roles('ADMIN')
   async update(@Payload() payload: { id: number; updateInspectionDto: UpdateInspectionDto; user: AuthenticatedUser }) {
     // Note: Gateway says payload = { user, id, updateInspectionDto }
     // Backend expected updateInspectionDto to contain id before. The gateway sends id separately.

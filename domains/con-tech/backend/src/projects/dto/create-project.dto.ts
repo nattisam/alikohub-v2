@@ -14,7 +14,8 @@ export class CreateProjectDto {
     clientId?: string;
 
     @IsDateString()
-    startDate: string;
+    @IsOptional()
+    startDate?: string;
 
     @IsDateString()
     @IsOptional()

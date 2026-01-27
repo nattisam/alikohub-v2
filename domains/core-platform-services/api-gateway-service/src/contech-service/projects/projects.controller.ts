@@ -130,4 +130,122 @@ export class ProjectsController {
     const payload = { user: req.user };
     return this.contechClient.send({ cmd: 'find_inspector' }, payload);
   }
+
+  @ApiOperation({ summary: 'Update project progress' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        progress: { type: 'number', minimum: 0, maximum: 100, example: 45 },
+        notes: { type: 'string', example: 'Completed foundation work' },
+      },
+      required: ['progress'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Project progress updated successfully',
+  })
+  @Post(':id/progress')
+  updateProjectProgress(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('progress') progress: number,
+    @Body('notes') notes?: string,
+  ) {
+    const payload = { id, progress, notes, user: req.user };
+    return this.contechClient.send({ cmd: 'update_project_progress' }, payload);
+  }
+
+  // TEST-04: Create project update (weekly summaries)
+  @ApiOperation({ summary: 'Create a project update/summary' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', example: 'Weekly summary: Completed phase 1...' },
+        isVisibleToClient: { type: 'boolean', example: false },
+      },
+      required: ['text'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Project update created successfully',
+  })
+  @Post(':id/updates')
+  createProjectUpdate(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body('text') text: string,
+    @Body('isVisibleToClient') isVisibleToClient?: boolean,
+  ) {
+    const payload = { projectId: id, text, isVisibleToClient, user: req.user };
+    return this.contechClient.send({ cmd: 'create_project_update' }, payload);
+  }
+
+  // TEST-04: Get project updates (weekly summaries)
+  @ApiOperation({ summary: 'Get project updates/summaries' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Project updates retrieved successfully',
+  })
+  @Get(':id/updates')
+  getProjectUpdates(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    const payload = { projectId: id, page, pageSize, user: req.user };
+    return this.contechClient.send({ cmd: 'get_project_updates' }, payload);
+  }
+
+  // Document Management
+  @ApiOperation({ summary: 'Add a document to project' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Site Plan v1' },
+        url: { type: 'string', example: 'https://example.com/file.pdf' },
+        fileType: { type: 'string', example: 'PDF' },
+        isVisibleToClient: { type: 'boolean', example: false },
+      },
+      required: ['title', 'url'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Document added successfully',
+  })
+  @Post(':id/documents')
+  addDocument(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { title: string; url: string; fileType?: string; isVisibleToClient?: boolean },
+  ) {
+    const payload = { projectId: id, dto, user: req.user };
+    return this.contechClient.send({ cmd: 'add_project_document' }, payload);
+  }
+
+  @ApiOperation({ summary: 'Get project documents' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Documents retrieved successfully',
+  })
+  @Get(':id/documents')
+  getDocuments(
+    @Request() req: RequestWithUser,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('page') page?: number,
+    @Query('pageSize') pageSize?: number,
+  ) {
+    const payload = { projectId: id, page, pageSize, user: req.user };
+    return this.contechClient.send({ cmd: 'get_project_documents' }, payload);
+  }
 }

@@ -128,12 +128,9 @@ enum ConsultancyRole {
 }
 
 enum ContechRole {
-  USER
-  CLIENT
-  CONTRACTOR
-  PROJECT_MANAGER
-  STAKEHOLDER
   ADMIN
+  CONTRACTOR
+  CLIENT
 }
 
 enum EventsRole {
