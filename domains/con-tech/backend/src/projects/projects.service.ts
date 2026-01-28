@@ -128,19 +128,20 @@ export class ProjectsService {
       this.prisma.project.count({ where }),
     ]);
 
-    // Enrich with manager data
-        const managerIds = [
-          ...new Set(
-            projects
-              .map((p) => p.manager)
-              .filter((id): id is string => id != null),
-          ),
-        ];
-        const managers = await this.userService.getUsersByIds(managerIds);
+    // Enrich with manager, client, and contractor data
+    const userIds = [...new Set([
+      ...projects.map(p => p.manager),
+      ...projects.map(p => p.clientId).filter(id => id != null),
+      ...projects.map(p => p.contractorId).filter(id => id != null),
+    ])] as string[];
+    
+    const users = await this.userService.getUsersByIds(userIds);
 
     const enrichedProjects = projects.map((project) => ({
       ...project,
-      manager: managers.find((m) => m.firebaseId === project.manager) || null,
+      manager: users.find((u) => u.firebaseId === project.manager) || null,
+      client: project.clientId ? users.find((u) => u.firebaseId === project.clientId) || null : null,
+      contractor: project.contractorId ? users.find((u) => u.firebaseId === project.contractorId) || null : null,
       taskStats: {
         total: project.tasks.length,
         completed: project.tasks.filter((t) => t.status === 'COMPLETED').length,
@@ -180,16 +181,18 @@ export class ProjectsService {
        throw new ForbiddenException('You do not have permission to view this project.');
     }
 
-    // Enrich with manager and client data
-    const [manager, client] = await Promise.all([
+    // Enrich with manager, client and contractor data
+    const [manager, client, contractor] = await Promise.all([
       this.userService.getUserById(project.manager),
       project.clientId ? this.userService.getUserById(project.clientId) : Promise.resolve(null),
+      project.contractorId ? this.userService.getUserById(project.contractorId) : Promise.resolve(null),
     ]);
 
     return {
       ...project,
       manager,
       client,
+      contractor,
     };
   }
 
@@ -305,8 +308,16 @@ export class ProjectsService {
     });
   }
 
-  async getProjectStats(manager?: string) {
-    const where = manager ? { manager } : {};
+  async getProjectStats(user: AuthenticatedUser, manager?: string) {
+    const profile = await this.userService.getOrCreateProfile(user);
+    const where: any = manager ? { manager } : {};
+
+    // Filter by role if not Admin
+    if (profile.role === 'CONTRACTOR') {
+      where.contractorId = user.firebaseId;
+    } else if (profile.role === 'CLIENT') {
+      where.clientId = user.firebaseId;
+    }
 
     const [totalProjects, activeProjects, completedProjects, plannedProjects] =
       await Promise.all([

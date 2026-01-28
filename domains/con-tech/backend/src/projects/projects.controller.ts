@@ -102,11 +102,11 @@ export class ProjectsController {
 
   @MessagePattern({ cmd: 'get_project_stats' })
   @UseGuards(RoleGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'CONTRACTOR', 'CLIENT')
   async getStats(
     @Payload() payload: { manager?: string; user: AuthenticatedUser },
   ) {
-    return await this.projectsService.getProjectStats(payload.manager);
+    return await this.projectsService.getProjectStats(payload.user, payload.manager);
   }
 
   // TEST-03: Update project progress (for contractors)

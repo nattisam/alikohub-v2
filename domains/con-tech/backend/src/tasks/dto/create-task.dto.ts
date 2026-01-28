@@ -28,4 +28,7 @@ export class CreateTaskDto {
   @IsArray()
   @IsOptional()
   dependencies?: number[]; // Array of task IDs
+
+  @IsOptional()
+  isVisibleToClient?: boolean;
 }

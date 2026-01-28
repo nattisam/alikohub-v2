@@ -13,7 +13,7 @@ export class TasksController {
 
     @MessagePattern({ cmd: 'create_task' })
     @UseGuards(RoleGuard)
-    @Roles('ADMIN')
+    @Roles('ADMIN', 'CONTRACTOR')
     async create(@Payload() payload: { dto: CreateTaskDto; user: AuthenticatedUser }) {
         return await this.tasksService.create(payload.dto, payload.user);
     }
@@ -51,8 +51,8 @@ export class TasksController {
 
     @MessagePattern({ cmd: 'get_task_stats' })
     @UseGuards(RoleGuard)
-    @Roles('ADMIN', 'CONTRACTOR')
+    @Roles('ADMIN', 'CONTRACTOR', 'CLIENT')
     async getStats(@Payload() payload: { projectId?: number; assignedTo?: string; user: AuthenticatedUser }) {
-        return await this.tasksService.getTaskStats(payload.projectId, payload.assignedTo);
+        return await this.tasksService.getTaskStats(payload.user, payload.projectId, payload.assignedTo);
     }
 }
