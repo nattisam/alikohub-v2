@@ -103,7 +103,8 @@ export class AuthService {
 			const eventPayload = {
 				userId: user.firebaseId,
 				email: user.email,
-				role: 'USER'
+				role: 'USER',
+				globalRole: user.globalRole,
 			};
 			this.academyClient.emit('user_created', eventPayload);
 			this.contechClient.emit('user_created', eventPayload);

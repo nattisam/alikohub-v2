@@ -30,7 +30,7 @@ export class UserController {
     }
 
     @EventPattern('user_created')
-    async handleUserCreated(@Payload() payload: { userId: string; email: string; role: string }) {
+    async handleUserCreated(@Payload() payload: { userId: string; email: string; role: string; globalRole?: string }) {
         try {
             const authenticatedUser: AuthenticatedUser = {
                 firebaseId: payload.userId,
@@ -38,6 +38,7 @@ export class UserController {
                 firstname: '',
                 lastname: '',
                 role: payload.role,
+                globalRole: payload.globalRole,
                 status: 'ACTIVE'
             };
             await this.userService.getOrCreateProfile(authenticatedUser);
