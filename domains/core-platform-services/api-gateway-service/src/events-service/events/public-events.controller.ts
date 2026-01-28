@@ -6,41 +6,29 @@ import {
     Param,
     Post,
     Query,
-    UseGuards,
-    Request,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { AuthGuard } from '../../common/guard/firebase_auth.guard';
-import { RequestWithUser } from '../../common/types/request-with-user.interface';
-import { CreateRegistrationDto } from '../registrations/dto/create-registration.dto';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller('events')
-@UseGuards(AuthGuard)
 export class PublicEventsController {
     constructor(@Inject('EVENTS_SERVICE') private eventsClient: ClientProxy) { }
 
     @Get()
-    findAllEvents(@Request() req: RequestWithUser, @Query() query: any) {
-        const payload = {
-            query: query,
-            user: req.user
-        };
-        return this.eventsClient.send({ cmd: 'find_all_events' }, payload);
+    @ApiOperation({ summary: 'Get all published events/announcements/news' })
+    findAllPosts(@Query() query: any) {
+        return this.eventsClient.send({ cmd: 'find_all_posts' }, { ...query, public: true });
     }
 
     @Get(':id')
-    findEventById(@Request() req: RequestWithUser, @Param('id') id: string) {
-        const payload = { id, user: req.user };
-        return this.eventsClient.send({ cmd: 'find_event_by_id' }, payload);
+    @ApiOperation({ summary: 'Get a specific published post by ID' })
+    findPostById(@Param('id') id: string) {
+        return this.eventsClient.send({ cmd: 'find_post_by_id' }, { id, public: true });
     }
 
-    @Post(':id/register')
-    registerForEvent(@Request() req: RequestWithUser, @Param('id') id: string, @Body() createRegistrationDto: CreateRegistrationDto) {
-        const payload = {
-            eventId: id,
-            dto: createRegistrationDto,
-            user: req.user,
-        };
-        return this.eventsClient.send({ cmd: 'create_registration' }, payload);
+    @Post('promote')
+    @ApiOperation({ summary: 'Submit a promotion request (public form)' })
+    submitPromotionRequest(@Body() dto: any) {
+        return this.eventsClient.send({ cmd: 'submit_promotion_request' }, dto);
     }
 }

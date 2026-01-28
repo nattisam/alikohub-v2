@@ -13,4 +13,7 @@ export class UpdateMilestoneDto {
   @IsOptional()
   @IsEnum(MilestoneStatus)
   status?: MilestoneStatus;
+
+  @IsOptional()
+  isVisibleToClient?: boolean;
 }

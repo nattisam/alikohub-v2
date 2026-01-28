@@ -272,10 +272,10 @@ export class ProjectsController {
   createComment(
     @Request() req: RequestWithUser,
     @Param('id', ParseIntPipe) id: number,
-    @Body('text') text: string,
+    @Body('content') content: string,
   ) {
-    const payload = { projectId: id, text, user: req.user };
-    return this.contechClient.send({ cmd: 'create_project_comment' }, payload);
+    const payload = { projectId: id, content, user: req.user };
+    return this.contechClient.send({ cmd: 'add_project_comment' }, payload);
   }
 
   @ApiOperation({ summary: 'Get project comments' })

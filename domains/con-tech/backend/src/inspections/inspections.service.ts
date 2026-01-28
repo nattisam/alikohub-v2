@@ -35,6 +35,7 @@ export class InspectionsService {
         status: createInspectionDto.status as string,
         photos: photoUrls, // Stored as Json array
         checklist: createInspectionDto.checklist as any, // Stored as Json
+        isVisibleToClient: createInspectionDto.isVisibleToClient ?? false,
       },
     });
 
@@ -54,8 +55,13 @@ export class InspectionsService {
     }
 
     const { skip = 0, take = 20 } = pagination;
+    const where: any = { projectId };
+    if (profile.role === 'CLIENT') {
+      where.isVisibleToClient = true;
+    }
+
     return this.prisma.inspection.findMany({
-      where: { projectId },
+      where,
       skip,
       take,
     });

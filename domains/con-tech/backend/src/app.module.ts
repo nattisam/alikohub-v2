@@ -23,6 +23,7 @@ import { AdminModule } from './admin/admin.module';
     PrismaModule,
     AuthModule,
     UserModule,
+    AdminModule,
     ProjectsModule,
     TasksModule,
     PrismaModule,

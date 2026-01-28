@@ -23,7 +23,7 @@ export class AdminController {
       throw new Error('Unauthorized: Admin access required');
     }
 
-    const stats = await this.projectsService.getProjectStats();
+    const stats = await this.projectsService.getProjectStats(user);
     
     // Additional admin-specific metrics
     const [totalClients, totalContractors] = await Promise.all([

@@ -13,4 +13,7 @@ export class UpdateInspectionDto {
   @IsOptional()
   status?: InspectionStatus;
 
+  @IsOptional()
+  isVisibleToClient?: boolean;
+
 }

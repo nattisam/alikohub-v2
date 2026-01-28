@@ -104,6 +104,7 @@ model Task {
   status      String
   deadline    DateTime
   assignedTo  String
+  isVisibleToClient Boolean @default(false)
   
   // Relations
   Project     Project @relation(fields: [projectId], references: [id])
@@ -131,6 +132,7 @@ model Inspection {
   checklist   Json
   photos      Json
   status      String
+  isVisibleToClient Boolean @default(false)
   
   // Relations
   Project     Project @relation(fields: [projectId], references: [id])
@@ -176,6 +178,7 @@ model Milestone {
   status      MilestoneStatus   @default(PENDING)
   dueDate     DateTime?
   progress    Float?            @default(0.0)
+  isVisibleToClient Boolean @default(true)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   

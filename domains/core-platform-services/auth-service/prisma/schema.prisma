@@ -135,9 +135,7 @@ enum ContechRole {
 
 enum EventsRole {
   USER
-  ATTENDEE
-  ORGANIZER
-  SPONSOR
+  CONTENT_MANAGER
   ADMIN
 }
 

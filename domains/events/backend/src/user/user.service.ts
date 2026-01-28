@@ -65,6 +65,25 @@ export class UserService {
 
   private async syncFromAuth(userId: string) {
     try {
+      // Fetch the user's full profile from Auth Service to get globalRole
+      const authUser: any = await this.getUserById(userId);
+      
+      // If the user has globalRole = ADMIN in Auth Service, sync as ADMIN in Events
+      if (authUser?.globalRole === 'ADMIN') {
+        await this.prisma.eventsProfile.upsert({
+          where: { id: userId },
+          create: {
+            id: userId,
+            role: EventsRole.ADMIN,
+          },
+          update: {
+            role: EventsRole.ADMIN,
+          },
+        });
+        this.logger.log(`User ${userId} is a Global ADMIN. Synced as Events ADMIN.`);
+        return;
+      }
+
       const authRecord: any = await firstValueFrom(
         this.authClient.send({ cmd: 'sync_events_user' }, { userId }),
       );
@@ -83,6 +102,7 @@ export class UserService {
               role: effectiveRole as EventsRole,
             },
           });
+          this.logger.log(`Synced user ${userId} from auth service. Role: ${effectiveRole}`);
         }
       }
     } catch (error) {

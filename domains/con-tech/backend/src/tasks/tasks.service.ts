@@ -48,6 +48,7 @@ export class TasksService {
                 status: 'PENDING',
                 deadline: dto.deadline ? new Date(dto.deadline) : new Date(),
                 assignedTo: dto.assignedTo,
+                isVisibleToClient: dto.isVisibleToClient ?? false,
             },
         });
     }
@@ -74,6 +75,10 @@ export class TasksService {
 
         const where: any = { projectId };
         if (query.status) where.status = query.status;
+        if (contechProfile.role === 'CLIENT') {
+            where.isVisibleToClient = true;
+        }
+
         const [tasks, total] = await Promise.all([
             this.prisma.task.findMany({ where, skip, take: pageSize, orderBy: [{ deadline: 'asc' }] }),
             this.prisma.task.count({ where }),
@@ -101,8 +106,10 @@ export class TasksService {
         const project = (task as any).Project; 
         
         // RBAC Check
-        if (contechProfile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-             throw new ForbiddenException('You do not have permission to view this task');
+        if (contechProfile.role === 'CLIENT') {
+             if (project.clientId !== user.firebaseId || !task.isVisibleToClient) {
+                 throw new ForbiddenException('You do not have permission to view this task');
+             }
         }
         if (contechProfile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId && task.assignedTo !== user.firebaseId) {
              throw new ForbiddenException('You do not have permission to view this task');
@@ -173,10 +180,27 @@ export class TasksService {
         });
     }
 
-    async getTaskStats(projectId?: number, assignedTo?: string) {
+    async getTaskStats(user: AuthenticatedUser, projectId?: number, assignedTo?: string) {
+        const contechProfile = await this.userService.getOrCreateProfile(user);
         const where: any = {};
         if (projectId) where.projectId = projectId;
         if (assignedTo) where.assignedTo = assignedTo;
+
+        // Role filtering
+        if (contechProfile.role === 'CLIENT') {
+            where.isVisibleToClient = true;
+            // Also ensure project belongs to client if projectId provided
+            if (projectId) {
+                const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+                if (project?.clientId !== user.firebaseId) {
+                    throw new ForbiddenException('Unauthorized');
+                }
+            }
+        } else if (contechProfile.role === 'CONTRACTOR' && !assignedTo) {
+             // If contractor wants general stats, maybe filter by their projects?
+             // For now, let's keep it simple or filter by assignedTo=user.firebaseId if no assignedTo provided.
+             // But contractor might want to see ALL tasks for their project.
+        }
 
         const [totalTasks, pendingTasks, inProgressTasks, completedTasks, blockedTasks] = await Promise.all([
             this.prisma.task.count({ where }),

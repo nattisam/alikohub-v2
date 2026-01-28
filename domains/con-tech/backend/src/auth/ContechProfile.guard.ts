@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export type AuthenticatedUser = {
     firebaseId: string;
     globalRole: "USER" | "ADMIN";
+    contechRole?: "ADMIN" | "CONTRACTOR" | "CLIENT";
 }
 
 @Injectable()
@@ -25,7 +26,8 @@ export class ContechProfileGuard implements CanActivate {
         });
 
         if (!profile) {
-            const roleToAssign = user.globalRole === 'ADMIN' ? "ADMIN" : "CLIENT";
+            // Use contechRole from token if present, otherwise fallback to globalRole or CLIENT
+            const roleToAssign = user.contechRole || (user.globalRole === 'ADMIN' ? "ADMIN" : "CLIENT");
             profile = await this.prisma.contechProfile.create({
                 data: {userId: user.firebaseId, role: roleToAssign},
             }); 
