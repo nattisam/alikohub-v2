@@ -43,11 +43,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Admin access via globalRole or normalized role
   const isAdmin = isGlobalAdmin || userRole === 'ADMIN';
 
-  // If user hasn't selected a role yet and no specific role is required, redirect to role selection
-  // EXCEPT for global admins who should probably have a role or we handle them specially
-  if (currentUser && !hasSelectedRole && requiredRole && !isGlobalAdmin) {
-    return <Navigate to="/role-selection" state={{ from: location }} replace />;
-  }
   
   // If a required role is specified, check if user has it
   if (requiredRole && currentUser) {

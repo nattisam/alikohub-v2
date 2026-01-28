@@ -91,10 +91,79 @@ const ClientDashboard = () => {
             <p className="text-[10px] font-bold text-slate-400 mt-4 uppercase tracking-widest italic">Live construction metrics</p>
           </CardContent>
         </Card>
+
+        {/* Budget Breakdown */}
+        <Card className="border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Budget Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-8">
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Budget</span>
+                  <span className="text-lg font-black text-slate-900">${clientData.budget.toLocaleString()}</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-baseline mb-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Spent</span>
+                  <span className="text-lg font-black text-amber-600">${clientData.spent.toLocaleString()}</span>
+                </div>
+                <div className="w-full h-1 bg-slate-50 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-amber-500 transition-all duration-1000" 
+                    style={{ width: `${clientData.budget > 0 ? (clientData.spent / clientData.budget) * 100 : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Remaining</span>
+                  <span className="text-lg font-black text-emerald-600">${clientData.remaining.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Inspection Summary */}
+        <Card className="border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-purple-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Quality Inspections</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-8">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <span className="text-xs font-bold text-slate-700 uppercase">Passed</span>
+                </div>
+                <span className="text-2xl font-black text-emerald-600">{clientData.inspectionSummary?.passed || 0}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-amber-50 rounded-2xl border border-amber-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <span className="text-xs font-bold text-slate-700 uppercase">Pending</span>
+                </div>
+                <span className="text-2xl font-black text-amber-600">{clientData.inspectionSummary?.pending || 0}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-red-50 rounded-2xl border border-red-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                  <span className="text-xs font-bold text-slate-700 uppercase">Failed</span>
+                </div>
+                <span className="text-2xl font-black text-red-600">{clientData.inspectionSummary?.failed || 0}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
         {/* Timeline updates */}
-        <Card className="md:col-span-2 border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden relative group">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-500"></div>
+        <Card className="md:col-span-3 border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500"></div>
           <CardHeader className="border-b border-slate-50 px-8 py-6">
             <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-900">Latest Project Activity</CardTitle>
           </CardHeader>
@@ -103,7 +172,7 @@ const ClientDashboard = () => {
               {(clientData.recentUpdates || []).length > 0 ? (clientData.recentUpdates || []).map((update) => (
                 <div key={update.id} className="px-8 py-6 hover:bg-slate-50 transition-colors flex justify-between items-center group/item text-slate-800">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover/item:scale-150 transition-transform"></div>
+                    <div className="w-2 h-2 rounded-full bg-blue-500 group-hover/item:scale-150 transition-transform"></div>
                     <div>
                       <p className="text-sm font-black uppercase tracking-tight">{update.title}</p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Verification System • {update.time}</p>

@@ -68,6 +68,23 @@ const ContractorDashboard = () => {
       </div>
       
       <DashboardGrid>
+        {/* Overdue Tasks - High Priority */}
+        <Card className="border-none shadow-xl shadow-red-200/50 bg-gradient-to-br from-red-50 to-white rounded-[2rem] overflow-hidden group relative">
+          <div className="absolute top-0 left-0 w-2 h-full bg-red-500 group-hover:w-3 transition-all"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              Overdue Tasks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-5xl font-black text-red-600">{contractorData.overdueTasks}</div>
+            <p className="text-[10px] font-bold text-red-500 mt-2 uppercase tracking-tight flex items-center gap-1">
+              ⚠ Critical Attention Required
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Pending tasks */}
         <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
           <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500 group-hover:w-2 transition-all"></div>
@@ -91,6 +108,47 @@ const ContractorDashboard = () => {
           <CardContent>
             <div className="text-5xl font-black text-slate-900">{contractorData.assignedTasks}</div>
             <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tight">Total Assigned Items</p>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="border-none shadow-xl shadow-slate-200/50 bg-gradient-to-br from-blue-600 to-blue-700 rounded-[2rem] overflow-hidden p-2 text-white relative">
+          <CardHeader>
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-white">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <button className="w-full p-4 bg-white/10 hover:bg-white/20 rounded-2xl border border-white/20 hover:border-white/40 transition-all group/btn flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📸</div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-white uppercase tracking-tight">Upload Site Photos</p>
+                    <p className="text-[10px] text-white/70 italic">Document progress</p>
+                  </div>
+                </div>
+                <span className="text-white/50 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all">→</span>
+              </button>
+              <button className="w-full p-4 bg-white/10 hover:bg-white/20 rounded-2xl border border-white/20 hover:border-white/40 transition-all group/btn flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📄</div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-white uppercase tracking-tight">Upload Documents</p>
+                    <p className="text-[10px] text-white/70 italic">Add reports & files</p>
+                  </div>
+                </div>
+                <span className="text-white/50 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all">→</span>
+              </button>
+              <button className="w-full p-4 bg-white/10 hover:bg-white/20 rounded-2xl border border-white/20 hover:border-white/40 transition-all group/btn flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">🎯</div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-white uppercase tracking-tight">Update Milestones</p>
+                    <p className="text-[10px] text-white/70 italic">Track project phases</p>
+                  </div>
+                </div>
+                <span className="text-white/50 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all">→</span>
+              </button>
+            </div>
           </CardContent>
         </Card>
 

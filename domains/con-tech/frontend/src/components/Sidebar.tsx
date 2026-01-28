@@ -76,16 +76,10 @@ const Sidebar: React.FC = () => {
 
     if (isAdmin) {
       items.push({
-        id: "Contractors",
-        label: "Contractors",
+        id: "Users",
+        label: "Users",
         icon: <FaUserFriends />,
-        path: "/admin/contractors",
-      });
-      items.push({
-        id: "Clients",
-        label: "Clients",
-        icon: <FaUserFriends />,
-        path: "/admin/clients",
+        path: "/admin/users",
       });
       items.push({
         id: "Reports",

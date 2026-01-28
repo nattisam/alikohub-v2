@@ -96,6 +96,27 @@ export class UserService {
         where: { userId },
       });
 
+      // Fetch the user's full profile from Auth Service to get globalRole
+      const authUser: any = await this.getUserById(userId);
+      
+      // If the user has globalRole = ADMIN in Auth Service, sync as ADMIN in ConTech
+      if (authUser?.globalRole === 'ADMIN') {
+        await this.prisma.contechProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            role: ContechRole.ADMIN,
+            hasSelectedRole: true, // Mark as selected to prevent overwrite
+          },
+          update: {
+            role: ContechRole.ADMIN,
+            hasSelectedRole: true,
+          },
+        });
+        this.logger.log(`User ${userId} is a Global ADMIN. Synced as ConTech ADMIN.`);
+        return;
+      }
+
       // If user has selected a role locally, don't overwrite it with Auth service data
       if (existingProfile?.hasSelectedRole) {
         this.logger.log(`User ${userId} has a locally selected role. Skipping sync from auth.`);
@@ -109,6 +130,7 @@ export class UserService {
       if (authRecord) {
         // Priority: 1. activeRole (if switched), 2. role (base role)
         const effectiveRole = authRecord.activeRole || authRecord.role;
+
 
         if (effectiveRole) {
           await this.prisma.contechProfile.upsert({

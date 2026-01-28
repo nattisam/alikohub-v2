@@ -21,6 +21,28 @@ const Header = ({
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
+  // Helper function to get the correct dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (!currentUser) return '/';
+    
+    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+    const userRole = currentUser?.role;
+    
+    // Admin access via globalRole or normalized role
+    const isAdmin = isGlobalAdmin || userRole === 'ADMIN';
+    
+    if (isAdmin) {
+      return '/admin';
+    } else if (userRole === 'CLIENT') {
+      return '/client';
+    } else if (userRole === 'CONTRACTOR') {
+      return '/contractor';
+    }
+    
+    // Default fallback
+    return '/';
+  };
+  
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -114,29 +136,14 @@ const Header = ({
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
                       <button 
-                        onClick={() => handleNavigate('/dashboard')} 
+                        onClick={() => handleNavigate(getDashboardRoute())} 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                       >
                         Dashboard
                       </button>
-                      <button 
-                        onClick={() => handleNavigate('/profile')} 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                      >
-                        Profile
-                      </button>
                     </div>
                   )}
                   
-                  {/* Show Choose Role button if user hasn't selected a role */}
-                  {!currentUser?.hasSelectedRole && (
-                    <button 
-                      onClick={() => handleNavigate('/role-selection')} 
-                      className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300"
-                    >
-                      Choose Role
-                    </button>
-                  )}
                 </div>
               )}
         </div>
@@ -194,7 +201,7 @@ const Header = ({
                 {mobileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
                     <button 
-                      onClick={() => handleNavigate('/dashboard')} 
+                      onClick={() => handleNavigate(getDashboardRoute())} 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     >
                       Dashboard
@@ -208,15 +215,6 @@ const Header = ({
                   </div>
                 )}
                 
-                {/* Show Choose Role button if user hasn't selected a role */}
-                {!currentUser?.hasSelectedRole && (
-                  <button 
-                    onClick={() => handleNavigate('/role-selection')} 
-                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 w-full"
-                  >
-                    Choose Role
-                  </button>
-                )}
               </div>
             )}
         </div>

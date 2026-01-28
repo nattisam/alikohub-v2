@@ -27,7 +27,6 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (user: CurrentUser) => void;
   refreshProfile: () => Promise<CurrentUser | null>;
-  selectRole: (role: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,12 +35,10 @@ const buildUser = (user: any): CurrentUser => {
   // Determine the current role and if user has selected a role
   // For con-tech, use contechRole if available, otherwise default to global role
   const currentRole = user.contechRole || user.role || 'USER';
-  const hasSelectedRole = currentRole && currentRole !== 'USER';
-  
   return {
     ...user,
     role: currentRole.toUpperCase(),
-    hasSelectedRole: hasSelectedRole,
+    hasSelectedRole: true, // Roles are now assigned at creation
   };
 };
 
@@ -196,27 +193,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (decodedReturnTo.startsWith('/')) {
         window.location.href = decodedReturnTo;
       } else {
-        // Check if user has selected a role to determine redirect destination
-        if (userData && userData.hasSelectedRole) {
-          // If user has already selected a role, redirect to appropriate dashboard
-          if (userData.role === 'CLIENT') {
-            window.location.href = "/client";
-          } else if (userData.role === 'CONTRACTOR') {
-            window.location.href = "/contractor";
-          } else if (userData.role === 'ADMIN') {
-            window.location.href = "/admin";
-          } else {
-            window.location.href = "/";
-          }
-        } else {
-          // If user hasn't selected a role, redirect to role selection
-          window.location.href = "/role-selection";
-        }
-      }
-    } else {
-      // Check if user has selected a role to determine redirect destination
-      if (userData && userData.hasSelectedRole) {
-        // If user has already selected a role, redirect to appropriate dashboard
+        // Redirect based on role
         if (userData.role === 'CLIENT') {
           window.location.href = "/client";
         } else if (userData.role === 'CONTRACTOR') {
@@ -226,22 +203,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         } else {
           window.location.href = "/";
         }
-      } else {
-        // If user hasn't selected a role, redirect to role selection
-        window.location.href = "/role-selection";
       }
-    }
-  };
-
-  const signup = async (credentials: SignupCredentials) => {
-    const response = await signupMutation.mutateAsync(credentials);
-    
-    // Use the user data from the response to determine redirect destination
-    const userData = buildUser(response.user);
-    
-    // Check if user has selected a role to determine redirect destination
-    if (userData && userData.hasSelectedRole) {
-      // If user has already selected a role, redirect to appropriate dashboard
+    } else {
+      // Redirect based on role
       if (userData.role === 'CLIENT') {
         window.location.href = "/client";
       } else if (userData.role === 'CONTRACTOR') {
@@ -251,9 +215,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } else {
         window.location.href = "/";
       }
+    }
+  };
+
+  const signup = async (credentials: SignupCredentials) => {
+    const response = await signupMutation.mutateAsync(credentials);
+    
+    // Use the user data from the response to determine redirect destination
+    // Use the user data from the response to determine redirect destination
+    const userData = buildUser(response.user);
+    
+    // Redirect based on role
+    if (userData.role === 'CLIENT') {
+      window.location.href = "/client";
+    } else if (userData.role === 'CONTRACTOR') {
+      window.location.href = "/contractor";
+    } else if (userData.role === 'ADMIN') {
+      window.location.href = "/admin";
     } else {
-      // If user hasn't selected a role, redirect to role selection
-      window.location.href = "/role-selection";
+      window.location.href = "/";
     }
   };
 
@@ -292,22 +272,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const selectRole = async (role: string) => {
-    try {
-      const result = await contechAPI.selectRole(role);
-      // Update the user with the new role information and hasSelectedRole status
-      // Refresh the profile to get updated user data from the backend
-      const updatedUserData = await contechAPI.getProfile();
-      const finalUser = buildUser(updatedUserData);
-      setUser(finalUser);
-      localStorage.setItem('user', JSON.stringify(finalUser));
-      
-      return result;
-    } catch (error) {
-      console.error('Error selecting role:', error);
-      throw error;
-    }
-  };
 
   return (
     <AuthContext.Provider
@@ -320,7 +284,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         logout,
         updateUser,
         refreshProfile,
-        selectRole,
       }}
     >
       {children}

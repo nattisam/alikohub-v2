@@ -67,6 +67,22 @@ export const contechAPI = {
     const response = await apiClient.post('/profile/select-role', { role });
     return response.data;
   },
+
+  createUser: async (data: any) => {
+    const response = await apiClient.post('/auth/contech/user', data);
+    return response.data;
+  },
+
+  getUsersByRole: async (role: string, page: number = 1, pageSize: number = 10) => {
+    const response = await apiClient.get(`/contech/admin/users?role=${role}&page=${page}&pageSize=${pageSize}`);
+    return response.data;
+  },
+
+  getAllProjects: async (page: number = 1, pageSize: number = 100) => {
+    const response = await apiClient.get(`/projects?page=${page}&pageSize=${pageSize}`);
+    return response.data;
+  },
+
   // Projects endpoints
   getProjects: async (params?: Record<string, unknown>) => {
     const response = await apiClient.get('/projects', { params });

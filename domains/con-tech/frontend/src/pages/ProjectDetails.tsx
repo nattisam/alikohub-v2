@@ -1,7 +1,16 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProject } from "../queries/projects";
 import { useUser } from "../hooks";
+import {
+  ArrowLeft,
+  MapPin,
+  Building2,
+  Calendar,
+  CheckCircle,
+  CircleDot,
+} from "lucide-react";
+
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -44,135 +53,161 @@ const ProjectDetails = () => {
     );
   }
 
-  return (
-    <div className="flex h-screen w-full bg-gray-50">
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Project Details</h1>
-            <button
-              onClick={() => navigate(-1)}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md"
-            >
-              Back
-            </button>
-          </div>
-        </header>
+ return (
+  <div className="min-h-screen w-full bg-gray-50">
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      {/* Back */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-4"
+      >
+        <ArrowLeft size={16} />
+        Back to Projects
+      </button>
 
-        <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                {project.name}
-              </h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                {project.description || "No description provided"}
-              </p>
-            </div>
-            <div className="px-4 py-5 sm:p-0">
-              <dl className="sm:divide-y sm:divide-gray-200">
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Status</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        project.status === "COMPLETED"
-                          ? "bg-green-100 text-green-800"
-                          : project.status === "ACTIVE"
-                          ? "bg-blue-100 text-blue-800"
-                          : project.status === "PLANNED"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : project.status === "ON_HOLD"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {project.status.replace("_", " ")}
-                    </span>
-                  </dd>
-                </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Start Date</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {new Date(project.startDate).toLocaleDateString()}
-                  </dd>
-                </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">End Date</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {project.endDate ? new Date(project.endDate).toLocaleDateString() : "N/A"}
-                  </dd>
-                </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Created By</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {project.manager?.firstname} {project.manager?.lastname}
-                  </dd>
-                </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Site Location</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {project.site || "N/A"}
-                  </dd>
-                </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Inspector</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {project.inspectorId || "N/A"}
-                  </dd>
-                </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Contractor</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {project.contractorId || "N/A"}
-                  </dd>
-                </div>
-              </dl>
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+              {project.name}
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                {project.status}
+              </span>
+            </h1>
+
+            <div className="mt-3 flex flex-wrap gap-6 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <MapPin size={14} />
+                {project.site || "N/A"}
+              </span>
+              <span className="flex items-center gap-1">
+                <Building2 size={14} />
+                {project.contractorId || "N/A"}
+              </span>
+              <span className="flex items-center gap-1">
+                <Calendar size={14} />
+                Due:{" "}
+                {project.endDate
+                  ? new Date(project.endDate).toLocaleDateString()
+                  : "N/A"}
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Project Stats */}
-          {project.taskStats && (
-            <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  Task Statistics
-                </h3>
-              </div>
-              <div className="px-4 py-5 sm:p-0">
-                <dl className="sm:grid sm:grid-cols-4 sm:gap-4 sm:px-6">
-                  <div className="py-4 sm:py-5">
-                    <dt className="text-sm font-medium text-gray-500">Total Tasks</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-gray-900">
-                      {project.taskStats.total}
-                    </dd>
-                  </div>
-                  <div className="py-4 sm:py-5">
-                    <dt className="text-sm font-medium text-gray-500">Completed</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-green-600">
-                      {project.taskStats.completed}
-                    </dd>
-                  </div>
-                  <div className="py-4 sm:py-5">
-                    <dt className="text-sm font-medium text-gray-500">In Progress</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-blue-600">
-                      {project.taskStats.inProgress}
-                    </dd>
-                  </div>
-                  <div className="py-4 sm:py-5">
-                    <dt className="text-sm font-medium text-gray-500">Pending</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-yellow-600">
-                      {project.taskStats.pending}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-          )}
-        </main>
+        {/* Progress */}
+        <div className="mt-6">
+          <div className="flex justify-between text-sm text-gray-500 mb-1">
+            <span>Progress</span>
+            <span>
+              {project.taskStats?.completed
+                ? Math.round(
+                    (project.taskStats.completed /
+                      project.taskStats.total) *
+                      100
+                  )
+                : 0}
+              %
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full"
+              style={{
+                width: `${
+                  project.taskStats?.completed
+                    ? (project.taskStats.completed /
+                        project.taskStats.total) *
+                      100
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mt-6 border-b border-gray-200">
+        <nav className="flex gap-6 text-sm font-medium">
+          <button className="pb-3 border-b-2 border-blue-600 text-blue-600">
+            Timeline
+          </button>
+          <button className="pb-3 text-gray-500 hover:text-gray-700">
+            Updates
+          </button>
+          <button className="pb-3 text-gray-500 hover:text-gray-700">
+            Files
+          </button>
+          <button className="pb-3 text-gray-500 hover:text-gray-700">
+            Messages
+          </button>
+        </nav>
+      </div>
+
+      {/* Milestones */}
+      <div className="mt-6 bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          Project Milestones
+        </h2>
+
+        <div className="relative border-l border-gray-200 ml-4 space-y-8">
+          {/* Completed */}
+          <div className="relative pl-8">
+            <CheckCircle
+              size={18}
+              className="absolute -left-[9px] top-1 text-green-500 bg-white"
+            />
+            <h3 className="font-medium text-gray-900">
+              Foundation Complete
+            </h3>
+            <p className="text-sm text-gray-500">Due: 14 Aug 2024</p>
+          </div>
+
+          <div className="relative pl-8">
+            <CheckCircle
+              size={18}
+              className="absolute -left-[9px] top-1 text-green-500 bg-white"
+            />
+            <h3 className="font-medium text-gray-900">
+              Structure (Floors 1–5)
+            </h3>
+            <p className="text-sm text-gray-500">Due: 29 Oct 2024</p>
+          </div>
+
+          <div className="relative pl-8">
+            <CheckCircle
+              size={18}
+              className="absolute -left-[9px] top-1 text-green-500 bg-white"
+            />
+            <h3 className="font-medium text-gray-900">
+              Structure (Floors 6–10)
+            </h3>
+            <p className="text-sm text-gray-500">Due: 30 Dec 2024</p>
+          </div>
+
+          {/* In Progress */}
+          <div className="relative pl-8">
+            <CircleDot
+              size={18}
+              className="absolute -left-[9px] top-1 text-blue-600 bg-white"
+            />
+            <h3 className="font-medium text-blue-600">
+              Structure (Floors 11–15)
+            </h3>
+            <p className="text-sm text-gray-500">Due: 27 Feb 2025</p>
+            <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+              In Progress
+            </span>
+          </div>
+        </div>
       </div>
     </div>
-  );
+  </div>
+);
+
+
 };
 
 export default ProjectDetails;

@@ -14,7 +14,6 @@ const useUser = (): UserContextType => {
     logout: auth.logout,
     updateUser: auth.updateUser,
     refreshProfile: auth.refreshProfile,
-    selectRole: auth.selectRole,
   };
 };
 

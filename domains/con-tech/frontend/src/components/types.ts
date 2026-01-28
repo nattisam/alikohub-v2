@@ -403,5 +403,4 @@ export interface UserContextType {
   logout: () => void;
   updateUser: (user: CurrentUser) => void;
   refreshProfile: () => Promise<CurrentUser | null>;
-  selectRole: (role: string) => Promise<void>;
 }

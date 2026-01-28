@@ -22,7 +22,7 @@ const Navbar: React.FC<NavbarProps> = () => {
     if (isGlobalAdmin || userRole === 'ADMIN') return '/admin';
     if (userRole === 'CONTRACTOR') return '/contractor';
     if (userRole === 'CLIENT') return '/client';
-    return '/role-selection';
+    return '/';
   }, [isGlobalAdmin, userRole]);
 
   useEffect(() => {

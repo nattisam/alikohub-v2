@@ -15,7 +15,7 @@ import ContactUsPage from "./pages/ContactUsPage";
 import { useUser } from "./hooks";
 import LoginForm from "./components/LoginForm";
 import CSignupForm from "./components/SignupForm";
-import RoleSelectionModal from "./components/RoleSelectionModal";
+// import RoleSelectionModal from "./components/RoleSelectionModal";
 import ProjectsPage from "./pages/ProjectsPage";
 import ReportsPage from "./pages/ReportsPage";
 import UserManagementPage from "./pages/UserManagementPage";
@@ -51,6 +51,7 @@ function DefaultLayout() {
 }
 
 
+/*
 function RoleSelectionWrapper() {
   const { currentUser } = useUser();
   const navigate = useNavigate();
@@ -84,8 +85,10 @@ function RoleSelectionWrapper() {
   }
   
   // If user hasn't selected a role, show the role selection modal
-  return <RoleSelectionModal onClose={handleCloseModal} />;
+  // return <RoleSelectionModal onClose={handleCloseModal} />;
+  return <Navigate to="/" replace />;
 }
+*/
 
 function LoginLayout() {
   return (
@@ -120,10 +123,12 @@ export default function App() {
       element: <LoginLayout />,
       children: [{ index: true, element: <CSignupForm /> }],
     },
+/*
     {
       path: "/role-selection",
       element: <RoleSelectionWrapper />,
     },
+*/
     // Admin Dashboard Routes
     {
       path: "/admin",
@@ -137,8 +142,7 @@ export default function App() {
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/new", element: <CreateProjectForm /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
-        { path: "contractors", element: <UserManagementPage /> },
-        { path: "clients", element: <UserManagementPage /> },
+        { path: "users", element: <UserManagementPage /> },
         { path: "reports", element: <ReportsPage /> },
         { path: "profile", element: <ProfilePage /> },
       ]
@@ -176,11 +180,11 @@ export default function App() {
     // Legacy Dashboard Redirect (for backward compatibility during migration)
     {
       path: "/dashboard/*",
-      element: <Navigate to="/role-selection" replace />,
+      element: <Navigate to="/" replace />,
     },
     {
       path: "/profile",
-      element: <Navigate to="/role-selection" replace />,
+      element: <Navigate to="/" replace />,
     }
   ]);
 

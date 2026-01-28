@@ -56,7 +56,7 @@ async function bootstrap() {
     });
     app.useGlobalGuards(app.get(auth_1.ConTechProfileGuard));
     await app.startAllMicroservices();
-    console.log(`ConTech microservice listening on TCP running on PORT:${PORT} and connected to both TCP and RabbitMQ`);
+    console.log(`ConTech microservice listening on TCP running on PORT:${PORT}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

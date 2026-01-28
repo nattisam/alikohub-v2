@@ -13,6 +13,7 @@ import { ClientReportModule } from './client-report/client-report.module';
 import { ContractModule } from './contract/contract.module';
 import { ContactModule } from './contact/contact.module';
 import { MilestonesModule } from './milestones/milestones.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { MilestonesModule } from './milestones/milestones.module';
     ClientReportModule,
     ContractModule,
     MilestonesModule,
-    ContactModule
+    ContactModule,
+    AdminModule
   ],
   providers: [CloudinaryService],
 })
