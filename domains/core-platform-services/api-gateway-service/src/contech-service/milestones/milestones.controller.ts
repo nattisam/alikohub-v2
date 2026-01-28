@@ -100,22 +100,9 @@ export class MilestonesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() createMilestoneReviewDto: CreateMilestoneReviewDto,
   ) {
-    const payload = { user: req.user, createMilestoneReviewDto };
+    const payload = { user: req.user, id, createMilestoneReviewDto };
     return lastValueFrom(
       this.contechClient.send({ cmd: 'create_milestone_review' }, payload),
-    );
-  }
-
-  @Get(':id/reviews')
-  @ApiOperation({ summary: 'Get all reviews for a milestone' })
-  @ApiParam({ name: 'id', type: Number })
-  getReviewsForMilestone(
-    @Request() req: RequestWithUser,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    const payload = { user: req.user, id };
-    return lastValueFrom(
-      this.contechClient.send({ cmd: 'getReviewsForMilestone' }, payload),
     );
   }
 }

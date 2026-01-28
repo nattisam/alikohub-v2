@@ -18,13 +18,13 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'find_all_posts' })
-  async findAll(@Payload() query: { type?: PostType; status?: PostStatus; page?: number; limit?: number }) {
+  async findAll(@Payload() query: { type?: PostType; status?: PostStatus; page?: number; limit?: number; public?: boolean }) {
     return this.postsService.findAll(query);
   }
 
   @MessagePattern({ cmd: 'find_post_by_id' })
-  async findOne(@Payload() id: string) {
-    return this.postsService.findOne(id);
+  async findOne(@Payload() payload: { id: string; public?: boolean }) {
+    return this.postsService.findOne(payload.id, payload.public);
   }
 
   @MessagePattern({ cmd: 'update_post' })

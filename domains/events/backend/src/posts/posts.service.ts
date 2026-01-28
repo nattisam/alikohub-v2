@@ -16,7 +16,7 @@ export class PostsService {
     const profile = await this.userService.getOrCreateProfile(user);
 
     if (profile.role !== EventsRole.ADMIN && profile.role !== EventsRole.CONTENT_MANAGER) {
-      throw new ForbiddenException('Only Content Managers and Admins can create posts.');
+      throw new ForbiddenException('Only Content Managers and Admins can create content.');
     }
 
     return this.prisma.post.create({
@@ -29,20 +29,26 @@ export class PostsService {
     });
   }
 
-  async findAll(query: { type?: PostType; status?: PostStatus; page?: number; limit?: number }) {
-    const { type, status, page = 1, limit = 10 } = query;
+  async findAll(query: { type?: PostType; status?: PostStatus; page?: number; limit?: number; public?: boolean }) {
+    const { type, status, page = 1, limit = 10, public: isPublic = false } = query;
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (type) where.type = type;
-    if (status) where.status = status;
+    
+    // Public requests only see PUBLISHED content
+    if (isPublic) {
+      where.status = PostStatus.PUBLISHED;
+    } else if (status) {
+      where.status = status;
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.post.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { publishDate: 'desc' },
       }),
       this.prisma.post.count({ where }),
     ]);
@@ -56,9 +62,14 @@ export class PostsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, isPublic = false) {
     const post = await this.prisma.post.findUnique({ where: { id } });
     if (!post) throw new NotFoundException('Post not found');
+    
+    if (isPublic && post.status !== PostStatus.PUBLISHED) {
+      throw new ForbiddenException('Post is not published');
+    }
+    
     return post;
   }
 
@@ -66,16 +77,14 @@ export class PostsService {
     const post = await this.findOne(id);
     const profile = await this.userService.getOrCreateProfile(user);
 
-    // Permissions check
     if (profile.role === EventsRole.ADMIN) {
       // Admins can update anything
     } else if (profile.role === EventsRole.CONTENT_MANAGER) {
-      // Content Managers can only update their own drafts or rejected posts
       if (post.authorId !== user.firebaseId) {
-        throw new ForbiddenException('You can only update your own posts.');
+        throw new ForbiddenException('You can only update your own drafts.');
       }
       if (post.status === PostStatus.PUBLISHED || post.status === PostStatus.APPROVED) {
-        throw new ForbiddenException('Cannot edit a post that is already approved or published.');
+        throw new ForbiddenException('Cannot edit a post once it has been approved or published.');
       }
     } else {
       throw new ForbiddenException('Permission denied.');
@@ -84,8 +93,10 @@ export class PostsService {
     const updateData: any = { ...updatePostDto };
     if (updateData.eventDate) updateData.eventDate = new Date(updateData.eventDate);
 
-    // If a CM updates a rejected post, it should probably move back to DRAFT or stay REJECTED until submitted
-    // But usually they just edit and then "submit". 
+    // If CM updates a rejected post, it resets rejection reason
+    if (profile.role === EventsRole.CONTENT_MANAGER && post.status === PostStatus.REJECTED) {
+      updateData.rejectionReason = null;
+    }
 
     return this.prisma.post.update({
       where: { id },
@@ -95,30 +106,36 @@ export class PostsService {
 
   async submitForReview(id: string, user: AuthenticatedUser) {
     const post = await this.findOne(id);
+    
     if (post.authorId !== user.firebaseId) {
       throw new ForbiddenException('You can only submit your own posts.');
     }
+    
     if (post.status !== PostStatus.DRAFT && post.status !== PostStatus.REJECTED) {
       throw new ForbiddenException('Only drafts or rejected posts can be submitted for review.');
     }
 
     return this.prisma.post.update({
       where: { id },
-      data: { status: PostStatus.PENDING },
+      data: { 
+        status: PostStatus.PENDING,
+        rejectionReason: null 
+      },
     });
   }
 
   async review(id: string, status: PostStatus, rejectionReason: string | null, user: AuthenticatedUser) {
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role !== EventsRole.ADMIN) {
-      throw new ForbiddenException('Only admins can review posts.');
+      throw new ForbiddenException('Only Admins can review and publish content.');
     }
 
     const data: any = { status };
     if (status === PostStatus.REJECTED) {
       data.rejectionReason = rejectionReason;
-    } else if (status === PostStatus.PUBLISHED || status === PostStatus.APPROVED) {
+    } else if (status === PostStatus.PUBLISHED) {
       data.publishDate = new Date();
+      data.rejectionReason = null;
     }
 
     return this.prisma.post.update({
@@ -132,7 +149,7 @@ export class PostsService {
     const profile = await this.userService.getOrCreateProfile(user);
 
     if (profile.role !== EventsRole.ADMIN && post.authorId !== user.firebaseId) {
-      throw new ForbiddenException('Permission denied.');
+      throw new ForbiddenException('Only the author or an Admin can delete this post.');
     }
 
     return this.prisma.post.delete({ where: { id } });

@@ -13,6 +13,11 @@ export class CreateProjectDto {
     @IsOptional()
     clientId?: string;
 
+    @IsString()
+    @IsOptional()
+    site?: string;    
+
+
     @IsDateString()
     @IsOptional()
     startDate?: string;

@@ -19,6 +19,8 @@ export class CreateMilestoneDto {
   status?: MilestoneStatus;
 
   @IsOptional()
-  @IsDate()
   dueDate?: Date;
+
+  @IsOptional()
+  isVisibleToClient?: boolean;
 }

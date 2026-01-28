@@ -38,7 +38,12 @@ export class MilestonesService {
       throw new ForbiddenException('You do not have permission to view milestones for this project.');
     }
 
-    return this.prisma.milestone.findMany({ where: { projectId } });
+    const where: any = { projectId };
+    if (profile.role === 'CLIENT') {
+      where.isVisibleToClient = true;
+    }
+
+    return this.prisma.milestone.findMany({ where });
   }
 
   async findOne(id: number, user: AuthenticatedUser) {
