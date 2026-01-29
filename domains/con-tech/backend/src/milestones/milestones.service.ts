@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMilestoneDto } from './dto/create-milestone.dto';
 import { UpdateMilestoneDto } from './dto/update-milestone.dto';
 import { CreateMilestoneReviewDto } from './dto/create-milestone-review.dto';
+import { FindAllMilestonesDto } from './dto/find-all-milestones.dto';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
@@ -26,24 +27,71 @@ export class MilestonesService {
     return milestone;
   }
 
-  async findAll(projectId: number, user: AuthenticatedUser) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
-    if (!project) throw new NotFoundException('Project not found');
-
+  async findAll(dto: FindAllMilestonesDto, user: AuthenticatedUser) {
     const profile = await this.userService.getOrCreateProfile(user);
-    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view milestones for this project.');
-    }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view milestones for this project.');
+    const { projectId, status, search, page = 1, limit = 10 } = dto;
+
+    const where: any = {};
+
+    if (projectId) {
+      const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+      if (!project) throw new NotFoundException('Project not found');
+
+      if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
+        throw new ForbiddenException('You do not have permission to view milestones for this project.');
+      }
+      if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
+        throw new ForbiddenException('You do not have permission to view milestones for this project.');
+      }
+      where.projectId = projectId;
+    } else if (profile.role !== 'ADMIN') {
+      // If no projectId, non-admin users can only see milestones for projects they are involved in
+      where.Project = {
+        OR: [
+          { manager: user.firebaseId },
+          { contractorId: user.firebaseId },
+          { clientId: user.firebaseId },
+        ],
+      };
     }
 
-    const where: any = { projectId };
+    if (status) {
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
     if (profile.role === 'CLIENT') {
       where.isVisibleToClient = true;
     }
 
-    return this.prisma.milestone.findMany({ where });
+    const skip = (page - 1) * limit;
+
+    const [milestones, total] = await Promise.all([
+      this.prisma.milestone.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { Project: { select: { name: true } } }
+      }),
+      this.prisma.milestone.count({ where }),
+    ]);
+
+    return {
+      data: milestones,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number, user: AuthenticatedUser) {

@@ -4,6 +4,8 @@ import { Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { AcademyProfileGuard } from './auth';
+import { ValidationPipe } from '@nestjs/common';
+import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
 dotenv.config(); // Load .env variables first
 
@@ -29,6 +31,18 @@ async function bootstrap() {
       port: PORT,
     },
   });
+
+  // Centralized Global Error Handling
+  app.useGlobalFilters(new RpcExceptionFilter());
+  
+  // Centralized Validation Handling
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // Apply global guard
   app.useGlobalGuards(app.get(AcademyProfileGuard));

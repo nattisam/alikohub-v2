@@ -3,6 +3,8 @@ import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { AppLogger } from './logger';
 import { EventsProfileGuard } from './auth';
+import { ValidationPipe } from '@nestjs/common';
+import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
 async function bootstrap() {
     const app = await NestFactory.createMicroservice(AppModule, {
@@ -13,6 +15,18 @@ async function bootstrap() {
         },
         logger: new AppLogger(),
     });
+
+    // Centralized Global Error Handling
+    app.useGlobalFilters(new RpcExceptionFilter());
+    
+    // Centralized Validation Handling
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+      }),
+    );
 
     // Apply global guard
     app.useGlobalGuards(app.get(EventsProfileGuard));

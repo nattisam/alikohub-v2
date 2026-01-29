@@ -39,6 +39,8 @@ const microservices_1 = require("@nestjs/microservices");
 const dotenv = __importStar(require("dotenv"));
 const config_1 = require("@nestjs/config");
 const auth_1 = require("./auth");
+const common_1 = require("@nestjs/common");
+const rpc_exception_filter_1 = require("./common/filters/rpc-exception.filter");
 dotenv.config();
 const winston_config_1 = require("./winston.config");
 async function bootstrap() {
@@ -54,10 +56,15 @@ async function bootstrap() {
             port: PORT,
         },
     });
+    app.useGlobalFilters(new rpc_exception_filter_1.RpcExceptionFilter());
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        transform: true,
+        forbidNonWhitelisted: true,
+    }));
     app.useGlobalGuards(app.get(auth_1.AcademyProfileGuard));
     await app.startAllMicroservices();
-    console.log(`Academy microservice listening on TCP port ${PORT}` +
-        ` and connected to RabbitMQ if configured`);
+    console.log(`Academy microservice listening on TCP port ${PORT}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

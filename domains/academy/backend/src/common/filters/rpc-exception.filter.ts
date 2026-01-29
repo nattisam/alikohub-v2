@@ -11,9 +11,7 @@ import { Prisma } from '@prisma/client';
 import { Observable, throwError } from 'rxjs';
 
 /**
- * Centralized exception filter for Microservices.
- * Catches all errors and transforms them into a standardized RpcException object
- * that the API Gateway can properly deserialize.
+ * Centralized exception filter for Academy Microservice.
  */
 @Catch()
 export class RpcExceptionFilter implements ExceptionFilter {
@@ -25,11 +23,9 @@ export class RpcExceptionFilter implements ExceptionFilter {
     let error = 'Internal Server Error';
     let details: any = null;
 
-    // 1. Handle Nest HTTP Exceptions (e.g. ForbiddenException, NotFoundException)
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const response = exception.getResponse() as any;
-      
       if (typeof response === 'object') {
         message = Array.isArray(response.message) ? response.message[0] : response.message || exception.message;
         error = response.error || 'Http Error';
@@ -39,18 +35,15 @@ export class RpcExceptionFilter implements ExceptionFilter {
         error = 'Http Error';
       }
     }
-    // 2. Handle Prisma Client Errors (Database)
     else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      this.logger.error(`Prisma Error [${exception.code}]: ${exception.message}`);
-      
       switch (exception.code) {
-        case 'P2002': // Unique constraint violation
+        case 'P2002':
           status = HttpStatus.CONFLICT;
           const target = (exception.meta?.target as string[])?.join(', ');
-          message = `Unique constraint violation. A record with this ${target || 'field'} already exists.`;
+          message = `Unique constraint violation: ${target || 'field'} already exists.`;
           error = 'Conflict';
           break;
-        case 'P2025': // Record not found
+        case 'P2025':
           status = HttpStatus.NOT_FOUND;
           message = 'The requested record was not found.';
           error = 'Not Found';
@@ -59,27 +52,15 @@ export class RpcExceptionFilter implements ExceptionFilter {
           status = HttpStatus.BAD_REQUEST;
           message = 'Database operation failed.';
           error = 'Database Error';
-          details = { code: exception.code };
       }
     }
-    // 3. Handle Prisma Validation Errors
-    else if (exception instanceof Prisma.PrismaClientValidationError) {
-      status = HttpStatus.BAD_REQUEST;
-      message = 'Invalid data format provided to database.';
-      error = 'Validation Error';
-    }
-    // 4. Handle Existing RpcException (don't wrap twice)
     else if (exception instanceof RpcException) {
       return throwError(() => exception.getError());
     }
-    // 5. Handle standard Error objects
     else if (exception instanceof Error) {
       message = exception.message;
       this.logger.error(`Unhandled error: ${message}`, exception.stack);
     } 
-    else {
-      this.logger.error('Unknown error type caught in filter:', exception);
-    }
 
     const errorResponse = {
       statusCode: status,
@@ -89,14 +70,12 @@ export class RpcExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     };
 
-    // Log the error for debugging
     if (status >= 500) {
       this.logger.error(`Fatal Error: ${JSON.stringify(errorResponse)}`);
     } else {
       this.logger.warn(`Handled Exception: ${message} (Status: ${status})`);
     }
 
-    // Return the formatted error as an RpcException
     return throwError(() => new RpcException(errorResponse));
   }
 }

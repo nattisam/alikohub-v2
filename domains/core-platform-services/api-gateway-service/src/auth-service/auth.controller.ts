@@ -119,6 +119,11 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Select academy role' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    role: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+      'any.only': 'Role must be one of: student, teacher, instructor'
+    })
+  })))
   async selectAcademyRole(@Request() req: any, @Body() selectRoleDto: SelectRoleDto) {
     // Inject userId from authenticated user
     const payload = { 
@@ -177,6 +182,12 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    reviewNotes: Joi.string().required().min(5).messages({
+      'string.empty': 'Review notes are required for approval',
+      'string.min': 'Review notes must be at least 5 characters long'
+    })
+  })))
   async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'approve_teacher_application' }, { 
@@ -198,6 +209,12 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    reviewNotes: Joi.string().required().min(5).messages({
+      'string.empty': 'Review notes are required for rejection',
+      'string.min': 'Review notes must be at least 5 characters long'
+    })
+  })))
   async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'reject_teacher_application' }, { 
@@ -219,6 +236,12 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Switch user role' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    newRole: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+      'any.only': 'newRole must be one of: student, teacher, instructor'
+    }),
+    userId: Joi.string().optional()
+  })))
   async switchRole(@Request() req: any, @Body() switchRoleDto: SwitchRoleDto) {
     const payload = {
       ...switchRoleDto,

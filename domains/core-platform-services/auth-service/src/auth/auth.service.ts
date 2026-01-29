@@ -674,7 +674,16 @@ export class AuthService {
 			});
 		}
 
-		if (role === 'student' || role === 'STUDENT') {
+		const targetRole = role.toUpperCase();
+		if (targetRole === 'ADMIN' || targetRole === 'ACADEMY_ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Cannot select ADMIN role via public selection endpoint',
+				error: 'Forbidden',
+			});
+		}
+
+		if (targetRole === 'STUDENT') {
 			// Student role is assigned immediately
 			await this.userService.updateAcademyRole(user.firebaseId, 'STUDENT', 'ACTIVE');
 			
@@ -691,7 +700,7 @@ export class AuthService {
 				user: this.toPlain(updatedUser),
 				...tokens,
 			};
-		} else if (role === 'teacher' || role === 'TEACHER' || role === 'instructor' || role === 'INSTRUCTOR') {
+		} else if (targetRole === 'TEACHER' || targetRole === 'INSTRUCTOR') {
 			// Check if user already has approved instructor role
 			if (user.academyUser && user.academyUser.role === 'INSTRUCTOR' && user.academyUser.status === 'ACTIVE') {
 				// User already has approved instructor role
@@ -795,7 +804,16 @@ export class AuthService {
 		const userId = application.userId;
 
 		// Update application status with reviewer info
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
+		try {
+			await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
+		} catch (error: any) {
+			this.logger.error(`Failed to approve teacher application: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to update application status',
+				error: 'Bad Request',
+			});
+		}
 
 		// Assign instructor role to user
 		await this.userService.updateAcademyRole(userId, 'INSTRUCTOR', 'ACTIVE');
@@ -843,7 +861,16 @@ export class AuthService {
 		}
 
 		// Update application status with reviewer info
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
+		try {
+			await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
+		} catch (error: any) {
+			this.logger.error(`Failed to reject teacher application: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to update application status',
+				error: 'Bad Request',
+			});
+		}
 
 		return {
 			message: 'Teacher application rejected',
@@ -873,9 +900,17 @@ export class AuthService {
 			'USER': 0
 		};
 
-		// Check if user has the requested role (or a higher one)
-		const userRole = user.academyUser?.role?.toUpperCase();
 		const targetRole = newRole.toUpperCase();
+
+		// Prevent switching to ADMIN roles unless you are ALREADY a global ADMIN
+		if ((targetRole === 'ADMIN' || targetRole === 'ACADEMY_ADMIN') && user.globalRole !== 'ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Only global administrators can switch to ADMIN roles',
+				error: 'Forbidden',
+			});
+		}
+		const userRole = user.academyUser?.role?.toUpperCase();
 		
 		if (!user.academyUser) {
 			throw new RpcException({

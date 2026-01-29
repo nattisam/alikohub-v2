@@ -14,8 +14,8 @@ export class AuthController {
 	@MessagePattern({ cmd: 'register' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
-		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
-		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim().messages({'string.pattern.base': 'firstname must contain only alphabetic characters'}),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 	})))
 	async register(@Payload() dto: SignUpDto) {
@@ -25,8 +25,8 @@ export class AuthController {
 	@MessagePattern({ cmd: 'create_recruiter' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
-		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
-		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim().messages({'string.pattern.base': 'firstname must contain only alphabetic characters'}),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 	})))
 	async createRecruiter(@Payload() dto: any) {
@@ -36,8 +36,8 @@ export class AuthController {
 	@MessagePattern({ cmd: 'create_contech_user' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
-		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
-		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim().messages({'string.pattern.base': 'firstname must contain only alphabetic characters'}),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 		role: Joi.string().valid('ADMIN', 'CONTRACTOR', 'CLIENT').required(),
 	})))
@@ -48,8 +48,8 @@ export class AuthController {
 	@MessagePattern({ cmd: 'create_events_user' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
-		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim(),
-		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim(),
+		firstname: Joi.string().required().pattern(/^[A-Za-z\s]+$/).trim().messages({'string.pattern.base': 'firstname must contain only alphabetic characters'}),
+		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 		role: Joi.string().valid('ADMIN', 'CONTENT_MANAGER', 'USER').required(),
 	})))
@@ -87,6 +87,10 @@ export class AuthController {
 
 	// Academy-specific message patterns
 	@MessagePattern({ cmd: 'select_academy_role' })
+	@UsePipes(new JoiValidationPipe(Joi.object({
+		userId: Joi.string().required(),
+		role: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase()
+	})))
 	async handleSelectRole(@Payload() data: SelectRoleDto) {
 		try {
 			return await this.authService.selectAcademyRole(data.userId, data.role);
@@ -122,6 +126,10 @@ export class AuthController {
 	}
 
 	@MessagePattern({ cmd: 'switch_role' })
+	@UsePipes(new JoiValidationPipe(Joi.object({
+		userId: Joi.string().required(),
+		newRole: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase()
+	})))
 	async handleSwitchRole(@Payload() data: { userId: string; newRole: string }) {
 		try {
 			return await this.authService.switchRole(data.userId, data.newRole);

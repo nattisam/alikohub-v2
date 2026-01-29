@@ -3,6 +3,7 @@ import { MilestonesService } from './milestones.service';
 import { CreateMilestoneDto } from './dto/create-milestone.dto';
 import { UpdateMilestoneDto } from './dto/update-milestone.dto';
 import { CreateMilestoneReviewDto } from './dto/create-milestone-review.dto';
+import { FindAllMilestonesDto } from './dto/find-all-milestones.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthenticatedUser } from '../user/user.service';
 import { ConTechProfileGuard, RoleGuard, Roles } from '../auth';
@@ -20,8 +21,8 @@ export class MilestonesController {
     }
 
     @MessagePattern({cmd: 'findAll_milestones'})
-    findAll(@Payload() payload: { projectId: number; user: AuthenticatedUser }) {
-        return this.milestonesService.findAll(payload.projectId, payload.user);
+    findAll(@Payload() payload: { findAllMilestonesDto: FindAllMilestonesDto; user: AuthenticatedUser }) {
+        return this.milestonesService.findAll(payload.findAllMilestonesDto, payload.user);
     }
 
     @MessagePattern({cmd: 'findOne_milestones'})
