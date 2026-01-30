@@ -1,10 +1,21 @@
 import { useUser } from "../hooks";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardGrid } from "../components/DashboardGrid";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { useContractorDashboardData } from "../queries/dashboard";
-import { FaProjectDiagram } from "react-icons/fa";
+import { 
+  HardHat, 
+  ClipboardCheck, 
+  AlertCircle, 
+  Calendar, 
+  ArrowUpRight, 
+  ChevronRight,
+  Image as ImageIcon,
+  FileText,
+  CheckCircle2,
+  MessageSquare,
+  Loader2
+} from "lucide-react";
 import type { ContractorDashboardData } from "../components/types";
 
 const ContractorDashboard = () => {
@@ -15,29 +26,26 @@ const ContractorDashboard = () => {
   const isContractor = currentUser?.role === "CONTRACTOR";
 
   useEffect(() => {
-    // Redirect users who don't have CONTRACTOR or ADMIN permissions away from this page
     if (currentUser && !isContractor && !isAdmin) {
       navigate("/");
     }
   }, [currentUser, navigate, isContractor, isAdmin]);
   
+  const { data: dashboardData, isLoading, isError } = useContractorDashboardData();
+  
   if (!currentUser || (!isContractor && !isAdmin)) {
-    // Don't render if user doesn't have appropriate permissions
     return null;
   }
   
-  const { data: dashboardData, isLoading, isError } = useContractorDashboardData();
-  
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
-        <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-xs font-black text-slate-400 uppercase tracking-widest">Syncing Site Data...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-10 w-10 animate-spin text-[#3E92D1]" />
+        <p className="mt-4 text-sm font-medium text-gray-500">Syncing Site Data...</p>
       </div>
     );
   }
   
-  // Use real data if available, otherwise default empty state
   const contractorData: ContractorDashboardData = dashboardData || {
     assignedTasks: 0,
     overdueTasks: 0,
@@ -49,162 +57,178 @@ const ContractorDashboard = () => {
       minor: 0,
     },
   };
+
+  const metrics = [
+    {
+      label: 'Overdue Tasks',
+      value: contractorData.overdueTasks,
+      icon: AlertCircle,
+      color: 'bg-red-100',
+      iconColor: 'text-red-600',
+      description: 'Immediate action required'
+    },
+    {
+      label: 'Pending Tasks',
+      value: contractorData.pendingTasks,
+      icon: ClipboardCheck,
+      color: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      description: 'Requires attention'
+    },
+    {
+      label: 'Active Pipeline',
+      value: contractorData.assignedTasks,
+      icon: HardHat,
+      color: 'bg-blue-100',
+      iconColor: 'text-[#3E92D1]',
+      description: 'Total assigned items'
+    }
+  ];
   
   return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 gap-4">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Contractor Hub</h2>
-          <p className="text-slate-500 text-xs mt-1 font-serif italic">Operational overview for your assigned project scopes</p>
+          <h1 className="text-xl text-gray-900 font-medium">
+            Contractor Hub: Welcome back, {currentUser?.firstname}.
+          </h1>
+          <p className="text-sm text-gray-500">Operational overview for your assigned project scopes</p>
         </div>
-        <div className="flex gap-2">
-          <div className={`px-5 py-2 ${isError ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'} rounded-2xl border flex items-center gap-2 transition-colors`}>
-            <span className={`w-2 h-2 rounded-full ${isError ? 'bg-red-600' : 'bg-blue-600 animate-pulse'}`}></span>
-            <span className={`text-[10px] font-black ${isError ? 'text-red-700' : 'text-blue-700'} uppercase tracking-widest leading-none`}>
-              {isError ? 'Sync Error' : 'Live Sync'}
-            </span>
-          </div>
+        <div className="flex gap-3">
+          <button 
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-[#3E92D1] hover:bg-[#2E82C1] gap-2 text-white shadow-sm transition-colors"
+            onClick={() => navigate('/contractor/projects')}
+          >
+            My Projects
+            <ArrowUpRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
-      
-      <DashboardGrid>
-        {/* Overdue Tasks - High Priority */}
-        <Card className="border-none shadow-xl shadow-red-200/50 bg-gradient-to-br from-red-50 to-white rounded-[2rem] overflow-hidden group relative">
-          <div className="absolute top-0 left-0 w-2 h-full bg-red-500 group-hover:w-3 transition-all"></div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-              Overdue Tasks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-5xl font-black text-red-600">{contractorData.overdueTasks}</div>
-            <p className="text-[10px] font-bold text-red-500 mt-2 uppercase tracking-tight flex items-center gap-1">
-              ⚠ Critical Attention Required
-            </p>
-          </CardContent>
-        </Card>
 
-        {/* Pending tasks */}
-        <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500 group-hover:w-2 transition-all"></div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Pending Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-5xl font-black text-slate-900">{contractorData.pendingTasks}</div>
-            <p className="text-[10px] font-bold text-amber-600 mt-2 uppercase tracking-tight flex items-center gap-1">
-               Requires Immediate Attention
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Active Scope */}
-        <Card className="border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 group-hover:w-2 transition-all"></div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Active Pipeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-5xl font-black text-slate-900">{contractorData.assignedTasks}</div>
-            <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tight">Total Assigned Items</p>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="border-none shadow-xl shadow-slate-200/50 bg-gradient-to-br from-blue-600 to-blue-700 rounded-[2rem] overflow-hidden p-2 text-white relative">
-          <CardHeader>
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-white">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <button className="w-full p-4 bg-white/10 hover:bg-white/20 rounded-2xl border border-white/20 hover:border-white/40 transition-all group/btn flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📸</div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold text-white uppercase tracking-tight">Upload Site Photos</p>
-                    <p className="text-[10px] text-white/70 italic">Document progress</p>
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+          return (
+            <Card key={metric.label} className="border-none shadow-sm hover:shadow-md transition-all duration-200">
+              <CardHeader className="pb-3 px-6 pt-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-500">
+                    {metric.label}
+                  </CardTitle>
+                  <div className={`p-2 rounded-lg ${metric.color}`}>
+                    <Icon className={`w-4 h-4 ${metric.iconColor}`} />
                   </div>
                 </div>
-                <span className="text-white/50 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all">→</span>
-              </button>
-              <button className="w-full p-4 bg-white/10 hover:bg-white/20 rounded-2xl border border-white/20 hover:border-white/40 transition-all group/btn flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">📄</div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold text-white uppercase tracking-tight">Upload Documents</p>
-                    <p className="text-[10px] text-white/70 italic">Add reports & files</p>
-                  </div>
-                </div>
-                <span className="text-white/50 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all">→</span>
-              </button>
-              <button className="w-full p-4 bg-white/10 hover:bg-white/20 rounded-2xl border border-white/20 hover:border-white/40 transition-all group/btn flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg">🎯</div>
-                  <div className="text-left">
-                    <p className="text-xs font-bold text-white uppercase tracking-tight">Update Milestones</p>
-                    <p className="text-[10px] text-white/70 italic">Track project phases</p>
-                  </div>
-                </div>
-                <span className="text-white/50 group-hover/btn:text-white group-hover/btn:translate-x-1 transition-all">→</span>
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                <div className="text-3xl font-bold text-gray-900">{metric.value}</div>
+                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                  {metric.description}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-        {/* Notifications / Communication Summary */}
-        <Card className="md:col-span-2 border-none shadow-xl shadow-slate-200/50 bg-slate-900 rounded-[2rem] overflow-hidden p-2 text-white relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <FaProjectDiagram size={120} />
-          </div>
-          <CardHeader>
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400">Client Communication & Alerts</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Schedule */}
+        <Card className="lg:col-span-2 border-none shadow-sm h-full">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg font-bold text-gray-900">Today's Operating Schedule</CardTitle>
+            <Calendar className="w-4 h-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex justify-between items-center hover:bg-white/10 transition-all cursor-pointer group">
-                <div>
-                  <p className="text-xs font-bold text-white uppercase tracking-tight">Foundation Milestone Approval</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 italic">Client feedback received 2h ago</p>
-                </div>
-                <span className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center text-[10px] font-black border border-amber-500/50 group-hover:scale-110 transition-transform">!</span>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex justify-between items-center hover:bg-white/10 transition-all cursor-pointer group">
-                <div>
-                  <p className="text-xs font-bold text-white uppercase tracking-tight">Site Photo Request: Zone B</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 italic">Admin request for documentation</p>
-                </div>
-                <span className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-[10px] font-black border border-blue-500/50 group-hover:scale-110 transition-transform">i</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Inspections Summary (Simplified) */}
-        <Card className="md:col-span-2 border-none shadow-xl shadow-slate-200/50 bg-white rounded-[2rem] overflow-hidden group">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-900">Today's Operating Schedule</CardTitle>
-              <span className="text-[10px] font-black text-slate-400 uppercase italic">January 26, 2026</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(contractorData.todayInspections || []).map((inspection) => (
-                <div key={inspection.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-blue-500/5 transition-all group/item">
+                <div key={inspection.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:border-[#3E92D1]/20 hover:shadow-sm transition-all group cursor-pointer">
                   <div className="flex justify-between items-start mb-2">
-                    <p className="text-sm font-black text-slate-900 group-hover/item:text-blue-600 transition-colors uppercase tracking-tight">{inspection.title}</p>
-                    <span className="text-[10px] font-bold text-slate-400 underline decoration-blue-500/30 decoration-2 underline-offset-4 tracking-tighter">{inspection.time}</span>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-[#3E92D1] transition-colors">{inspection.title}</p>
+                    <span className="text-[10px] font-bold text-[#3E92D1] bg-[#3E92D1]/5 px-2 py-1 rounded-md">{inspection.time}</span>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-widest">
-                    <span className="w-1 h-1 rounded-full bg-slate-300"></span> Site Location: {inspection.location}
+                  <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    Site: {inspection.location}
                   </p>
                 </div>
               ))}
             </div>
+            {(!contractorData.todayInspections || contractorData.todayInspections.length === 0) && (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-400 italic">No inspections scheduled for today.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
-      </DashboardGrid>
+
+        {/* Quick Actions */}
+        <Card className="border-none shadow-sm h-full">
+          <CardHeader>
+            <CardTitle className="text-lg font-bold text-gray-900">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+              <ImageIcon className="w-4 h-4 mr-2" />
+              Upload Site Photos
+            </button>
+            <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+              <FileText className="w-4 h-4 mr-2" />
+              Submit Day Report
+            </button>
+            <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Update Project Status
+            </button>
+            
+            <div className="pt-4 mt-4 border-t border-gray-100">
+              <div className="bg-blue-50/50 rounded-lg p-4">
+                <p className="text-[10px] font-bold text-[#3E92D1] uppercase tracking-wider mb-1">Status</p>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isError ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+                  <span className="text-xs font-medium text-gray-600">{isError ? 'Sync Error' : 'Live Sync Active'}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Communication Summary */}
+        <Card className="md:col-span-3 border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-bold text-gray-900">Communication & Alerts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all cursor-pointer group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Foundation Milestone Approval</p>
+                    <p className="text-xs text-gray-500">Client feedback received • 2h ago</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all cursor-pointer group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#3E92D1]">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Site Photo Request: Zone B</p>
+                    <p className="text-xs text-gray-500">Admin request for documentation</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

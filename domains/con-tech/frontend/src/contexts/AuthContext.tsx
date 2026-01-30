@@ -238,9 +238,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
-    // Store current location before clearing storage
-    const currentPath = window.location.pathname + window.location.search + window.location.hash;
-    
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     setUser(null);
@@ -248,8 +245,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // Dispatch a custom event to notify other tabs about logout
     window.dispatchEvent(new CustomEvent('userLoggedOut'));
     
-    // Redirect to login with return URL
-    window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
+    // Redirect to login
+    window.location.href = `/login`;
   };
 
   const updateUser = (u: CurrentUser) => {

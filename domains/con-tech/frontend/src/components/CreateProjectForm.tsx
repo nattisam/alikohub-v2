@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useCreateProject } from "../queries/projects";
+import { useUsersByRole } from "../queries/users";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import { Loader2, Calendar, FileText, User, Layout, Save } from "lucide-react";
+import Swal from "sweetalert2";
 
 const CreateProjectForm = () => {
   const [projectInfo, setProjectInfo] = useState({
@@ -11,6 +15,7 @@ const CreateProjectForm = () => {
   });
   
   const createProjectMutation = useCreateProject();
+  const { data: clients, isLoading: loadingClients } = useUsersByRole("CLIENT");
 
   const handleCreateProject = async(e: FormEvent) => {
     e.preventDefault()
@@ -30,7 +35,12 @@ const CreateProjectForm = () => {
     createProjectMutation.mutate(formattedProjectData, {
       onSuccess: (createdProject) => {
         if(createdProject) {
-          alert("Project Created Successfully");
+          Swal.fire({
+            title: "Success!",
+            text: "Project Created Successfully",
+            icon: "success",
+            confirmButtonColor: "#3E92D1",
+          });
           setProjectInfo({
             name: "",
             description: "",
@@ -42,7 +52,12 @@ const CreateProjectForm = () => {
       },
       onError: (error) => {
         console.error("Error creating project:", error);
-        alert("Failed to create project. Please check permissions.");
+        Swal.fire({
+          title: "Error!",
+          text: "Failed to create project. Please check permissions.",
+          icon: "error",
+          confirmButtonColor: "#3E92D1",
+        });
       }
     });
   }
@@ -57,98 +72,140 @@ const CreateProjectForm = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Create New Project</h2>
-          <p className="text-slate-500 text-xs mt-1 font-medium font-serif italic">Assign internal staff and partners to a project scope</p>
-        </div>
-        <div className="text-sm font-bold text-slate-400 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 italic">
-          Project Creation
+          <h1 className="text-2xl font-bold text-gray-900">Create New Project</h1>
+          <p className="text-sm text-gray-500 mt-1">Assign internal staff and partners to a project scope</p>
         </div>
       </div>
 
-      <form onSubmit={handleCreateProject} className="space-y-6">
-        <div className="border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden p-6">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-blue-500"></div>
-          <div className="mb-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Project Information</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Project Name</label>
-              <input
-                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 rounded-2xl py-4 px-6 transition-all outline-none font-bold text-slate-900"
-                type="text"
-                placeholder="e.g. Luxury Villa Construction"
-                required
-                value={projectInfo.name}
-                onChange={(e) => handleFormValueChange(e, "name")}
-              />
+      <form onSubmit={handleCreateProject} className="space-y-8">
+        <Card className="border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg font-bold text-gray-900">
+              <Layout className="w-5 h-5 text-[#3E92D1]" />
+              Project Details
+            </CardTitle>
+            <CardDescription>
+              Enter the core information for the new construction project.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Project Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <input
+                    className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm"
+                    type="text"
+                    placeholder="e.g. Luxury Villa Construction"
+                    required
+                    value={projectInfo.name}
+                    onChange={(e) => handleFormValueChange(e, "name")}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Primary Client</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <select
+                    className="block w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg text-sm leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm appearance-none"
+                    required
+                    value={projectInfo.clientId}
+                    onChange={(e) => handleFormValueChange(e, "clientId")}
+                    disabled={loadingClients}
+                  >
+                    <option value="">Select a Client</option>
+                    {clients?.map((client: any) => (
+                      <option key={client.id || client.firebaseId} value={client.id || client.firebaseId}>
+                        {client.firstname} {client.lastname}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                    {loadingClients ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Start Date</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <input
+                    type="date"
+                    className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm"
+                    required
+                    value={projectInfo.startDate}
+                    onChange={(e) => handleFormValueChange(e, "startDate")}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Target End Date</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Calendar className="h-4 w-4" />
+                  </div>
+                  <input
+                    type="date"
+                    className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm"
+                    required
+                    value={projectInfo.endDate}
+                    onChange={(e) => handleFormValueChange(e, "endDate")}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Primary Client ID</label>
-              <input
-                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 rounded-2xl py-4 px-6 transition-all outline-none font-bold text-slate-900"
-                type="text"
-                placeholder="Client ID (e.g. 2)"
+              <label className="text-sm font-medium text-gray-700 block">Description</label>
+              <textarea
+                value={projectInfo.description}
+                onChange={(e) => handleFormValueChange(e, "description")}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-lg text-sm leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm min-h-[120px]"
+                rows={4}
+                placeholder="e.g. Building a 5-bedroom luxury villa in Lekki, including swimming pool and landscaping."
                 required
-                value={projectInfo.clientId}
-                onChange={(e) => handleFormValueChange(e, "clientId")}
               />
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Start Date</label>
-              <input
-                type="date"
-                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 rounded-2xl py-4 px-6 transition-all outline-none font-bold text-slate-900"
-                required
-                value={projectInfo.startDate}
-                onChange={(e) => handleFormValueChange(e, "startDate")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Target End Date</label>
-              <input
-                type="date"
-                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 rounded-2xl py-4 px-6 transition-all outline-none font-bold text-slate-900"
-                required
-                value={projectInfo.endDate}
-                onChange={(e) => handleFormValueChange(e, "endDate")}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-none shadow-lg shadow-slate-200/50 bg-white rounded-3xl overflow-hidden p-6">
-          <div className="mb-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Project Description</h3>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Description</label>
-            <textarea
-              value={projectInfo.description}
-              onChange={(e) => handleFormValueChange(e, "description")}
-              className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 rounded-2xl py-4 px-6 transition-all outline-none font-bold text-slate-900"
-              rows={6}
-              placeholder="e.g. Building a 5-bedroom luxury villa in Lekki"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-4">
           <button 
             type="submit" 
             disabled={createProjectMutation.isPending}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-black px-8 py-3.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 uppercase tracking-tight"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-11 px-8 py-2 bg-[#3E92D1] hover:bg-[#2E82C1] text-white shadow-sm min-w-[160px]"
           >
-            {createProjectMutation.isPending ? 'Creating...' : 'Create Project'}
+            {createProjectMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Create Project
+              </>
+            )}
           </button>
         </div>
       </form>

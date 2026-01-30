@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useUser } from "../hooks";
 
 import AccessDenied from "./common/AccessDenied";
@@ -14,7 +14,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole 
 }) => {
   const { currentUser, isLoading, isAuthenticated } = useUser();
-  const location = useLocation();
 
   // If we're still loading, show a loading indicator
   if (isLoading) {
@@ -33,12 +32,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
   const userRole = currentUser?.role;
-  const hasSelectedRole = currentUser?.hasSelectedRole;
 
   // Admin access via globalRole or normalized role
   const isAdmin = isGlobalAdmin || userRole === 'ADMIN';

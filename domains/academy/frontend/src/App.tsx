@@ -252,6 +252,7 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="teacher-applications" element={<TeacherApplicationsDashboard />} />
           <Route path="courses" element={<CoursesManagementPage />} />
+          <Route path="*" element={<NotFoundState />} />
         </Route>
 
         {/* Fallback */}

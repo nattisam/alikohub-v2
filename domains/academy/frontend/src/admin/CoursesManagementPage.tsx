@@ -254,15 +254,12 @@ const CoursesManagementPage = () => {
   }
   
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Manage Courses</h2>
       
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Course List</h3>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-            Add New Course
-          </button>
         </div>
         
         <div className="overflow-x-auto">

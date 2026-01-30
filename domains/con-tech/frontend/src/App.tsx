@@ -28,6 +28,7 @@ import PMDashboard from "./pages/PMDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
+import ClientContactPage from "./pages/ClientContactPage";
 
 
 
@@ -49,46 +50,6 @@ function DefaultLayout() {
     </>
   );
 }
-
-
-/*
-function RoleSelectionWrapper() {
-  const { currentUser } = useUser();
-  const navigate = useNavigate();
-  
-  const handleCloseModal = () => {
-    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
-    // Close modal and redirect to appropriate dashboard based on role
-    if (isGlobalAdmin || currentUser?.role === "ADMIN") {
-      navigate("/admin");
-    } else if (currentUser?.role === "CONTRACTOR") {
-      navigate("/contractor");
-    } else if (currentUser?.role === "CLIENT") {
-      navigate("/client");
-    } else {
-      navigate("/");
-    }
-  };
-  
-  // If user has selected a role, redirect away from role selection
-  if (currentUser?.hasSelectedRole || currentUser?.globalRole === 'ADMIN') {
-    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
-    const destination = isGlobalAdmin || currentUser?.role === "ADMIN" 
-      ? "/admin" 
-      : currentUser?.role === "CONTRACTOR" 
-        ? "/contractor" 
-        : currentUser?.role === "CLIENT" 
-          ? "/client" 
-          : "/";
-          
-    return <Navigate to={destination} replace />;
-  }
-  
-  // If user hasn't selected a role, show the role selection modal
-  // return <RoleSelectionModal onClose={handleCloseModal} />;
-  return <Navigate to="/" replace />;
-}
-*/
 
 function LoginLayout() {
   return (
@@ -123,12 +84,7 @@ export default function App() {
       element: <LoginLayout />,
       children: [{ index: true, element: <CSignupForm /> }],
     },
-/*
-    {
-      path: "/role-selection",
-      element: <RoleSelectionWrapper />,
-    },
-*/
+
     // Admin Dashboard Routes
     {
       path: "/admin",
@@ -175,6 +131,7 @@ export default function App() {
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
         { path: "profile", element: <ProfilePage /> },
+        { path: "contact-guidance", element: <ClientContactPage /> },
       ]
     },
     // Legacy Dashboard Redirect (for backward compatibility during migration)

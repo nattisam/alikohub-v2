@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProject } from "../queries/projects";
 import { useUser } from "../hooks";
+import { contechAPI } from "../services/api";
 import {
   ArrowLeft,
   MapPin,
@@ -9,14 +10,30 @@ import {
   Calendar,
   CheckCircle,
   CircleDot,
+  Circle,
+  Loader2,
 } from "lucide-react";
 
+interface Milestone {
+  id: number;
+  projectId: number;
+  title: string;
+  description: string | null;
+  status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED";
+  dueDate: string | null;
+  progress: number;
+  isVisibleToClient: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { currentUser } = useUser();
   const { data: project, isLoading, error } = useProject(Number(projectId));
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [milestonesLoading, setMilestonesLoading] = useState(true);
 
   useEffect(() => {
     if (!currentUser) {
@@ -25,10 +42,78 @@ const ProjectDetails = () => {
     }
   }, [currentUser, navigate]);
 
+  useEffect(() => {
+    const fetchMilestones = async () => {
+      if (!projectId) return;
+      
+      try {
+        setMilestonesLoading(true);
+        const data = await contechAPI.getMilestones(Number(projectId));
+        setMilestones(data || []);
+      } catch (err) {
+        console.error("Error fetching milestones:", err);
+        setMilestones([]);
+      } finally {
+        setMilestonesLoading(false);
+      }
+    };
+
+    fetchMilestones();
+  }, [projectId]);
+
+  const getMilestoneIcon = (status: string, progress: number) => {
+    if (status === "APPROVED" || progress === 100) {
+      return <CheckCircle size={18} className="absolute -left-[9px] top-1 text-green-500 bg-white" />;
+    } else if (status === "IN_REVIEW" || progress > 0) {
+      return <CircleDot size={18} className="absolute -left-[9px] top-1 text-[#3E92D1] bg-white" />;
+    } else {
+      return <Circle size={18} className="absolute -left-[9px] top-1 text-gray-300 bg-white" />;
+    }
+  };
+
+  const getMilestoneTextColor = (status: string, progress: number) => {
+    if (status === "APPROVED" || progress === 100) {
+      return "text-green-600";
+    } else if (status === "IN_REVIEW" || progress > 0) {
+      return "text-[#3E92D1]";
+    } else {
+      return "text-gray-900";
+    }
+  };
+
+  const getStatusBadge = (status: string, progress: number) => {
+    if (status === "APPROVED" || progress === 100) {
+      return (
+        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+          Completed
+        </span>
+      );
+    } else if (status === "IN_REVIEW") {
+      return (
+        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+          In Review
+        </span>
+      );
+    } else if (progress > 0) {
+      return (
+        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+          In Progress ({progress}%)
+        </span>
+      );
+    } else if (status === "REJECTED") {
+      return (
+        <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+          Rejected
+        </span>
+      );
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3E92D1]"></div>
       </div>
     );
   }
@@ -101,27 +186,14 @@ const ProjectDetails = () => {
           <div className="flex justify-between text-sm text-gray-500 mb-1">
             <span>Progress</span>
             <span>
-              {project.taskStats?.completed
-                ? Math.round(
-                    (project.taskStats.completed /
-                      project.taskStats.total) *
-                      100
-                  )
-                : 0}
-              %
+              {project.progress || 0}%
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-blue-600 h-2 rounded-full"
+              className="bg-[#3E92D1] h-2 rounded-full"
               style={{
-                width: `${
-                  project.taskStats?.completed
-                    ? (project.taskStats.completed /
-                        project.taskStats.total) *
-                      100
-                    : 0
-                }%`,
+                width: `${project.progress || 0}%`,
               }}
             />
           </div>
@@ -131,7 +203,7 @@ const ProjectDetails = () => {
       {/* Tabs */}
       <div className="mt-6 border-b border-gray-200">
         <nav className="flex gap-6 text-sm font-medium">
-          <button className="pb-3 border-b-2 border-blue-600 text-blue-600">
+          <button className="pb-3 border-b-2 border-[#3E92D1] text-[#3E92D1]">
             Timeline
           </button>
           <button className="pb-3 text-gray-500 hover:text-gray-700">
@@ -152,56 +224,40 @@ const ProjectDetails = () => {
           Project Milestones
         </h2>
 
-        <div className="relative border-l border-gray-200 ml-4 space-y-8">
-          {/* Completed */}
-          <div className="relative pl-8">
-            <CheckCircle
-              size={18}
-              className="absolute -left-[9px] top-1 text-green-500 bg-white"
-            />
-            <h3 className="font-medium text-gray-900">
-              Foundation Complete
-            </h3>
-            <p className="text-sm text-gray-500">Due: 14 Aug 2024</p>
+        {milestonesLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#3E92D1]" />
           </div>
-
-          <div className="relative pl-8">
-            <CheckCircle
-              size={18}
-              className="absolute -left-[9px] top-1 text-green-500 bg-white"
-            />
-            <h3 className="font-medium text-gray-900">
-              Structure (Floors 1–5)
-            </h3>
-            <p className="text-sm text-gray-500">Due: 29 Oct 2024</p>
+        ) : milestones.length > 0 ? (
+          <div className="relative border-l border-gray-200 ml-4 space-y-8">
+            {milestones.map((milestone) => (
+              <div key={milestone.id} className="relative pl-8">
+                {getMilestoneIcon(milestone.status, milestone.progress)}
+                <h3 className={`font-medium ${getMilestoneTextColor(milestone.status, milestone.progress)}`}>
+                  {milestone.title}
+                </h3>
+                {milestone.description && (
+                  <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
+                )}
+                <p className="text-sm text-gray-500">
+                  {milestone.dueDate 
+                    ? `Due: ${new Date(milestone.dueDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}`
+                    : "No due date set"}
+                </p>
+                {getStatusBadge(milestone.status, milestone.progress)}
+              </div>
+            ))}
           </div>
-
-          <div className="relative pl-8">
-            <CheckCircle
-              size={18}
-              className="absolute -left-[9px] top-1 text-green-500 bg-white"
-            />
-            <h3 className="font-medium text-gray-900">
-              Structure (Floors 6–10)
-            </h3>
-            <p className="text-sm text-gray-500">Due: 30 Dec 2024</p>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <Circle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-sm">No milestones have been created for this project yet.</p>
           </div>
-
-          {/* In Progress */}
-          <div className="relative pl-8">
-            <CircleDot
-              size={18}
-              className="absolute -left-[9px] top-1 text-blue-600 bg-white"
-            />
-            <h3 className="font-medium text-blue-600">
-              Structure (Floors 11–15)
-            </h3>
-            <p className="text-sm text-gray-500">Due: 27 Feb 2025</p>
-            <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-              In Progress
-            </span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   </div>

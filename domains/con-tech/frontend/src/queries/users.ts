@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { authAPI } from "../services/api";
+import { authAPI, contechAPI } from "../services/api";
 import type { User } from "../components/types";
 
 export const useUserProfile = () => {
@@ -43,6 +43,16 @@ export const useCreateUserProfile = () => {
       queryClient.setQueryData(["userProfile"], newUser);
       // Invalidate other related queries if needed
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    },
+  });
+};
+
+export const useUsersByRole = (role: string) => {
+  return useQuery({
+    queryKey: ["users", role],
+    queryFn: async () => {
+      const response = await contechAPI.getUsersByRole(role, 1, 100);
+      return response.items || [];
     },
   });
 };

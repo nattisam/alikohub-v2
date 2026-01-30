@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Bell, UserCircle, ChevronDown, LayoutDashboard, User, LogOut } from 'lucide-react';
 import { useDashboard, useUser } from '../hooks';
-import logo from '../assets/AlikoLogo.svg';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
   notificationCount?: number;
@@ -48,15 +47,11 @@ const Navbar: React.FC<NavbarProps> = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-gray-200 bg-white/95 px-4 shadow-sm backdrop-blur md:px-6">
-      <Link to="/">
-        <img src={logo} alt="logo" className="h-8" />
-      </Link>
-
-      <div className="flex items-center gap-3">
+    <nav className="sticky top-0 z-20 flex h-[73px] items-center justify-end border-b border-gray-300 bg-[#FFFFFF] px-4 shadow-none md:px-8">
+      <div className="flex items-center gap-4">
         <button
           onClick={handleBellClick}
-          className="relative rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-blue-600"
+          className="relative rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#3E92D1]"
         >
           <Bell className="h-5 w-5" />
           {notifications.length > 0 && (

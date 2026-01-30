@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../hooks';
-import { Search, Users, Briefcase, CheckCircle, ChevronRight, UserPlus, Loader2, X, Shield, HardHat, Building2 } from 'lucide-react';
+import { Search, Users, Briefcase, CheckCircle, UserPlus, Loader2, X, Shield, HardHat, Building2 } from 'lucide-react';
 import { contechAPI } from '../services/api';
 
 const UserManagementPage = () => {
@@ -107,7 +107,7 @@ const UserManagementPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-blue-600" />
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#3E92D1]" />
           <p className="mt-4 text-sm font-medium text-gray-600">Loading Directory...</p>
         </div>
       </div>
@@ -146,7 +146,7 @@ const UserManagementPage = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#3E92D1] focus:ring-4 focus:ring-[#3E92D1]/10 transition-all font-medium"
                     placeholder="John"
                     required
                   />
@@ -203,10 +203,10 @@ const UserManagementPage = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3 mb-2 relative z-10">
-                      <div className={`p-2 rounded-lg ${formData.role === 'CONTRACTOR' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                      <div className={`p-2 rounded-lg ${formData.role === 'CONTRACTOR' ? 'bg-[#3E92D1] text-white' : 'bg-gray-100 text-gray-500'}`}>
                         <HardHat className="w-4 h-4" />
                       </div>
-                      <span className={`font-bold ${formData.role === 'CONTRACTOR' ? 'text-blue-900' : 'text-gray-700'}`}>Contractor</span>
+                      <span className={`font-bold ${formData.role === 'CONTRACTOR' ? 'text-[#3E92D1]' : 'text-gray-700'}`}>Contractor</span>
                     </div>
                   </button>
 
@@ -282,7 +282,7 @@ const UserManagementPage = () => {
             onClick={() => setActiveTab('contractors')}
             className={`py-3 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'contractors'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-[#3E92D1] text-[#3E92D1]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -295,7 +295,7 @@ const UserManagementPage = () => {
             onClick={() => setActiveTab('clients')}
             className={`py-3 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'clients'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-[#3E92D1] text-[#3E92D1]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
@@ -316,71 +316,73 @@ const UserManagementPage = () => {
             placeholder="Search by name, email, or role..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm text-gray-900 shadow-sm outline-none transition-all placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm text-gray-900 shadow-sm outline-none transition-all placeholder:text-gray-400 focus:border-[#3E92D1] focus:ring-2 focus:ring-[#3E92D1]/20"
           />
         </div>
       </div>
 
       {/* Users Grid */}
       {filteredUsers.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
-            >
-              {/* Role Badge */}
-              <div className="absolute right-4 top-4">
-                <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    user.role === 'CONTRACTOR'
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'bg-emerald-50 text-emerald-700'
-                  }`}
-                >
-                  {user.role}
-                </span>
-              </div>
-
-              {/* User Info */}
-              <div className="flex items-start gap-4">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${
-                    user.role === 'CONTRACTOR'
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600'
-                      : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-                  }`}
-                >
-                  {user.firstname?.[0]}{user.lastname?.[0]}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold text-gray-900">
-                    {user.firstname} {user.lastname}
-                  </h3>
-                  <p className="truncate text-sm text-gray-500">{user.email}</p>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="mt-4 flex items-center gap-4 border-t border-gray-100 pt-4">
-                <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                  <Briefcase className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium">{user.projects?.length || 0}</span>
-                  <span className="text-gray-400">Projects</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                  <CheckCircle className="h-4 w-4 text-emerald-500" />
-                  <span className="font-medium text-emerald-600">{user.status}</span>
-                </div>
-              </div>
-
-              {/* Action */}
-              <button className="mt-4 flex w-full items-center justify-center gap-1 rounded-lg bg-gray-50 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">
-                User Details
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-left text-sm text-gray-500">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-6 py-4 font-semibold">User</th>
+                <th className="px-6 py-4 font-semibold">Email</th>
+                <th className="px-6 py-4 font-semibold">Role</th>
+                <th className="px-6 py-4 font-semibold">Projects</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 border-t border-gray-100">
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="group hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                          user.role === 'CONTRACTOR'
+                            ? 'bg-gradient-to-br from-[#3E92D1] to-[#2E82C1]'
+                            : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                        }`}
+                      >
+                        {user.firstname?.[0]}{user.lastname?.[0]}
+                      </div>
+                      <span className="font-semibold text-gray-900">
+                        {user.firstname} {user.lastname}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 max-w-[200px] truncate" title={user.email}>
+                    {user.email}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        user.role === 'CONTRACTOR'
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5 text-gray-600">
+                      <Briefcase className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium">{user.projects?.length || 0}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                     <div className="flex items-center gap-1.5">
+                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                      <span className="font-medium text-emerald-700">Active</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white py-16">

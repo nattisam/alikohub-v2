@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import AccessDenied from '../states/AccessDenied';
 
@@ -13,7 +13,6 @@ const AppRoute: React.FC<AppRouteProps> = ({
   requiredRole 
 }) => {
   const { user: currentUser, isLoading, isAuthenticated } = useAuth();
-  const location = useLocation();
 
   // If we're still loading, show a loading indicator
   if (isLoading) {
@@ -29,7 +28,7 @@ const AppRoute: React.FC<AppRouteProps> = ({
 
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+    return <Navigate to="/auth/login" replace />;
   }
 
   // If user is an admin, redirect them to admin dashboard - they should not access app routes
@@ -39,7 +38,7 @@ const AppRoute: React.FC<AppRouteProps> = ({
 
   // If user hasn't selected a role yet, redirect to role selection page
   if (currentUser && !(currentUser.hasSelectedRole || currentUser.academyUser?.hasSelectedRole)) {
-    return <Navigate to="/role" state={{ from: location }} replace />;
+    return <Navigate to="/role" replace />;
   }
 
   // Check if user has pending or rejected instructor application but is trying to access instructor-only resources

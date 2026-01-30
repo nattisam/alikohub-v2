@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../hooks";
 import { FiLoader } from "react-icons/fi";
 import type { LoginCredentials } from "./types";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 const LoginForm = () => {
   const { login, isLoading } = useUser();
+  const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState<LoginCredentials>({
     email: "",
     password: "",
@@ -24,11 +26,27 @@ const LoginForm = () => {
     return errors.length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessages([]);
     if (validateUser(userInfo)) {
-      login(userInfo);
+      try {
+        const user = await login(userInfo);
+        if (user) {
+          // Smooth redirect based on role
+          if (user.role === 'ADMIN') {
+            navigate('/admin');
+          } else if (user.role === 'CONTRACTOR') {
+            navigate('/contractor');
+          } else if (user.role === 'CLIENT') {
+            navigate('/client');
+          } else {
+            navigate('/');
+          }
+        }
+      } catch (err) {
+        console.error("Login failed:", err);
+      }
     }
   };
 

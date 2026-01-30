@@ -248,8 +248,21 @@ export const contechAPI = {
     return response.data;
   },
 
+
   deleteComment: async (id: string) => {
     const response = await apiClient.delete(`/contech/comments/${id}`);
+    return response.data;
+  },
+
+  // Milestones endpoints
+  getMilestones: async (projectId?: number) => {
+    const url = projectId ? `/milestones/project/${projectId}` : '/milestones';
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getMilestone: async (id: number) => {
+    const response = await apiClient.get(`/milestones/${id}`);
     return response.data;
   },
 

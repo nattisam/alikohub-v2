@@ -1,32 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useUser } from "../hooks";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import Footer from "./Footer";
 
 function DashboardLayout() {
   const { currentUser, isLoading } = useUser();
-  const [showSidebar, setShowSidebar] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 780) {
-        setShowSidebar(false);
-      } else {
-        setShowSidebar(true);
-      }
-    };
-    
-    // Initial check
-    handleResize();
-    
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    // Initial check (can be expanded later if mobile sidebar is needed)
   }, []);
 
   if (isLoading) {
@@ -46,18 +29,17 @@ function DashboardLayout() {
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="flex flex-row min-h-[calc(100vh-120px)]">
-        {showSidebar && <Sidebar />}
-        <main className={`${showSidebar ? "ml-0 md:ml-16" : ""} flex-1 p-6 transition-all duration-300`}>
-          <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen flex bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Navbar />
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto h-full">
             <Outlet />
           </div>
         </main>
       </div>
-      <Footer />
-    </>
+    </div>
   );
 }
 
