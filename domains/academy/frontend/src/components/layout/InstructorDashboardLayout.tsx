@@ -1,80 +1,106 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import {
+  LayoutDashboard,
+  BookOpen,
+  PlusCircle,
+  BarChart3,
+  Menu,
+  X
+} from "lucide-react";
 
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ElementType;
+}
 
 const InstructorDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { logout } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-
-
-  // Navigation items
-  const navItems = [
-    { path: "/instructor", label: "Dashboard", icon: "📊" },
-    { path: "/instructor/mycourses", label: "My Courses", icon: "📚" },
-    { path: "/instructor/create-course", label: "Create Course", icon: "➕" },
-    { path: "/instructor/analytics", label: "Analytics", icon: "📈" },
+  const navItems: NavItem[] = [
+    { path: "/instructor", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/instructor/mycourses", label: "My Courses", icon: BookOpen },
+    { path: "/instructor/create-course", label: "Create Course", icon: PlusCircle },
+    { path: "/instructor/analytics", label: "Analytics", icon: BarChart3 },
   ];
 
+  const isActive = (path: string) => {
+    if (path === "/instructor") {
+      return location.pathname === "/instructor";
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="flex bg-gray-50 min-h-screen">
+      {/* Mobile Toggle Button */}
+      <button
+        className="lg:hidden fixed bottom-6 right-6 z-[60] p-4 rounded-full bg-[#F47E28] text-white shadow-2xl hover:bg-[#d96a1a] transition-all transform active:scale-95"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[45] lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r-gray-700 hidden lg:flex flex-col">
-        <div className="px-6 py-5 font-bold text-xl">Instructor Hub</div>
-        <nav className="flex-1 px-4 space-y-2 text-sm">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`block px-4 py-2 rounded-lg transition-colors ${
-                location.pathname === item.path
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <span className="mr-2">{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="px-4 py-4 text-gray-500 text-sm border-t-gray-50">
-          <button className="w-full text-left hover:text-gray-700">Settings</button>
-          <button 
-            className="w-full text-left mt-2 hover:text-gray-700"
-            onClick={() => {
-              // Use the logout function from auth context
-              logout();
-            }}
-          >
-            Logout
-          </button>
+      <aside
+        className={`fixed lg:sticky top-0 lg:top-16 left-0 z-50 lg:z-10 h-screen lg:h-[calc(100vh-64px)] w-64 bg-[#2e3b4d] border-r border-white/10 transition-all duration-300 ease-in-out flex flex-col
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+      >
+        {/* Sidebar Navigation Header (Mobile only) */}
+        <div className="lg:hidden px-6 py-6 bg-[#2e3b4d] border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#F47E28] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">IH</span>
+            </div>
+            <span className="font-bold text-white text-lg">Instructor Hub</span>
+          </div>
         </div>
+
+        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+           <p className="px-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-4 lg:hidden">Management</p>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group
+                  ${
+                    active
+                      ? "bg-[#3E92D1] text-white shadow-lg shadow-blue-500/20"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }
+                `}
+              >
+                <Icon size={18} className={active ? "text-white" : "text-white/30 group-hover:text-white/60"} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </aside>
 
-      {/* Mobile Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50">
-        <div className="grid grid-cols-5 gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center justify-center py-2 text-xs ${
-                location.pathname === item.path
-                  ? "text-blue-600"
-                  : "text-gray-500"
-              }`}
-            >
-              <span className="text-lg mb-1">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-1 pb-16 lg:pb-0">
-        {children}
+      {/* Main Content Area */}
+      <main className="flex-1 min-w-0 bg-gray-50 p-4 md:p-8">
+          <div className="max-w-7xl mx-auto h-full">
+            {children}
+          </div>
       </main>
     </div>
   );

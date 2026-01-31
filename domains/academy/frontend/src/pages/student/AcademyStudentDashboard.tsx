@@ -1,13 +1,24 @@
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
-import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext"; // Restore useAuth
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
-import type { Course } from "../../components/common/types.d.tsx"; // Ensure this matches usage or update usage
+import type { Course } from "../../components/common/types.d.tsx";
+import { 
+  BookOpen, 
+  Clock, 
+  Trophy, 
+  ArrowRight, 
+  BarChart2, 
+  Plus,
+  CheckCircle,
+  Layout,
+  X
+} from "lucide-react";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
-import { useNavigate } from "react-router-dom";
+import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
+import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import ErrorState from "../../components/states/ErrorState";
 import EmptyState from "../../components/states/EmptyState";
 
@@ -15,7 +26,6 @@ const AcademyStudentDashboard = () => {
   const { user: currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  // State definitions (Moved to top to avoid conditional hook errors)
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,52 +33,31 @@ const AcademyStudentDashboard = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Auth and Role check effect
   useEffect(() => {
     if (isLoading) return;
-    
     if (!currentUser) {
       navigate('/auth/login');
       return;
     }
 
-    // Check if user has selected a role and it's appropriate for student dashboard
     const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-    
-    // Check if user wants to apply as instructor
     const pendingRole = currentUser.pendingRole;
     const instructorStatus = currentUser.roleStatus?.instructor;
 
-    // If user has active STUDENT role, allow access to student dashboard
-    if (activeRole === "STUDENT") {
-      return; // allowed
-    }
-    
-    // If user wants to apply as instructor, allow access to see the application modal, but only if not already a student
-    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
-      return; // allowed to see application modal
-    }
+    if (activeRole === "STUDENT") return;
+    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') return;
 
-    // Redirect to role selection if user hasn't selected a role yet
-    navigate("/role"); // Redirect to role selection page
+    navigate("/role");
   }, [currentUser, isLoading, navigate]);
 
   const fetchDashboardData = async () => {
     const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
       let retries = 0;
-
       while (retries <= maxRetries) {
         try {
-          // Fetch enrolled courses
           const coursesResponse = await enrollmentApi.getMyCourses();
-          
-          // Robustly handle different response formats and potential null values
           const responseData = coursesResponse?.data;
-          const rawItems = Array.isArray(responseData)
-            ? responseData
-            : Array.isArray((responseData as any)?.items)
-              ? (responseData as any).items
-              : [];
+          const rawItems = Array.isArray(responseData) ? responseData : (responseData as any)?.items || [];
 
           const detectedEnrollments: EnrollmentWithCourse[] = [];
           const detectedCourses: Course[] = [];
@@ -80,10 +69,7 @@ const AcademyStudentDashboard = () => {
               if (enrollmentItem.course) {
                 detectedCourses.push({
                   ...enrollmentItem.course,
-                  progress:
-                    (enrollmentItem as any).progress ??
-                    (enrollmentItem.course as any).progress ??
-                    0,
+                  progress: (enrollmentItem as any).progress ?? (enrollmentItem.course as any).progress ?? 0,
                 } as unknown as Course);
               }
             } else if (item && typeof item === "object") {
@@ -93,30 +79,22 @@ const AcademyStudentDashboard = () => {
 
           setEnrollments(detectedEnrollments);
           setCourses(detectedCourses);
-          setError(null); // Clear any previous error
-          return; // Success, exit the retry loop
+          setError(null);
+          return;
         } catch (error: any) {
-          // Check for status codes that shouldn't be treated as "fatal" dashboard errors
           const status = error.response?.status;
-          
           if (status === 401 || status === 404) {
-            // These mean either unauthorized (handled elsewhere) or nothing found
             setEnrollments([]);
             setCourses([]);
             setError(null);
             return;
           }
-
-          // Check if it's a 429 error (Too Many Requests)
           if (status === 429 && retries < maxRetries) {
-            // Exponential backoff: wait longer after each retry
-            await new Promise((resolve) =>
-              setTimeout(resolve, delay * Math.pow(2, retries))
-            );
+            await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(2, retries)));
             retries++;
           } else {
             setError(error as Error);
-            break; // Stop retrying on other errors or max retries reached
+            break;
           }
         }
       }
@@ -138,39 +116,28 @@ const AcademyStudentDashboard = () => {
     }
   }, [refreshKey, currentUser]);
 
-  // If user is loading, show loading indicator
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
+        <div className="animate-spin h-8 w-8 border-b-2 border-[#3E92D1] rounded-full" />
       </div>
     );
   }
 
-  // If user is not logged in, return null (redirection handled in effect)
-  if (!currentUser) {
-    return null;
-  }
+  if (!currentUser) return null;
 
-  // Logic to determine what to show
   const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
   const hasSelectedRole = (currentUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
-  
   const pendingRole = currentUser?.pendingRole;
   const instructorStatus = currentUser?.roleStatus?.instructor;
-  
-  // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
+
   if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
-    // Show role selection modal
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
-            <p className="text-gray-600 mb-6">
+      <div className="min-h-screen bg-gray-50 pt-24">
+        <div className="max-w-2xl mx-auto px-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Select Your Role</h2>
+            <p className="text-gray-500 mb-8">
               To access the student dashboard, please select the Student role.
             </p>
             <RoleSelectionModal onClose={() => navigate('/role')} />
@@ -180,10 +147,9 @@ const AcademyStudentDashboard = () => {
     );
   }
 
-  // Only show the instructor application modal if the user is not already a student
   if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="min-h-screen bg-gray-50 pt-24">
         <TeacherApplicationModal standalone={true} />
       </div>
     );
@@ -191,100 +157,152 @@ const AcademyStudentDashboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <ErrorState 
-          message="Failed to load dashboard data"
-          onRetry={() => setRefreshKey(prev => prev + 1)}
-        />
+      <div className="min-h-screen bg-gray-50 pt-24">
+        <ErrorState message="Failed to load dashboard" onRetry={() => setRefreshKey(prev => prev + 1)} />
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-20 px-4 w-full">
-        <div className="relative">
-          <div className="h-20 w-20 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-4 w-4 bg-blue-600 rounded-full animate-pulse"></div>
-          </div>
-        </div>
-        <p className="mt-6 text-slate-500 font-bold animate-pulse tracking-widest uppercase text-[10px]">Loading Dashboard...</p>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="animate-spin h-10 w-10 border-b-2 border-[#3E92D1] rounded-full mb-4" />
+        <p className="text-sm text-gray-400 font-medium">Synchronizing your dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 transition-all duration-500">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-slate-100 pt-16">
-        <div className="max-w-7xl mx-auto px-6 py-10 sm:px-8 lg:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Academy Dashboard</h1>
-            <p className="text-slate-500 mt-2 font-medium italic">Welcome back, {(currentUser?.firstName as string) || currentUser?.email}</p>
-          </div>
-          <div className="flex bg-blue-50/50 p-1.5 rounded-2xl border border-blue-100 mb-2">
-            <div className="px-4 py-2 bg-white rounded-xl shadow-sm text-xs font-black text-blue-600 uppercase tracking-wider">
-              Enrolled: {enrollments.length}
+      <header className="bg-white border-b border-gray-100 pt-16">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+              <p className="text-gray-500 mt-1">Welcome back, {currentUser?.firstName || currentUser?.email}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-2 bg-[#3E92D1]/5 text-[#3E92D1] px-4 py-2 rounded-lg text-sm font-semibold border border-[#3E92D1]/10">
+                 <BookOpen size={16} />
+                 {enrollments.length} Active Courses
+              </span>
+              <button 
+                onClick={() => navigate('/courses')}
+                className="bg-[#3E92D1] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#327aae] transition-colors flex items-center gap-2 shadow-sm"
+              >
+                 <Plus size={16} />
+                 Explore Courses
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-10 sm:px-8 lg:px-10">
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="p-2 bg-blue-50 text-[#3E92D1] rounded-md">
+                    <BarChart2 size={18} />
+                 </div>
+                 <span className="text-sm font-medium text-gray-500">Overall Progress</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">
+                 {courses.length > 0 ? Math.round(courses.reduce((acc, c) => acc + (c.progress || 0), 0) / courses.length) : 0}%
+              </p>
+           </div>
+           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="p-2 bg-green-50 text-green-600 rounded-md">
+                    <CheckCircle size={18} />
+                 </div>
+                 <span className="text-sm font-medium text-gray-500">Completed Courses</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">
+                 {courses.filter(c => (c.progress || 0) >= 100).length}
+              </p>
+           </div>
+           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="p-2 bg-purple-50 text-purple-600 rounded-md">
+                    <Clock size={18} />
+                 </div>
+                 <span className="text-sm font-medium text-gray-500">Hours Learned</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">12.5h</p>
+           </div>
+           <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="p-2 bg-orange-50 text-orange-600 rounded-md">
+                    <Trophy size={18} />
+                 </div>
+                 <span className="text-sm font-medium text-gray-500">Certificates Earned</span>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">2</p>
+           </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+           <h2 className="text-lg font-semibold text-gray-900">My Learning Path</h2>
+           <Link to="/courses" className="text-sm font-medium text-[#3E92D1] hover:underline flex items-center gap-1">
+              Browse More <ArrowRight size={14} />
+           </Link>
+        </div>
+
         {enrollments.length === 0 ? (
           <EmptyState 
-            title="No Enrollments Found"
-            message="You haven't enrolled in any courses yet. Start your learning journey today."
-            actionText="Find a Course"
+            title="Your journey hasn't started yet"
+            message="Discover our library of courses and choose one that fits your interests."
+            actionText="Browse Courses"
             onAction={() => navigate('/courses')}
-            icon={
-              <svg className="h-10 w-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            }
+            icon={<Layout className="h-10 w-10 text-gray-200" />}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
-              <div key={course.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 group relative flex flex-col">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
-                
-                <div className="p-8 flex-1 flex flex-col">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-slate-800 transition-colors group-hover:text-blue-600 line-clamp-1">{course.title}</h3>
-                    <p className="text-slate-500 text-sm mt-3 line-clamp-2 leading-relaxed h-10">{course.shortDescription}</p>
+              <div key={course.id} className="group bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col">
+                <div className="p-6 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start gap-4 mb-4">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-[#3E92D1] transition-colors line-clamp-2">
+                       {course.title}
+                    </h3>
                   </div>
                   
-                  <div className="mt-auto space-y-6">
+                  <p className="text-gray-500 text-sm mb-6 line-clamp-2 min-h-[2.5rem]">
+                     {course.shortDescription}
+                  </p>
+                  
+                  <div className="mt-auto space-y-4">
                     <div>
-                      <div className="flex justify-between items-end mb-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</span>
-                        <span className="text-[10px] font-black text-blue-600">{course.progress || 0}%</span>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Course Progress</span>
+                        <span className="text-[10px] font-bold text-[#3E92D1] bg-[#3E92D1]/5 px-2 py-0.5 rounded-full">{course.progress || 0}%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">
+                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                         <div 
-                          className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out" 
+                          className="bg-[#3E92D1] h-full rounded-full transition-all duration-1000 ease-out" 
                           style={{ width: `${course.progress || 0}%` }}
                         ></div>
                       </div>
                     </div>
                     
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <button 
                         onClick={() => setSelectedCourse(course)}
-                        className="flex-1 px-4 py-4 bg-slate-50 text-slate-700 rounded-2xl font-bold text-xs hover:bg-slate-100 transition-all active:scale-95 border border-slate-100"
+                        className="flex-1 px-3 py-2.5 bg-gray-50 text-gray-600 rounded-md font-semibold text-xs hover:bg-gray-100 transition-all border border-gray-100 flex items-center justify-center gap-2"
                       >
-                        Stats
+                         <BarChart2 size={12} />
+                         View Stats
                       </button>
                       <button 
-                        onClick={() => navigate(`/student-dashboard/mycourses/${course.id}/modules`)}
-                        className="flex-[2] px-4 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
+                        onClick={() => navigate(`/student-module/${course.id}/modules`)}
+                        className="flex-[1.5] px-3 py-2.5 bg-[#3E92D1] text-white rounded-md font-semibold text-xs hover:bg-[#327aae] transition-all flex items-center justify-center gap-2 shadow-sm"
                       >
-                        Resume 
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7-7 7M3 12h18" />
-                        </svg>
+                         Resume Learning
+                         <ArrowRight size={12} />
                       </button>
                     </div>
                   </div>
@@ -297,32 +315,35 @@ const AcademyStudentDashboard = () => {
 
       {/* Progress Detail Modal */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800">{selectedCourse.title} Progress</h2>
-                <button 
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-100">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+               <div>
+                  <h2 className="text-lg font-bold text-gray-900">{selectedCourse.title}</h2>
+                  <p className="text-xs text-gray-400 mt-1">Detailed progress analysis</p>
+               </div>
+               <button 
                   onClick={() => setSelectedCourse(null)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
+                  className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-50 rounded-full transition-all"
+               >
+                  <X size={20} />
+               </button>
+            </div>
 
-              <StudentProgressTracker
-                course={selectedCourse}
-                userId={currentUser.firebaseId}
-              />
+            <div className="p-6 overflow-y-auto">
+               <StudentProgressTracker
+                 course={selectedCourse}
+                 userId={currentUser.firebaseId}
+               />
+            </div>
 
-              <div className="mt-6 flex justify-end">
-                <button
+            <div className="p-6 border-t border-gray-100 flex justify-end">
+               <button
                   onClick={() => setSelectedCourse(null)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                >
-                  Close
-                </button>
-              </div>
+                  className="px-6 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 font-semibold text-sm transition-all"
+               >
+                  Dismiss
+               </button>
             </div>
           </div>
         </div>

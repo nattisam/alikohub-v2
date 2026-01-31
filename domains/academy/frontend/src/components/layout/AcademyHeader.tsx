@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import {
-  FaUser,
-  FaSignOutAlt,
-  FaBars,
-  FaTimes,
-  FaBook,
-  FaCaretDown,
-  FaCog,
-  FaTachometerAlt,
-} from "react-icons/fa";
+import { 
+  User, 
+  LogOut, 
+  Settings, 
+  LayoutDashboard, 
+  ChevronDown, 
+  Menu, 
+  X,
+  Book
+} from "lucide-react";
 import logo from "../../assets/logo.svg";
 
 interface AcademyHeaderProps {
@@ -124,58 +124,69 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                     onClick={() =>
                       setIsProfileDropdownOpen(!isProfileDropdownOpen)
                     }
-                    className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-2 py-1"
+                    className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100"
                   >
-                    {currentUser.profilePicture ? (
-                      <img
-                        src={currentUser.profilePicture}
-                        className="h-8 w-8 rounded-full"
-                        alt="Profile"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                        <FaUser className="text-gray-600" />
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-gray-700">
+                    <div className="h-7 w-7 rounded-full bg-[#3E92D1] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                      {currentUser.firstname?.[0] || 'A'}{currentUser.lastname?.[0] || 'U'}
+                    </div>
+                    <span className="hidden text-sm font-medium text-gray-700 sm:inline">
                       {currentUser.firstname}
                     </span>
-                    <FaCaretDown />
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
                   </button>
 
                   {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50">
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
-                      >
-                        <FaTachometerAlt className="mr-2" /> Dashboard
-                      </Link>
+                    <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-gray-100 bg-white py-2 shadow-xl z-[60]">
+                      <div className="mb-1 border-b border-gray-100 px-4 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                          Account
+                        </p>
+                        <p className="truncate text-sm font-medium text-gray-800">
+                          {currentUser.email}
+                        </p>
+                      </div>
+
+                      {(() => {
+                        const academyRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+                        const dashboardPath = currentUser?.globalRole === 'ADMIN' ? '/admin' : 
+                                            academyRole === 'INSTRUCTOR' ? '/instructor' : 
+                                            '/student-dashboard';
+                        return (
+                          <Link
+                            to={dashboardPath}
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
+                          </Link>
+                        );
+                      })()}
 
                       <Link
                         to="/profile"
                         onClick={() => setIsProfileDropdownOpen(false)}
-                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
                       >
-                        <FaUser className="mr-2" /> Profile
+                        <User className="h-4 w-4" />
+                        Profile
                       </Link>
 
                       <Link
                         to="/settings"
                         onClick={() => setIsProfileDropdownOpen(false)}
-                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
                       >
-                        <FaCog className="mr-2" /> Settings
+                        <Settings className="h-4 w-4" />
+                        Settings
                       </Link>
-
-                      <hr />
 
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        className="mt-1 flex w-full items-center gap-3 border-t border-gray-100 px-4 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                       >
-                        <FaSignOutAlt className="mr-2" /> Sign out
+                        <LogOut className="h-4 w-4" />
+                        Sign out
                       </button>
                     </div>
                   )}
@@ -198,9 +209,9 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
             {/* Mobile Toggle */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden ml-4"
+              className="md:hidden ml-4 p-2 hover:bg-gray-100 rounded-lg"
             >
-              {isMenuOpen ? <FaTimes /> : <FaBars />}
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
@@ -211,22 +222,22 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
             <Link to="/" className="block px-3 py-2">
               Home
             </Link>
-            <Link to="/courses" className="block px-3 py-2">
-              <FaBook className="inline mr-2" /> Courses
+            <Link to="/courses" className="block px-3 py-2 text-gray-700 hover:text-blue-600">
+              <Book className="inline mr-2 h-4 w-4" /> Courses
             </Link>
-            <Link to="/about" className="block px-3 py-2">
+            <Link to="/about" className="block px-3 py-2 text-gray-700 hover:text-blue-600">
               About
             </Link>
-            <Link to="/contact" className="block px-3 py-2">
+            <Link to="/contact" className="block px-3 py-2 text-gray-700 hover:text-blue-600">
               Contact
             </Link>
 
             {currentUser && (
               <button
                 onClick={handleLogout}
-                className="block w-full text-left px-3 py-2 text-red-600"
+                className="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50"
               >
-                <FaSignOutAlt className="inline mr-2" /> Sign out
+                <LogOut className="inline mr-2 h-4 w-4" /> Sign out
               </button>
             )}
           </div>

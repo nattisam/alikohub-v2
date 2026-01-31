@@ -118,6 +118,7 @@ export interface CourseLesson {
   maxScore?: number;
   passingScore?: number;
   isCompleted?: boolean;
+  duration?: number;
   createdAt: string;
   updatedAt: string;
   dueDate?: string;
@@ -133,6 +134,7 @@ export interface Lesson {
   maxScore?: number;
   passingScore?: number;
   isCompleted?: boolean;
+  duration?: number;
   createdAt: string;
   updatedAt: string;
   dueDate?: string;

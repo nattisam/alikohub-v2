@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Course } from "../../components/common/types.d";
-import { FaBook, FaStar, FaUsers, FaClock, FaTag } from "react-icons/fa";
+import { 
+  Search, 
+  Filter, 
+  SortAsc, 
+  BookOpen, 
+  Star, 
+  Users, 
+  Clock, 
+  ChevronRight
+} from "lucide-react";
 import { courseApi } from "../../api/courseApi";
 
 const CoursesPage: React.FC = () => {
@@ -15,43 +24,27 @@ const CoursesPage: React.FC = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [searchParams] = useSearchParams();
 
-  
-  // Create a stable identifier for user changes
   const userId = currentUser?.firebaseId || currentUser?.id;
   const userRole = currentUser?.academyRole || currentUser?.currentRole;
 
-  // Fetch all published courses (requires authentication)
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
         setError(null);
-        
         const response = await courseApi.getPublishedCourses();
-        
-        // Handle different response formats robustly
         const responseData = response?.data;
         const coursesData = responseData?.items || responseData;
-        
         if (Array.isArray(coursesData)) {
           setCourses(coursesData);
         } else {
-          // If it's not an array, treat it as empty but don't show an error
-          // unless it's clearly a failure
           setCourses([]);
         }
       } catch (err: any) {
-        // Check if it's a 401 error (unauthorized)
         if (err?.response?.status === 401) {
-          // For 401 errors, we still try to continue but with empty courses
-          // This allows the page to render without showing login prompts
           setCourses([]);
         } else if (err?.response?.status === 429) {
-          // For 429 errors, show a more specific message
           setError("Too many requests. Please try again in a moment.");
-        } else if (err?.response?.status === 404) {
-          // 404 can sometimes mean "no courses found" in some API designs
-          setCourses([]);
         } else {
           setError("Failed to load courses. Please try again later.");
         }
@@ -59,11 +52,9 @@ const CoursesPage: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchCourses();
-  }, [userId, userRole]); // Only refetch when user ID or role changes
+  }, [userId, userRole]);
 
-  // Set category from URL params if available
   useEffect(() => {
     const categoryParam = searchParams.get("category");
     if (categoryParam) {
@@ -71,19 +62,15 @@ const CoursesPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Get unique categories from courses
   const categories = ["All", ...Array.from(new Set(courses.map(course => course.category || "Uncategorized")))];
 
-  // Filter and sort courses
   const filteredCourses = courses
     .filter(course => {
       const matchesSearch = course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (course.instructor?.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.instructor?.lastname?.toLowerCase().includes(searchTerm.toLowerCase()));
-      
       const matchesCategory = selectedCategory === "All" || course.category === selectedCategory;
-      
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
@@ -107,77 +94,53 @@ const CoursesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-600">Loading courses...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    // Show a general error message without login prompts
-    return (
-      <div className="min-h-screen bg-gray-50 pt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Error Loading Courses</h2>
-            <p className="text-red-600 mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin h-10 w-10 border-b-2 border-[#3E92D1] rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F7FA] to-[#E6E9F0] pt-20">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen w-full bg-gray-50 pt-24 pb-12">
+      <div className="max-w-7xl mx-auto px-6">
+        
         {/* Page Header */}
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#1175BD] to-[#1175BD]">
-            Explore Our Courses
+        <div className="mb-10 text-left max-w-3xl">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Browse All Courses
           </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Explore our comprehensive collection of courses taught by industry experts. 
-            Find the perfect course to advance your skills and career.
+          <p className="text-gray-600 text-lg leading-relaxed">
+            Expand your knowledge with our expert-led courses. Find the perfect path to elevate your skills and career.
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Filters Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+            
             {/* Search */}
-            <div>
-              <label htmlFor="search" className="block text-sm font-semibold text-gray-700 mb-2">
+            <div className="md:col-span-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <Search size={14} className="text-gray-400" />
                 Search Courses
               </label>
               <input
                 type="text"
-                id="search"
-                placeholder="Search by title, description, or instructor..."
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#E6D600] focus:border-[#E6D600] transition-all"
+                placeholder="Search by title, instructor, or description..."
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#3E92D1] transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            {/* Category Filter */}
-            <div>
-              <label htmlFor="category" className="block text-sm font-semibold text-gray-700 mb-2">
+            {/* Category */}
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <Filter size={14} className="text-gray-400" />
                 Category
               </label>
               <select
-                id="category"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#E6D600] focus:border-[#E6D600] transition-all"
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#3E92D1] transition-all"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
@@ -187,14 +150,14 @@ const CoursesPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Sort By */}
-            <div>
-              <label htmlFor="sort" className="block text-sm font-semibold text-gray-700 mb-2">
+            {/* Sort */}
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <SortAsc size={14} className="text-gray-400" />
                 Sort By
               </label>
               <select
-                id="sort"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#E6D600] focus:border-[#E6D600] transition-all"
+                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#3E92D1] transition-all"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -210,130 +173,135 @@ const CoursesPage: React.FC = () => {
         </div>
 
         {/* Courses Count */}
-        <div className="mb-6">
-          <p className="text-gray-600 font-medium">
-            Showing {filteredCourses.length} of {courses.length} courses
+        <div className="mb-6 flex items-center justify-between">
+          <p className="text-sm text-gray-500 font-medium">
+            Showing <span className="text-gray-900">{filteredCourses.length}</span> of {courses.length} courses
           </p>
+          {searchTerm && (
+            <button 
+               onClick={() => setSearchTerm("")}
+               className="text-xs text-[#3E92D1] hover:underline"
+            >
+               Clear filters
+            </button>
+          )}
         </div>
 
         {/* Courses Grid */}
         {filteredCourses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => (
-              <div key={course.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
-                {/* Course Image */}
-                <div className="h-52 overflow-hidden">
+              <Link 
+                key={course.id} 
+                to={`/courses/${course.id}`}
+                className="group bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col"
+              >
+                {/* Image Section */}
+                <div className="h-48 overflow-hidden relative">
                   {course.thumbnail ? (
                     <img 
                       src={course.thumbnail} 
                       alt={course.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#E6D600] to-[#F2F296] flex items-center justify-center">
-                      <FaBook className="h-16 w-16 text-white" />
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                       <BookOpen size={48} className="text-gray-200" />
                     </div>
                   )}
+                  <div className="absolute top-4 left-4">
+                     <span className="bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-700 shadow-sm border border-gray-100">
+                        {course.category || "General"}
+                     </span>
+                  </div>
                 </div>
 
-                {/* Course Info */}
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-gray-900 line-clamp-2">
+                {/* Info Section */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 leading-tight group-hover:text-[#3E92D1] transition-colors">
                       {course.title}
                     </h3>
-                    {course.price !== null && course.price > 0 ? (
-                      <span className="text-xl font-bold text-[#E6D600]">
-                        ${course.price}
-                      </span>
-                    ) : (
-                      <span className="text-xl font-bold text-[#E6D600]">
-                        Free
-                      </span>
-                    )}
                   </div>
 
-                  {course.shortDescription && (
-                    <p className="text-gray-600 text-base mb-4 line-clamp-2">
-                      {course.shortDescription}
-                    </p>
-                  )}
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2 leading-relaxed">
+                    {course.shortDescription}
+                  </p>
 
-               
-
-                  {/* Course Metadata */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {course.category && (
-                      <span className="inline-flex items-center text-xs bg-[#E6D600]/10 text-[#E6D600] px-3 py-1.5 rounded-full font-medium">
-                        <FaTag className="mr-1" />
-                        {course.category}
+                  <div className="mt-auto space-y-4">
+                    {/* Meta Meta Meta */}
+                    <div className="flex items-center gap-4 text-xs text-gray-400 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                        {course.rating?.toFixed(1) || "5.0"}
                       </span>
-                    )}
-                    {course.targetLevel && (
-                      <span className="inline-flex items-center text-xs bg-[#F2F296]/20 text-[#F2F296] px-3 py-1.5 rounded-full font-medium">
-                        {course.targetLevel}
+                      <span className="flex items-center gap-1">
+                        <Users size={14} />
+                        {course.enrolledNum || 0}
                       </span>
-                    )}
-                    {course.estimatedTime && (
-                      <span className="inline-flex items-center text-xs bg-purple-100/20 text-purple-700 px-3 py-1.5 rounded-full font-medium">
-                        <FaClock className="mr-1" />
-                        {course.estimatedTime} hours
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Ratings and Enrollments */}
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center">
-                      <FaStar className="text-yellow-400 mr-1" />
-                      <span className="text-base font-semibold text-gray-900">
-                        {course.rating?.toFixed(1) || "N/A"}
+                      <span className="flex items-center gap-1">
+                        <Clock size={14} />
+                        {course.estimatedTime || 10}h
                       </span>
                     </div>
-                    {course.enrolledNum !== null && (
-                      <div className="flex items-center text-base text-gray-500">
-                        <FaUsers className="mr-1" />
-                        {course.enrolledNum}
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Action Button */}
-                  <Link
-                    to={`/courses/${course.id}`}
-                    className="w-full bg-gradient-to-r from-[#1175BD] to-[#1175BD] text-white text-center py-3 rounded-lg hover:from-[#0E5F9A] hover:to-[#0E5F9A] transition-all duration-300 block font-bold text-lg shadow-md"
-                  >
-                    View Details
-                  </Link>
+                    {/* Bottom Row */}
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                      <div className="text-xl font-bold text-gray-900">
+                        {course.price && course.price > 0 ? `$${course.price}` : "Free"}
+                      </div>
+                      <div className="flex items-center gap-1 text-sm font-semibold text-[#3E92D1]">
+                         Details
+                         <ChevronRight size={16} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100">
-            <div className="mx-auto h-16 w-16 text-[#E6D600] mb-4 flex items-center justify-center">
-              <FaBook className="h-16 w-16" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-16 text-center">
+            <div className="mx-auto h-16 w-16 text-gray-200 mb-4 flex items-center justify-center bg-gray-50 rounded-full">
+              <Search size={32} />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No courses found</h3>
-            <p className="text-gray-500 text-lg mb-4">
-              {searchTerm || selectedCategory !== "All" 
-                ? "Try adjusting your search or filter criteria" 
-                : "No courses are currently available"}
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses found</h3>
+            <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+              We couldn't find any courses matching your current filters. Try adjusting your search or category.
             </p>
-            {(searchTerm || selectedCategory !== "All") && (
-              <button
-                onClick={() => {
+            <button
+               onClick={() => {
                   setSearchTerm("");
                   setSelectedCategory("All");
-                }}
-                className="bg-gradient-to-r from-[#E6D600] to-[#F2F296] text-black px-6 py-3 rounded-lg hover:from-[#D4C400] hover:to-[#E0E08A] transition-all duration-300 font-semibold shadow-md"
-              >
-                Clear Filters
-              </button>
-            )}
+               }}
+               className="bg-[#3E92D1] text-white px-6 py-2.5 rounded-md hover:bg-[#327aae] transition-colors font-medium text-sm"
+            >
+               Reset all filters
+            </button>
           </div>
         )}
+        
+        {/* Newsletter / CTA Section matched to con-tech footer-ish style */}
+        <div className="mt-20 bg-[#3E92D1] rounded-2xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8">
+           <div className="max-w-xl">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Start your learning journey today</h2>
+              <p className="text-white/80 leading-relaxed capitalize">
+                 Join thousands of students and instructors on Aliko Academy. Get certificate for every course you complete.
+              </p>
+           </div>
+           <button className="whitespace-nowrap px-8 py-3 bg-white text-[#3E92D1] font-bold rounded-lg hover:bg-gray-50 transition-colors shadow-xl shadow-blue-900/10">
+              Create an Account
+           </button>
+        </div>
       </div>
+
+      {/* Error state */}
+      {error && !loading && (
+        <div className="fixed bottom-6 right-6 bg-red-50 border border-red-200 p-4 rounded-lg shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4">
+           <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+           <p className="text-sm text-red-700 font-medium">{error}</p>
+        </div>
+      )}
     </div>
   );
 };

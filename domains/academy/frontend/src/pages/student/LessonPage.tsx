@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { courseApi } from "../../api/courseApi";
-import { FaFile, FaVideo, FaFilePdf } from "react-icons/fa";
+import { 
+  FileText, 
+  Video, 
+  File, 
+  ArrowLeft, 
+  Clock, 
+  Calendar,
+  PlayCircle,
+  Layout
+} from "lucide-react";
 import type { Lesson } from "../../components/common/types";
 
 const LessonPage: React.FC = () => {
@@ -26,11 +35,11 @@ const LessonPage: React.FC = () => {
   const fetchLesson = async (id: number) => {
     try {
       setLoading(true);
+      setError("");
 
       const lessonRes = await courseApi.getLesson(id);
       setLesson(lessonRes.data);
 
-      // fetch lessons of the SAME module
       if (lessonRes.data.moduleId) {
         const moduleLessonsRes = await courseApi.getLessons(
           lessonRes.data.moduleId
@@ -38,7 +47,7 @@ const LessonPage: React.FC = () => {
         setModuleLessons(moduleLessonsRes.data);
       }
     } catch {
-      setError("Failed to load lesson");
+      setError("Failed to load lesson content");
     } finally {
       setLoading(false);
     }
@@ -47,7 +56,10 @@ const LessonPage: React.FC = () => {
   const renderContent = () => {
     if (!lesson?.contents?.length) {
       return (
-        <p className="text-gray-500 text-center py-12">No content available.</p>
+        <div className="flex flex-col items-center justify-center p-12 text-gray-500">
+          <File size={48} className="mb-4 text-gray-200" />
+          <p>No content available for this lesson.</p>
+        </div>
       );
     }
 
@@ -59,118 +71,160 @@ const LessonPage: React.FC = () => {
           <video
             src={current.contentUrl || current.content}
             controls
-            className="w-full rounded-lg max-h-[420px]"
+            className="w-full h-full object-contain"
           />
         );
       case "PDF":
         return (
           <iframe
             src={current.contentUrl || current.content}
-            className="w-full h-[420px] rounded-lg"
-            title="PDF"
+            className="w-full h-full border-none"
+            title="PDF Viewer"
           />
         );
       case "TEXT":
         return (
           <div
-            className="prose max-w-none"
+            className="p-8 prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-[#3E92D1]"
             dangerouslySetInnerHTML={{ __html: current.content || "" }}
           />
         );
       default:
-        return <p className="text-gray-600">Unsupported content</p>;
+        return (
+          <div className="flex items-center justify-center p-12 text-gray-500 italic">
+            Unsupported content type
+          </div>
+        );
     }
   };
 
   const getContentIcon = (type: string) => {
-    if (type === "VIDEO") return <FaVideo className="text-red-500" />;
-    if (type === "WEBINAR") return <FaVideo className="text-red-500" />;
-    if (type === "PDF") return <FaFilePdf className="text-red-600" />;
-    return <FaFile className="text-blue-500" />;
+    if (type === "VIDEO" || type === "WEBINAR") return <Video size={16} />;
+    if (type === "PDF") return <FileText size={16} />;
+    return <File size={16} />;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-b-2 border-[#3E92D1] rounded-full" />
       </div>
     );
   }
 
   if (error || !lesson) {
-    return <div className="text-center text-red-600">{error}</div>;
+    return (
+       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 text-center max-w-md">
+             <div className="h-12 w-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <File size={24} />
+             </div>
+             <h2 className="text-lg font-bold text-gray-900 mb-2">Lesson Unavailable</h2>
+             <p className="text-gray-500 mb-6">{error || "Could not find the requested lesson."}</p>
+             <button 
+                onClick={() => navigate(-1)}
+                className="bg-[#3E92D1] text-white px-6 py-2 rounded-md font-semibold text-sm hover:bg-[#327aae] transition-colors"
+             >
+                Go Back
+             </button>
+          </div>
+       </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* BACK */}
-        <Link
-          to={`/student-dashboard/mycourses/${courseId}/modules`}
-          className="text-blue-600 hover:underline mb-6 inline-block flex items-center"
-        >
-          <span className="mr-2">←</span> Back to Modules
-        </Link>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        
+        {/* Navigation */}
+        <div className="mb-8">
+           <Link
+             to={`/student-dashboard/mycourses/${courseId}/modules`}
+             className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+           >
+             <ArrowLeft size={16} />
+             Back to Modules
+           </Link>
+        </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* LEFT: LESSON LIST */}
-          <div className="bg-white rounded-xl shadow">
-            <h2 className="px-4 py-3 font-semibold border-b border-gray-200 text-gray-800">Lessons</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Sidebar: Lessons List */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden sticky top-24">
+               <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100">
+                  <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                     <Layout size={16} className="text-[#3E92D1]" />
+                     Module Lessons
+                  </h2>
+               </div>
 
-            <div className="divide-y divide-gray-100">
-              {moduleLessons.map((l) => (
-                <div
-                  key={l.id}
-                  onClick={() =>
-                    navigate(
-                      `/student-dashboard/mycourses/${courseId}/module/lesson/${l.title
-                        .replace(/\s+/g, "-")
-                        .toLowerCase()}/${l.id}`
-                    )
-                  }
-                  className={`px-4 py-3 cursor-pointer text-sm transition-colors duration-200 flex items-center gap-3 ${
-                    l.id === lesson.id 
-                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-500" 
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    {l.contents && l.contents.length > 0 ? getContentIcon(l.contents[0].type) : getContentIcon(l.type)}
-                  </div>
-                  <span className="truncate">{l.title}</span>
-                </div>
-              ))}
+               <div className="divide-y divide-gray-50 max-h-[calc(100vh-160px)] overflow-y-auto">
+                 {moduleLessons.map((l) => (
+                   <button
+                     key={l.id}
+                     onClick={() =>
+                       navigate(
+                         `/student-dashboard/mycourses/${courseId}/module/lesson/${l.title
+                           .replace(/\s+/g, "-")
+                           .toLowerCase()}/${l.id}`
+                       )
+                     }
+                     className={`w-full text-left px-6 py-4 transition-all flex items-center gap-3 ${
+                       l.id === lesson.id 
+                         ? "bg-blue-50 text-[#3E92D1]" 
+                         : "bg-white hover:bg-gray-50 text-gray-600"
+                     }`}
+                   >
+                     <div className={`flex-shrink-0 p-1.5 rounded-md ${l.id === lesson.id ? 'bg-[#3E92D1] text-white' : 'bg-gray-50 text-gray-400'}`}>
+                       {l.id === lesson.id ? <PlayCircle size={14} /> : (l.contents && l.contents.length > 0 ? getContentIcon(l.contents[0].type) : getContentIcon(l.type))}
+                     </div>
+                     <span className={`text-xs font-semibold truncate ${l.id === lesson.id ? 'text-[#3E92D1]' : 'text-gray-700'}`}>
+                        {l.title}
+                     </span>
+                   </button>
+                 ))}
+               </div>
             </div>
           </div>
 
-          {/* RIGHT: CONTENT */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* PLAYER */}
-            <div className="bg-white rounded-xl shadow">
-              <div className="aspect-video bg-black rounded-lg overflow-hidden p-2">
-                {renderContent()}
-              </div>
-            </div>
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Viewport Card */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[500px]">
+               {/* Player View */}
+               <div className="relative aspect-video bg-gray-900 group flex items-center justify-center">
+                  {renderContent()}
+               </div>
 
-            {/* LESSON INFO */}
-            <div className="bg-white rounded-xl shadow p-6">
-              <h3 className="text-xl font-bold text-gray-900">{lesson.title}</h3>
+               {/* Info Section */}
+               <div className="p-8">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                     <h1 className="text-2xl font-bold text-gray-900">{lesson.title}</h1>
+                     <div className="flex items-center gap-4 text-xs font-medium text-gray-400">
+                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-md">
+                           <Clock size={14} className="text-[#3E92D1]" />
+                           45 min
+                        </span>
+                        <span className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 rounded-md">
+                           <Calendar size={14} className="text-[#3E92D1]" />
+                           Updated recently
+                        </span>
+                     </div>
+                  </div>
 
-              <div className="mt-2 text-sm text-gray-500 flex gap-4">
-                <span className="flex items-center gap-1">
-                  <span>⏱</span> 45 min
-                </span>
-                <span className="flex items-center gap-1">
-                  <span>📅</span> Updated recently
-                </span>
-              </div>
-
-              {lesson.description && (
-                <p className="mt-4 text-gray-600 leading-relaxed">
-                  {lesson.description}
-                </p>
-              )}
+                  {lesson.description ? (
+                    <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">About this lesson</h4>
+                       <p className="text-gray-600 leading-relaxed text-sm">
+                         {lesson.description}
+                       </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 italic text-sm">No description available for this lesson.</p>
+                  )}
+               </div>
             </div>
           </div>
         </div>

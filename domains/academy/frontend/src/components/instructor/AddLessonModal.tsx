@@ -54,7 +54,7 @@ const AddLessonModal: React.FC<AddLessonModalProps> = ({
         
         // Note: We'll need to implement file upload API endpoint
         // For now, we'll just create content record with URL placeholder
-        await courseApi.createContent({
+        await courseApi.createLesson({
           lessonId: lessonResponse.data.id,
           title: file.name,
           type,
