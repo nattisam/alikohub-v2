@@ -1,45 +1,38 @@
-import { Link } from "react-router-dom";
+import { ArrowRight } from 'lucide-react';
+import { Countdown } from './Countdown';
 
-function Hero() {
-
+export default function Hero() {
   return (
- <section className="h-screen">
-  <div
-    className="relative h-screen w-full bg-cover bg-center"
-    style={{ backgroundImage: 'url("/images/gathering.png")' }}
-  >
-    {/* Overlay */}
-    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-      <div className="mx-auto max-w-4xl text-center px-4">
-        <h1 className="bg-gradient-to-r from-[#0C69AD] via-[#3FA9F5] to-[#052F4A] bg-clip-text text-4xl font-extrabold text-transparent md:text-6xl">
-          Connecting Africa to Global Opportunities Through Impactful Events
+    <section
+      className="relative text-center min-h-[300px] text-white bg-cover "
+      style={{
+        backgroundImage: "url('/images/gathering.png')",
+      }}
+    >
+      {/* overlay */}
+      <div className="absolute inset-0 " />
+
+      <div className="relative z-10">
+        <span className="text-xs bg-blue-900/40">
+          LAGOS 2026
+        </span>
+
+        <h1 className="mt-6 text-5xl font-bold">
+          Africa Tech <span className="text-blue-500 mb-15"><h1>Summit 2026</h1></span>
         </h1>
 
-        <p className="mx-auto mt-4 max-w-xl sm:text-xl text-[#3FA9F5] font-bold">
-          Join us and embark on your next extraordinary adventure!
-        </p>
+        <Countdown />
 
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            className="rounded border border-blue-600 bg-blue-600 px-12 py-3 text-sm font-medium text-white hover:bg-transparent hover:text-white"
-            to="/events"
-          >
-            Upcoming Events
-          </Link>
-
-          <Link
-            className="rounded border border-blue-600 px-12 py-3 text-sm font-medium text-white hover:bg-blue-600"
-            to="/news"
-          >
-            News
-          </Link>
+        <div className="flex justify-center gap-4">
+          <button className="flex items-center mt-10 mb-10 gap-2 px-4 py-3 rounded-full 
+          bg-gray-500 hover:bg-blue-700 transition-colors duration-300">
+            Register Now <ArrowRight size={16} />
+          </button>
+          <button className="px-6 py-3 rounded-full mb-10 mt-10 border border-gray-500 hover:border-white transition">
+            View Schedule
+          </button>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-
+    </section>
   );
 }
-
-export default Hero;

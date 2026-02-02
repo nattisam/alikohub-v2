@@ -30,7 +30,7 @@ interface RegisterPayload {
   lastname: string
   email: string
   password: string
-  captchaToken: string
+  // captchaToken: string
 }
 
 interface AuthResponse {
@@ -201,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastname: payload.lastname,
       email: payload.email,
       password: payload.password,
-      captchaToken: payload.captchaToken
+      // captchaToken: payload.captchaToken
     })
   }
 

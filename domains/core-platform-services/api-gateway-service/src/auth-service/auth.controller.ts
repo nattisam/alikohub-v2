@@ -95,10 +95,10 @@ export class AuthController {
     this.logger.log(`Registration attempt for: ${registerDto.email}`);
     
     // TEST-04 Fix: Validate CAPTCHA if configured
-    const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
-    if (captchaValid === false) {
-      throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
-    }
+    // const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
+    // if (captchaValid === false) {
+    //   throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
+    // }
 
     // Remove captchaToken before sending to auth service
     const { captchaToken, ...authPayload } = registerDto;

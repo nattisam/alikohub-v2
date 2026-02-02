@@ -1,89 +1,67 @@
-import { Link } from 'react-router-dom';
-import type { Post } from '../types/post';
-import { PostType } from '../types/post';
+import { ArrowRight } from 'lucide-react';
 
-interface PostCardProps {
-  post: Post;
-}
+/**
+ * TEMPORARY UI-ONLY COMPONENT
+ * Uses dummy data to design the News & Announcements feed.
+ * Replace dummyPost with real `post` prop later.
+ */
 
-export function PostCard({ post }: PostCardProps) {
-  const isEvent = post.type === PostType.EVENT;
-  
+export function PostCard() {
+  const dummyPost = {
+    title: 'Enterprise API V2 Integration Now Live',
+    content:
+      'We are excited to announce our latest integration capabilities for enterprise partners, featuring enhanced security protocols and faster data streaming.',
+    type: 'NEW',
+    secondaryType: 'UPDATE',
+    author: 'Sarah Jenkins',
+    time: '2 hours ago',
+    hasImage: false,
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border border-gray-100">
-      {post.coverImage && (
-        <div className="h-48 overflow-hidden relative">
-          <img 
-            src={post.coverImage} 
-            alt={post.title} 
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-          />
-          <div className="absolute top-4 left-4">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white ${
-              post.type === PostType.EVENT ? 'bg-blue-600' : 
-              post.type === PostType.NEWS ? 'bg-green-600' : 'bg-purple-600'
-            }`}>
-              {post.type}
-            </span>
-          </div>
+    <article className="py-8 border-b border-gray-200">
+      {/* Top row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex gap-2">
+          <span className="text-xs font-semibold px-2 py-1 rounded-md bg-blue-100 text-blue-700">
+            {dummyPost.type}
+          </span>
+          <span className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+            {dummyPost.secondaryType}
+          </span>
+        </div>
+
+        <span className="text-xs text-gray-400">{dummyPost.time}</span>
+      </div>
+
+      {/* Title */}
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        {dummyPost.title}
+      </h2>
+
+      {/* Author */}
+      <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <div className="w-6 h-6 rounded-full bg-gray-300" />
+        <span>By {dummyPost.author}</span>
+      </div>
+
+      {/* Optional image placeholder */}
+      {dummyPost.hasImage && (
+        <div className="mb-4 h-40 rounded-xl bg-blue-100 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-md bg-blue-200">📊</div>
         </div>
       )}
-      
-      <div className="p-6 flex flex-col flex-1">
-        {!post.coverImage && (
-          <div className="mb-4">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white ${
-              post.type === PostType.EVENT ? 'bg-blue-600' : 
-              post.type === PostType.NEWS ? 'bg-green-600' : 'bg-purple-600'
-            }`}>
-              {post.type}
-            </span>
-          </div>
-        )}
-        
-        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
-          {post.title}
-        </h3>
-        
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-          {post.shortDescription}
-        </p>
-        
-        {isEvent && (
-          <div className="mt-auto mb-4 bg-blue-50 p-3 rounded-lg">
-            <div className="flex items-center text-blue-800 text-sm font-medium mb-1">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              {post.eventDate}
-            </div>
-            {post.location && (
-              <div className="flex items-center text-blue-800 text-sm">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {post.location}
-              </div>
-            )}
-          </div>
-        )}
-        
-        <div className={`mt-auto flex items-center justify-between ${!isEvent ? 'pt-4 border-t border-gray-50' : ''}`}>
-          <span className="text-gray-500 text-xs italic">
-            Published: {post.publishDate ? new Date(post.publishDate).toLocaleDateString() : new Date(post.createdAt).toLocaleDateString()}
-          </span>
-          <Link 
-            to={`/post/${post.id}`}
-            className="text-blue-600 font-semibold text-sm hover:text-blue-800 flex items-center transition-colors"
-          >
-            Read More
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </div>
+
+      {/* Content */}
+      <p className="text-sm text-gray-600 mb-4 max-w-2xl">
+        {dummyPost.content}
+      </p>
+
+      {/* Action */}
+      <button className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
+        Read more
+        <ArrowRight size={14} />
+      </button>
+    </article>
   );
 }

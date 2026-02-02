@@ -2,9 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PostList } from '../components/PostList';
 import Hero from '../components/Hero';
-import { FeaturedEvents } from '../components/FeaturedEvents';
 import { getAllPublishedPosts } from '../services/post-service';
 import { PostType } from '../types/post';
+import UpcomingEvents from '../components/UpcomingEvents';
+import Ecosystem from '../components/Ecosystem';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -17,34 +18,12 @@ export default function HomePage() {
   const featuredEvents = posts.filter(post => post.type === PostType.EVENT).slice(0, 2);
 
   return (
-    <div className="bg-white">
+    <div className="bg-white min-h-screen bg-black text-white">
       <Hero/>
-
-      {featuredEvents.length > 0 && (
-        <FeaturedEvents events={featuredEvents} />
-      )}
-
+      <UpcomingEvents />
+      <Ecosystem />
       {/* Latest Content Feed */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-          <div>
-            <span className="text-blue-600 font-black uppercase tracking-widest text-sm">Feed</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Latest Updates</h2>
-          </div>
-          <p className="text-gray-500 max-w-md md:text-right">
-            Stay in the loop with the most recent developments across the AlikoHub ecosystem.
-          </p>
-        </div>
-        
-        <PostList 
-          posts={posts} 
-          isLoading={isLoading} 
-          isError={isError}
-          error={error}
-          onRetry={refetch}
-          emptyMessage="No updates published yet."
-        />
-      </section>
+     
 
       {/* Promotion Call to Action */}
       <section className="bg-blue-50 py-20">

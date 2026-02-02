@@ -3,11 +3,11 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 // Extend Express Request type to include 'user'
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: any;
-  }
-}
+// declare module 'express-serve-static-core' {
+//   interface Request {
+//     user?: any;
+//   }
+// }
 
 @Injectable()
 export class TestAuthMiddleware implements NestMiddleware {
