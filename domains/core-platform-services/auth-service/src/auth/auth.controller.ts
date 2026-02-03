@@ -1,4 +1,4 @@
-import { Controller, UsePipes, Logger } from '@nestjs/common';
+import { Controller, UsePipes, Logger, Post, Get, Body, Query, Patch, Param, Delete } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { SignUpDto, SignInDto } from './dto';
@@ -11,6 +11,18 @@ export class AuthController {
 	private readonly logger = new Logger(AuthController.name);
 	constructor(private readonly authService: AuthService) {}
 
+	@Get('health')
+	healthCheckGet() {
+		return { status: 'up', service: 'auth-service', timestamp: new Date().toISOString() };
+	}
+
+	@Post('health')
+	@MessagePattern({ cmd: 'health_check' })
+	healthCheckPost() {
+		return { status: 'up', service: 'auth-service', timestamp: new Date().toISOString() };
+	}
+
+	@Post('register')
 	@MessagePattern({ cmd: 'register' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
@@ -18,10 +30,11 @@ export class AuthController {
 		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 	})))
-	async register(@Payload() dto: SignUpDto) {
-		return this.authService.register(dto);
+	async register(@Body() dto: SignUpDto, @Payload() payload: SignUpDto) {
+		return this.authService.register(dto || payload);
 	}
 
+	@Post('create-recruiter')
 	@MessagePattern({ cmd: 'create_recruiter' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
@@ -29,10 +42,11 @@ export class AuthController {
 		lastname: Joi.string().optional().allow(null, '').pattern(/^[A-Za-z\s]*$/).trim().messages({'string.pattern.base': 'lastname must contain only alphabetic characters'}),
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 	})))
-	async createRecruiter(@Payload() dto: any) {
-		return this.authService.createRecruiter(dto);
+	async createRecruiter(@Body() dto: any, @Payload() payload: any) {
+		return this.authService.createRecruiter(dto || payload);
 	}
 
+	@Post('create-contech-user')
 	@MessagePattern({ cmd: 'create_contech_user' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
@@ -41,10 +55,11 @@ export class AuthController {
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 		role: Joi.string().valid('ADMIN', 'CONTRACTOR', 'CLIENT').required(),
 	})))
-	async createContechUser(@Payload() dto: any) {
-		return this.authService.createContechUser(dto);
+	async createContechUser(@Body() dto: any, @Payload() payload: any) {
+		return this.authService.createContechUser(dto || payload);
 	}
 
+	@Post('create-events-user')
 	@MessagePattern({ cmd: 'create_events_user' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required().trim(),
@@ -53,45 +68,51 @@ export class AuthController {
 		password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
 		role: Joi.string().valid('ADMIN', 'CONTENT_MANAGER', 'USER').required(),
 	})))
-	async createEventsUser(@Payload() dto: any) {
-		return this.authService.createEventsUser(dto);
+	async createEventsUser(@Body() dto: any, @Payload() payload: any) {
+		return this.authService.createEventsUser(dto || payload);
 	}
 
+	@Post('login')
 	@MessagePattern({ cmd: 'login' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		email: Joi.string().email().required(),
 		password: Joi.string().min(6).required(),
 	})))
-	async login(@Payload() dto: SignInDto) {
-		return this.authService.login(dto);
+	async login(@Body() dto: SignInDto, @Payload() payload: SignInDto) {
+		return this.authService.login(dto || payload);
 	}
 
-
+	@Post('login-google')
 	@MessagePattern({ cmd: 'login_google' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		idToken: Joi.string().required(),
 	})))
-	async loginWithGoogle(@Payload() body: { idToken: string }) {
-		return this.authService.loginWithGoogle(body.idToken);
+	async loginWithGoogle(@Body() body: { idToken: string }, @Payload() payload: { idToken: string }) {
+		const token = body?.idToken || payload?.idToken;
+		return this.authService.loginWithGoogle(token);
 	}
 
+	@Post('verify')
 	@MessagePattern({ cmd: 'verify' })
-	async verify(@Payload() payload: { type: 'cookie' | 'token'; value: string }) {
-		return this.authService.verifyAuth(payload);
+	async verify(@Body() dto: { type: 'cookie' | 'token'; value: string }, @Payload() payload: { type: 'cookie' | 'token'; value: string }) {
+		return this.authService.verifyAuth(dto || payload);
 	}
 
+	@Post('create-session')
 	@MessagePattern({ cmd: 'create_session' })
-	async createSession(@Payload() data: { idToken: string; expiresIn?: number }) {
+	async createSession(@Body() dto: { idToken: string; expiresIn?: number }, @Payload() payload: { idToken: string; expiresIn?: number }) {
+		const data = dto || payload;
 		return this.authService.createSessionCookie(data.idToken, data.expiresIn);
 	}
 
-	// Academy-specific message patterns
+	@Post('academy/select-role')
 	@MessagePattern({ cmd: 'select_academy_role' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		userId: Joi.string().required(),
 		role: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase()
 	})))
-	async handleSelectRole(@Payload() data: SelectRoleDto) {
+	async handleSelectRole(@Body() dto: SelectRoleDto, @Payload() payload: SelectRoleDto) {
+		const data = dto || payload;
 		try {
 			return await this.authService.selectAcademyRole(data.userId, data.role);
 		} catch (error) {
@@ -100,37 +121,46 @@ export class AuthController {
 		}
 	}
 
+	@Post('academy/apply-teacher')
 	@MessagePattern({ cmd: 'apply_teacher_role' })
-	async handleTeacherApplication(@Payload() data: TeacherApplicationDto) {
+	async handleTeacherApplication(@Body() dto: TeacherApplicationDto, @Payload() payload: TeacherApplicationDto) {
 		try {
-			return await this.authService.applyForTeacherRole(data);
+			return await this.authService.applyForTeacherRole(dto || payload);
 		} catch (error) {
 			this.logger.error(`Error in apply_teacher_role: ${error.message}`, error.stack);
 			throw error;
 		}
 	}
 
+	@Post('academy/teacher-applications')
 	@MessagePattern({ cmd: 'get_teacher_applications' })
-	async handleGetTeacherApplications(@Payload() data: { requestingUserRole?: string }) {
-		return this.authService.getTeacherApplications(data.requestingUserRole);
+	async handleGetTeacherApplications(@Query() query: { requestingUserRole?: string }, @Payload() payload: { requestingUserRole?: string }) {
+		const role = query?.requestingUserRole || payload?.requestingUserRole;
+		return this.authService.getTeacherApplications(role);
 	}
 
+	@Post('academy/approve-teacher')
 	@MessagePattern({ cmd: 'approve_teacher_application' })
-	async handleApproveTeacher(@Payload() data: { applicationId: string; requestingUserRole?: string; reviewerId?: string; reviewNotes?: string }) {
+	async handleApproveTeacher(@Body() dto: any, @Payload() payload: any) {
+		const data = dto || payload;
 		return this.authService.approveTeacherApplication(data.applicationId, data.requestingUserRole, data.reviewerId, data.reviewNotes);
 	}
 
+	@Post('academy/reject-teacher')
 	@MessagePattern({ cmd: 'reject_teacher_application' })
-	async handleRejectTeacher(@Payload() data: { applicationId: string; requestingUserRole?: string; reviewerId?: string; reviewNotes?: string }) {
+	async handleRejectTeacher(@Body() dto: any, @Payload() payload: any) {
+		const data = dto || payload;
 		return this.authService.rejectTeacherApplication(data.applicationId, data.requestingUserRole, data.reviewerId, data.reviewNotes);
 	}
 
+	@Patch('academy/switch-role')
 	@MessagePattern({ cmd: 'switch_role' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		userId: Joi.string().required(),
 		newRole: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase()
 	})))
-	async handleSwitchRole(@Payload() data: { userId: string; newRole: string }) {
+	async handleSwitchRole(@Body() dto: { userId: string; newRole: string }, @Payload() payload: { userId: string; newRole: string }) {
+		const data = dto || payload;
 		try {
 			return await this.authService.switchRole(data.userId, data.newRole);
 		} catch (error) {
@@ -139,37 +169,51 @@ export class AuthController {
 		}
 	}
 
+	@Post('academy/status')
 	@MessagePattern({ cmd: 'get_user_academy_status' })
-	async handleGetUserStatus(@Payload() data: { userId: string }) {
+	async handleGetUserStatus(@Body() dto: { userId: string }, @Payload() payload: { userId: string }) {
+		const data = dto || payload;
 		return this.authService.getUserAcademyStatus(data.userId);
 	}
 
+	@Post('sync/contech')
 	@MessagePattern({ cmd: 'sync_contech_user' })
-	async handleSyncContechUser(@Payload() data: { userId: string }) {
+	async handleSyncContechUser(@Body() dto: { userId: string }, @Payload() payload: { userId: string }) {
+		const data = dto || payload;
 		return this.authService.syncContechUser(data.userId);
 	}
 
+	@Post('sync/events')
 	@MessagePattern({ cmd: 'sync_events_user' })
-	async handleSyncEventsUser(@Payload() data: { userId: string }) {
+	async handleSyncEventsUser(@Body() dto: { userId: string }, @Payload() payload: { userId: string }) {
+		const data = dto || payload;
 		return this.authService.syncEventsUser(data.userId);
 	}
 
+	@Post('sync/academy')
 	@MessagePattern({ cmd: 'sync_academy_user' })
-	async handleSyncAcademyUser(@Payload() data: { userId: string }) {
+	async handleSyncAcademyUser(@Body() dto: { userId: string }, @Payload() payload: { userId: string }) {
+		const data = dto || payload;
 		return this.authService.syncAcademyUser(data.userId);
 	}
+
+	@Post('contact/email')
 	@MessagePattern({ cmd: 'send_contact_email' })
-	async handleSendContactEmail(@Payload() dto: any) {
-		return this.authService.sendContactEmail(dto);
+	async handleSendContactEmail(@Body() dto: any, @Payload() payload: any) {
+		return this.authService.sendContactEmail(dto || payload);
 	}
 
+	@Patch('user/status')
 	@MessagePattern({ cmd: 'update_status' })
-	async handleUpdateStatus(@Payload() data: { firebaseId: string; status: string }) {
+	async handleUpdateStatus(@Body() dto: { firebaseId: string; status: string }, @Payload() payload: { firebaseId: string; status: string }) {
+		const data = dto || payload;
 		return this.authService.updateStatus(data.firebaseId, data.status);
 	}
 
+	@Delete('user')
 	@MessagePattern({ cmd: 'delete_user' })
-	async handleDeleteUser(@Payload() data: { firebaseId: string }) {
-		return this.authService.deleteUser(data.firebaseId);
+	async handleDeleteUser(@Body() dto: { firebaseId: string }, @Payload() payload: { firebaseId: string }) {
+		const firebaseId = dto?.firebaseId || payload?.firebaseId;
+		return this.authService.deleteUser(firebaseId);
 	}
 }

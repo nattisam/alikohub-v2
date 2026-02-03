@@ -1,23 +1,21 @@
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { winstonConfig } from './winston.config';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
 async function bootstrap() {
-  // Create microservice
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.TCP,
-    options: {
-      host: '0.0.0.0',
-      port: parseInt(process.env.AUTH_SERVICE_PORT) || 3001,
-    },
+  const logger = new Logger('Bootstrap');
+  const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,
   });
 
+  const port = parseInt(process.env.AUTH_SERVICE_PORT) || 3001;
+  
   // Centralized Global Error Handling
-  app.useGlobalFilters(new RpcExceptionFilter());
+  app.useGlobalFilters(new GlobalExceptionFilter(), new RpcExceptionFilter());
   
   // Centralized Validation Handling
   app.useGlobalPipes(
@@ -28,8 +26,18 @@ async function bootstrap() {
     }),
   );
   
-  await app.listen();
-  console.log('Auth microservice running on TCP port 3001');
+  // Connect TCP microservice
+  app.connectMicroservice({
+    transport: Transport.TCP,
+    options: {
+      host: '0.0.0.0',
+      port: 3011,
+    },
+  });
+
+  await app.startAllMicroservices();
+  await app.listen(port, '0.0.0.0');
+  logger.log(`Auth service running on HTTP port ${port} and TCP port 3011`);
 }
 
 bootstrap();

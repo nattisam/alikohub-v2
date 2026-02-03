@@ -36,6 +36,7 @@ export class RpcExceptionFilter implements ExceptionFilter {
       }
     }
     else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      this.logger.error(`Prisma Known Error: ${exception.code} - ${exception.message}`);
       switch (exception.code) {
         case 'P2002':
           status = HttpStatus.CONFLICT;
@@ -50,9 +51,22 @@ export class RpcExceptionFilter implements ExceptionFilter {
           break;
         default:
           status = HttpStatus.BAD_REQUEST;
-          message = 'Database operation failed.';
+          message = `Database operation failed: ${exception.code}`;
           error = 'Database Error';
       }
+    }
+    else if (exception instanceof Prisma.PrismaClientValidationError) {
+      this.logger.error(`Prisma Validation Error: ${exception.message}`);
+      status = HttpStatus.BAD_REQUEST;
+      message = 'Invalid data provided for database operation.';
+      error = 'Validation Error';
+      details = exception.message;
+    }
+    else if (exception instanceof Prisma.PrismaClientInitializationError) {
+      this.logger.error(`Prisma Initialization Error: ${exception.message}`);
+      status = HttpStatus.SERVICE_UNAVAILABLE;
+      message = 'Database connection failed.';
+      error = 'Initialization Error';
     }
     else if (exception instanceof RpcException) {
       return throwError(() => exception.getError());

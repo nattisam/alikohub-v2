@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
 import { EmailService } from './email.service';
 import { AcademyRole, ContechRole, EventsRole, GlobalRole, CareersRole } from '@prisma/client';
+import { RabbitMQService } from '../rabbitmq.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
 		@Inject('ACADEMY_SERVICE') private readonly academyClient: ClientProxy,
 		@Inject('CONTECH_SERVICE') private readonly contechClient: ClientProxy,
 		@Inject('EVENTS_SERVICE') private readonly eventsClient: ClientProxy,
+		private readonly rabbitMQService: RabbitMQService,
 	) {}
 
 	async register(dto: any) {
@@ -99,16 +101,17 @@ export class AuthService {
 			user = await this.userService.findByFirebaseId(userRecord.uid);
 			this.logger.log(`User created in database: ${user.id}`);
 			
-			// Emit user_created event to all services
-			const eventPayload = {
-				userId: user.firebaseId,
-				email: user.email,
-				role: 'USER',
-				globalRole: user.globalRole,
-			};
-			this.academyClient.emit('user_created', eventPayload);
-			this.contechClient.emit('user_created', eventPayload);
-			this.eventsClient.emit('user_created', eventPayload);
+			// Broadcast event to all microservices via RabbitMQ
+			await this.rabbitMQService.publishToExchange('user_events', {
+				pattern: 'user_created',
+				data: {
+					userId: user.firebaseId,
+					email: user.email,
+					firstname: user.firstname,
+					lastname: user.lastname,
+					role: user.globalRole,
+				}
+			});
 		}
 
 		// Issue Firebase custom token
@@ -650,9 +653,11 @@ export class AuthService {
 		}
 
 		const firebaseId = decoded.uid || decoded.sub;
+		this.logger.log(`[verifyAuth] Verifying user with firebaseId: ${firebaseId} (type: ${type})`);
 		const user = await this.userService.findByFirebaseId(firebaseId);
 		
 		if (!user) {
+			this.logger.warn(`[verifyAuth] User NOT FOUND in database for firebaseId: ${firebaseId}`);
 			throw new RpcException({
 				statusCode: HttpStatus.UNAUTHORIZED,
 				message: 'User not found',
@@ -660,6 +665,7 @@ export class AuthService {
 			});
 		}
 
+		this.logger.log(`[verifyAuth] SUCCESS for user: ${user.email} (id: ${user.id})`);
 		return { user: this.toPlain(user), decodedToken: decoded };
 	}
 
