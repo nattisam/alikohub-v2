@@ -33,49 +33,59 @@ export class CourseModulesService {
     return await this.prisma.module.create({ data: dto });
   }
 
-  async findAllByCourse(courseId: number, user: AuthenticatedUser) {
+  async findAllByCourse(courseId: number, user: AuthenticatedUser, query: any = {}) {
     console.log(`=== Accessing Course Modules ===`);
     console.log(`User ID: ${user.firebaseId}`);
     console.log(`Course ID: ${courseId}`);
 
-    // AUTHORIZATION: We now allow all users to view course modules (the curriculum).
-    // This allows prospective students to see what the course covers.
-    // Lesson CONTENT is still protected in the LessonsService.
-    
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
 
-    console.log(`ACCESS GRANTED: User ${user.firebaseId} viewing curriculum for course ${courseId}`);
-    return await this.prisma.module.findMany({
-      where: { courseId },
-      include: { 
-        lessons: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            maxScore: true,
-            dueDate: true,
-            createdAt: true,
-            updatedAt: true,
-            // Exclude content for public view
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const [modules, total] = await Promise.all([
+      this.prisma.module.findMany({
+        where: { courseId },
+        skip,
+        take: pageSize,
+        include: { 
+          lessons: {
+            select: {
+              id: true,
+              title: true,
+              type: true,
+              maxScore: true,
+              dueDate: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+            orderBy: { order: 'asc' }
           },
-          orderBy: { createdAt: 'asc' }
-        },
-        exercises: {
+          exercises: {
             select: {
                 id: true,
                 title: true,
                 type: true,
                 points: true,
                 order: true,
-                // Exclude correct answer
             },
             orderBy: { order: 'asc' }
-        }
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+          }
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.module.count({ where: { courseId } })
+    ]);
+
+    return {
+      items: modules,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 
   async findOne(id: number, user: AuthenticatedUser) {

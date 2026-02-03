@@ -199,13 +199,19 @@ export class CoursesService {
       }
 
       // Enforce visibility rules
-      if (!isAdmin) {
+      if (isAdmin) {
+        if (query.status) where.status = query.status;
+        if (query.instructorId) where.instructorId = query.instructorId;
+      } else if (user && query.instructorId === user.firebaseId) {
+        // Instructor looking at their own courses - allow filtering by any status
+        if (query.status) where.status = query.status;
+        where.instructorId = query.instructorId;
+      } else {
+        // Public view or looking at someone else's courses - only show PUBLISHED
         where.status = CourseStatus.PUBLISHED;
-      } else if (query.status) {
-        where.status = query.status;
+        if (query.instructorId) where.instructorId = query.instructorId;
       }
 
-      if (query.instructorId) where.instructorId = query.instructorId;
       if (query.category) where.category = query.category;
       if (query.q) {
         where.OR = [
@@ -216,8 +222,8 @@ export class CoursesService {
       }
 
       // Handle pagination
-      const page = query.page || 1;
-      const pageSize = query.pageSize || 10;
+      const page = Number(query.page) || 1;
+      const pageSize = Number(query.pageSize) || 10;
       const skip = (page - 1) * pageSize;
 
       const [courses, total] = await Promise.all([
@@ -225,7 +231,23 @@ export class CoursesService {
           where,
           skip,
           take: pageSize,
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          include: {
+            _count: {
+              select: {
+                modules: true,
+                enrollments: true,
+              },
+            },
+            profile: {
+              select: {
+                bio: true,
+                expertise: true,
+                specialization: true,
+                role: true,
+              },
+            },
+          },
         }),
         this.prisma.course.count({ where }),
       ]);
@@ -234,31 +256,26 @@ export class CoursesService {
       // Get unique instructor IDs from the courses
       const instructorIds = [...new Set(courses.map((c) => c.instructorId))];
 
-      // Fetch all required instructors in a single batch call
-      const instructors = await this.userService.getUsersByIds(instructorIds);
+      // Fetch all required instructors in a single batch call from Auth Service
+      const authInstructors = await this.userService.getUsersByIds(instructorIds);
 
-      // Calculate enrollment count for each course
-      const coursesWithEnrollmentCount = await Promise.all(
-        courses.map(async (course) => {
-          // Count enrollments for this course
-          const enrollmentCount = await this.prisma.enrollment.count({
-            where: {
-              courseId: course.id,
-            },
-          });
-
-          return {
-            ...course,
-            enrolledNum: enrollmentCount, // Override the stored enrolledNum with actual count
-          };
-        })
-      );
-
-      // Map instructors back to their courses
-      const items = coursesWithEnrollmentCount.map((course) => ({
-        ...course,
-        instructor: instructors.find((i) => i.firebaseId === course.instructorId) || null,
-      }));
+      // Map everything back to response objects
+      const items = courses.map((course: any) => {
+        const authInfo = authInstructors.find((i: any) => i.firebaseId === course.instructorId);
+        
+        return {
+          ...course,
+          modulesCount: course._count?.modules || 0,
+          enrolledNum: course._count?.enrollments || course.enrolledNum || 0,
+          instructor: authInfo ? {
+            ...authInfo,
+            profile: course.profile,
+          } : null,
+          // Remove the raw profile and _count property from the root level of the item
+          profile: undefined,
+          _count: undefined,
+        };
+      });
 
       let statusCounts = {};
       if (isAdmin) {

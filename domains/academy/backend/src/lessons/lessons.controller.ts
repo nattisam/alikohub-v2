@@ -22,8 +22,15 @@ export class LessonsController {
   }
 
   @MessagePattern({ cmd: 'find_lessons_by_module' })
-  async findByModule(@Payload() payload: { moduleId: number; user: AuthenticatedUser }) {
-    return await this.lessonsService.findByModule(payload.moduleId, payload.user);
+  async findByModule(@Payload() payload: { moduleId: number; user: AuthenticatedUser; query?: any }) {
+    return await this.lessonsService.findByModule(payload.moduleId, payload.user, payload.query);
+  }
+
+  @MessagePattern({ cmd: 'find_instructor_lessons' })
+  @UseGuards(RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async findInstructorLessons(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return await this.lessonsService.findByInstructor(payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: 'find_lesson_by_id' })

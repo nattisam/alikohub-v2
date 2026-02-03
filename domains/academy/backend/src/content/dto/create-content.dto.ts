@@ -41,4 +41,8 @@ export class CreateContentDto {
   @IsOptional()
   @IsString()
   metadata?: string; // JSON string for additional metadata
+
+  @IsOptional()
+  @IsInt()
+  order?: number;
 }

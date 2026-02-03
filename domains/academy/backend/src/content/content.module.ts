@@ -20,7 +20,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           transport: Transport.TCP,
           options: {
             host: configService.get('FILE_UPLOAD_SERVICE_HOST'),
-            port: configService.get('FILE_UPLOAD_SERVICE_PORT'),
+            port: 3019, // configService.get('FILE_UPLOAD_SERVICE_PORT'),
           },
         }),
       },

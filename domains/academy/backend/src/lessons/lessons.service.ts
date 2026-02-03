@@ -46,19 +46,16 @@ export class LessonsService {
     });
   }
 
-  async findByModule(moduleId: number, user: AuthenticatedUser) {
+  async findByModule(moduleId: number, user: AuthenticatedUser, query: any = {}) {
     console.log(`=== Authorization Check for Lessons ===`);
     console.log(`User ID: ${user.firebaseId}`);
     console.log(`Module ID: ${moduleId}`);
 
     const academyProfile = await this.userService.getOrCreateProfile(user)
-    console.log(`User academy profile:`, academyProfile);
-
     const module = await this.prisma.module.findUnique({
       where: { id: moduleId },
       include: { course: true },
     });
-    console.log(`Module found:`, module);
 
     if (!module) throw new NotFoundException('Module not found');
 
@@ -70,55 +67,95 @@ export class LessonsService {
     const isInstructor = instructorId === user.firebaseId;
     let isEnrolled = false;
 
-    console.log(`Initial check - Is instructor: ${isInstructor}, Is admin: ${isAdmin}`);
-
     if (!isAdmin && !isInstructor) {
-      console.log(`Checking enrollment for user ${user.firebaseId} in course ${courseId}`);
-
-      // Check for direct course enrollment (no cohort)
-      const directEnrollment = await this.prisma.enrollment.findFirst({
+      // Check for enrollment
+      const enrollment = await this.prisma.enrollment.findFirst({
         where: {
           userId: user.firebaseId,
-          courseId: courseId,
-          cohortId: null // Direct enrollment without cohort
+          OR: [
+            { courseId: courseId, cohortId: null },
+            { cohort: { courseId: courseId } }
+          ]
         },
       });
-
-      console.log(`Direct enrollment query result:`, directEnrollment);
-
-      if (directEnrollment) {
-        isEnrolled = true;
-        console.log(`User is directly enrolled in course`);
-      } else {
-        // Check for cohort-based enrollment
-        const cohortEnrollment = await this.prisma.enrollment.findFirst({
-          where: {
-            userId: user.firebaseId,
-            cohort: { courseId: courseId }
-          },
-        });
-
-        console.log(`Cohort enrollment query result:`, cohortEnrollment);
-        if (cohortEnrollment) {
-          isEnrolled = true;
-          console.log(`User is enrolled in course through cohort`);
-        }
-      }
+      isEnrolled = !!enrollment;
     }
 
-    console.log(`Final authorization - Is instructor: ${isInstructor}, Is admin: ${isAdmin}, Is enrolled: ${isEnrolled}`);
-
     if (!isAdmin && !isInstructor && !isEnrolled) {
-      console.log(`ACCESS DENIED: User ${user.firebaseId} is not authorized to view lessons for module ${moduleId}`);
       throw new ForbiddenException('You must be enrolled in this course to view its lessons.');
     }
 
-    console.log(`ACCESS GRANTED: User ${user.firebaseId} is authorized to view lessons for module ${moduleId}`);
-    return await this.prisma.lesson.findMany({
-      where: { moduleId },
-      orderBy: { order: 'asc' },
-      include: { contents: true, exercises: true },
-    });
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const [lessons, total] = await Promise.all([
+      this.prisma.lesson.findMany({
+        where: { moduleId },
+        skip,
+        take: pageSize,
+        orderBy: { order: 'asc' },
+        include: { contents: true, exercises: true },
+      }),
+      this.prisma.lesson.count({ where: { moduleId } })
+    ]);
+
+    return {
+      items: lessons,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
+
+  async findByInstructor(user: AuthenticatedUser, query: any = {}) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+      throw new ForbiddenException('Instructor role required');
+    }
+
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const where: any = {
+      module: {
+        course: {
+          instructorId: user.firebaseId
+        }
+      }
+    };
+
+    if (query.moduleId) where.moduleId = Number(query.moduleId);
+    if (query.type) where.type = query.type;
+
+    const [lessons, total] = await Promise.all([
+      this.prisma.lesson.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        include: { 
+          module: { 
+            include: { 
+              course: { 
+                select: { id: true, title: true } 
+              } 
+            } 
+          } 
+        }
+      }),
+      this.prisma.lesson.count({ where })
+    ]);
+
+    return {
+      items: lessons,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 
   async findOne(id: number, user: AuthenticatedUser) {
