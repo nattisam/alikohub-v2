@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Inject, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request, Inject, Patch, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
 import { AdminAccessGuard } from '../common/guard/admin-access.guard';
@@ -10,6 +10,8 @@ import { CreateJobDto } from './dto/create-job.dto';
 import { ApplyJobDto } from './dto/apply-job.dto';
 import { CreateRecruiterDto } from './dto/create-recruiter.dto';
 import { Public } from '../common/decorators/public.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../file-upload-service/file-upload.service';
 
 @ApiTags('Careers')
 @ApiBearerAuth()
@@ -19,6 +21,7 @@ export class CareersController {
   constructor(
     @Inject('CAREERS_SERVICE') private readonly careersClient: ClientProxy,
     @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   @Post('admin/recruiters')
@@ -108,8 +111,19 @@ export class CareersController {
   }
 
   @Post('jobs/:id/apply')
+  @UseInterceptors(FileInterceptor('resume'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Apply to a job' })
-  async applyJob(@Request() req: any, @Param('id') id: string, @Body() applyJobDto: ApplyJobDto) {
+  async applyJob(
+    @Request() req: any, 
+    @Param('id') id: string, 
+    @Body() applyJobDto: ApplyJobDto,
+    @UploadedFile() resume?: Express.Multer.File,
+  ) {
+    if (resume) {
+      const uploadResult = await this.fileUploadService.uploadFile(resume, 'document');
+      applyJobDto.resumeUrl = uploadResult.url;
+    }
     return firstValueFrom(
       this.careersClient.send({ cmd: 'apply_job' }, { 
         jobId: parseInt(id), 
@@ -139,3 +153,4 @@ export class CareersController {
     );
   }
 }
+

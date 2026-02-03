@@ -1,4 +1,5 @@
 import { IsString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateEventDto {
     @IsString()
@@ -20,4 +21,8 @@ export class UpdateEventDto {
     @IsString()
     @IsOptional()
     location?: string;
+
+    @ApiProperty({ type: 'string', format: 'binary', description: 'Event cover image' })
+    @IsOptional()
+    coverImage?: any;
 }

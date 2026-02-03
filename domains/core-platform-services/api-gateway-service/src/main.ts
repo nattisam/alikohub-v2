@@ -1,7 +1,13 @@
+import { otelSDK } from './common/tracing/tracing';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+// Start OpenTelemetry SDK
+otelSDK.start();
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import * as dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { UserModule } from './auth-service/user/user.module';
@@ -10,8 +16,6 @@ import { EventsServiceModule } from './events-service/events-service.module';
 import { AcademyServiceModule } from './academy-service';
 import { winstonConfig } from './winston.config';
 import { RpcExceptionFilter } from './common/filters';
-
-dotenv.config();
 
 // Bootstrap the application
 async function bootstrap() {

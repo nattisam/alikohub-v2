@@ -1,5 +1,5 @@
-import { IsInt, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsString, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCourseModuleDto {
   @ApiProperty({ example: 'Introduction' })
@@ -13,4 +13,9 @@ export class CreateCourseModuleDto {
   @ApiProperty({ example: 1 })
   @IsInt()
   courseId!: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsInt()
+  @IsOptional()
+  order?: number;
 }

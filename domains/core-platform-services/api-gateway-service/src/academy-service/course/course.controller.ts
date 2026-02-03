@@ -1,3 +1,5 @@
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../../file-upload-service/file-upload.service';
 import {
   Body,
   Controller,
@@ -11,6 +13,8 @@ import {
   UseGuards,
   Request,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
@@ -30,6 +34,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 
@@ -38,17 +43,31 @@ import { Public } from '../../common/decorators/public.decorator';
 @Controller('academy/courses')
 @UseGuards(AuthGuard)
 export class CourseController {
-  constructor(@Inject('ACADEMY_SERVICE') private academyClient: ClientProxy) {}
+  constructor(
+    @Inject('ACADEMY_SERVICE') private academyClient: ClientProxy,
+    private readonly fileUploadService: FileUploadService
+  ) {}
 
   // Create a new course
   @Post()
   @UseGuards(AuthGuard, TeacherAccessGuard)
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new course' })
   @ApiResponse({ status: 201, description: 'Course created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 403, description: 'Teacher role required' })
   @ApiBody({ type: CreateCourseDto })
-  createCourse(@Request() req: RequestWithUser, @Body() createCourseDto: CreateCourseDto) {
+  async createCourse(
+    @Request() req: RequestWithUser, 
+    @Body() createCourseDto: CreateCourseDto,
+    @UploadedFile() thumbnail?: Express.Multer.File,
+  ) {
+    if (thumbnail) {
+      const uploadResult = await this.fileUploadService.uploadFile(thumbnail, 'image');
+      createCourseDto.thumbnail = uploadResult.url;
+    }
+
     const payload = {
       dto: createCourseDto,
       user: req.user,
@@ -67,8 +86,33 @@ export class CourseController {
     description: 'Query parameters (pagination, filters, etc.)',
   })
   findAllCourses(@Request() req: RequestWithUser, @Query() query: any) {
-    const payload = { query, user: req.user };
+    const payload = { query, user: req.user! };
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
+  }
+
+  // Get instructor's own courses
+  @Get('instructor/my')
+  @UseGuards(AuthGuard, TeacherAccessGuard)
+  @ApiOperation({ summary: "Get currently logged-in instructor's courses" })
+  @ApiResponse({ status: 200, description: 'List of instructor courses' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  @ApiQuery({ name: 'status', required: false })
+  getMyCourses(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = { 
+      query: { ...query, instructorId: req.user!.firebaseId }, 
+      user: req.user! 
+    };
+    return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
+  }
+
+  // Get instructor's courses with full stats
+  @Get('instructor/stats')
+  @UseGuards(AuthGuard, TeacherAccessGuard)
+  @ApiOperation({ summary: "Get instructor's courses with detailed stats" })
+  @ApiResponse({ status: 200, description: 'List of courses with stats' })
+  getInstructorCoursesWithStats(@Request() req: RequestWithUser) {
+    return this.academyClient.send({ cmd: 'get_instructor_courses_with_stats' }, { user: req.user });
   }
 
   // Get all courses with all statuses (Admin only)
@@ -79,7 +123,7 @@ export class CourseController {
   getAllCourses(@Request() req: RequestWithUser, @Query() query: any) {
     const payload = { 
       query: { ...query }, 
-      user: req.user 
+      user: req.user!
     };
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
@@ -94,7 +138,7 @@ export class CourseController {
   getPendingCourses(@Request() req: RequestWithUser, @Query() query: any) {
     const payload = { 
       query: { ...query, status: 'PENDING_APPROVAL' }, 
-      user: req.user 
+      user: req.user! 
     };
     return this.academyClient.send({ cmd: 'find_all_courses' }, payload);
   }
@@ -141,23 +185,31 @@ export class CourseController {
   @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiParam({ name: 'id', type: Number })
   findCourseById(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
-    const payload = { id, user: req.user };
+    const payload = { id, user: req.user! };
     return this.academyClient.send({ cmd: 'find_course_by_id' }, payload);
   }
 
   // Update a course
   @Patch(':id')
   @UseGuards(AuthGuard, EnrollmentGuard)
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a course' })
   @ApiResponse({ status: 200, description: 'Course updated successfully' })
   @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiParam({ name: 'id', type: Number })
   @ApiBody({ type: UpdateCourseDto })
-  updateCourse(
+  async updateCourse(
     @Request() req: RequestWithUser,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCourseDto: UpdateCourseDto,
+    @UploadedFile() thumbnail?: Express.Multer.File,
   ) {
+    if (thumbnail) {
+      const uploadResult = await this.fileUploadService.uploadFile(thumbnail, 'image');
+      updateCourseDto.thumbnail = uploadResult.url;
+    }
+
     const payload = {
       id,
       dto: updateCourseDto,

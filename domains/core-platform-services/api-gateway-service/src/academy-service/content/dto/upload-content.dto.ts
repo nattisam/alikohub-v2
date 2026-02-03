@@ -1,4 +1,5 @@
 import { IsEnum, IsInt, IsString, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 
 // Define ContentType enum locally to avoid Prisma dependency
 export enum ContentType {
@@ -16,6 +17,7 @@ export class UploadContentDto {
   type!: ContentType;
 
   @IsInt()
+  @Type(() => Number)
   lessonId!: number;
 
   @IsOptional()

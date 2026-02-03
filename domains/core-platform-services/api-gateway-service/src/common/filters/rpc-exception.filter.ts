@@ -2,10 +2,7 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logge
 import { RpcException } from '@nestjs/microservices';
 import { Request, Response } from 'express';
 
-/**
- * Centalized Exception Filter for the API Gateway.
- * Bridges microservice RPC errors to standard HTTP responses.
- */
+
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
@@ -24,7 +21,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof RpcException) {
       const rpcError = exception.getError();
       if (typeof rpcError === 'object' && rpcError !== null) {
-        statusCode = (rpcError as any).statusCode || (rpcError as any).status || HttpStatus.BAD_REQUEST;
+        // Safely extract status code - ensure it's a valid number
+        const rawStatus = (rpcError as any).statusCode || (rpcError as any).status;
+        if (typeof rawStatus === 'number' && rawStatus >= 100 && rawStatus <= 599) {
+          statusCode = rawStatus;
+        } else {
+          statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
         message = (rpcError as any).message || 'RPC Error';
         error = (rpcError as any).error || 'RPC Error';
         details = (rpcError as any).details || null;
@@ -80,9 +83,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const logMessage = `${request.method} ${request.url} - ${statusCode} - ${message}`;
     if (statusCode >= 500) {
       this.logger.error(logMessage);
-      if (exception.stack) this.logger.error(exception.stack);
-      // Security: Do not leak internal error messages for 500 errors to the client
-      message = 'An unexpected error occurred on our server. Our team has been notified.';
+      if (exception.stack) {
+        this.logger.error(exception.stack);
+      } else {
+        // Log the whole exception object if there's no stack trace
+        console.error('[CRITICAL] Internal Error without stack trace:', exception);
+        console.dir(exception, { depth: null });
+      }
+      
+      // Security: Do not leak internal error messages for 500 errors to the client in production
+      if (process.env.NODE_ENV === 'production') {
+        message = 'An unexpected error occurred on our server. Our team has been notified.';
+      }
     } else {
       this.logger.warn(logMessage);
     }

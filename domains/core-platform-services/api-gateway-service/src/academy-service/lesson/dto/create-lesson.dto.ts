@@ -58,4 +58,9 @@ export class CreateLessonDto {
   @ValidateNested({ each: true })
   @Type(() => CreateContentDto)
   contents?: CreateContentDto[];
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsInt()
+  @IsOptional()
+  order?: number;
 }

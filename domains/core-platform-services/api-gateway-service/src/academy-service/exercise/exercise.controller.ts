@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, UseGuards, Request, HttpStatus, HttpException, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, UseGuards, Request, HttpStatus, HttpException, Logger, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { firstValueFrom, timeout, catchError, throwError } from 'rxjs';
@@ -17,7 +17,11 @@ export class ExercisesController {
 
   private handleError(error: any, operation: string) {
     this.logger.error(`${operation} failed:`, error);
-    const status = error.statusCode || error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+    // Ensure we get a valid numeric status code
+    const rawStatus = error.statusCode || error.status;
+    const status = (typeof rawStatus === 'number' && rawStatus >= 100 && rawStatus <= 599)
+      ? rawStatus
+      : HttpStatus.INTERNAL_SERVER_ERROR;
     const message = error.message || 'Error communicating with Academy service';
     throw new HttpException({ statusCode: status, message, error: error.error || 'Academy Service Error' }, status);
   }
@@ -38,12 +42,26 @@ export class ExercisesController {
 
   @Get('module/:moduleId')
   @ApiOperation({ summary: 'Find all exercises in a module' })
-  async findAllByModule(@Request() req: any, @Param('moduleId') moduleId: string) {
+  async findAllByModule(@Request() req: any, @Param('moduleId') moduleId: string, @Query() query: any) {
     return firstValueFrom(
-      this.academyClient.send({ cmd: 'find_exercises_by_module' }, { moduleId: +moduleId, user: req.user }).pipe(
+      this.academyClient.send({ cmd: 'find_exercises_by_module' }, { moduleId: +moduleId, user: req.user, query }).pipe(
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Find Exercises by Module');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Get('instructor/my')
+  @ApiOperation({ summary: 'Find all exercises for current instructor' })
+  async getMyExercises(@Request() req: any, @Query() query: any) {
+    return firstValueFrom(
+      this.academyClient.send({ cmd: 'find_instructor_exercises' }, { user: req.user, query }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Find My Exercises');
           return throwError(() => error);
         }),
       )

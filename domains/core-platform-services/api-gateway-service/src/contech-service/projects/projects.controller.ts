@@ -11,25 +11,33 @@ import {
   UseGuards,
   Request,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../../file-upload-service/file-upload.service';
 import {
   ApiTags,
   ApiOperation,
   ApiBody,
   ApiQuery,
   ApiResponse,
+  ApiConsumes,
 } from '@nestjs/swagger';
 
 @ApiTags('Projects')
 @Controller('projects')
 @UseGuards(AuthGuard)
 export class ProjectsController {
-  constructor(@Inject('CONTECH_SERVICE') private contechClient: ClientProxy) {}
+  constructor(
+    @Inject('CONTECH_SERVICE') private contechClient: ClientProxy,
+    private readonly fileUploadService: FileUploadService
+  ) {}
 
   @ApiOperation({ summary: 'Create a new project' })
   @ApiBody({ type: CreateProjectDto })
@@ -210,28 +218,35 @@ export class ProjectsController {
 
   // Document Management
   @ApiOperation({ summary: 'Add a document to project' })
+  @Post(':id/documents')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
+        file: { type: 'string', format: 'binary' },
         title: { type: 'string', example: 'Site Plan v1' },
-        url: { type: 'string', example: 'https://example.com/file.pdf' },
         fileType: { type: 'string', example: 'PDF' },
         isVisibleToClient: { type: 'boolean', example: false },
       },
-      required: ['title', 'url'],
+      required: ['title'],
     },
   })
   @ApiResponse({
     status: 201,
     description: 'Document added successfully',
   })
-  @Post(':id/documents')
-  addDocument(
+  async addDocument(
     @Request() req: RequestWithUser,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { title: string; url: string; fileType?: string; isVisibleToClient?: boolean },
+    @Body() dto: { title: string; url?: string; fileType?: string; isVisibleToClient?: boolean },
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+    if (file) {
+      const uploadResult = await this.fileUploadService.uploadFile(file, 'document');
+      dto.url = uploadResult.url;
+    }
     const payload = { projectId: id, dto, user: req.user };
     return this.contechClient.send({ cmd: 'add_project_document' }, payload);
   }
