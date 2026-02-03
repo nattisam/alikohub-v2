@@ -26,6 +26,33 @@ async function bootstrap() {
     },
   });
 
+  // Add RabbitMQ transport for async events (optional - only if available)
+  const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost';
+  if (process.env.RABBITMQ_ENABLED !== 'false') {
+    try {
+      app.connectMicroservice({
+        transport: Transport.RMQ,
+        options: {
+          urls: [rabbitmqUrl],
+          queue: 'contech_user_events',
+          exchange: 'user_events',
+          exchangeType: 'fanout',
+          queueOptions: {
+            durable: false
+          },
+          socketOptions: {
+            noDelay: true
+          }
+        },
+      });
+      console.log(`ConTech: RabbitMQ transport configured for ${rabbitmqUrl}`);
+    } catch (e) {
+      console.warn(`ConTech: RabbitMQ transport not available: ${e.message}`);
+    }
+  } else {
+    console.log('ConTech: RabbitMQ disabled via RABBITMQ_ENABLED=false');
+  }
+
   // Centralized Global Error Handling
   app.useGlobalFilters(new RpcExceptionFilter());
   

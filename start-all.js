@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const services = [
-  { name: 'api-gateway', path: './domains/core-platform-services/api-gateway-service/dist/main.js', port: 3000 },
+  { name: 'api-gateway', path: './domains/core-platform-services/api-gateway-service/dist/main.js', port: 3006 },
   { 
     name: 'auth-service', 
     path: './domains/core-platform-services/auth-service/dist/main.js', 
@@ -22,26 +22,26 @@ const services = [
   { 
     name: 'academy-backend', 
     path: './domains/academy/backend/dist/src/main.js', 
-    port: 3002,
+    port: 3005,
     dbEnv: 'ACADEMY_DATABASE_URL'
   },
   { 
     name: 'con-tech-backend', 
     path: './domains/con-tech/backend/dist/src/main.js', 
-    port: 3003,
+    port: 3002,
     dbEnv: 'CONTECH_DATABASE_URL'
   },
   { 
     name: 'careers-service', 
     path: './domains/core-platform-services/careers-service/dist/main.js', 
-    port: 3004,
+    port: 3008,
     dbEnv: 'CAREERS_DATABASE_URL',
     portEnv: 'CAREERS_SERVICE_PORT'
   },
   { 
     name: 'events-backend', 
     path: './domains/events/backend/dist/main.js', 
-    port: 3005,
+    port: 3004,
     dbEnv: 'EVENTS_DATABASE_URL',
     portEnv: 'EVENTS_SERVICE_PORT'
   },
@@ -55,7 +55,9 @@ services.forEach(service => {
   const env = {
     ...process.env,
     PORT: service.port,
-    NODE_ENV: 'production'
+    NODE_ENV: 'production',
+    RABBITMQ_URL: process.env.RABBITMQ_URL || 'amqp://localhost',
+    RABBITMQ_ENABLED: process.env.RABBITMQ_ENABLED || 'true'
   };
 
   if (service.portEnv) {
