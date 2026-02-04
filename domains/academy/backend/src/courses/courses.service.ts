@@ -247,6 +247,28 @@ export class CoursesService {
                 role: true,
               },
             },
+            // Conditional include for full content when pending approval
+            ...(query.status === CourseStatus.PENDING_APPROVAL ? {
+              modules: {
+                orderBy: { createdAt: 'asc' },
+                include: {
+                  lessons: {
+                    orderBy: { order: 'asc' },
+                    include: {
+                      contents: {
+                        orderBy: { createdAt: 'asc' }
+                      },
+                      exercises: {
+                        orderBy: { order: 'asc' }
+                      }
+                    }
+                  },
+                  exercises: {
+                    orderBy: { order: 'asc' }
+                  }
+                }
+              }
+            } : {})
           },
         }),
         this.prisma.course.count({ where }),
@@ -305,7 +327,38 @@ export class CoursesService {
 
   // REFACTORED: Use string ID and enrich data
   async findOne(id: number, user?: AuthenticatedUser) {
-    const course = await this.prisma.course.findUnique({ where: { id } });
+    const course = await this.prisma.course.findUnique({ 
+      where: { id },
+      include: {
+        modules: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            lessons: {
+              orderBy: { order: 'asc' },
+              include: {
+                contents: {
+                  orderBy: { createdAt: 'asc' }
+                },
+                exercises: {
+                  orderBy: { order: 'asc' }
+                }
+              }
+            },
+            exercises: {
+              orderBy: { order: 'asc' }
+            }
+          }
+        },
+        profile: {
+          select: {
+            bio: true,
+            expertise: true,
+            specialization: true,
+            role: true
+          }
+        }
+      }
+    });
     if (!course) throw new NotFoundException('Course not found');
 
     // Visibility Check: If not published, only Admin or Owner can view

@@ -41,6 +41,15 @@ export class CourseModulesService {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
 
+    // VISIBILITY CHECK
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    const isInstructor = course.instructorId === user.firebaseId;
+    const isAdmin = academyProfile.role === 'ADMIN';
+
+    if (course.status !== 'PUBLISHED' && !isInstructor && !isAdmin) {
+      throw new ForbiddenException('You generally do not have permission to view content of this course.');
+    }
+
     const page = Number(query.page) || 1;
     const pageSize = Number(query.pageSize) || 10;
     const skip = (page - 1) * pageSize;
@@ -58,6 +67,7 @@ export class CourseModulesService {
               type: true,
               maxScore: true,
               dueDate: true,
+              order: true,
               createdAt: true,
               updatedAt: true,
             },
@@ -91,14 +101,19 @@ export class CourseModulesService {
   async findOne(id: number, user: AuthenticatedUser) {
     const module = await this.prisma.module.findUnique({
       where: { id },
-      include: { lessons: true, exercises: true, course: true },
+      include: { 
+        lessons: { orderBy: { order: 'asc' } }, 
+        exercises: { orderBy: { order: 'asc' } }, 
+        course: true 
+      },
     });
     if (!module) throw new NotFoundException('Module not found');
 
-    // AUTHORIZATION: Re-use the same logic as findAllByCourse
-    const { course, ...moduleData } = module;
-    await this.findAllByCourse(course.id, user); // This will throw a ForbiddenException if not allowed
+    // AUTHORIZATION: Reuse the course-level check
+    // This ensures that if the course is not accessible, the module is not accessible
+    await this.findAllByCourse(module.course.id, user);
 
+    const { course, ...moduleData } = module;
     return moduleData;
   }
 
@@ -142,5 +157,38 @@ export class CourseModulesService {
     }
 
     return await this.prisma.module.delete({ where: { id } });
+  }
+
+  async findOneForInstructor(id: number, user: AuthenticatedUser) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    const module = await this.prisma.module.findUnique({
+      where: { id },
+      include: {
+        course: {
+          select: { instructorId: true, title: true }
+        },
+        lessons: {
+          include: {
+            contents: true,
+            exercises: true,
+          },
+          orderBy: { order: 'asc' }
+        },
+        exercises: {
+            orderBy: { order: 'asc' }
+        }
+      },
+    });
+
+    if (!module) throw new NotFoundException('Module not found');
+
+    const isInstructor = module.course.instructorId === user.firebaseId;
+    const isAdmin = academyProfile.role === 'ADMIN';
+
+    if (!isInstructor && !isAdmin) {
+      throw new ForbiddenException('You do not have permission to view this module in instructor mode.');
+    }
+
+    return module;
   }
 }

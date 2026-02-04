@@ -1,4 +1,4 @@
-import { Controller, UseGuards } from '@nestjs/common';
+import { Controller, UseGuards, UseFilters } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CourseModulesService } from './course-modules.service';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
@@ -7,10 +7,12 @@ import { AuthenticatedUser } from 'src/user/user.service';
 import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
 import { RoleGuard } from 'src/auth/role-guard/role-guard';
 import { Roles } from 'src/auth/role-guard/roles.decorator';
+import { RpcExceptionFilter } from 'src/common/filters/rpc-exception.filter';
 
 
 @Controller()
 @UseGuards(AcademyProfileGuard)
+@UseFilters(RpcExceptionFilter)
 export class CourseModulesController {
   constructor(private readonly courseModulesService: CourseModulesService) { }
 
@@ -29,6 +31,13 @@ export class CourseModulesController {
   @MessagePattern({ cmd: 'find_module_by_id' })
   async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
     return await this.courseModulesService.findOne(payload.id, payload.user);
+  }
+
+  @MessagePattern({ cmd: 'get_instructor_module' })
+  @UseGuards(RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async findOneForInstructor(@Payload() payload: { id: number; user: AuthenticatedUser }) {
+    return await this.courseModulesService.findOneForInstructor(payload.id, payload.user);
   }
 
   @MessagePattern({ cmd: 'update_course_module' })

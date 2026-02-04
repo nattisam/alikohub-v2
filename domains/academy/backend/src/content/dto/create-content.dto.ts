@@ -8,11 +8,17 @@ export class CreateContentDto {
   @IsEnum(ContentType)
   type: ContentType;
 
+  @IsOptional()
   @IsUrl()
-  url: string;
+  url?: string;
 
+  @IsOptional()
   @IsInt()
-  lessonId: number;
+  lessonId?: number;
+
+  @IsOptional()
+  @IsString()
+  body?: string;
 
   @IsOptional()
   @IsString()

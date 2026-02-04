@@ -11,7 +11,7 @@ const services = [
     name: 'auth-service', 
     path: './domains/core-platform-services/auth-service/dist/main.js', 
     port: 3001,
-    dbEnv: 'AUTH_DATABASE_URL',
+    dbUrl: 'postgresql://postgres:1234@localhost:5433/postgres',
     portEnv: 'AUTH_SERVICE_PORT'
   },
   { 
@@ -23,7 +23,7 @@ const services = [
     name: 'academy-backend', 
     path: './domains/academy/backend/dist/src/main.js', 
     port: 3005,
-    dbEnv: 'ACADEMY_DATABASE_URL'
+    dbUrl: 'postgresql://academy_user:academy_pass@127.0.0.1:5433/academydb'
   },
   { 
     name: 'con-tech-backend', 
@@ -64,16 +64,32 @@ services.forEach(service => {
     env[service.portEnv] = service.port;
   }
 
-  if (service.dbEnv && process.env[service.dbEnv]) {
+  if (service.dbUrl) {
+    env.DATABASE_URL = service.dbUrl;
+    console.log(`[${service.name}] Explicit DATABASE_URL set`);
+  } else if (service.dbEnv && process.env[service.dbEnv]) {
     env.DATABASE_URL = process.env[service.dbEnv];
     console.log(`[${service.name}] Using DATABASE_URL from ${service.dbEnv}`);
+  } else {
+    // Clear DATABASE_URL if it's not explicitly set for this service
+    // to prevent it from using another service's DB
+    delete env.DATABASE_URL;
   }
 
   const cwd = path.resolve(__dirname, service.path.split('/dist/')[0]);
 
   const child = fork(path.resolve(__dirname, service.path), [], {
     env,
-    cwd
+    cwd,
+    stdio: ['inherit', 'pipe', 'pipe', 'ipc']
+  });
+
+  child.stdout.on('data', (data) => {
+    process.stdout.write(`[${service.name}] ${data}`);
+  });
+
+  child.stderr.on('data', (data) => {
+    process.stderr.write(`[${service.name}] ERROR: ${data}`);
   });
 
   child.on('message', (msg) => {

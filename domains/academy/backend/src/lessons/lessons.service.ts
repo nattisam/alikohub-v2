@@ -41,7 +41,14 @@ export class LessonsService {
         unlockRules: dto.unlockRules || {},
         dueDate: dueDate ? new Date(dueDate) : null,
         module: { connect: { id: moduleId } },
-        ...(contents && contents.length > 0 ? { contents: { create: contents } } : {}),
+        ...(contents && contents.length > 0 ? { 
+          contents: { 
+            create: contents.map(c => {
+              const { lessonId, ...rest } = c;
+              return rest;
+            }) 
+          } 
+        } : {}),
       },
     });
   }
@@ -241,7 +248,15 @@ export class LessonsService {
         unlockRules: dto.unlockRules !== undefined ? dto.unlockRules : lesson.unlockRules,
         ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
         ...(moduleId !== undefined ? { module: { connect: { id: moduleId } } } : {}),
-        ...(contents && contents.length > 0 ? { contents: { deleteMany: {}, create: contents } } : {}),
+        ...(contents && contents.length > 0 ? { 
+          contents: { 
+            deleteMany: {}, 
+            create: contents.map(c => {
+              const { lessonId, ...rest } = c;
+              return rest;
+            }) 
+          } 
+        } : {}),
       },
     });
   }

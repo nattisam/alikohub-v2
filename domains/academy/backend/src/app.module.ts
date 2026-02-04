@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { CoursesModule } from './courses/courses.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -16,6 +17,7 @@ import { TeachingScheduleModule } from './teaching-schedule/teaching-schedule.mo
 import { AcademyProfileGuard } from './auth/academy-profile.guard';
 import { RoleGuard } from './auth/role-guard/role-guard';
 import { ExercisesModule } from './exercises/exercises.module';
+import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
 @Global()
 @Module({
@@ -40,6 +42,10 @@ import { ExercisesModule } from './exercises/exercises.module';
   providers: [
     AcademyProfileGuard,
     RoleGuard,
+    {
+      provide: APP_FILTER,
+      useClass: RpcExceptionFilter,
+    },
   ]
 })
 export class AppModule { }

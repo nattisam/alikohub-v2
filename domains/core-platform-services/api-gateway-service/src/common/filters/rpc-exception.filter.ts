@@ -51,16 +51,25 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // 3. Handle serialized errors from microservices (passed as generic objects)
     else if (exception && typeof exception === 'object') {
       // Microservices often return { message, statusCode, error } or { response: { message, statusCode } }
-      const rawStatus = exception.statusCode || exception.status || exception.response?.statusCode || exception.response?.status;
+      // Or sometimes they wrap it in { error: { statusCode, ... } }
+      const rawStatus = exception.statusCode || 
+                        exception.status || 
+                        exception.response?.statusCode || 
+                        exception.response?.status ||
+                        exception.error?.statusCode ||
+                        exception.error?.status;
       
       if (typeof rawStatus === 'number' && !isNaN(rawStatus) && rawStatus >= 100 && rawStatus <= 599) {
         statusCode = rawStatus;
       }
       
-      const rawMessage = exception.message || exception.response?.message;
+      const rawMessage = exception.message || exception.response?.message || exception.error?.message;
       message = Array.isArray(rawMessage) ? rawMessage[0] : rawMessage || message;
-      error = exception.error || exception.response?.error || (statusCode === 500 ? 'Internal Server Error' : 'Microservice Error');
-      details = exception.details || exception.response?.details || null;
+      
+      const rawError = exception.error?.error || exception.error || exception.response?.error;
+      error = typeof rawError === 'string' ? rawError : (statusCode === 500 ? 'Internal Server Error' : 'Microservice Error');
+      
+      details = exception.details || exception.response?.details || exception.error?.details || null;
       
       // Handle connection errors
       if (exception.code === 'ECONNREFUSED') {
