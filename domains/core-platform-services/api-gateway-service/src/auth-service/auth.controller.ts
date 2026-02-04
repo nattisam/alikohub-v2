@@ -8,7 +8,7 @@ import { Roles } from '../common/roles/roles.decorator';
 import { CaptchaService } from '../common/captcha/captcha.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto } from './dto/academy-roles.dto';
+import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto, InstructorApplicationDto } from './dto/academy-roles.dto';
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError, firstValueFrom } from 'rxjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
@@ -171,6 +171,76 @@ export class AuthController {
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Apply Teacher');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('academy/apply-instructor')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('resume'))
+  @ApiConsumes('multipart/form-data')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Apply for instructor role (FormData friendly)' })
+  async applyInstructor(
+    @Request() req: any,
+    @Body() dto: InstructorApplicationDto,
+    @UploadedFile() resume?: Express.Multer.File,
+  ) {
+    let resumeUrl = null;
+    if (resume) {
+      const uploadResult = await this.fileUploadService.uploadFile(resume, 'document');
+      resumeUrl = uploadResult.url;
+    }
+
+    // Parse categories from string to array
+    const teachingCategories = dto.teachingCategories.split(',').map(c => c.trim());
+    
+    // Parse interview responses if provided as JSON string
+    let interviewResponses = [];
+    if (dto.interviewResponses) {
+      try {
+        interviewResponses = JSON.parse(dto.interviewResponses);
+      } catch (e) {
+        throw new BadRequestException('Invalid format for interviewResponses. Must be a JSON string.');
+      }
+    }
+
+    const payload = {
+      userId: req.user.firebaseId,
+      personalDetails: {
+        firstname: dto.firstname,
+        lastname: dto.lastname,
+        email: dto.email,
+        phone: dto.phone,
+      },
+      teachingCategories,
+      resumeUrl,
+      interviewResponses,
+    };
+
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'apply_teacher_role' }, payload).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Apply Instructor');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Get('academy/instructor/:id')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Get instructor/applicant details by ID (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Instructor details' })
+  async getInstructorById(@Param('id') id: string) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'get_instructor_by_id' }, { id }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Get Instructor By ID');
           return throwError(() => error);
         }),
       )
