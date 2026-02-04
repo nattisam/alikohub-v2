@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
+import { RabbitMQModule } from './rabbitmq.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from './user/user.module';
     FirebaseModule,
     PrismaModule,
     UserModule,
+    RabbitMQModule,
   ],
 })
 export class AppModule {}

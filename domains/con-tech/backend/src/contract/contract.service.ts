@@ -36,6 +36,49 @@ export class ContractService {
     });
   }
 
+  /**
+   * Upload a contract file and create a contract record
+   * Handles base64 encoded files from API Gateway
+   */
+  async uploadAndCreateContract(
+    projectId: number,
+    file: { buffer: string; originalname: string; mimetype: string; size: number },
+    user: AuthenticatedUser,
+  ) {
+    // Verify project exists
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    // Decode base64 buffer
+    const fileBuffer = Buffer.from(file.buffer, 'base64');
+
+    // Create mock Multer file for Cloudinary upload
+    const mockFile = {
+      buffer: fileBuffer,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    } as any;
+
+    // Upload to Cloudinary as raw file (for documents like PDFs)
+    const uploadResult = await this.cloudinaryService.uploadRaw(mockFile, {
+      folder: `contech/contracts/${projectId}`,
+      public_id: `contract_${Date.now()}`,
+    });
+
+    // Create contract record with uploaded file URL
+    return this.prisma.contract.create({
+      data: {
+        projectId,
+        contractFile: uploadResult.secure_url,
+        status: 'DRAFT',
+        changeOrders: [],
+      },
+    });
+  }
+
   async updateStatus(id: number, status: string, user: AuthenticatedUser) {
     const contract = await this.findContractById(id, user); // RBAC included
 

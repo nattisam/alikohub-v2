@@ -10,20 +10,41 @@ import {
     Query,
     UseGuards,
     Request,
+    UseInterceptors,
+    UploadedFile,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../../file-upload-service/file-upload.service';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
+
 @ApiTags('Internal Events Management')
 @Controller('manage/events')
 @UseGuards(AuthGuard)
 export class EventsController {
-    constructor(@Inject('EVENTS_SERVICE') private eventsClient: ClientProxy) { }
+    constructor(
+        @Inject('EVENTS_SERVICE') private eventsClient: ClientProxy,
+        private readonly fileUploadService: FileUploadService
+    ) { }
 
     @ApiOperation({ summary: 'Create a new post (Draft)' })
     @Post()
-    createPost(@Request() req: RequestWithUser, @Body() createPostDto: any) {
+    @UseInterceptors(FileInterceptor('coverImage'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: CreateEventDto })
+    async createPost(
+        @Request() req: RequestWithUser, 
+        @Body() createPostDto: CreateEventDto,
+        @UploadedFile() coverImage?: Express.Multer.File,
+    ) {
+        if (coverImage) {
+            const uploadResult = await this.fileUploadService.uploadFile(coverImage, 'image');
+            createPostDto.coverImage = uploadResult.url;
+        }
         return this.eventsClient.send({ cmd: 'create_post' }, { dto: createPostDto, user: req.user });
     }
 
@@ -35,7 +56,19 @@ export class EventsController {
 
     @ApiOperation({ summary: 'Update a draft or rejected post' })
     @Patch(':id')
-    updatePost(@Request() req: RequestWithUser, @Param('id') id: string, @Body() updatePostDto: any) {
+    @UseInterceptors(FileInterceptor('coverImage'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({ type: UpdateEventDto })
+    async updatePost(
+        @Request() req: RequestWithUser, 
+        @Param('id') id: string, 
+        @Body() updatePostDto: UpdateEventDto,
+        @UploadedFile() coverImage?: Express.Multer.File,
+    ) {
+        if (coverImage) {
+            const uploadResult = await this.fileUploadService.uploadFile(coverImage, 'image');
+            updatePostDto.coverImage = uploadResult.url;
+        }
         return this.eventsClient.send({ cmd: 'update_post' }, { id, dto: updatePostDto, user: req.user });
     }
 

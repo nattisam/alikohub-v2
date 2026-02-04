@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   Request,
   ParseIntPipe,
@@ -58,10 +59,12 @@ export class CourseModuleController {
   findAllModulesByCourse(
     @Request() req: RequestWithUser,
     @Param('courseId', ParseIntPipe) courseId: number,
+    @Query() query: any,
   ) {
     const payload = {
       courseId,
       user: req.user,
+      query,
     };
     return this.academyClient.send({ cmd: 'find_modules_by_course' }, payload);
   }

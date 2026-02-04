@@ -34,10 +34,9 @@ export class TeacherApplicationDto {
   @IsString({ each: true })
   teachingCategories!: string[];
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Teacher resume file' })
   @IsOptional()
-  resumeUrl?: string;
+  resumeUrl?: any;
 
   @ApiProperty()
   @IsArray()

@@ -31,15 +31,22 @@ export class EnrollmentsController {
   @MessagePattern({ cmd: "find_all_enrollments" })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
-  async findAll(@Payload() payload: { user: AuthenticatedUser }) {
-    return await this.enrollmentsService.findAll(payload.user);
+  async findAll(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return await this.enrollmentsService.findAll(payload.user, payload.query);
+  }
+
+  @MessagePattern({ cmd: 'find_instructor_enrollments' })
+  @UseGuards(RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async findInstructorEnrollments(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return await this.enrollmentsService.findByInstructor(payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: "find_enrollments_by_cohort" })
   @UseGuards(RoleGuard)
   @Roles('INSTRUCTOR', 'ADMIN')
-  async findByCohort(@Payload() payload: { cohortId: number; user: AuthenticatedUser }) {
-    return await this.enrollmentsService.findByCohort(payload.cohortId, payload.user);
+  async findByCohort(@Payload() payload: { cohortId: number; user: AuthenticatedUser; query?: any }) {
+    return await this.enrollmentsService.findByCohort(payload.cohortId, payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: "remove_enrollment" })
@@ -58,7 +65,7 @@ export class EnrollmentsController {
   }
 
   @MessagePattern({ cmd: 'find_enrollments_by_course' })
-  async findEnrollmentsByCourse(@Payload() payload: { courseId: number; user: AuthenticatedUser }) {
-    return await this.enrollmentsService.findByCourse(payload.courseId, payload.user);
+  async findEnrollmentsByCourse(@Payload() payload: { courseId: number; user: AuthenticatedUser; query?: any }) {
+    return await this.enrollmentsService.findByCourse(payload.courseId, payload.user, payload.query);
   }
 }

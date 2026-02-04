@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty, IsUrl } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ApplyJobDto {
@@ -7,9 +7,7 @@ export class ApplyJobDto {
   @IsOptional()
   coverLetter?: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @IsUrl()
-  resumeUrl!: string;
+  @ApiProperty({ type: 'string', format: 'binary', description: 'Resume file (PDF, Doc)' })
+  @IsOptional()
+  resumeUrl?: any;
 }

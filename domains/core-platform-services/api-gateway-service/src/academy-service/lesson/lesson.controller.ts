@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   Request,
   ParseIntPipe,
@@ -57,12 +58,25 @@ export class LessonController {
   findLessonsByModule(
     @Request() req: RequestWithUser,
     @Param('moduleId', ParseIntPipe) moduleId: number,
+    @Query() query: any,
   ) {
     const payload = {
       moduleId,
       user: req.user,
+      query,
     };
     return this.academyClient.send({ cmd: 'find_lessons_by_module' }, payload);
+  }
+
+  // Instructor only
+  @Get('instructor/my')
+  @ApiOperation({
+    summary: 'Get all lessons for current instructor',
+    description: '🔒 Instructor only',
+  })
+  @ApiResponse({ status: 200, description: 'List of lessons' })
+  getMyLessons(@Request() req: RequestWithUser, @Query() query: any) {
+    return this.academyClient.send({ cmd: 'find_instructor_lessons' }, { user: req.user, query });
   }
 
   // Student / Instructor

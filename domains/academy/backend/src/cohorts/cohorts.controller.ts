@@ -23,8 +23,15 @@ export class CohortsController {
   }
 
   @MessagePattern({ cmd: 'find_all_cohorts' })
-  async findAll(@Payload() payload: { courseId?: number }) {
-    return this.cohortsService.findAll(payload.courseId);
+  async findAll(@Payload() payload: { query?: any }) {
+    return this.cohortsService.findAll(payload.query);
+  }
+
+  @MessagePattern({ cmd: 'find_instructor_cohorts' })
+  @UseGuards(RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async findInstructorCohorts(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return this.cohortsService.findByInstructor(payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: 'find_cohort_by_id' })

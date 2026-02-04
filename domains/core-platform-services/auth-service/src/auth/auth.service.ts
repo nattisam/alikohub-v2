@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
 import { EmailService } from './email.service';
 import { AcademyRole, ContechRole, EventsRole, GlobalRole, CareersRole } from '@prisma/client';
+import { RabbitMQService } from '../rabbitmq.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
 		@Inject('ACADEMY_SERVICE') private readonly academyClient: ClientProxy,
 		@Inject('CONTECH_SERVICE') private readonly contechClient: ClientProxy,
 		@Inject('EVENTS_SERVICE') private readonly eventsClient: ClientProxy,
+		private readonly rabbitMQService: RabbitMQService,
 	) {}
 
 	async register(dto: any) {
@@ -99,16 +101,17 @@ export class AuthService {
 			user = await this.userService.findByFirebaseId(userRecord.uid);
 			this.logger.log(`User created in database: ${user.id}`);
 			
-			// Emit user_created event to all services
-			const eventPayload = {
-				userId: user.firebaseId,
-				email: user.email,
-				role: 'USER',
-				globalRole: user.globalRole,
-			};
-			this.academyClient.emit('user_created', eventPayload);
-			this.contechClient.emit('user_created', eventPayload);
-			this.eventsClient.emit('user_created', eventPayload);
+			// Broadcast event to all microservices via RabbitMQ
+			await this.rabbitMQService.publishToExchange('user_events', {
+				pattern: 'user_created',
+				data: {
+					userId: user.firebaseId,
+					email: user.email,
+					firstname: user.firstname,
+					lastname: user.lastname,
+					role: user.globalRole,
+				}
+			});
 		}
 
 		// Issue Firebase custom token
@@ -650,9 +653,11 @@ export class AuthService {
 		}
 
 		const firebaseId = decoded.uid || decoded.sub;
+		this.logger.log(`[verifyAuth] Verifying user with firebaseId: ${firebaseId} (type: ${type})`);
 		const user = await this.userService.findByFirebaseId(firebaseId);
 		
 		if (!user) {
+			this.logger.warn(`[verifyAuth] User NOT FOUND in database for firebaseId: ${firebaseId}`);
 			throw new RpcException({
 				statusCode: HttpStatus.UNAUTHORIZED,
 				message: 'User not found',
@@ -660,6 +665,7 @@ export class AuthService {
 			});
 		}
 
+		this.logger.log(`[verifyAuth] SUCCESS for user: ${user.email} (id: ${user.id})`);
 		return { user: this.toPlain(user), decodedToken: decoded };
 	}
 
@@ -674,7 +680,16 @@ export class AuthService {
 			});
 		}
 
-		if (role === 'student' || role === 'STUDENT') {
+		const targetRole = role.toUpperCase();
+		if (targetRole === 'ADMIN' || targetRole === 'ACADEMY_ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Cannot select ADMIN role via public selection endpoint',
+				error: 'Forbidden',
+			});
+		}
+
+		if (targetRole === 'STUDENT') {
 			// Student role is assigned immediately
 			await this.userService.updateAcademyRole(user.firebaseId, 'STUDENT', 'ACTIVE');
 			
@@ -691,7 +706,7 @@ export class AuthService {
 				user: this.toPlain(updatedUser),
 				...tokens,
 			};
-		} else if (role === 'teacher' || role === 'TEACHER' || role === 'instructor' || role === 'INSTRUCTOR') {
+		} else if (targetRole === 'TEACHER' || targetRole === 'INSTRUCTOR') {
 			// Check if user already has approved instructor role
 			if (user.academyUser && user.academyUser.role === 'INSTRUCTOR' && user.academyUser.status === 'ACTIVE') {
 				// User already has approved instructor role
@@ -795,7 +810,16 @@ export class AuthService {
 		const userId = application.userId;
 
 		// Update application status with reviewer info
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
+		try {
+			await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
+		} catch (error: any) {
+			this.logger.error(`Failed to approve teacher application: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to update application status',
+				error: 'Bad Request',
+			});
+		}
 
 		// Assign instructor role to user
 		await this.userService.updateAcademyRole(userId, 'INSTRUCTOR', 'ACTIVE');
@@ -843,7 +867,16 @@ export class AuthService {
 		}
 
 		// Update application status with reviewer info
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
+		try {
+			await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
+		} catch (error: any) {
+			this.logger.error(`Failed to reject teacher application: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to update application status',
+				error: 'Bad Request',
+			});
+		}
 
 		return {
 			message: 'Teacher application rejected',
@@ -873,9 +906,17 @@ export class AuthService {
 			'USER': 0
 		};
 
-		// Check if user has the requested role (or a higher one)
-		const userRole = user.academyUser?.role?.toUpperCase();
 		const targetRole = newRole.toUpperCase();
+
+		// Prevent switching to ADMIN roles unless you are ALREADY a global ADMIN
+		if ((targetRole === 'ADMIN' || targetRole === 'ACADEMY_ADMIN') && user.globalRole !== 'ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Only global administrators can switch to ADMIN roles',
+				error: 'Forbidden',
+			});
+		}
+		const userRole = user.academyUser?.role?.toUpperCase();
 		
 		if (!user.academyUser) {
 			throw new RpcException({

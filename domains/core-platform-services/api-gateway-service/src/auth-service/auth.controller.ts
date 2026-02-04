@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes, Patch, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
@@ -11,9 +11,11 @@ import { RegisterDto } from './dto/register.dto';
 import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto } from './dto/academy-roles.dto';
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError, firstValueFrom } from 'rxjs';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import * as Joi from 'joi';
 import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../file-upload-service/file-upload.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -23,6 +25,7 @@ export class AuthController {
   constructor(
     @Inject('AUTH_SERVICE') private authClient: ClientProxy,
     private readonly captchaService: CaptchaService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   private handleError(error: any, operation: string) {
@@ -119,6 +122,11 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Select academy role' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    role: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+      'any.only': 'Role must be one of: student, teacher, instructor'
+    })
+  })))
   async selectAcademyRole(@Request() req: any, @Body() selectRoleDto: SelectRoleDto) {
     // Inject userId from authenticated user
     const payload = { 
@@ -139,9 +147,20 @@ export class AuthController {
 
   @Post('academy/apply-teacher')
   @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('resume'))
+  @ApiConsumes('multipart/form-data')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Apply for teacher role' })
-  async applyTeacher(@Request() req: any, @Body() applicationDto: TeacherApplicationDto) {
+  async applyTeacher(
+    @Request() req: any, 
+    @Body() applicationDto: TeacherApplicationDto,
+    @UploadedFile() resume?: Express.Multer.File,
+  ) {
+    if (resume) {
+      const uploadResult = await this.fileUploadService.uploadFile(resume, 'document');
+      applicationDto.resumeUrl = uploadResult.url;
+    }
+
     const payload = {
       ...applicationDto,
       userId: req.user.firebaseId
@@ -177,6 +196,12 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    reviewNotes: Joi.string().required().min(5).messages({
+      'string.empty': 'Review notes are required for approval',
+      'string.min': 'Review notes must be at least 5 characters long'
+    })
+  })))
   async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'approve_teacher_application' }, { 
@@ -198,6 +223,12 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    reviewNotes: Joi.string().required().min(5).messages({
+      'string.empty': 'Review notes are required for rejection',
+      'string.min': 'Review notes must be at least 5 characters long'
+    })
+  })))
   async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'reject_teacher_application' }, { 
@@ -219,6 +250,12 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Switch user role' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    newRole: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+      'any.only': 'newRole must be one of: student, teacher, instructor'
+    }),
+    userId: Joi.string().optional()
+  })))
   async switchRole(@Request() req: any, @Body() switchRoleDto: SwitchRoleDto) {
     const payload = {
       ...switchRoleDto,

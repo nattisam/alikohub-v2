@@ -7,10 +7,12 @@ export const winstonConfig = WinstonModule.createLogger({
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.ms(),
-        nestWinstonModuleUtilities.format.nestLike('ApiGateway', {
-          colors: true,
-          prettyPrint: true,
-        }),
+        process.env.NODE_ENV === 'production'
+          ? winston.format.json()
+          : nestWinstonModuleUtilities.format.nestLike('ApiGateway', {
+              colors: true,
+              prettyPrint: true,
+            }),
       ),
     }),
   ],

@@ -22,8 +22,8 @@ export class CourseModulesController {
   }
 
   @MessagePattern({ cmd: 'find_modules_by_course' })
-  async findAllByCourse(@Payload() payload: { courseId: number; user: AuthenticatedUser }) {
-    return await this.courseModulesService.findAllByCourse(payload.courseId, payload.user);
+  async findAllByCourse(@Payload() payload: { courseId: number; user: AuthenticatedUser; query?: any }) {
+    return await this.courseModulesService.findAllByCourse(payload.courseId, payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: 'find_module_by_id' })

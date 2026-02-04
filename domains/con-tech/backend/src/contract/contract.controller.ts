@@ -14,10 +14,15 @@ export class ContractController {
   @MessagePattern({ cmd: 'uploadContract' })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
-  uploadContract(@Payload() payload: { projectId: number; contractUrl: string; user: AuthenticatedUser }) {
-    return this.contractsService.createContract(
+  uploadContract(@Payload() payload: { 
+    projectId: number; 
+    file: { buffer: string; originalname: string; mimetype: string; size: number };
+    user: AuthenticatedUser 
+  }) {
+    return this.contractsService.uploadAndCreateContract(
       payload.projectId,
-      payload.contractUrl,
+      payload.file,
+      payload.user,
     );
   }
 

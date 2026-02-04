@@ -78,4 +78,11 @@ export class CoursesController {
   async reject(@Payload() payload: { id: number; reason: string; user: AuthenticatedUser }) {
     return await this.coursesService.reject(payload.id, payload.reason, payload.user);
   }
+
+  @MessagePattern({ cmd: 'get_instructor_courses_with_stats' })
+  @UseGuards(AcademyProfileGuard, RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async getInstructorCoursesWithStats(@Payload() payload: { user: AuthenticatedUser }) {
+    return await this.coursesService.getInstructorCoursesWithStats(payload.user);
+  }
 }

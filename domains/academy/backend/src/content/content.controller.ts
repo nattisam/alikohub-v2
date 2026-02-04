@@ -11,7 +11,7 @@ import { Roles } from 'src/auth/role-guard/roles.decorator';
 import { ContentType } from '@prisma/client';
 
 interface UploadedFile {
-  buffer: Buffer;
+  buffer: Buffer | string; // Buffer or base64 encoded string from transport
   originalname: string;
   mimetype: string;
   size: number;
@@ -24,9 +24,9 @@ export class ContentController {
 
   @MessagePattern({ cmd: 'find_content_by_lesson' })
   async findByLesson(
-    @Payload() payload: { lessonId: number; user: AuthenticatedUser },
+    @Payload() payload: { lessonId: number; user: AuthenticatedUser; query?: any },
   ) {
-    return this.contentService.findByLesson(payload.lessonId, payload.user);
+    return this.contentService.findByLesson(payload.lessonId, payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: 'create_content' })
@@ -59,8 +59,15 @@ export class ContentController {
   @MessagePattern({ cmd: 'find_all_content' })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
-  async findAll(@Payload() payload: { user: AuthenticatedUser }) {
-    return this.contentService.findAll(payload.user);
+  async findAll(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return this.contentService.findAll(payload.user, payload.query);
+  }
+
+  @MessagePattern({ cmd: 'find_instructor_content' })
+  @UseGuards(RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async findInstructorContent(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return this.contentService.findByInstructor(payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: 'find_content_by_id' })

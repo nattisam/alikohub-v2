@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { AcademyRole } from '@prisma/client';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 enum GlobalRole {
@@ -134,12 +134,13 @@ export class UserService {
 
   private async syncFromAuth(userId: string) {
     try {
-      this.logger.log(`[UserService] Syncing user ${userId} from Auth service...`);
+      this.logger.log(`[UserService] Syncing user ${userId} from Auth service (TCP 3011)...`);
       const authRecord = await firstValueFrom(
-        this.authClient.send({ cmd: 'sync_academy_user' }, { userId }),
-      );
+        this.authClient.send({ cmd: 'sync_academy_user' }, { userId }).pipe(timeout(5000))
+      ) as any;
 
       if (authRecord) {
+        this.logger.log(`[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`);
         // Determine effective role: prioritize ADMIN > INSTRUCTOR > STUDENT > USER
         let effectiveRole = authRecord.activeRole || authRecord.role;
         
@@ -151,8 +152,6 @@ export class UserService {
           effectiveRole = 'INSTRUCTOR';
         }
         
-        this.logger.log(`[UserService] Auth record found for ${userId}. Role: ${authRecord.role}, GlobalRole: ${authRecord.globalRole}, Effective: ${effectiveRole}`);
-
         if (effectiveRole) {
           await this.prisma.academyProfile.upsert({
             where: { userId },
@@ -174,8 +173,10 @@ export class UserService {
       } else {
         this.logger.warn(`[UserService] No auth record returned for ${userId}`);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`[UserService] FAILED to sync user ${userId} from auth service:`, error);
       this.logger.error(`[UserService] Failed to sync user ${userId} from auth service:`, error);
+      // Don't rethrow yet, we might want to proceed with a default profile
     }
   }
 

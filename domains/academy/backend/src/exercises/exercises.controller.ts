@@ -23,8 +23,15 @@ export class ExercisesController {
   }
 
   @MessagePattern({ cmd: 'find_exercises_by_module' })
-  findAllByModule(@Payload() payload: { moduleId: number; user: AuthenticatedUser }) {
-    return this.exercisesService.findAllByModule(payload.moduleId, payload.user);
+  findAllByModule(@Payload() payload: { moduleId: number; user: AuthenticatedUser; query?: any }) {
+    return this.exercisesService.findAllByModule(payload.moduleId, payload.user, payload.query);
+  }
+
+  @MessagePattern({ cmd: 'find_instructor_exercises' })
+  @UseGuards(RoleGuard)
+  @Roles('INSTRUCTOR', 'ADMIN')
+  async findInstructorExercises(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
+    return await this.exercisesService.findByInstructor(payload.user, payload.query);
   }
 
   @MessagePattern({ cmd: 'find_exercise_by_id' })

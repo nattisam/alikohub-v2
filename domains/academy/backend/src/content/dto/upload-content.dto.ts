@@ -14,4 +14,8 @@ export class UploadContentDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  contentUrl?: string;
 }
