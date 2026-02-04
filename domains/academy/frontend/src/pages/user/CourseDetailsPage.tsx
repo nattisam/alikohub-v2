@@ -27,10 +27,10 @@ const CourseDetailsPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   
-  const { data: course, isLoading, isError } = useCourse(parseInt(courseId || '0'));
+  const { data: course, isLoading, isError } = useCourse(parseInt(courseId || '0', 10));
 
   // Check if user has selected a role
-  const hasRole = (currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole) !== undefined;
+  const hasRole = !!(currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole);
   const isStudent = (currentUser?.academyActiveRole === 'STUDENT' || currentUser?.academyUser?.activeRole === 'STUDENT');
   
   // Check if user is already enrolled
@@ -42,6 +42,7 @@ const CourseDetailsPage: React.FC = () => {
   
   // Fetch user enrollments (Preserved Logic with Retry)
   useEffect(() => {
+    let isMounted = true;
     const fetchUserEnrollments = async () => {
       if (currentUser) {
         const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
@@ -50,7 +51,9 @@ const CourseDetailsPage: React.FC = () => {
           while (retries <= maxRetries) {
             try {
               const response = await enrollmentApi.getMyCourses();
-              setUserEnrollments(response.data);
+              if (isMounted) {
+                setUserEnrollments(Array.isArray(response?.data) ? response.data : []);
+              }
               return;
             } catch (err: any) {
               console.error("Error fetching user enrollments:", err);
@@ -67,17 +70,18 @@ const CourseDetailsPage: React.FC = () => {
         try {
           await fetchWithRetry();
         } finally {
-          setEnrollmentsLoading(false);
+          if (isMounted) setEnrollmentsLoading(false);
         }
       } else {
-        setEnrollmentsLoading(false);
+        if (isMounted) setEnrollmentsLoading(false);
       }
     };
     
     fetchUserEnrollments();
+    return () => { isMounted = false; };
   }, [currentUser]);
 
-  const { data: modulesFromQuery = [] } = useCourseModules(parseInt(courseId || '0'));
+  const { data: modulesFromQuery = [] } = useCourseModules(parseInt(courseId || '0', 10));
   
   const handleEnroll = async () => {
     if (!currentUser) {
@@ -99,15 +103,23 @@ const CourseDetailsPage: React.FC = () => {
     try {
       setEnrolling(true);
       const response = await enrollmentApi.createEnrollment({
-        courseId: parseInt(courseId || "0"),
+        courseId: parseInt(courseId || "0", 10),
       });
       
-      if (response.status === 201) {
+      if (response?.status === 201) {
         alert("Successfully enrolled in the course!");
+        if (course) {
+          setUserEnrollments(prev => {
+            if (prev.some(c => c.id === course.id)) return prev;
+            return [...prev, course];
+          });
+        }
         // Refresh enrollments
         try {
            const enrollmentResponse = await enrollmentApi.getMyCourses();
-           setUserEnrollments(enrollmentResponse.data);
+           if (Array.isArray(enrollmentResponse?.data)) {
+             setUserEnrollments(enrollmentResponse.data);
+           }
         } catch (e) {
           console.error("Error refreshing enrollments", e);
         }
@@ -131,8 +143,8 @@ const CourseDetailsPage: React.FC = () => {
     }));
   };
 
-  const isEnrolled = !enrollmentsLoading && userEnrollments.some(
-    (c: Course) => c.id === course?.id
+  const isEnrolled = !enrollmentsLoading && Array.isArray(userEnrollments) && userEnrollments.some(
+    (c: Course) => c?.id === course?.id
   );
 
   if (isLoading) {
@@ -159,8 +171,10 @@ const CourseDetailsPage: React.FC = () => {
     );
   }
 
-  const totalLessons = modulesFromQuery.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
-  const estimatedHours = course.estimatedTime ? Math.floor(course.estimatedTime / 60) : 0;
+  const modules = Array.isArray(modulesFromQuery) ? modulesFromQuery : [];
+  const totalLessons = modules.reduce((acc, m) => acc + (m?.lessons?.length || 0), 0);
+  const estimatedHours = course?.estimatedTime ? Math.floor(course.estimatedTime / 60) : 0;
+
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
@@ -235,12 +249,12 @@ const CourseDetailsPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-lg font-semibold text-gray-900">Course Content</h2>
                             <div className="text-sm text-gray-500">
-                                {modulesFromQuery.length} Modules • {totalLessons} Lessons
+                                {modules.length} Modules • {totalLessons} Lessons
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            {modulesFromQuery.map((module: CourseModule, idx) => (
+                            {modules.map((module: CourseModule, idx) => (
                                 <div key={module.id} className="border border-gray-200 rounded-lg overflow-hidden">
                                     <button 
                                         onClick={() => toggleModule(module.id)}
@@ -321,22 +335,20 @@ const CourseDetailsPage: React.FC = () => {
 
                     <button
                         onClick={() => {
-                            if (isEnrolled) {
-                                navigate("/student-dashboard");
-                            } else {
+                            if (!isEnrolled) {
                                 handleEnroll();
                             }
                         }}
-                        disabled={enrolling}
+                        disabled={enrolling || isEnrolled}
                         className={`w-full py-2.5 px-4 rounded-md font-medium text-sm flex items-center justify-center gap-2 mb-4 transition-colors ${
                             isEnrolled 
-                            ? 'bg-green-600 hover:bg-green-700 text-white' 
+                            ? 'bg-green-600 text-white cursor-not-allowed opacity-90' 
                             : 'bg-[#3E92D1] hover:bg-[#327aae] text-white'
                         } ${enrolling ? 'opacity-75 cursor-not-allowed' : ''}`}
                     >
                         {isEnrolled ? (
                             <>
-                                <PlayCircle size={18} /> Continue Learning
+                                <CheckCircle size={18} /> Enrolled
                             </>
                         ) : enrolling ? (
                             <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Processing...</>

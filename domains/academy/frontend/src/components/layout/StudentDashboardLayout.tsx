@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   BookOpen,
-  Trophy,
   User,
   Menu,
   X,
@@ -23,7 +22,6 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const navItems: NavItem[] = [
     { path: "/student-dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/student-dashboard/mycourses", label: "Courses", icon: BookOpen },
-    { path: "/student-dashboard/certificates", label: "Certificates", icon: Trophy },
     { path: "/student-dashboard/profile", label: "Profile", icon: User },
   ];
 

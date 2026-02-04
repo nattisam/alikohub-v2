@@ -12,7 +12,7 @@ interface NotFoundStateProps {
 const NotFoundState: React.FC<NotFoundStateProps> = ({
   title = 'Page Not Found',
   message = 'The page you are looking for does not exist.',
-  buttonText = 'Go to Dashboard',
+  buttonText = 'Go to Home',
   onGoHome
 }) => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const NotFoundState: React.FC<NotFoundStateProps> = ({
     if (onGoHome) {
       onGoHome();
     } else {
-      navigate('/dashboard');
+      navigate('/');
     }
   };
   return (

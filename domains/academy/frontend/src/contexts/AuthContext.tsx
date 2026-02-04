@@ -41,11 +41,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const buildUser = (user: any): CurrentUser => {
-  const academyUser = user.academyUser;
+  if (!user) {
+    return {} as CurrentUser;
+  }
+
+  const academyUser = user?.academyUser;
   
   // Convert backend lowercase roles to frontend uppercase format
   const convertRoleToUppercase = (role: string) => {
-    if (!role) return role;
+    if (!role || typeof role !== 'string') return role;
     
     switch (role.toLowerCase()) {
       case 'instructor':
@@ -66,28 +70,28 @@ const buildUser = (user: any): CurrentUser => {
 
   const convertedAcademyUser = academyUser ? {
     ...academyUser,
-    role: convertRoleToUppercase(academyUser.role),
-    activeRole: convertRoleToUppercase(academyUser.activeRole),
+    role: convertRoleToUppercase(academyUser?.role),
+    activeRole: convertRoleToUppercase(academyUser?.activeRole),
   } : null;
 
   return {
     ...user,
-    firstName: user.firstname || user.firstName,
-    lastName: user.lastname || user.lastName,
+    firstName: user?.firstname || user?.firstName || '',
+    lastName: user?.lastname || user?.lastName || '',
     academyUser: convertedAcademyUser,
-    academyRole: convertRoleToUppercase(academyUser?.role) ?? 'USER',
-    academyActiveRole: convertRoleToUppercase(user.academyActiveRole) ?? convertRoleToUppercase(academyUser?.activeRole) ?? convertRoleToUppercase(academyUser?.role) ?? 'USER',
+    academyRole: convertRoleToUppercase(academyUser?.role) || 'USER',
+    academyActiveRole: convertRoleToUppercase(user?.academyActiveRole) || convertRoleToUppercase(academyUser?.activeRole) || convertRoleToUppercase(academyUser?.role) || 'USER',
 
-    hasSelectedRole: convertedAcademyUser?.role && convertedAcademyUser.role !== 'USER',
+    hasSelectedRole: !!(convertedAcademyUser?.role && convertedAcademyUser.role !== 'USER'),
 
     // Include INSTRUCTOR in availableRoles if user has applied and been approved
     // Include INSTRUCTOR if the user has an approved instructor application status
     availableRoles: [
       'STUDENT',
       // Include INSTRUCTOR if user's role is INSTRUCTOR or if they have an approved instructor application
-      ...((convertedAcademyUser?.role === 'INSTRUCTOR' || user.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
-      ...(user.globalRole === 'ADMIN' ? ['ADMIN'] : []),
-    ],
+      ...((convertedAcademyUser?.role === 'INSTRUCTOR' || user?.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
+      ...(user?.globalRole === 'ADMIN' ? ['ADMIN'] : []),
+    ].filter((v, i, a) => a.indexOf(v) === i), // Unique roles
   };
 };
 

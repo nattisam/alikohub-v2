@@ -6,7 +6,6 @@ import AcademyStudentDashboard from "../../pages/student/AcademyStudentDashboard
 import StudentCourseOverview from "../../pages/student/StudentCourseOverview";
 import StudentProfile from "../../pages/student/StudentProfile";
 import StudentDashboardLayout from "./StudentDashboardLayout";
-import StudentCertificatesPage from "../../pages/student/StudentCertificatesPage";
 import LessonPage from "../../pages/student/LessonPage";
 
 import NotFoundState from "../states/NotFoundState";
@@ -60,7 +59,6 @@ const StudentDashboardRouter: React.FC = () => {
         <Route path="" element={<AcademyStudentDashboard />} />
         <Route path="mycourses" element={<StudentCourseOverview />} />
 <Route path="mycourses/:courseId/module/lesson/:lessonTitle/:lessonId" element={<LessonPage />} />
-        <Route path="certificates" element={<StudentCertificatesPage />} />
         <Route path="profile" element={<StudentProfile />} />
         <Route path="settings" element={<StudentProfile />} />
         <Route 
@@ -69,7 +67,6 @@ const StudentDashboardRouter: React.FC = () => {
             <NotFoundState 
               title="Page Not Found" 
               message="The page you are looking for does not exist in the student dashboard."
-              onGoHome={() => navigate('/student-dashboard')} 
             /> 
           } 
         />

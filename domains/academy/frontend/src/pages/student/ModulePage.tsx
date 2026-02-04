@@ -37,21 +37,23 @@ const ModulePage: React.FC = () => {
   const { data: modules = [], isLoading: areModulesLoading, isError: areModulesError } = useCourseModules(parsedCourseId);
 
   useEffect(() => {
-    if (modules.length > 0) {
+    if (Array.isArray(modules) && modules.length > 0) {
       if (selectedLessonId) {
-        const lessonIdNum = parseInt(selectedLessonId);
+        const lessonIdNum = parseInt(selectedLessonId, 10);
         for (const module of modules) {
-          const foundLesson = module.lessons.find((lesson: CourseLesson) => lesson.id === lessonIdNum);
-          if (foundLesson) {
-            setSelectedLesson(foundLesson);
-            return;
+          if (Array.isArray(module?.lessons)) {
+            const foundLesson = module.lessons.find((lesson: CourseLesson) => lesson?.id === lessonIdNum);
+            if (foundLesson) {
+              setSelectedLesson(foundLesson);
+              return;
+            }
           }
         }
       }
       
       if (!selectedLesson) {
         const firstModule = modules[0];
-        if (firstModule && firstModule.lessons.length > 0) {
+        if (firstModule && Array.isArray(firstModule.lessons) && firstModule.lessons.length > 0) {
           setSelectedLesson(firstModule.lessons[0]);
         }
       }
@@ -185,7 +187,7 @@ const ModulePage: React.FC = () => {
               <div className="flex flex-wrap gap-6 text-sm text-gray-500 pt-4 border-t border-gray-100">
                 <span className="flex items-center gap-2">
                    <PlayCircle size={16} className="text-[#3E92D1]" />
-                   {modules.reduce((t, m) => t + (m.lessons?.length || 0), 0)} Lessons
+                   {Array.isArray(modules) ? modules.reduce((t, m) => t + (m?.lessons?.length || 0), 0) : 0} Lessons
                 </span>
                 <span className="flex items-center gap-2">
                    <Clock size={16} className="text-[#3E92D1]" />
@@ -224,7 +226,7 @@ const ModulePage: React.FC = () => {
                      )}
                   </div>
 
-                  {selectedLesson?.contents && selectedLesson.contents.length > 1 && (
+                  {Array.isArray(selectedLesson?.contents) && selectedLesson.contents.length > 1 && (
                      <div className="flex flex-wrap gap-2 mb-6">
                         {selectedLesson.contents.map((_, i) => (
                            <button
@@ -270,7 +272,7 @@ const ModulePage: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-                   {modules.map((module, idx) => (
+                   {Array.isArray(modules) && modules.map((module, idx) => (
                       <div key={module.id} className="border border-gray-100 rounded-md overflow-hidden">
                          <button
                             onClick={() => toggleModule(module.id)}
@@ -284,8 +286,8 @@ const ModulePage: React.FC = () => {
 
                          {(expandedModules[module.id] || searchTerm) && (
                             <div className="bg-white border-t border-gray-100">
-                               {module.lessons
-                                  .filter(l => !searchTerm || l.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                               {Array.isArray(module?.lessons) && module.lessons
+                                  .filter(l => !searchTerm || l?.title?.toLowerCase()?.includes(searchTerm.toLowerCase()))
                                   .map((lesson) => (
                                   <div
                                      key={lesson.id}
@@ -312,7 +314,7 @@ const ModulePage: React.FC = () => {
                                      )}
                                   </div>
                                ))}
-                               {module.lessons.length === 0 && (
+                               {(!module.lessons || module.lessons.length === 0) && (
                                  <div className="p-3 text-xs text-gray-400 italic">No lessons</div>
                                )}
                             </div>

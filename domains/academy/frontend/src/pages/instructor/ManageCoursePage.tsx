@@ -69,14 +69,16 @@ const ManageCoursePage: React.FC = () => {
       
       // Fetch modules for the course
       const modulesResponse = await courseApi.getModules(courseId);
-      const modulesData = modulesResponse.data;
+      const modulesData = Array.isArray(modulesResponse?.data) ? modulesResponse.data : [];
       setModules(modulesData);
       
       // Pre-populate moduleLessons with data from modules if available
       const initialLessons: Record<number, CourseLesson[]> = {};
       modulesData.forEach((module: CourseModule) => {
-        // If the module has lessons property, use it, otherwise initialize as empty array
-        initialLessons[module.id] = module.lessons || [];
+        if (module && typeof module.id === 'number') {
+          // If the module has lessons property, use it, otherwise initialize as empty array
+          initialLessons[module.id] = Array.isArray(module.lessons) ? module.lessons : [];
+        }
       });
       setModuleLessons(initialLessons);
     } catch (err: any) {
@@ -98,9 +100,11 @@ const ManageCoursePage: React.FC = () => {
       }
       
       const response = await courseApi.getLessons(moduleId);
+      const lessonsData = Array.isArray(response?.data) ? response.data : [];
+      
       setModuleLessons(prev => ({
         ...prev,
-        [moduleId]: response.data
+        [moduleId]: lessonsData
       }));
     } catch (err: any) {
       console.error(`Error fetching lessons for module ${moduleId}:`, err);
@@ -265,7 +269,7 @@ const ManageCoursePage: React.FC = () => {
 
     {/* Modules */}
     <div className="space-y-4">
-      {modules.map(module => (
+      {Array.isArray(modules) && modules.map(module => (
         <div
           key={module.id}
           className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
@@ -317,7 +321,7 @@ const ManageCoursePage: React.FC = () => {
                 <div className="flex justify-center py-6">
                   <div className="h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                 </div>
-              ) : moduleLessons[module.id]?.length ? (
+              ) : Array.isArray(moduleLessons[module.id]) && moduleLessons[module.id].length ? (
                 <div className="space-y-3">
                   {moduleLessons[module.id].map(lesson => (
                     <div

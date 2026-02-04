@@ -70,7 +70,6 @@ const InstructorDashboardRouter: React.FC = () => {
             <NotFoundState 
               title="Page Not Found" 
               message="The page you are looking for does not exist in the instructor dashboard."
-              onGoHome={() => navigate('/instructor')}
             /> 
           } 
         />

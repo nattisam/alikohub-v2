@@ -27,7 +27,7 @@ import EventDetailsPage from "./pages/user/EventDetailsPage";
 import DashboardRouter from "./components/layout/DashboardRouter";
 import RolesPage from "./pages/user/RolesPage";
 import ProfilePage from "./pages/user/ProfilePage";
-import SettingsPage from "./pages/user/SettingsPage";
+
 import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
 import AdminDashboard from "./admin/AdminDashboard";
 import CoursesManagementPage from "./admin/CoursesManagementPage";
@@ -233,14 +233,7 @@ function App() {
               </AppRoute>
             }
           />
-          <Route
-            path="/settings"
-            element={
-              <AppRoute>
-                <SettingsPage />
-              </AppRoute>
-            }
-          />
+
         </Route>
         
         {/* Admin routes - completely separate tree */}

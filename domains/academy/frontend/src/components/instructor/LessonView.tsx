@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { FaTrash, FaEdit, FaPlus, FaFile, FaVideo, FaFilePdf, FaQuestionCircle, FaTasks, FaBook, FaGraduationCap, FaSpinner } from "react-icons/fa";
+import { FaTrash, FaEdit, FaPlus, FaFile, FaVideo, FaFilePdf, FaQuestionCircle, FaTasks, FaBook, FaGraduationCap, FaSpinner, FaClipboardList, FaCheckCircle } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
 import { academyApi } from "../../api";
-import type { CourseLesson, LessonContent } from "../common/types.d.tsx";
+import type { CourseLesson, LessonContent, Exercise } from "../common/types.d.tsx";
 import ContentViewer from "./ContentViewer";
 import ConfirmationModal from "../common/ConfirmationModal";
 
@@ -23,6 +23,7 @@ const LessonView: React.FC<LessonViewProps> = ({
 }) => {
   const [lesson, setLesson] = useState<CourseLesson | null>(null);
   const [contents, setContents] = useState<LessonContent[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showContentViewer, setShowContentViewer] = useState(false);
@@ -40,6 +41,22 @@ const LessonView: React.FC<LessonViewProps> = ({
     dueDate: "",
     maxScore: "",
     passingScore: ""
+  });
+  const [showAddExerciseForm, setShowAddExerciseForm] = useState(false);
+  const [newExercise, setNewExercise] = useState<{
+    title: string;
+    type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    points: number;
+  }>({
+    title: "",
+    type: "MULTIPLE_CHOICE",
+    question: "",
+    options: ["", "", "", ""],
+    correctAnswer: "",
+    points: 10
   });
 
   useEffect(() => {
@@ -64,6 +81,10 @@ const LessonView: React.FC<LessonViewProps> = ({
       // Fetch content for this lesson
       const contentResponse = await academyApi.get(`/content/lesson/${lessonId}`);
       setContents(contentResponse.data);
+
+      // Fetch exercises for this module
+      const exerciseResponse = await academyApi.get(`/academy/exercises/module/${moduleId}`);
+      setExercises(exerciseResponse.data);
     } catch (err) {
       setError("Failed to load lesson data");
       console.error(err);
@@ -134,6 +155,59 @@ const LessonView: React.FC<LessonViewProps> = ({
     } catch (error) {
       console.error("Error updating lesson:", error);
       alert("Failed to update lesson");
+    }
+  };
+
+  const handleAddExercise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const validOptions = newExercise.type === 'TRUE_FALSE' ? ['True', 'False'] : newExercise.options.filter(o => o.trim() !== "");
+      if (newExercise.type === 'MULTIPLE_CHOICE' && validOptions.length < 2) {
+        alert("Please provide at least 2 options");
+        return;
+      }
+      if (!validOptions.includes(newExercise.correctAnswer)) {
+        alert("Correct answer must be one of the options");
+        return;
+      }
+
+      const exerciseData = {
+        correctAnswer: newExercise.correctAnswer,
+        points: Number(newExercise.points),
+        order: (contents?.length || 0) + 1
+      };
+      
+      await academyApi.post('/academy/exercises', exerciseData);
+      
+      // Refresh exercises list
+      const exerciseResponse = await academyApi.get(`/academy/exercises/module/${moduleId}`);
+      setExercises(exerciseResponse.data);
+      
+      setShowAddExerciseForm(false);
+      setNewExercise({
+        title: "",
+        type: "MULTIPLE_CHOICE",
+        question: "",
+        options: ["", "", "", ""],
+        correctAnswer: "",
+        points: 10
+      });
+      alert("Exercise created successfully!");
+    } catch (error) {
+      console.error("Error adding exercise:", error);
+      alert("Failed to add exercise");
+    }
+  };
+
+  const handleDeleteExercise = async (exerciseId: number) => {
+    if (!window.confirm("Are you sure you want to delete this exercise?")) return;
+    
+    try {
+      await academyApi.delete(`/academy/exercises/${exerciseId}`);
+      setExercises(prev => prev.filter(ex => ex.id !== exerciseId));
+    } catch (error) {
+      console.error("Error deleting exercise:", error);
+      alert("Failed to delete exercise");
     }
   };
 
@@ -404,18 +478,27 @@ const LessonView: React.FC<LessonViewProps> = ({
                   </button>
                 )}
                 {isInstructorView && (
-                  <button
-                    onClick={() => setShowAddContentForm(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 font-medium flex items-center text-sm shadow transition-all"
-                  >
-                    <FaPlus className="mr-2" size={14} /> Add Content
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowAddContentForm(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 font-medium flex items-center text-sm shadow transition-all"
+                    >
+                      <FaPlus className="mr-2" size={14} /> Add Content
+                    </button>
+                    <button
+                      onClick={() => setShowAddExerciseForm(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 font-medium flex items-center text-sm shadow transition-all"
+                    >
+                      <FaClipboardList className="mr-2" size={14} /> Add Exercise
+                    </button>
+                  </>
                 )}
               </div>
             </div>
             
-            {contents.length > 0 ? (
+            {(contents.length > 0 || exercises.length > 0) ? (
               <div className="space-y-4">
+                {/* Lesson Contents */}
                 {contents.map((content) => (
                   <div key={content.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-gray-50 rounded-xl border border-gray-200 hover:shadow-sm transition-all">
                     <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
@@ -459,6 +542,35 @@ const LessonView: React.FC<LessonViewProps> = ({
                     </div>
                   </div>
                 ))}
+
+                {/* Exercises (as Quizzes) */}
+                {exercises.map((exercise) => (
+                  <div key={`ex-${exercise.id}`} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-purple-50 rounded-xl border border-purple-200 hover:shadow-sm transition-all">
+                    <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
+                      <div className="mr-3 p-2 bg-white rounded-lg shadow">
+                        <FaClipboardList className="text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{exercise.title}</p>
+                        <div className="flex items-center mt-1">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-purple-800 border border-purple-200">
+                            Quiz • {exercise.points} pts
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2 w-full sm:w-auto">
+                      {isInstructorView && (
+                        <button
+                          onClick={() => handleDeleteExercise(exercise.id)}
+                          className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 font-medium text-sm shadow transition-all"
+                        >
+                          <FaTrash size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300">
@@ -468,12 +580,20 @@ const LessonView: React.FC<LessonViewProps> = ({
                 <h3 className="text-xl font-bold text-gray-900 mb-2">No content available</h3>
                 <p className="text-gray-600 mb-6">There is no content added to this lesson yet.</p>
                 {isInstructorView && (
-                  <button
-                    onClick={() => setShowAddContentForm(true)}
-                    className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
-                  >
-                    <FaPlus className="mr-2" /> Add Content
-                  </button>
+                  <div className="flex space-x-3 justify-center">
+                    <button
+                      onClick={() => setShowAddContentForm(true)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                    >
+                      <FaPlus className="mr-2" /> Add Content
+                    </button>
+                    <button
+                      onClick={() => setShowAddExerciseForm(true)}
+                      className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                    >
+                      <FaClipboardList className="mr-2" /> Add Exercise
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -578,6 +698,161 @@ const LessonView: React.FC<LessonViewProps> = ({
                     className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-medium transition-all shadow-md hover:shadow-lg"
                   >
                     Add Content
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add Exercise Form Modal */}
+      {showAddExerciseForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-200">
+                <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                  <FaClipboardList className="mr-3 text-purple-600" /> Add New Exercise
+                </h3>
+                <button
+                  onClick={() => setShowAddExerciseForm(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <FaXmark size={20} className="text-gray-600" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleAddExercise} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Title</label>
+                    <input
+                      type="text"
+                      value={newExercise.title}
+                      onChange={(e) => setNewExercise({...newExercise, title: e.target.value})}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm"
+                      placeholder="e.g., Module 1 Final Quiz"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Sub-Type</label>
+                    <select
+                      value={newExercise.type}
+                      onChange={(e) => {
+                        const val = e.target.value as 'MULTIPLE_CHOICE' | 'TRUE_FALSE';
+                        if (val === 'TRUE_FALSE') {
+                          setNewExercise({...newExercise, type: val, options: ['True', 'False'], correctAnswer: ''});
+                        } else {
+                          setNewExercise({...newExercise, type: val, options: ['', '', '', ''], correctAnswer: ''});
+                        }
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm bg-white"
+                    >
+                      <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                      <option value="TRUE_FALSE">True / False</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Points</label>
+                    <input
+                      type="number"
+                      value={newExercise.points}
+                      onChange={(e) => setNewExercise({...newExercise, points: parseInt(e.target.value) || 0})}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Question</label>
+                  <textarea
+                    value={newExercise.question}
+                    onChange={(e) => setNewExercise({...newExercise, question: e.target.value})}
+                    required
+                    rows={2}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm resize-none"
+                    placeholder="Enter the question here..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    {newExercise.type === 'MULTIPLE_CHOICE' ? "Options (Select the correct answer) *" : "Select Correct Answer *"}
+                  </label>
+                  <div className="space-y-3">
+                    {newExercise.type === 'MULTIPLE_CHOICE' ? (
+                      newExercise.options.map((option, index) => (
+                        <div key={index} className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            name="correctAnswer"
+                            checked={newExercise.correctAnswer === option && option !== ""}
+                            onChange={() => setNewExercise({...newExercise, correctAnswer: option})}
+                            className="w-5 h-5 text-purple-600 border-gray-300 focus:ring-purple-500 cursor-pointer"
+                            disabled={option === ""}
+                          />
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              value={option}
+                              onChange={(e) => {
+                                const newOptions = [...newExercise.options];
+                                newOptions[index] = e.target.value;
+                                let newCorrect = newExercise.correctAnswer;
+                                if (newExercise.correctAnswer === option) newCorrect = e.target.value;
+                                setNewExercise({...newExercise, options: newOptions, correctAnswer: newCorrect});
+                              }}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm"
+                              placeholder={`Option ${index + 1}`}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                        {['True', 'False'].map((val) => (
+                          <label key={val} className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${newExercise.correctAnswer === val ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-purple-200'}`}>
+                            <input
+                              type="radio"
+                              name="lessonCorrectAnswer"
+                              checked={newExercise.correctAnswer === val}
+                              onChange={() => setNewExercise({...newExercise, correctAnswer: val})}
+                              className="hidden"
+                            />
+                            <FaCheckCircle className={newExercise.correctAnswer === val ? 'text-white' : 'text-gray-300'} />
+                            <span className="font-semibold">{val}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-start">
+                  <FaQuestionCircle className="text-purple-500 mt-1 mr-3 flex-shrink-0" />
+                  <p className="text-sm text-purple-800">
+                    {newExercise.type === 'MULTIPLE_CHOICE' 
+                      ? "Create a multiple choice exercise. Students will receive points for selecting the correct answer."
+                      : "Create a True/False exercise. Ideal for quick knowledge checks."}
+                  </p>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddExerciseForm(false)}
+                    className="px-5 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-700 hover:to-gray-800 font-medium transition-all shadow-md hover:shadow-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 font-medium transition-all shadow-md hover:shadow-lg"
+                  >
+                    Create Exercise
                   </button>
                 </div>
               </form>

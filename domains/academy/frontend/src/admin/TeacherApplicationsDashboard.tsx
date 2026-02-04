@@ -62,11 +62,13 @@ const TeacherApplicationsDashboard: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('ALL'); // ALL, PENDING, APPROVED, REJECTED
 
   // Filter applications based on search term and status
-  const filteredApplications = applications.filter(app => {
+  const filteredApplications = (Array.isArray(applications) ? applications : []).filter(app => {
+    if (!app?.user) return false;
+    
     const matchesSearch = 
-      app.user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.user.lastname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (app.user.firstname?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (app.user.lastname?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (app.user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'ALL' || app.status === filterStatus;
     

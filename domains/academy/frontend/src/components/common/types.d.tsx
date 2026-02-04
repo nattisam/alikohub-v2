@@ -152,6 +152,20 @@ export interface LessonContent {
   updatedAt: string;
 }
 
+export interface Exercise {
+  id: number;
+  moduleId: number;
+  title: string;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  points: number;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface TrendingCourseCardProps {
   course: Course;
   onEnroll: () => void;

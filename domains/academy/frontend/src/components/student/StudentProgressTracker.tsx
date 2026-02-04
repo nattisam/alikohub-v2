@@ -78,21 +78,25 @@ const StudentProgressTracker: React.FC<StudentProgressTrackerProps> = ({
 
   // Calculate overall progress
   const calculateOverallProgress = () => {
-    if (progress.length === 0) return 0;
+    if (!Array.isArray(progress) || progress.length === 0) return 0;
     
     let totalItems = 0;
     let completedItems = 0;
     
     progress.forEach(module => {
-      module.lessons.forEach(lesson => {
-        totalItems += 1;
-        if (lesson.status === "COMPLETED") completedItems += 1;
-        
-        lesson.contents.forEach(content => {
+      if (Array.isArray(module?.lessons)) {
+        module.lessons.forEach(lesson => {
           totalItems += 1;
-          if (content.status === "COMPLETED") completedItems += 1;
+          if (lesson?.status === "COMPLETED") completedItems += 1;
+          
+          if (Array.isArray(lesson?.contents)) {
+            lesson.contents.forEach(content => {
+              totalItems += 1;
+              if (content?.status === "COMPLETED") completedItems += 1;
+            });
+          }
         });
-      });
+      }
     });
     
     return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
@@ -132,7 +136,7 @@ const StudentProgressTracker: React.FC<StudentProgressTrackerProps> = ({
       </div>
       
       <div className="space-y-6">
-        {progress.map((module) => (
+        {Array.isArray(progress) && progress.map((module) => (
           <div key={module.moduleId} className="border rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-lg font-semibold text-gray-800">
@@ -147,7 +151,7 @@ const StudentProgressTracker: React.FC<StudentProgressTrackerProps> = ({
             </div>
             
             <div className="space-y-4 ml-4">
-              {module.lessons.map((lesson) => (
+              {Array.isArray(module?.lessons) && module.lessons.map((lesson) => (
                 <div key={lesson.lessonId} className="border-l-2 border-gray-200 pl-4 py-2">
                   <div className="flex items-center justify-between mb-3">
                     <h5 className="font-medium text-gray-700">
@@ -162,7 +166,7 @@ const StudentProgressTracker: React.FC<StudentProgressTrackerProps> = ({
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-2">
-                    {lesson.contents.map((content) => (
+                    {Array.isArray(lesson?.contents) && lesson.contents.map((content) => (
                       <div 
                         key={content.contentId} 
                         className="flex items-center justify-between p-3 bg-gray-50 rounded"

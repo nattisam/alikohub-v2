@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import apiClient from "../../lib/api";
 import {
   FaUser,
-  FaCamera,
   FaSave,
   FaEdit,
   FaExchangeAlt,
   FaUserPlus,
 } from "react-icons/fa";
+import Swal from 'sweetalert2';
 
 const ProfilePage = () => {
   const {
@@ -23,7 +23,6 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR") => {
@@ -31,14 +30,11 @@ const ProfilePage = () => {
       try {
         // Use the mutation directly to get access to its state
         await switchRoleMutation.mutateAsync(role);
-
-        // Close the dropdown after role switch
-        setIsRoleDropdownOpen(false);
-
       } catch (error) {
         console.error("Failed to switch role:", error);
-
-        // Close the dropdown even if there's an error
+        alert("Failed to switch role. Please try again.");
+      } finally {
+        // Close the dropdown after role switch attempt
         setIsRoleDropdownOpen(false);
       }
     }
@@ -63,14 +59,17 @@ const ProfilePage = () => {
 
   // If user is not logged in, redirect to login
   if (!currentUser) {
-    window.location.href = "/auth/login";
+    // Check if we are in a browser environment
+    if (typeof window !== 'undefined') {
+      window.location.href = "/auth/login";
+    }
     return null;
   }
 
   // Allow users with globalRole USER to access their profile
   // If user hasn't selected a role yet and doesn't have globalRole USER, show role selection modal
 
-  if (!currentUser.academyRole && currentUser.globalRole !== "USER") {
+  if (!currentUser?.academyRole && currentUser?.globalRole !== "USER") {
     // We need to show the role selection modal
     // For now, we'll just show a message directing them to select a role
     return (
@@ -83,7 +82,7 @@ const ProfilePage = () => {
             <p className="text-gray-600 mb-6">
               To access your profile, please select a role.
             </p>
-            <RoleSelectionModal onClose={() => (window.location.href = "/")} />
+            <RoleSelectionModal onClose={() => { if (typeof window !== 'undefined') window.location.href = "/"; }} />
           </div>
         </div>
       </div>
@@ -94,18 +93,15 @@ const ProfilePage = () => {
     lastname: "",
     email: "",
     bio: "",
-    title: "", // For instructors
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (currentUser) {
       setFormData({
-        firstname: currentUser.firstname || "",
-        lastname: currentUser.lastname || "",
-        email: currentUser.email || "",
-        bio: currentUser.bio || "",
-        title: (currentUser as any).title || "", // For instructors
+        firstname: currentUser?.firstname || "",
+        lastname: currentUser?.lastname || "",
+        email: currentUser?.email || "",
+        bio: currentUser?.bio || "",
       });
     }
   }, [currentUser]);
@@ -120,56 +116,14 @@ const ProfilePage = () => {
     }));
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && currentUser) {
-      const file = e.target.files[0];
 
-      // Create FormData object to send the file
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        setUploading(true);
-
-        // Upload the file to our file upload service through the API gateway
-        // Use axios instead of fetch for consistency
-        const response = await apiClient.post("/upload/image", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        if (response.data) {
-          const result = response.data;
-
-          const updateResponse = await apiClient.patch(
-            `/users/${currentUser.firebaseId}`,
-            {
-              profilePicture: result.url,
-            }
-          );
-
-          if (updateResponse.data) {
-            // Update the current user context
-            updateUser({
-              ...currentUser,
-              profilePicture: result.url,
-            });
-          }
-        } else {
-          console.error("File upload failed");
-        }
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      } finally {
-        setUploading(false);
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.firebaseId) {
+      alert("User not found. Please log in again.");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -180,20 +134,13 @@ const ProfilePage = () => {
         lastname: formData.lastname,
         bio: formData.bio,
       };
-
-      // Include title for instructors
-      if (
-        currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-        currentUser.academyRole === "INSTRUCTOR"
-      ) {
-        updateData.title = formData.title;
-      }
+      
       const response = await apiClient.patch(
         `/users/${currentUser.firebaseId}`,
         updateData
       );
 
-      if (response.data) {
+      if (response?.data) {
         // Update the current user context
         updateUser({
           ...currentUser,
@@ -201,19 +148,50 @@ const ProfilePage = () => {
         });
 
         setIsEditing(false);
+        Swal.fire({
+          showConfirmButton: false,
+          background: "transparent",
+          backdrop: "rgba(0,0,0,0.3)",
+          timer: 2500,
+          html: `
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-[360px] text-center">
+              <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-lg font-semibold text-gray-900">
+                Profile Update Successful
+              </h2>
+
+              <p class="text-sm text-gray-500 mt-2">
+                Your profile has been updated successfully.
+              </p>
+            </div>
+          `,
+          didOpen: () => {
+            const btn = document.getElementById('lms-success-btn');
+            if (btn) btn.onclick = () => Swal.close();
+          }
+        });
+
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error updating profile',
+        text: error?.response?.data?.message || "Please try again."
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
+
 
   if (!currentUser) {
     return (
@@ -250,7 +228,7 @@ const ProfilePage = () => {
                   <button
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                     disabled={switchRoleMutation.isPending}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-[#0D72BA] bg-[#0D72BA]/10 hover:bg-[#0D72BA]/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0D72BA] disabled:opacity-50"
                   >
                     <FaExchangeAlt className="mr-2 h-4 w-4" />
                     Switch Role
@@ -316,34 +294,10 @@ const ProfilePage = () => {
                       <FaUser className="h-12 w-12 text-gray-400" />
                     </div>
                   )}
-                  <button
-                    onClick={triggerFileInput}
-                    disabled={uploading}
-                    className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    {uploading ? (
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <FaCamera className="h-4 w-4 text-white" />
-                    )}
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
                 </div>
                 <h2 className="mt-4 text-xl font-bold text-gray-900">
                   {currentUser.firstname} {currentUser.lastname}
                 </h2>
-                {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-                  currentUser.academyRole === "INSTRUCTOR") && (
-                  <p className="text-gray-600">
-                    {(currentUser as any).title || "Instructor"}
-                  </p>
-                )}
               </div>
 
               {/* Profile Information */}
@@ -401,25 +355,6 @@ const ProfilePage = () => {
                       />
                     </div>
 
-                    {currentUser.academyRole === "INSTRUCTOR" && (
-                      <div className="sm:col-span-6">
-                        <label
-                          htmlFor="title"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Title
-                        </label>
-                        <input
-                          type="text"
-                          name="title"
-                          id="title"
-                          value={formData.title}
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        />
-                      </div>
-                    )}
-
                     <div className="sm:col-span-6">
                       <label
                         htmlFor="bio"
@@ -442,27 +377,41 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="bg-white py-2.5 px-6 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all duration-200"
                     >
                       Cancel
                     </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <FaSave className="mr-2 h-4 w-4" />
-                          Save
-                        </>
-                      )}
-                    </button>
+                    {(() => {
+                      const hasChanges = currentUser && (
+                        formData.firstname !== (currentUser.firstname || "") ||
+                        formData.lastname !== (currentUser.lastname || "") ||
+                        formData.bio !== (currentUser.bio || "")
+                      );
+                      
+                      return (
+                        <button
+                          type="submit"
+                          disabled={loading || !hasChanges}
+                          className={`inline-flex justify-center items-center py-2.5 px-8 border text-sm font-semibold rounded-full transition-all duration-200 
+                            ${loading || !hasChanges 
+                              ? "bg-[#0D72BA]/5 text-[#0D72BA]/30 border-[#0D72BA]/10 cursor-not-allowed" 
+                              : "bg-[#0D72BA] text-white border-transparent hover:bg-[#0b619e] hover:shadow-lg active:scale-95 shadow-md shadow-[#0D72BA]/20"
+                            }`}
+                        >
+                          {loading ? (
+                            <>
+                              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <FaSave className="mr-2 h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </form>
               ) : (
@@ -484,22 +433,11 @@ const ProfilePage = () => {
                         {currentUser.email}
                       </dd>
                     </div>
-                    {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-                      currentUser.academyRole === "INSTRUCTOR") && (
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">
-                          Title
-                        </dt>
-                        <dd className="mt-1 text-sm text-gray-900">
-                          {(currentUser as any).title || "Not provided"}
-                        </dd>
-                      </div>
-                    )}
                     <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500">Bio</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
-                        {currentUser.bio || "No bio provided"}
-                      </dd>
+                       <dt className="text-sm font-medium text-gray-500">Bio</dt>
+                       <dd className="mt-1 text-sm text-gray-900">
+                         {currentUser.bio || "No bio provided"}
+                       </dd>
                     </div>
                   </div>
 
@@ -507,7 +445,7 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-full text-[#0D72BA] bg-[#0D72BA]/10 hover:bg-[#0D72BA]/20 hover:shadow-md transition-all duration-200 active:scale-95"
                     >
                       <FaEdit className="mr-2 h-4 w-4" />
                       Edit Profile
