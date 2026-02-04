@@ -286,6 +286,18 @@
 									"path": ["auth", "academy", "reject-teacher", "{{appId}}"]
 								}
 							}
+						},
+						{
+							"name": "Get Instructor/Applicant Details",
+							"request": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {
+									"raw": "{{baseUrl}}/auth/academy/instructor/{{userId}}",
+									"host": ["{{baseUrl}}"],
+									"path": ["auth", "academy", "instructor", "{{userId}}"]
+								}
+							}
 						}
 					]
 				},
@@ -619,39 +631,26 @@
 					"name": "Career (Apply Teacher)",
 					"item": [
 						{
-							"name": "Submit Teacher Application (Multipart)",
+							"name": "Apply as Instructor (FormData)",
 							"request": {
 								"method": "POST",
 								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 								"body": {
 									"mode": "formdata",
 									"formdata": [
-										{
-											"key": "personalDetails",
-											"value": "{\"firstname\":\"John\",\"lastname\":\"Doe\",\"email\":\"teacher@example.com\"}",
-											"type": "text"
-										},
-										{
-											"key": "teachingCategories",
-											"value": "[\"Programming\"]",
-											"type": "text"
-										},
-										{
-											"key": "interviewResponses",
-											"value": "[]",
-											"type": "text"
-										},
-										{
-											"key": "resume",
-											"type": "file",
-											"src": []
-										}
+										{ "key": "firstname", "value": "John", "type": "text" },
+										{ "key": "lastname", "value": "Doe", "type": "text" },
+										{ "key": "email", "value": "teacher@example.com", "type": "text" },
+										{ "key": "phone", "value": "+123456789", "type": "text" },
+										{ "key": "teachingCategories", "value": "Programming, Cloud", "type": "text" },
+										{ "key": "interviewResponses", "value": "[]", "type": "text" },
+										{ "key": "resume", "type": "file", "src": [] }
 									]
 								},
 								"url": {
-									"raw": "{{baseUrl}}/auth/academy/apply-teacher",
+									"raw": "{{baseUrl}}/auth/academy/apply-instructor",
 									"host": ["{{baseUrl}}"],
-									"path": ["auth", "academy", "apply-teacher"]
+									"path": ["auth", "academy", "apply-instructor"]
 								}
 							}
 						}
@@ -796,6 +795,18 @@
 											"raw": "{{baseUrl}}/academy/modules/{{moduleId}}",
 											"host": ["{{baseUrl}}"],
 											"path": ["academy", "modules", "{{moduleId}}"]
+										}
+									}
+								},
+								{
+									"name": "Get Module Full Details (Instructor View)",
+									"request": {
+										"method": "GET",
+										"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+										"url": {
+											"raw": "{{baseUrl}}/academy/modules/instructor/{{moduleId}}",
+											"host": ["{{baseUrl}}"],
+											"path": ["academy", "modules", "instructor", "{{moduleId}}"]
 										}
 									}
 								},

@@ -773,6 +773,39 @@ export class AuthService {
 		return this.userService.getTeacherApplications();
 	}
 
+	async getInstructorById(id: string) {
+		// id could be firebaseId or numeric email? Actually it should be what we expect from admin dashboard
+		// Let's assume id is firebaseId or numeric database ID
+		let user = await this.userService.findByFirebaseId(id);
+		if (!user) {
+			user = await this.userService.findById(id);
+		}
+
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found',
+				error: 'Not Found',
+			});
+		}
+
+		// Find application if any
+		const application = await this.prisma.application.findUnique({
+			where: {
+				userId_domain: {
+					userId: user.firebaseId,
+					domain: 'academy'
+				}
+			}
+		});
+
+		return {
+			user: this.toPlain(user),
+			application,
+			academyStatus: user.academyUser,
+		};
+	}
+
 	async approveTeacherApplication(applicationId: string, requestingUserRole?: string, reviewerId?: string, reviewNotes?: string) {
 		if (requestingUserRole !== 'ADMIN') {
 			throw new RpcException({

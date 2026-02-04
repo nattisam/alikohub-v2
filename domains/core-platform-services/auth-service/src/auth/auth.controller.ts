@@ -139,6 +139,13 @@ export class AuthController {
 		return this.authService.getTeacherApplications(role);
 	}
 
+	@Post('academy/instructor/:id')
+	@MessagePattern({ cmd: 'get_instructor_by_id' })
+	async handleGetInstructorById(@Body() dto: { id: string }, @Payload() payload: { id: string }) {
+		const id = dto?.id || payload?.id;
+		return this.authService.getInstructorById(id);
+	}
+
 	@Post('academy/approve-teacher')
 	@MessagePattern({ cmd: 'approve_teacher_application' })
 	async handleApproveTeacher(@Body() dto: any, @Payload() payload: any) {
