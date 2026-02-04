@@ -1,8 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUser } from '../hooks';
-import { Search, Users, Briefcase, CheckCircle, UserPlus, Loader2, X, Shield, HardHat, Building2 } from 'lucide-react';
-import { contechAPI } from '../services/api';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../hooks";
+import {
+  Search,
+  Users,
+  Briefcase,
+  CheckCircle,
+  UserPlus,
+  Loader2,
+  X,
+  Shield,
+  HardHat,
+  Building2,
+} from "lucide-react";
+import { contechAPI } from "../services/api";
 
 const UserManagementPage = () => {
   const { currentUser } = useUser();
@@ -10,41 +21,52 @@ const UserManagementPage = () => {
   const [contractors, setContractors] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'contractors' | 'clients'>('contractors');
-  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<"contractors" | "clients">(
+    "contractors",
+  );
+
   // Create User Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    role: 'CONTRACTOR'
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    role: "CONTRACTOR",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Prevent double-fetch in React StrictMode
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
     if (!currentUser) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
+
+    // Skip if already fetched (React StrictMode protection)
+    if (hasFetchedRef.current) {
+      return;
+    }
+    hasFetchedRef.current = true;
 
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        // Fetch contractors
-        const contractorResponse = await contechAPI.getUsersByRole('CONTRACTOR', 1, 10);
+        // Fetch contractors and clients in parallel
+        const [contractorResponse, clientResponse] = await Promise.all([
+          contechAPI.getUsersByRole("CONTRACTOR", 1, 10),
+          contechAPI.getUsersByRole("CLIENT", 1, 10),
+        ]);
+
         setContractors(contractorResponse.items || []);
-
-        // Fetch clients
-        const clientResponse = await contechAPI.getUsersByRole('CLIENT', 1, 10);
         setClients(clientResponse.items || []);
-
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
         setLoading(false);
       }
     };
@@ -52,10 +74,12 @@ const UserManagementPage = () => {
     fetchUsers();
   }, [currentUser, navigate]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -70,37 +94,42 @@ const UserManagementPage = () => {
         firstname: formData.firstName,
         lastname: formData.lastName,
         password: formData.password,
-        role: formData.role
+        role: formData.role,
       });
-      
+
       setIsModalOpen(false);
       // Reset form
       setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        role: 'CONTRACTOR'
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        role: "CONTRACTOR",
       });
-      
+
       // In a real app, we would refresh the list here
-      alert(`User ${formData.firstName} created successfully! (Reload to see changes if backend supports listing)`);
-      
+      alert(
+        `User ${formData.firstName} created successfully! (Reload to see changes if backend supports listing)`,
+      );
     } catch (err: any) {
       console.error("Failed to create user:", err);
-      setError(err.response?.data?.message || "Failed to create user. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          "Failed to create user. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const currentUsers = activeTab === 'contractors' ? contractors : clients;
-  
-  const filteredUsers = currentUsers.filter(user =>
-    user.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+  const currentUsers = activeTab === "contractors" ? contractors : clients;
+
+  const filteredUsers = currentUsers.filter(
+    (user) =>
+      user.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
@@ -108,7 +137,9 @@ const UserManagementPage = () => {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#3E92D1]" />
-          <p className="mt-4 text-sm font-medium text-gray-600">Loading Directory...</p>
+          <p className="mt-4 text-sm font-medium text-gray-600">
+            Loading Directory...
+          </p>
         </div>
       </div>
     );
@@ -116,21 +147,22 @@ const UserManagementPage = () => {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700 relative">
-      
       {/* Create User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Create New Account</h2>
-              <button 
+              <h2 className="text-xl font-bold text-gray-900">
+                Create New Account
+              </h2>
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleCreateUser} className="p-6 space-y-6">
               {error && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium flex gap-3 items-center">
@@ -141,7 +173,9 @@ const UserManagementPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">First Name</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    First Name
+                  </label>
                   <input
                     name="firstName"
                     value={formData.firstName}
@@ -152,7 +186,9 @@ const UserManagementPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Last Name</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Last Name
+                  </label>
                   <input
                     name="lastName"
                     value={formData.lastName}
@@ -165,7 +201,9 @@ const UserManagementPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email Address</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Email Address
+                </label>
                 <input
                   name="email"
                   type="email"
@@ -178,7 +216,9 @@ const UserManagementPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Password
+                </label>
                 <input
                   name="password"
                   type="password"
@@ -191,39 +231,55 @@ const UserManagementPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Account Role</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Account Role
+                </label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
-                    onClick={() => setFormData({...formData, role: 'CONTRACTOR'})}
+                    onClick={() =>
+                      setFormData({ ...formData, role: "CONTRACTOR" })
+                    }
                     className={`p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden ${
-                      formData.role === 'CONTRACTOR' 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:border-gray-300'
+                      formData.role === "CONTRACTOR"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     <div className="flex items-center gap-3 mb-2 relative z-10">
-                      <div className={`p-2 rounded-lg ${formData.role === 'CONTRACTOR' ? 'bg-[#3E92D1] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                      <div
+                        className={`p-2 rounded-lg ${formData.role === "CONTRACTOR" ? "bg-[#3E92D1] text-white" : "bg-gray-100 text-gray-500"}`}
+                      >
                         <HardHat className="w-4 h-4" />
                       </div>
-                      <span className={`font-bold ${formData.role === 'CONTRACTOR' ? 'text-[#3E92D1]' : 'text-gray-700'}`}>Contractor</span>
+                      <span
+                        className={`font-bold ${formData.role === "CONTRACTOR" ? "text-[#3E92D1]" : "text-gray-700"}`}
+                      >
+                        Contractor
+                      </span>
                     </div>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setFormData({...formData, role: 'CLIENT'})}
+                    onClick={() => setFormData({ ...formData, role: "CLIENT" })}
                     className={`p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden ${
-                      formData.role === 'CLIENT' 
-                        ? 'border-emerald-500 bg-emerald-50' 
-                        : 'border-gray-200 hover:border-gray-300'
+                      formData.role === "CLIENT"
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     <div className="flex items-center gap-3 mb-2 relative z-10">
-                      <div className={`p-2 rounded-lg ${formData.role === 'CLIENT' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                      <div
+                        className={`p-2 rounded-lg ${formData.role === "CLIENT" ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500"}`}
+                      >
                         <Building2 className="w-4 h-4" />
                       </div>
-                      <span className={`font-bold ${formData.role === 'CLIENT' ? 'text-emerald-900' : 'text-gray-700'}`}>Client</span>
+                      <span
+                        className={`font-bold ${formData.role === "CLIENT" ? "text-emerald-900" : "text-gray-700"}`}
+                      >
+                        Client
+                      </span>
                     </div>
                   </button>
                 </div>
@@ -248,7 +304,7 @@ const UserManagementPage = () => {
                       Creating...
                     </>
                   ) : (
-                    'Create Account'
+                    "Create Account"
                   )}
                 </button>
               </div>
@@ -279,11 +335,11 @@ const UserManagementPage = () => {
       <div className="mb-6 border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
-            onClick={() => setActiveTab('contractors')}
+            onClick={() => setActiveTab("contractors")}
             className={`py-3 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'contractors'
-                ? 'border-[#3E92D1] text-[#3E92D1]'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === "contractors"
+                ? "border-[#3E92D1] text-[#3E92D1]"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -292,11 +348,11 @@ const UserManagementPage = () => {
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('clients')}
+            onClick={() => setActiveTab("clients")}
             className={`py-3 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'clients'
-                ? 'border-[#3E92D1] text-[#3E92D1]'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              activeTab === "clients"
+                ? "border-[#3E92D1] text-[#3E92D1]"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -336,32 +392,39 @@ const UserManagementPage = () => {
             </thead>
             <tbody className="divide-y divide-gray-100 border-t border-gray-100">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="group hover:bg-gray-50 transition-colors">
+                <tr
+                  key={user.id}
+                  className="group hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                          user.role === 'CONTRACTOR'
-                            ? 'bg-gradient-to-br from-[#3E92D1] to-[#2E82C1]'
-                            : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                          user.role === "CONTRACTOR"
+                            ? "bg-gradient-to-br from-[#3E92D1] to-[#2E82C1]"
+                            : "bg-gradient-to-br from-emerald-500 to-emerald-600"
                         }`}
                       >
-                        {user.firstname?.[0]}{user.lastname?.[0]}
+                        {user.firstname?.[0]}
+                        {user.lastname?.[0]}
                       </div>
                       <span className="font-semibold text-gray-900">
                         {user.firstname} {user.lastname}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 max-w-[200px] truncate" title={user.email}>
+                  <td
+                    className="px-6 py-4 max-w-[200px] truncate"
+                    title={user.email}
+                  >
                     {user.email}
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        user.role === 'CONTRACTOR'
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'bg-emerald-50 text-emerald-700'
+                        user.role === "CONTRACTOR"
+                          ? "bg-blue-50 text-blue-700"
+                          : "bg-emerald-50 text-emerald-700"
                       }`}
                     >
                       {user.role}
@@ -370,13 +433,17 @@ const UserManagementPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5 text-gray-600">
                       <Briefcase className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium">{user.projects?.length || 0}</span>
+                      <span className="font-medium">
+                        {user.projects?.length || 0}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                     <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
                       <CheckCircle className="h-4 w-4 text-emerald-500" />
-                      <span className="font-medium text-emerald-700">Active</span>
+                      <span className="font-medium text-emerald-700">
+                        Active
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -387,7 +454,9 @@ const UserManagementPage = () => {
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white py-16">
           <Users className="h-12 w-12 text-gray-300" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">Empty Directory</h3>
+          <h3 className="mt-4 text-lg font-semibold text-gray-900">
+            Empty Directory
+          </h3>
           <p className="mt-1 text-sm text-gray-500">
             No users matching your search were found.
           </p>

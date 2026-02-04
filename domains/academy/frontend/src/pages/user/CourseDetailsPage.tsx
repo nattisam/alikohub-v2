@@ -11,7 +11,6 @@ import {
   User,
   Star,
   CheckCircle,
-  PlayCircle,
   FileText,
   Video,
   ChevronDown,
