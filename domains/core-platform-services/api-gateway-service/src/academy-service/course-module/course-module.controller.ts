@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
+import { AcademyRolesGuard, Roles, AcademyRole } from '../../common/guards/academy-roles.guard';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
 import { UpdateCourseModuleDto } from './dto/update-course-module.dto';
@@ -33,6 +34,8 @@ export class CourseModuleController {
 
   // Create module (Instructor only – documented)
   @Post()
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
   @ApiOperation({
     summary: 'Create course module',
     description: '🔒 Instructor only',
@@ -81,8 +84,23 @@ export class CourseModuleController {
     return this.academyClient.send({ cmd: 'find_module_by_id' }, payload);
   }
 
+  @Get('instructor/:id')
+  @ApiOperation({ summary: 'Get module by ID for instructor (full details)' })
+  @ApiParam({ name: 'id', type: Number })
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
+  findInstructorModuleById(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    const payload = {
+      id,
+      user: req.user,
+    };
+    return this.academyClient.send({ cmd: 'get_instructor_module' }, payload);
+  }
+
   // Update module
   @Put(':id')
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
   @ApiOperation({
     summary: 'Update course module',
     description: '🔒 Instructor only',
@@ -104,6 +122,8 @@ export class CourseModuleController {
 
   // Delete module
   @Delete(':id')
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
   @ApiOperation({
     summary: 'Delete course module',
     description: '🔒 Instructor only',

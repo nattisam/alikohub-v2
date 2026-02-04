@@ -153,7 +153,7 @@ export class AuthController {
 		return this.authService.rejectTeacherApplication(data.applicationId, data.requestingUserRole, data.reviewerId, data.reviewNotes);
 	}
 
-	@Patch('academy/switch-role')
+	@Post('academy/switch-role')
 	@MessagePattern({ cmd: 'switch_role' })
 	@UsePipes(new JoiValidationPipe(Joi.object({
 		userId: Joi.string().required(),

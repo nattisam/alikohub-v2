@@ -11,13 +11,20 @@ export class CreateContentDto {
   @IsEnum(ContentType)
   type!: ContentType;
 
-  @ApiProperty({ example: 'https://example.com/video.mp4' })
+  @ApiPropertyOptional({ example: 'https://example.com/video.mp4' })
   @IsUrl()
-  url!: string;
+  @IsOptional()
+  url?: string;
 
-  @ApiProperty({ example: 1 })
+  @ApiPropertyOptional({ example: 1 })
   @IsInt()
-  lessonId!: number;
+  @IsOptional()
+  lessonId?: number;
+
+  @ApiPropertyOptional({ example: 'Lesson body text' })
+  @IsString()
+  @IsOptional()
+  body?: string;
 
   @ApiPropertyOptional({ example: 1 })
   @IsInt()

@@ -7,6 +7,7 @@ export enum ContentType {
   PDF = 'PDF',
   QUIZ = 'QUIZ',
   ASSIGNMENT = 'ASSIGNMENT',
+  TEXT = 'TEXT',
 }
 
 export class UploadContentDto {

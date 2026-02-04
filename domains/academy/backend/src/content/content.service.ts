@@ -47,8 +47,9 @@ export class ContentService {
       throw new ForbiddenException(
         'You do not have permission to add content to this lesson.',
       );
+    if (!dto.lessonId) throw new BadRequestException('lessonId is required for direct content creation');
 
-    return this.prisma.content.create({ data: dto });
+    return this.prisma.content.create({ data: dto as any });
   }
 
   async uploadFile(
@@ -352,7 +353,7 @@ export class ContentService {
 
     return this.prisma.content.update({
       where: { id: payload.id },
-      data: payload.dto,
+      data: payload.dto as any,
     });
   }
 
