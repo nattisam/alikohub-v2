@@ -1040,15 +1040,24 @@ export class AuthService {
 			where: { userId: user.firebaseId },
 		});
 
+		const isAdmin = user.globalRole === GlobalRole.ADMIN;
+		const targetRole = isAdmin ? ContechRole.ADMIN : (contechUser?.role || ContechRole.CLIENT);
+
 		if (!contechUser) {
 			contechUser = await this.prisma.contechUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: ContechRole.CLIENT,
+					role: targetRole,
 					status: 'ACTIVE',
 				}
 			});
-			this.logger.log(`Created missing ContechUser record for user: ${user.firebaseId}`);
+			this.logger.log(`Created ContechUser record for user: ${user.firebaseId} with role: ${targetRole}`);
+		} else if (isAdmin && contechUser.role !== ContechRole.ADMIN) {
+			contechUser = await this.prisma.contechUser.update({
+				where: { userId: user.firebaseId },
+				data: { role: ContechRole.ADMIN }
+			});
+			this.logger.log(`Automatically promoted ConTech user ${user.firebaseId} to ADMIN because of global role`);
 		}
 
 		return contechUser;
@@ -1068,15 +1077,24 @@ export class AuthService {
 			where: { userId: user.firebaseId },
 		});
 
+		const isAdmin = user.globalRole === GlobalRole.ADMIN;
+		const targetRole = isAdmin ? EventsRole.ADMIN : (eventsUser?.role || EventsRole.USER);
+
 		if (!eventsUser) {
 			eventsUser = await this.prisma.eventsUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: EventsRole.USER,
+					role: targetRole,
 					status: 'ACTIVE',
 				}
 			});
-			this.logger.log(`Created missing EventsUser record for user: ${user.firebaseId}`);
+			this.logger.log(`Created EventsUser record for user: ${user.firebaseId} with role: ${targetRole}`);
+		} else if (isAdmin && eventsUser.role !== EventsRole.ADMIN) {
+			eventsUser = await this.prisma.eventsUser.update({
+				where: { userId: user.firebaseId },
+				data: { role: EventsRole.ADMIN }
+			});
+			this.logger.log(`Automatically promoted Events user ${user.firebaseId} to ADMIN because of global role`);
 		}
 
 		return eventsUser;
@@ -1096,15 +1114,24 @@ export class AuthService {
 			where: { userId: user.firebaseId },
 		});
 
+		const isAdmin = user.globalRole === GlobalRole.ADMIN;
+		const targetRole = isAdmin ? AcademyRole.ADMIN : (academyUser?.role || AcademyRole.USER);
+
 		if (!academyUser) {
 			academyUser = await this.prisma.academyUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: AcademyRole.USER,
+					role: targetRole,
 					status: 'ACTIVE',
 				}
 			});
-			this.logger.log(`Created missing AcademyUser record for user: ${user.firebaseId}`);
+			this.logger.log(`Created AcademyUser record for user: ${user.firebaseId} with role: ${targetRole}`);
+		} else if (isAdmin && academyUser.role !== AcademyRole.ADMIN) {
+			academyUser = await this.prisma.academyUser.update({
+				where: { userId: user.firebaseId },
+				data: { role: AcademyRole.ADMIN }
+			});
+			this.logger.log(`Automatically promoted Academy user ${user.firebaseId} to ADMIN because of global role`);
 		}
 
 		return {
