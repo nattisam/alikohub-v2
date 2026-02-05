@@ -16,6 +16,8 @@ type FindAllQuery = {
   status?: CourseStatus;
   instructorId?: string;
   category?: string;
+  difficulty?: string; // Add this
+  targetLevel?: string; // Add this
   q?: string; // search in title/description
 };
 
@@ -213,6 +215,8 @@ export class CoursesService {
       }
 
       if (query.category) where.category = query.category;
+      if (query.targetLevel) where.targetLevel = query.targetLevel;
+      if (query.difficulty) where.targetLevel = query.difficulty;
       if (query.q) {
         where.OR = [
           { title: { contains: query.q, mode: 'insensitive' } },
