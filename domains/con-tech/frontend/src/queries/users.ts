@@ -5,6 +5,9 @@ import type { User } from "../components/types";
 export const useUserProfile = () => {
   return useQuery({
     queryKey: ["userProfile"],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const response = await authAPI.getProfile();
       return response;
@@ -50,6 +53,17 @@ export const useCreateUserProfile = () => {
 export const useUsersByRole = (role: string) => {
   return useQuery({
     queryKey: ["users", role],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error: Error | unknown) => {
+      // Don't retry on 429 - let axios handle it
+      const err = error as { response?: { status?: number } };
+      if (err?.response?.status === 429) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     queryFn: async () => {
       const response = await contechAPI.getUsersByRole(role, 1, 100);
       return response.items || [];

@@ -59,11 +59,7 @@ const PMDashboard = () => {
   }
 
   if (error || !dashboardData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <ServerError onRetry={() => refetch()} />
-      </div>
-    );
+    return <ServerError onRetry={() => refetch()} />;
   }
 
   const metrics = [

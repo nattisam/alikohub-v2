@@ -4,9 +4,10 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3006";
 
 // Retry configuration for rate limiting
-export const MAX_RETRIES = 3;
-export const INITIAL_RETRY_DELAY = 1000;
-export const MAX_RETRY_DELAY = 10000;
+// Retry configuration for rate limiting
+export const MAX_RETRIES = 1; // Only retry once to avoid cascading
+export const INITIAL_RETRY_DELAY = 2000; // Increased delay
+export const MAX_RETRY_DELAY = 5000;
 
 // Helper function to calculate exponential backoff delay
 export const getRetryDelay = (retryCount: number): number => {

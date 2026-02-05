@@ -10,6 +10,7 @@ import {
   Loader2,
   X,
   HardHat,
+  
   Building2,
 } from "lucide-react";
 import { contechAPI } from "../services/api";
@@ -133,14 +134,12 @@ const UserManagementPage = () => {
 
   if (isError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <ServerError
-          onRetry={() => {
-            refetchContractors();
-            refetchClients();
-          }}
-        />
-      </div>
+      <ServerError
+        onRetry={() => {
+          refetchContractors();
+          refetchClients();
+        }}
+      />
     );
   }
 
