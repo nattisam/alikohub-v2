@@ -70,7 +70,14 @@ export interface FileWithMetadata {
 // =========================
 // ENUMS / LITERAL TYPES
 // =========================
-export type ProjectStatus = "DRAFT" | "PLANNED" | "ACTIVE" | "ON_HOLD" | "DELAYED" | "COMPLETED" | "CANCELLED";
+export type ProjectStatus =
+  | "DRAFT"
+  | "PLANNED"
+  | "ACTIVE"
+  | "ON_HOLD"
+  | "DELAYED"
+  | "COMPLETED"
+  | "CANCELLED";
 export const ProjectStatus = {
   DRAFT: "DRAFT" as const,
   PLANNED: "PLANNED" as const,
@@ -81,7 +88,15 @@ export const ProjectStatus = {
   CANCELLED: "CANCELLED" as const,
 };
 
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEWED" | "COMPLETED" | "BLOCKED" | "CANCELLED" | "PENDING" | "ON_HOLD";
+export type TaskStatus =
+  | "TODO"
+  | "IN_PROGRESS"
+  | "REVIEWED"
+  | "COMPLETED"
+  | "BLOCKED"
+  | "CANCELLED"
+  | "PENDING"
+  | "ON_HOLD";
 export const TaskStatus = {
   TODO: "TODO" as const,
   IN_PROGRESS: "IN_PROGRESS" as const,
@@ -102,7 +117,12 @@ export const TaskPriority = {
   URGENT: "URGENT" as const,
 };
 
-export type ContractStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | "AMENDED";
+export type ContractStatus =
+  | "DRAFT"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "REJECTED"
+  | "AMENDED";
 export const ContractStatus = {
   DRAFT: "DRAFT" as const,
   PENDING_APPROVAL: "PENDING_APPROVAL" as const,
@@ -111,7 +131,12 @@ export const ContractStatus = {
   AMENDED: "AMENDED" as const,
 };
 
-export type InspectionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+export type InspectionStatus =
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED";
 export const InspectionStatus = {
   PENDING: "PENDING" as const,
   IN_PROGRESS: "IN_PROGRESS" as const,
@@ -120,7 +145,11 @@ export const InspectionStatus = {
   CANCELLED: "CANCELLED" as const,
 };
 
-export type ChecklistItemStatus = "PASS" | "FAIL" | "NOT_APPLICABLE" | "PENDING";
+export type ChecklistItemStatus =
+  | "PASS"
+  | "FAIL"
+  | "NOT_APPLICABLE"
+  | "PENDING";
 export const ChecklistItemStatus = {
   PASS: "PASS" as const,
   FAIL: "FAIL" as const,
@@ -158,22 +187,15 @@ export interface ClientDashboardData {
 }
 
 export interface ProjectManagerDashboardData {
-  activeProjects: number;
-  activeProjectsChange: number;
-  contractStatus: {
-    pending: number;
+  projectStats: {
+    total: number;
     active: number;
     completed: number;
+    planned: number;
   };
-  rfis: {
-    pending: number;
-    approved: number;
-    rejected: number;
-  };
-  qualityIssues: {
-    total: number;
-    critical: number;
-    minor: number;
+  users: {
+    clients: number;
+    contractors: number;
   };
 }
 

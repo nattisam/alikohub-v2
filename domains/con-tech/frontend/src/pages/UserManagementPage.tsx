@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../hooks";
 import {
@@ -9,22 +9,35 @@ import {
   UserPlus,
   Loader2,
   X,
-  Shield,
   HardHat,
   Building2,
 } from "lucide-react";
 import { contechAPI } from "../services/api";
+import { useUsersByRole } from "../queries/users";
+import ServerError from "../components/common/ServerError";
 
 const UserManagementPage = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
-  const [contractors, setContractors] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"contractors" | "clients">(
     "contractors",
   );
+
+  // Queries using TanStack Query
+  const {
+    data: contractors = [],
+    isLoading: loadingContractors,
+    isError: errorContractors,
+    refetch: refetchContractors,
+  } = useUsersByRole("CONTRACTOR");
+
+  const {
+    data: clients = [],
+    isLoading: loadingClients,
+    isError: errorClients,
+    refetch: refetchClients,
+  } = useUsersByRole("CLIENT");
 
   // Create User Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,40 +51,10 @@ const UserManagementPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Prevent double-fetch in React StrictMode
-  const hasFetchedRef = useRef(false);
-
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
-      return;
     }
-
-    // Skip if already fetched (React StrictMode protection)
-    if (hasFetchedRef.current) {
-      return;
-    }
-    hasFetchedRef.current = true;
-
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        // Fetch contractors and clients in parallel
-        const [contractorResponse, clientResponse] = await Promise.all([
-          contechAPI.getUsersByRole("CONTRACTOR", 1, 10),
-          contechAPI.getUsersByRole("CLIENT", 1, 10),
-        ]);
-
-        setContractors(contractorResponse.items || []);
-        setClients(clientResponse.items || []);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
   }, [currentUser, navigate]);
 
   const handleInputChange = (
@@ -107,10 +90,11 @@ const UserManagementPage = () => {
         role: "CONTRACTOR",
       });
 
-      // In a real app, we would refresh the list here
-      alert(
-        `User ${formData.firstName} created successfully! (Reload to see changes if backend supports listing)`,
-      );
+      // Refetch to see new user
+      if (formData.role === "CONTRACTOR") refetchContractors();
+      else refetchClients();
+
+      alert(`User ${formData.firstName} created successfully!`);
     } catch (err: any) {
       console.error("Failed to create user:", err);
       setError(
@@ -122,10 +106,12 @@ const UserManagementPage = () => {
     }
   };
 
+  const loading = loadingContractors || loadingClients;
+  const isError = errorContractors || errorClients;
   const currentUsers = activeTab === "contractors" ? contractors : clients;
 
   const filteredUsers = currentUsers.filter(
-    (user) =>
+    (user: any) =>
       user.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,6 +127,19 @@ const UserManagementPage = () => {
             Loading Directory...
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <ServerError
+          onRetry={() => {
+            refetchContractors();
+            refetchClients();
+          }}
+        />
       </div>
     );
   }
@@ -391,7 +390,7 @@ const UserManagementPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 border-t border-gray-100">
-              {filteredUsers.map((user) => (
+              {filteredUsers.map((user: any) => (
                 <tr
                   key={user.id}
                   className="group hover:bg-gray-50 transition-colors"

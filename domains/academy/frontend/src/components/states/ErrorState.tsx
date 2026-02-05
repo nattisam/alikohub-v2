@@ -1,5 +1,4 @@
-import React from 'react';
-import { FaExclamationTriangle, FaRedo } from 'react-icons/fa';
+import React from "react";
 
 interface ErrorStateProps {
   title?: string;
@@ -10,35 +9,46 @@ interface ErrorStateProps {
 }
 
 const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'Something went wrong',
-  message = 'An error occurred while loading the data. Please try again.',
+  title = "Something went wrong",
+  message = "An error occurred while loading the data. Please try again.",
   onRetry,
   showRetry = true,
-  error
+  error,
 }) => {
-  // Extract error details if available
-  const errorMessage = error?.response?.data?.message || error?.message || message;
+  // Check if it's a 500 error
+  const isServerError = error?.response?.status === 500;
+
+  // Use requested messaging for server errors
+  const displayTitle = isServerError ? "Something went wrong" : title;
+  const displayMessage = isServerError
+    ? "We’re having trouble processing your request right now. Please try again in a moment."
+    : error?.response?.data?.message || error?.message || message;
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md w-full text-center">
-        <div className="flex justify-center mb-4">
-          <div className="bg-red-100 p-3 rounded-full">
-            <FaExclamationTriangle className="text-red-600 text-3xl" />
-          </div>
-        </div>
-        
-        <h3 className="text-xl font-bold text-red-800 mb-2">{title}</h3>
-        <p className="text-red-600 mb-6">{errorMessage}</p>
-        
+    <div className="min-h-[400px] flex items-center justify-center bg-gray-50 px-4 rounded-xl">
+      <div className="text-center max-w-md">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          {displayTitle}
+        </h1>
+
+        <p className="text-gray-600 mb-6">{displayMessage}</p>
+
         {showRetry && onRetry && (
           <button
             onClick={onRetry}
-            className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition shadow-md hover:shadow-lg active:scale-95"
           >
-            <FaRedo /> Retry
+            Retry
           </button>
         )}
+
+        <p className="mt-4 text-sm text-gray-500">
+          If the problem persists,{" "}
+          <a href="/contact" className="text-blue-600 hover:underline">
+            contact support
+          </a>
+          .
+        </p>
       </div>
     </div>
   );

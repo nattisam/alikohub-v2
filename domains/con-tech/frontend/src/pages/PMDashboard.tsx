@@ -1,143 +1,103 @@
 import { useUser } from "../hooks";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { contechAPI } from "../services/api";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { useProjectManagerDashboardData } from "../queries/dashboard";
+import ServerError from "../components/common/ServerError";
 import BarChart from "../components/charts/BarChart";
-import { 
-  Briefcase, 
-  HardHat, 
-  Users, 
-  Building2, 
-  ArrowUpRight, 
+import {
+  Briefcase,
+  HardHat,
+  Users,
+  Building2,
+  ArrowUpRight,
   ChevronRight,
   Activity,
   ClipboardList,
   BarChart3,
-  Loader2
+  Loader2,
 } from "lucide-react";
 
 const PMDashboard = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState({
-    totalProjects: 0,
-    activeProjects: 0,
-    contractors: 0,
-    clients: 0,
-    projectStatus: {
-      active: 0,
-      pending: 0,
-      completed: 0,
-    }
-  });
 
-  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "ADMIN";
-  
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useProjectManagerDashboardData();
+
+  const isAdmin =
+    currentUser?.globalRole === "ADMIN" || currentUser?.role === "ADMIN";
+
   useEffect(() => {
     if (currentUser && !isAdmin) {
       navigate("/");
     }
   }, [currentUser, navigate, isAdmin]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!isAdmin) return;
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const [clientResponse, contractorResponse, projectResponse] = await Promise.all([
-          contechAPI.getUsersByRole('CLIENT', 1, 100),
-          contechAPI.getUsersByRole('CONTRACTOR', 1, 100),
-          contechAPI.getAllProjects(1, 100)
-        ]);
-
-        const clientsCount = clientResponse?.total || 0;
-        const contractorsCount = contractorResponse?.total || 0;
-        const projectsCount = projectResponse?.total || 0;
-        
-        const projectStatus = {
-          active: 0,
-          pending: 0,
-          completed: 0,
-        };
-
-        if (projectResponse?.items) {
-          projectResponse.items.forEach((project: any) => {
-            const status = project.status?.toLowerCase();
-            if (status === 'active' || status === 'in_progress') projectStatus.active++;
-            else if (status === 'pending' || status === 'on_hold') projectStatus.pending++;
-            else if (status === 'completed' || status === 'finished') projectStatus.completed++;
-          });
-        }
-
-        setDashboardData({
-          totalProjects: projectsCount,
-          activeProjects: projectStatus.active,
-          contractors: contractorsCount,
-          clients: clientsCount,
-          projectStatus
-        });
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [isAdmin]);
-
   if (!currentUser || !isAdmin) {
     return null;
   }
-  
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-10 w-10 animate-spin text-[#3E92D1]" />
-        <p className="mt-4 text-sm font-medium text-gray-500">Loading Analytics...</p>
+        <p className="mt-4 text-sm font-medium text-gray-500">
+          Loading Analytics...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !dashboardData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <ServerError onRetry={() => refetch()} />
       </div>
     );
   }
 
   const metrics = [
     {
-      label: 'Total Projects',
-      value: dashboardData.totalProjects,
+      label: "Total Projects",
+      value: dashboardData.projectStats.total,
       icon: Briefcase,
-      color: 'bg-blue-100',
-      iconColor: 'text-[#3E92D1]',
-      description: 'System-wide construction'
+      color: "bg-blue-100",
+      iconColor: "text-[#3E92D1]",
+      description: "System-wide construction",
     },
     {
-      label: 'Active Projects',
-      value: dashboardData.activeProjects,
+      label: "Active Projects",
+      value: dashboardData.projectStats.active,
       icon: HardHat,
-      color: 'bg-orange-100',
-      iconColor: 'text-orange-600',
-      description: 'Currently in progress'
+      color: "bg-orange-100",
+      iconColor: "text-orange-600",
+      description: "Currently in progress",
     },
     {
-      label: 'Contractors',
-      value: dashboardData.contractors,
+      label: "Contractors",
+      value: dashboardData.users.contractors,
       icon: Users,
-      color: 'bg-amber-100',
-      iconColor: 'text-amber-600',
-      description: 'Active team members'
+      color: "bg-amber-100",
+      iconColor: "text-amber-600",
+      description: "Active team members",
     },
     {
-      label: 'Clients',
-      value: dashboardData.clients,
+      label: "Clients",
+      value: dashboardData.users.clients,
       icon: Building2,
-      color: 'bg-emerald-100',
-      iconColor: 'text-emerald-600',
-      description: 'Registered partners'
+      color: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+      description: "Registered partners",
     },
   ];
 
@@ -147,13 +107,14 @@ const PMDashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl text-gray-900 font-medium">
-            Welcome back, {currentUser?.firstname}. Here's the construction platform status.
+            Welcome back, {currentUser?.firstname}. Here's the construction
+            platform status.
           </h1>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-[#3E92D1] hover:bg-[#2E82C1] gap-2 text-white shadow-sm"
-            onClick={() => navigate('/admin/projects')}
+            onClick={() => navigate("/admin/projects")}
           >
             Manage Projects
             <ArrowUpRight className="w-4 h-4" />
@@ -166,7 +127,10 @@ const PMDashboard = () => {
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <Card key={metric.label} className="border-none shadow-sm hover:shadow-md transition-all duration-200">
+            <Card
+              key={metric.label}
+              className="border-none shadow-sm hover:shadow-md transition-all duration-200"
+            >
               <CardHeader className="pb-3 px-6 pt-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-gray-500">
@@ -178,7 +142,9 @@ const PMDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                <div className="text-3xl font-bold text-gray-900">{metric.value}</div>
+                <div className="text-3xl font-bold text-gray-900">
+                  {metric.value}
+                </div>
                 <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
                   {metric.description}
                 </p>
@@ -192,63 +158,74 @@ const PMDashboard = () => {
         {/* Project Status Activity */}
         <Card className="lg:col-span-2 border-none shadow-sm h-full">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-gray-900">Project Portfolio Breakdown</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-900">
+              Project Portfolio Breakdown
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div 
+              <div
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
-                onClick={() => navigate('/admin/projects')}
+                onClick={() => navigate("/admin/projects")}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-sm">
-                    {dashboardData.projectStatus.active}
+                    {dashboardData.projectStats.active}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       Active Projects in Progress
                     </p>
                     <p className="text-xs text-gray-500">
-                      {dashboardData.totalProjects > 0 
-                        ? Math.round((dashboardData.projectStatus.active / dashboardData.totalProjects) * 100)
-                        : 0}% of your current pipeline
+                      {dashboardData.projectStats.total > 0
+                        ? Math.round(
+                            (dashboardData.projectStats.active /
+                              dashboardData.projectStats.total) *
+                              100,
+                          )
+                        : 0}
+                      % of your current pipeline
                     </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
-              </div>
-              
-              <div 
-                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
-                onClick={() => navigate('/admin/projects')}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-sm">
-                    {dashboardData.projectStatus.pending}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Pending & On-Hold Initiatives
-                    </p>
-                    <p className="text-xs text-gray-500">Awaiting scope approval or initialization</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
               </div>
 
-              <div 
+              <div
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
-                onClick={() => navigate('/admin/projects')}
+                onClick={() => navigate("/admin/projects")}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-sm">
+                    {dashboardData.projectStats.planned}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Planned & Starting Initiatives
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Awaiting initialization or starting soon
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
+              </div>
+
+              <div
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
+                onClick={() => navigate("/admin/projects")}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#3E92D1] font-bold text-sm">
-                    {dashboardData.projectStatus.completed}
+                    {dashboardData.projectStats.completed}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       Successfully Completed Projects
                     </p>
-                    <p className="text-xs text-gray-500">Finalized and archived deliverables</p>
+                    <p className="text-xs text-gray-500">
+                      Finalized and archived deliverables
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
@@ -260,36 +237,44 @@ const PMDashboard = () => {
         {/* Quick Tasks */}
         <Card className="border-none shadow-sm h-full">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-gray-900">Quick Actions</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-900">
+              Quick Actions
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <button 
+            <button
               className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
-              onClick={() => navigate('/admin/projects/new')}
+              onClick={() => navigate("/admin/projects/new")}
             >
               <ClipboardList className="w-4 h-4 mr-2" />
               Create New Project
             </button>
-            <button 
+            <button
               className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
-              onClick={() => navigate('/admin/users')}
+              onClick={() => navigate("/admin/users")}
             >
               <Users className="w-4 h-4 mr-2" />
               Manage System Users
             </button>
-            <button 
+            <button
               className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
-              onClick={() => navigate('/admin/reports')}
+              onClick={() => navigate("/admin/reports")}
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               Generate System Reports
             </button>
             <div className="pt-4 mt-4 border-t border-gray-100">
               <div className="bg-blue-50/50 rounded-lg p-4">
-                <p className="text-[10px] font-bold text-[#3E92D1] uppercase tracking-wider mb-1">System Health</p>
+                <p className="text-[10px] font-bold text-[#3E92D1] uppercase tracking-wider mb-1">
+                  System Health
+                </p>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
-                  <span className="text-xs font-medium text-gray-600">{error ? 'Limited Connectivity' : 'Systems Operational'}</span>
+                  <div
+                    className={`w-2 h-2 rounded-full ${error ? "bg-red-500" : "bg-emerald-500"}`}
+                  ></div>
+                  <span className="text-xs font-medium text-gray-600">
+                    {error ? "Limited Connectivity" : "Systems Operational"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -301,19 +286,23 @@ const PMDashboard = () => {
       <Card className="border-none shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-bold text-gray-900">Consolidated Growth Metrics</CardTitle>
-            <p className="text-xs text-gray-500 mt-1">Project completion speed and efficiency over time</p>
+            <CardTitle className="text-lg font-bold text-gray-900">
+              Consolidated Growth Metrics
+            </CardTitle>
+            <p className="text-xs text-gray-500 mt-1">
+              Project completion speed and efficiency over time
+            </p>
           </div>
           <Activity className="w-5 h-5 text-gray-300" />
         </CardHeader>
         <CardContent>
           <div className="h-72">
-            <BarChart 
+            <BarChart
               data={[
-                { month: 'Jan', progress: 20 }, 
-                { month: 'Feb', progress: 35 }, 
-                { month: 'Mar', progress: 45 }, 
-                { month: 'Apr', progress: 60 }
+                { month: "Jan", progress: 20 },
+                { month: "Feb", progress: 35 },
+                { month: "Mar", progress: 45 },
+                { month: "Apr", progress: 60 },
               ]}
               xKey="month"
               yKey="progress"

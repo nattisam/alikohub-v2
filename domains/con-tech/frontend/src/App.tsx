@@ -30,8 +30,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
 import ClientContactPage from "./pages/ClientContactPage";
 
-
-
 function DefaultLayout() {
   const { pathname } = useLocation();
   return (
@@ -71,7 +69,7 @@ export default function App() {
         { index: true, element: <ConTechHomePage /> },
         { path: "about", element: <ConTechAboutUsPage /> },
         { path: "contact", element: <ContactUsPage /> },
-        { path: "services", element: <ConTechServicesPage /> }
+        { path: "services", element: <ConTechServicesPage /> },
       ],
     },
     {
@@ -101,7 +99,7 @@ export default function App() {
         { path: "users", element: <UserManagementPage /> },
         { path: "reports", element: <ReportsPage /> },
         { path: "profile", element: <ProfilePage /> },
-      ]
+      ],
     },
     // Contractor Dashboard Routes
     {
@@ -116,7 +114,7 @@ export default function App() {
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
         { path: "profile", element: <ProfilePage /> },
-      ]
+      ],
     },
     // Client Dashboard Routes
     {
@@ -132,7 +130,7 @@ export default function App() {
         { path: "projects/:projectId", element: <ProjectDetails /> },
         { path: "profile", element: <ProfilePage /> },
         { path: "contact-guidance", element: <ClientContactPage /> },
-      ]
+      ],
     },
     // Legacy Dashboard Redirect (for backward compatibility during migration)
     {
@@ -142,7 +140,7 @@ export default function App() {
     {
       path: "/profile",
       element: <Navigate to="/" replace />,
-    }
+    },
   ]);
 
   return <RouterProvider router={router} />;

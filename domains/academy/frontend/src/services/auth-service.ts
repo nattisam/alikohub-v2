@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api } from "../lib/api";
 
 export interface LoginCredentials {
   email: string;
@@ -74,7 +74,7 @@ export interface CurrentUser {
   eventsRole?: string;
   eventsStatus?: string;
   roleStatus?: {
-    instructor: 'active' | 'pending' | 'rejected' | 'not_applied' | string;
+    instructor: "active" | "pending" | "rejected" | "not_applied" | string;
     applicationDate?: string;
     approvalDate?: string;
   };
@@ -93,23 +93,26 @@ export interface CurrentUser {
 
 export const authService = {
   login: async (credentials: LoginCredentials) => {
-    const { data } = await api.post('/auth/login', credentials);
+    const { data } = await api.post("/auth/login", credentials);
     return data;
   },
 
   register: async (credentials: SignupCredentials) => {
-    const { data } = await api.post('/auth/register', credentials);
+    const { data } = await api.post("/auth/register", credentials);
     return data;
   },
 
   verifyToken: async (token: string) => {
-    const { data } = await api.post('/auth/verify', { type: 'jwt', value: token });
+    const { data } = await api.post("/auth/verify", {
+      type: "jwt",
+      value: token,
+    });
     return data;
   },
 
   checkEmailAvailability: async (email: string) => {
     try {
-      await api.post('/auth/login', { email, password: 'dummy-password' });
+      await api.post("/auth/login", { email, password: "dummy-password" });
       return false;
     } catch (error) {
       const err = error as { response?: { status?: number } };
@@ -123,78 +126,103 @@ export const authService = {
   },
 
   updateProfile: async (profileData: Partial<CurrentUser>) => {
-    const { data } = await api.patch('/users/profile', profileData);
+    const { data } = await api.patch("/users/profile", profileData);
     return data;
   },
-  
+
   // Academy specific auth actions
   selectRole: async (role: string) => {
-    let backendRole = '';
-    switch(role) {
-      case 'INSTRUCTOR':
-        backendRole = 'instructor';
+    let backendRole = "";
+    switch (role) {
+      case "INSTRUCTOR":
+        backendRole = "instructor";
         break;
-      case 'STUDENT':
-        backendRole = 'student';
+      case "STUDENT":
+        backendRole = "student";
         break;
-      case 'ADMIN':
-        backendRole = 'admin';
+      case "ADMIN":
+        backendRole = "admin";
         break;
       default:
         backendRole = role.toLowerCase();
     }
-    
+
     try {
-      const response = await api.post('/auth/academy/select-role', { role: backendRole });
+      const response = await api.post("/auth/academy/select-role", {
+        role: backendRole,
+      });
       return response.data;
     } catch (error) {
-      console.error('Error in role selection API call:', error);
+      console.error("Error in role selection API call:", error);
       throw error;
     }
   },
-  
+
   switchRole: async (role: string) => {
-    let backendRole = '';
-    switch(role) {
-      case 'INSTRUCTOR':
-        backendRole = 'instructor';
+    let backendRole = "";
+    switch (role) {
+      case "INSTRUCTOR":
+        backendRole = "instructor";
         break;
-      case 'STUDENT':
-        backendRole = 'student';
+      case "STUDENT":
+        backendRole = "student";
         break;
-      case 'ADMIN':
-        backendRole = 'admin';
+      case "ADMIN":
+        backendRole = "admin";
         break;
       default:
         backendRole = role.toLowerCase();
     }
-    
-    const { data } = await api.post('/auth/academy/switch-role', { newRole: backendRole });
+
+    const { data } = await api.post("/auth/academy/switch-role", {
+      newRole: backendRole,
+    });
     return data;
   },
-  
+
   getProfile: async () => {
-    const { data } = await api.get('/users/profile');
+    const { data } = await api.get("/users/profile");
     return data;
   },
-  
+
   applyTeacher: async (applicationData: unknown) => {
-    const { data } = await api.post('/auth/academy/apply-teacher', applicationData);
+    const { data } = await api.post(
+      "/auth/academy/apply-teacher",
+      applicationData,
+    );
     return data;
   },
-  
+
   getTeacherApplications: async () => {
-    const { data } = await api.get('/auth/academy/teacher-applications');
+    const { data } = await api.get("/auth/academy/teacher-applications");
     return data;
   },
-  
-  approveTeacher: async (applicationId: string) => {
-    const { data } = await api.post(`/auth/academy/approve-teacher/${applicationId}`);
-    return data;
+
+  approveTeacher: async ({
+    applicationId,
+    data,
+  }: {
+    applicationId: string;
+    data: { reviewNotes: string };
+  }) => {
+    const response = await api.post(
+      `/auth/academy/approve-teacher/${applicationId}`,
+      data,
+    );
+    return response.data;
   },
-  
-  rejectTeacher: async (applicationId: string) => {
-    const { data } = await api.post(`/auth/academy/reject-teacher/${applicationId}`);
-    return data;
+
+  rejectTeacher: async ({
+    applicationId,
+    data,
+  }: {
+    applicationId: string;
+    data: { reviewNotes: string };
+  }) => {
+    const response = await api.post(
+      `/auth/academy/reject-teacher/${applicationId}`,
+      data,
+    );
+    return response.data;
   },
 };

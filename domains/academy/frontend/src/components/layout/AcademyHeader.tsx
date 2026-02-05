@@ -76,13 +76,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   };
 
   return (
-    <header
-      className={`fixed w-full top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-white shadow-md border-b border-white/10"
-          : "bg-transparent"
-      }`}
-    >
+    <header className="bg-white shadow-md fixed w-full top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -103,8 +97,8 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                 to={item.to}
                 className={`${
                   currentTab === item.to
-                    ? "text-white"
-                    : "text-white hover:text-blue-600"
+                    ? "text-blue-600"
+                    : "text-gray-700 hover:text-blue-600"
                 } px-3 py-2 rounded-md text-md font-medium`}
               >
                 {item.label}
