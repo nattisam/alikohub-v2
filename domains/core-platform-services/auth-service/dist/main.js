@@ -23,7 +23,7 @@ async function bootstrap() {
         transport: microservices_1.Transport.TCP,
         options: {
             host: '0.0.0.0',
-            port: 3011,
+            port: parseInt(process.env.AUTH_TCP_PORT) || 3011,
         },
     });
     await app.startAllMicroservices();
