@@ -12,8 +12,8 @@ import { DatabaseModule } from '../database/database.module';
         name: 'AUTH_SERVICE',
         transport: Transport.TCP,
         options: {
-          host: '0.0.0.0',
-          port: 3001, // Verify this port matches Auth Service
+          host: process.env.AUTH_SERVICE_HOST || '0.0.0.0',
+          port: parseInt(process.env.AUTH_TCP_PORT) || 3011,
         },
       },
     ]),
