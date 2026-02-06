@@ -13,7 +13,7 @@ import { DatabaseModule } from '../database/database.module';
         transport: Transport.TCP,
         options: {
           host: process.env.AUTH_SERVICE_HOST || '0.0.0.0',
-          port: parseInt(process.env.AUTH_TCP_PORT) || 3011,
+          port: parseInt(process.env.AUTH_TCP_PORT || '3011', 10),
         },
       },
     ]),
