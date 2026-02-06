@@ -1,26 +1,70 @@
+# ============================================
+# AlikoHub Docker Compose Configuration
+# ============================================
+# For VPS deployment with Docker (alternative to PM2)
+# Usage: docker-compose up -d --build
 
+version: '3.8'
 
 services:
+  # ============================================
+  # Infrastructure Services
+  # ============================================
+  
   postgres:
     image: postgres:15-alpine
-    restart: always
+    container_name: alikohub-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: alikohub_db
+      POSTGRES_USER: ${DB_USER:-alikohub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-alikohub}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-alikohub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alikohub-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: alikohub-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alikohub-network
+
+  # ============================================
+  # Application Services
+  # ============================================
 
   api-gateway:
     build:
       context: ./domains/core-platform-services/api-gateway-service
       dockerfile: Dockerfile
+    container_name: alikohub-api-gateway
+    restart: unless-stopped
     ports:
       - "3006:3006"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3006
       - AUTH_SERVICE_HOST=auth-service
       - AUTH_SERVICE_PORT=3001
@@ -32,78 +76,200 @@ services:
       - EVENTS_SERVICE_PORT=3004
       - CAREERS_SERVICE_HOST=careers-service
       - CAREERS_SERVICE_PORT=3008
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+      - FILE_UPLOAD_SERVICE_HOST=file-upload-service
+      - FILE_UPLOAD_SERVICE_PORT=3009
     depends_on:
-      - auth-service
-      - academy-service
-      - con-tech-service
-      - events-service
-      - careers-service
+      auth-service:
+        condition: service_healthy
+      academy-service:
+        condition: service_healthy
+      con-tech-service:
+        condition: service_healthy
+      events-service:
+        condition: service_healthy
+      careers-service:
+        condition: service_healthy
+    networks:
+      - alikohub-network
 
   auth-service:
     build:
       context: ./domains/core-platform-services/auth-service
       dockerfile: Dockerfile
+    container_name: alikohub-auth-service
+    restart: unless-stopped
     ports:
       - "3001:3001"
+      - "3011:3011"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - AUTH_SERVICE_PORT=3001
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+      - AUTH_TCP_PORT=3011
+      - DATABASE_URL=postgresql://${DB_USER:-alikohub}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-alikohub}?schema=auth
+      - JWT_SECRET=${JWT_SECRET:-changeme}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - RABBITMQ_ENABLED=true
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - alikohub-network
 
   academy-service:
     build:
       context: ./domains/academy/backend
       dockerfile: Dockerfile
+    container_name: alikohub-academy-service
+    restart: unless-stopped
     ports:
       - "3005:3005"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3005
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+      - DATABASE_URL=postgresql://${DB_USER:-alikohub}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-alikohub}?schema=academy
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - RABBITMQ_ENABLED=true
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - alikohub-network
 
   con-tech-service:
     build:
       context: ./domains/con-tech/backend
       dockerfile: Dockerfile
+    container_name: alikohub-con-tech-service
+    restart: unless-stopped
     ports:
       - "3002:3002"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3002
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+      - DATABASE_URL=postgresql://${DB_USER:-alikohub}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-alikohub}?schema=contech
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - RABBITMQ_ENABLED=true
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - alikohub-network
 
   events-service:
     build:
       context: ./domains/events/backend
       dockerfile: Dockerfile
+    container_name: alikohub-events-service
+    restart: unless-stopped
     ports:
       - "3004:3004"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - EVENTS_SERVICE_PORT=3004
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+      - DATABASE_URL=postgresql://${DB_USER:-alikohub}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-alikohub}?schema=events
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - RABBITMQ_ENABLED=true
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - alikohub-network
 
   careers-service:
     build:
       context: ./domains/core-platform-services/careers-service
       dockerfile: Dockerfile
+    container_name: alikohub-careers-service
+    restart: unless-stopped
     ports:
       - "3008:3008"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - CAREERS_SERVICE_PORT=3008
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/alikohub_db
+      - DATABASE_URL=postgresql://${DB_USER:-alikohub}:${DB_PASSWORD:-changeme}@postgres:5432/${DB_NAME:-alikohub}?schema=careers
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - alikohub-network
 
+  file-upload-service:
+    build:
+      context: ./domains/core-platform-services/file-upload-service
+      dockerfile: Dockerfile
+    container_name: alikohub-file-upload-service
+    restart: unless-stopped
+    ports:
+      - "3009:3009"
+    environment:
+      - NODE_ENV=production
+      - PORT=3009
+      - UPLOAD_PATH=/app/uploads
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - alikohub-network
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  alikohub-network:
+    driver: bridge
+
+# ============================================
+# Volumes
+# ============================================
 volumes:
   postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  uploads_data:
+    driver: local

@@ -5,15 +5,14 @@ const microservices_1 = require("@nestjs/microservices");
 const app_module_1 = require("./app.module");
 const winston_config_1 = require("./winston.config");
 const common_1 = require("@nestjs/common");
-const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const rpc_exception_filter_1 = require("./common/filters/rpc-exception.filter");
 async function bootstrap() {
     const logger = new common_1.Logger('Bootstrap');
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: winston_config_1.winstonConfig,
     });
-    const port = parseInt(process.env.AUTH_SERVICE_PORT) || 3001;
-    app.useGlobalFilters(new http_exception_filter_1.GlobalExceptionFilter(), new rpc_exception_filter_1.RpcExceptionFilter());
+    const port = parseInt(process.env.AUTH_SERVICE_PORT || '3001', 10);
+    app.useGlobalFilters(new rpc_exception_filter_1.RpcExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,
@@ -23,7 +22,7 @@ async function bootstrap() {
         transport: microservices_1.Transport.TCP,
         options: {
             host: '0.0.0.0',
-            port: parseInt(process.env.AUTH_TCP_PORT) || 3011,
+            port: parseInt(process.env.AUTH_TCP_PORT || '3011', 10),
         },
     });
     await app.startAllMicroservices();
