@@ -51,6 +51,18 @@ export class CourseModuleController {
     return this.academyClient.send({ cmd: 'create_course_module' }, payload);
   }
 
+  // Get all modules
+  @Get()
+  @ApiOperation({ summary: 'Get all course modules' })
+  @ApiResponse({ status: 200, description: 'Return all modules (paginated)' })
+  findAllModules(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = {
+      user: req.user,
+      query,
+    };
+    return this.academyClient.send({ cmd: 'find_all_modules' }, payload);
+  }
+
   // Get modules by course
   @Get('course/:courseId')
   @ApiOperation({ summary: 'Get modules by course ID' })
