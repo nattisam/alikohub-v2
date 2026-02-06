@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { FaUserCircle } from 'react-icons/fa';
-import { useDashboard } from '../hooks';
-import { useUser } from '../hooks';
-import { useProjects } from '../queries/projects';
-import type { ExtendedCurrentUser } from '../components/types';
+import React, { useState, useEffect } from "react";
+import { FaUserCircle } from "react-icons/fa";
+import { useDashboard } from "../hooks";
+import { useUser } from "../hooks";
+import { useProjects } from "../queries/projects";
+import type { ExtendedCurrentUser } from "../components/types";
 
 interface Comment {
   author: { name: string; avatar: string };
@@ -25,11 +25,15 @@ interface CommentSectionProps {
   className?: string;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ className = "" }) => {
   const { comments } = useDashboard();
-  const { currentUser } = useUser() as { currentUser: ExtendedCurrentUser | null };
-  const [projectComments, setProjectComments] = useState<FormattedComment[]>([]);
-  const [newComment, setNewComment] = useState('');
+  const { currentUser } = useUser() as {
+    currentUser: ExtendedCurrentUser | null;
+  };
+  const [projectComments, setProjectComments] = useState<FormattedComment[]>(
+    [],
+  );
+  const [newComment, setNewComment] = useState("");
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [localComments, setLocalComments] = useState<ProjectComment[]>([]);
 
@@ -42,18 +46,25 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
 
   // Format and filter comments
   useEffect(() => {
-    const formattedDashboardComments: FormattedComment[] = (comments || []).map(comment => ({
-      author: { name: comment.author.name, avatar: comment.author.avatar },
-      text: comment.text,
-      time: 'Just now'
-    }));
+    const formattedDashboardComments: FormattedComment[] = (comments || [])
+      .filter((comment) => comment && comment.text)
+      .map((comment) => ({
+        author: {
+          name: comment.author?.name || "Unknown",
+          avatar: comment.author?.avatar || "",
+        },
+        text: comment.text || "",
+        time: "Just now",
+      }));
 
     const allComments = [...formattedDashboardComments, ...localComments];
 
     if (selectedProject) {
       const filteredComments = allComments.filter(
         (comment: any) =>
-          !('projectId' in comment) || !comment.projectId || comment.projectId === selectedProject
+          !("projectId" in comment) ||
+          !comment.projectId ||
+          comment.projectId === selectedProject,
       );
       setProjectComments(filteredComments);
     } else {
@@ -71,16 +82,20 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
   const handleAddComment = () => {
     if (newComment.trim() && currentUser) {
       const comment: ProjectComment = {
-        author: { name: currentUser.firstName || 'User', avatar: currentUser.avatar || '' },
+        author: { name: currentUser.firstName || "User", avatar: "" },
         text: newComment,
-        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        projectId: selectedProject || undefined
+        time: new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        projectId: selectedProject || undefined,
       };
 
-      setLocalComments(prev => [...prev, comment]);
-      setNewComment('');
+      setLocalComments((prev) => [...prev, comment]);
+      setNewComment("");
 
-      console.log('Comment posted:', comment);
+      console.log("Comment posted:", comment);
     }
   };
 
@@ -90,11 +105,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
         <h2 className="text-lg font-bold">Comments</h2>
         {projects.length > 0 && (
           <select
-            value={selectedProject ?? ''}
+            value={selectedProject ?? ""}
             onChange={(e) => setSelectedProject(parseInt(e.target.value))}
             className="text-sm rounded border-gray-300"
           >
-            {projects.map(project => (
+            {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
               </option>
@@ -130,7 +145,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ className = '' }) => {
           placeholder="Add a comment..."
           className="flex-1 p-2 border rounded"
         />
-        <button 
+        <button
           onClick={handleAddComment}
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >

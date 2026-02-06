@@ -1,31 +1,12 @@
 import { contechApi } from "../api";
-import type { Task, TaskQuery, TaskStatsParams, CreateTaskDto, UpdateTaskDto, TaskStats } from "../components/types";
-
-export interface CreateTaskDto {
-  title: string;
-  description: string;
-  projectId: number;
-  assignedTo?: string;
-  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-  dueDate?: string;
-}
-
-export interface UpdateTaskDto {
-  title?: string;
-  description?: string;
-  assignedTo?: string;
-  status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
-  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-  dueDate?: string;
-  progress?: number;
-}
-
-export interface TaskStats {
-  totalTasks: number;
-  completedTasks: number;
-  pendingTasks: number;
-  inProgressTasks: number;
-}
+import type {
+  Task,
+  TaskQuery,
+  TaskStatsParams,
+  CreateTaskDto,
+  UpdateTaskDto,
+  TaskStats,
+} from "../components/types";
 
 export class TasksService {
   private static instance: TasksService;
@@ -47,10 +28,15 @@ export class TasksService {
   }
 
   async findByProject(projectId: number, query?: TaskQuery): Promise<Task[]> {
-    const response = await contechApi.get<Task[]>(`/tasks/project/${projectId}`, {
-      params: query,
-      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
-    });
+    const response = await contechApi.get<Task[]>(
+      `/tasks/project/${projectId}`,
+      {
+        params: query,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      },
+    );
     return response.data;
   }
 
@@ -78,7 +64,11 @@ export class TasksService {
     const response = await contechApi.patch<Task>(
       `/tasks/${id}/progress`,
       { progress },
-      { headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      },
     );
     return response.data;
   }

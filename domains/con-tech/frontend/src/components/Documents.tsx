@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useUser } from '../hooks';
-import { useProjects } from '../queries/projects';
-import { useContracts } from '../queries/contracts';
-import type { ExtendedCurrentUser } from '../components/types';
-import { FaDownload } from 'react-icons/fa';
-import type { Project } from './types';
+import { useState, useEffect } from "react";
+import { useUser } from "../hooks";
+import { contechAPI } from "../services/api";
+import type { ExtendedCurrentUser } from "../components/types";
+import { FaDownload } from "react-icons/fa";
+import type { Project } from "./types";
 
 interface Document {
   name: string;
@@ -18,9 +17,6 @@ const Documents: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-
-  const { data: projects = [] } = useProjects();
-  const { data: contracts = [] } = useContracts();
 
   useEffect(() => {
     if (currentUser) {
@@ -36,12 +32,14 @@ const Documents: React.FC = () => {
 
   const fetchProjects = async () => {
     if (!currentUser) return;
-    
+
     try {
-      const response: Project[] = await projectsService.findAll({});
-      const userProjects = Array.isArray(response) ? response : (response.items || []);
+      const response: any = await contechAPI.getProjects({});
+      const userProjects = Array.isArray(response)
+        ? response
+        : response.items || [];
       setProjects(userProjects);
-      
+
       // Select the first project by default
       if (userProjects.length > 0 && !selectedProject) {
         setSelectedProject(userProjects[0].id);
@@ -53,17 +51,18 @@ const Documents: React.FC = () => {
 
   const fetchDocuments = async () => {
     if (!currentUser || !selectedProject) return;
-    
+
     try {
       setLoading(true);
       // Fetch contracts for the selected project
-      const contractData = await contractsService.getContractsByProject(selectedProject);
-      const contractDocuments = contractData.map(contract => ({
+      const contractData: any[] =
+        await contechAPI.getContracts(selectedProject);
+      const contractDocuments = contractData.map((contract: any) => ({
         name: contract.fileName,
         type: "Contract",
-        updated: new Date(contract.updatedAt).toLocaleDateString()
+        updated: new Date(contract.updatedAt).toLocaleDateString(),
       }));
-      
+
       setDocuments(contractDocuments);
     } catch (err) {
       console.error("Error fetching documents:", err);
@@ -75,8 +74,8 @@ const Documents: React.FC = () => {
 
   // Original static documents
   const staticDocuments: Document[] = [
-    { name: 'Construction Contract', type: 'pdf', updated: '2024-09-15' },
-    { name: 'Invoice #4', type: 'pdf', updated: '2024-09-10' },
+    { name: "Construction Contract", type: "pdf", updated: "2024-09-15" },
+    { name: "Invoice #4", type: "pdf", updated: "2024-09-10" },
   ];
 
   const allDocuments = documents.length > 0 ? documents : staticDocuments;
@@ -91,7 +90,7 @@ const Documents: React.FC = () => {
             onChange={(e) => setSelectedProject(parseInt(e.target.value))}
             className="text-sm rounded border-gray-300"
           >
-            {projects.map(project => (
+            {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
               </option>
@@ -99,18 +98,23 @@ const Documents: React.FC = () => {
           </select>
         )}
       </div>
-      
+
       {loading ? (
         <div className="text-center py-4">Loading documents...</div>
       ) : (
         <div className="space-y-4">
           {allDocuments.map((doc, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+            <div
+              key={index}
+              className="flex items-center justify-between p-2 bg-gray-50 rounded"
+            >
               <div className="flex items-center space-x-2">
-                <span>{doc.type === 'Contract' ? '📄' : '📝'}</span>
+                <span>{doc.type === "Contract" ? "📄" : "📝"}</span>
                 <div>
                   <span>{doc.name}</span>
-                  <p className="text-xs text-gray-500">Updated: {doc.updated}</p>
+                  <p className="text-xs text-gray-500">
+                    Updated: {doc.updated}
+                  </p>
                 </div>
               </div>
               <FaDownload className="text-blue-500 cursor-pointer" />

@@ -103,7 +103,7 @@ const PMDashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl text-gray-900 font-medium">
-            Welcome back, {currentUser?.firstname}. Here's the construction
+            Welcome back, {currentUser?.firstName}. Here's the construction
             platform status.
           </h1>
         </div>

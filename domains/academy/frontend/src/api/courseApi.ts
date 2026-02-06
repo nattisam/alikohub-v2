@@ -66,7 +66,7 @@ export const courseApi = {
 
   // Modules
   getModules: (courseId: number) =>
-    academyApi.get(`/academy/modules/course/${courseId}`),
+    academyApi.get(`/academy/modules/instructor/${courseId}`),
   getModule: (id: number) => academyApi.get(`/academy/modules/${id}`),
   createModule: (data: unknown) => academyApi.post("/academy/modules", data),
   updateModule: (id: number, data: unknown) =>

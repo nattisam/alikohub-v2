@@ -21,10 +21,14 @@ const TeamActivityCard = ({
   });
   return (
     <div className="flex items-center bg-gray-50 p-3 rounded-md mb-2 hover:bg-gray-100 transition">
-      <img src={avatar} alt={user.name} className="w-8 h-8 rounded-full mr-3" />
+      <img
+        src={avatar}
+        alt={`${user.firstName} ${user.lastName}`}
+        className="w-8 h-8 rounded-full mr-3"
+      />
       <div>
         <p className="font-bold">
-          {user.name} {action}
+          {user.firstName} {user.lastName} {action}
         </p>
         <p className="text-xs text-gray-500">{activityAge}</p>
       </div>

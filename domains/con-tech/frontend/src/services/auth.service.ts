@@ -24,15 +24,18 @@ export class AuthService {
     return AuthService.authToken;
   }
   public async register({
-    firstname,
-    lastname,
+    firstName,
+    lastName,
     email,
     password,
     captchaToken,
-  }: SignupCredentials): Promise<{ token: string; user: CurrentUser; expiresIn?: string } | boolean> {  // Changed return type to match expected format
+  }: SignupCredentials): Promise<
+    { token: string; user: CurrentUser; expiresIn?: string } | boolean
+  > {
+    // Changed return type to match expected format
     const response = await authApi.post("/register", {
-      firstname: firstname,
-      lastname: lastname,
+      firstname: firstName,
+      lastname: lastName,
       email: email,
       password: password,
       captchaToken: captchaToken,
@@ -49,7 +52,7 @@ export class AuthService {
         return {
           token: response.data.token,
           user: response.data.user,
-          expiresIn: response.data.expiresIn
+          expiresIn: response.data.expiresIn,
         };
       }
       // If registration doesn't return token (requires login after), return true
@@ -83,31 +86,31 @@ export class AuthService {
         if (expiresIn) {
           if (expiresIn.endsWith("d")) {
             AuthService.expiresOn = new Date(
-              Date.now() + parseInt(expiresIn) * 24 * 60 * 60 * 1000
+              Date.now() + parseInt(expiresIn) * 24 * 60 * 60 * 1000,
             );
           } else if (expiresIn.endsWith("h")) {
             AuthService.expiresOn = new Date(
-              Date.now() + parseInt(expiresIn) * 60 * 60 * 1000
+              Date.now() + parseInt(expiresIn) * 60 * 60 * 1000,
             );
           } else if (expiresIn.endsWith("m")) {
             AuthService.expiresOn = new Date(
-              Date.now() + parseInt(expiresIn) * 60 * 1000
+              Date.now() + parseInt(expiresIn) * 60 * 1000,
             );
           } else {
             AuthService.expiresOn = new Date(
-              Date.now() + parseInt(expiresIn) * 1000
+              Date.now() + parseInt(expiresIn) * 1000,
             );
           }
           localStorage.setItem(
             "expiresOn",
-            AuthService.expiresOn.toISOString()
+            AuthService.expiresOn.toISOString(),
           );
         }
         // Return the expected format with both token and user
         return {
           token: response.data.token,
           user: response.data.user,
-          expiresIn: response.data.expiresIn
+          expiresIn: response.data.expiresIn,
         };
       } else console.log("response.data :", response.data);
     } else if (response.status >= 400 && response.status < 500) {
@@ -125,7 +128,7 @@ export class AuthService {
     if (token && AuthService.expiresOn && AuthService.expiresOn > new Date())
       response = await authApi.post("verify", {
         type: "token",
-        value: token,  // Use the token from localStorage
+        value: token, // Use the token from localStorage
       });
     else response = await authApi.post("verify");
     if (response.status === 201) {
@@ -142,7 +145,7 @@ export class AuthService {
       AuthService.authToken = null;
       AuthService.expiresOn = null;
       localStorage.removeItem("expiresOn");
-      localStorage.removeItem("accessToken");  // Changed from authToken to accessToken
+      localStorage.removeItem("accessToken"); // Changed from authToken to accessToken
     }
     return response.status === 200;
   }
@@ -152,8 +155,8 @@ export class AuthService {
       user !== undefined &&
       typeof user.firebaseId === "string" &&
       typeof user.email === "string" &&
-      typeof user.firstname === "string" &&
-      typeof user.lastname === "string" &&
+      typeof user.firstName === "string" &&
+      typeof user.lastName === "string" &&
       typeof user.role === "string" &&
       typeof user.createdAt === "string" &&
       typeof user.updatedAt === "string"

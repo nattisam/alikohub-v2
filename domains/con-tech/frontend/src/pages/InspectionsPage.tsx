@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useDashboard, useUser } from '../hooks';
-import { useInspections } from '../queries/inspections';
-import { useProjects } from '../queries/projects';
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDashboard, useUser } from "../hooks";
+import { useInspections } from "../queries/inspections";
+import { useProjects } from "../queries/projects";
+import type { Inspection } from "../components/types";
 
 const InspectionsPage = () => {
   const { projectId } = useParams();
@@ -11,48 +12,47 @@ const InspectionsPage = () => {
   const { currentUser } = useUser();
   const { canInspect } = useDashboard();
 
-  const [selectedProject, setSelectedProject] = useState<string>(projectId || 'all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProject, setSelectedProject] = useState<string>(
+    projectId || "all",
+  );
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const {
-    data: allProjects = [],
-    isLoading: projectsLoading,
-  } = useProjects();
+  const { data: allProjects = [], isLoading: projectsLoading } = useProjects();
 
-  const {
-    data: allInspections = [],
-    isLoading: inspectionsLoading,
-  } = useInspections();
+  const { data: allInspections = [], isLoading: inspectionsLoading } =
+    useInspections();
 
   // ✅ Derived loading (NO local state)
   const loading = projectsLoading || inspectionsLoading;
 
   // ✅ Auth guard (NO useEffect)
   if (!currentUser) {
-    navigate('/login');
+    navigate("/login");
     return null;
   }
 
   // 🔍 Search filter
-  const filteredInspections = allInspections.filter((inspection) =>
-    (inspection.checklist &&
-      JSON.stringify(inspection.checklist)
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())) ||
-    (inspection.status &&
-      inspection.status.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredInspections = allInspections.filter(
+    (inspection: Inspection) =>
+      (inspection.checklist &&
+        JSON.stringify(inspection.checklist)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())) ||
+      (inspection.status &&
+        inspection.status.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   // 🏗 Project filter
   const projectFilteredInspections =
-    selectedProject === 'all'
+    selectedProject === "all"
       ? filteredInspections
       : filteredInspections.filter(
-          (inspection) => inspection.projectId === Number(selectedProject)
+          (inspection: Inspection) =>
+            inspection.projectId === Number(selectedProject),
         );
 
   const handleCreateInspection = () => {
-    navigate('/inspections/new');
+    navigate("/inspections/new");
   };
 
   if (loading) {
@@ -108,7 +108,7 @@ const InspectionsPage = () => {
           {/* List */}
           {projectFilteredInspections.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projectFilteredInspections.map((inspection) => (
+              {projectFilteredInspections.map((inspection: Inspection) => (
                 <div
                   key={inspection.id}
                   className="bg-white rounded-lg shadow hover:shadow-md transition p-6"
@@ -118,7 +118,7 @@ const InspectionsPage = () => {
                       Inspection #{inspection.id}
                     </h3>
                     <span className="text-xs px-2 py-1 rounded bg-gray-100">
-                      {inspection.status.replace('_', ' ')}
+                      {inspection.status.replace("_", " ")}
                     </span>
                   </div>
 

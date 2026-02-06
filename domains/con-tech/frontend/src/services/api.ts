@@ -264,9 +264,9 @@ export const contechAPI = {
   },
 
   // Comments endpoints
-  getComments: async (params?: Record<string, unknown>) => {
-    const response = await apiClient.get("/contech/comments", { params });
-    return response.data;
+  getComments: async (_params?: Record<string, unknown>) => {
+    // Global comments endpoint does not exist
+    return [];
   },
 
   getProjectComments: async (projectId: number) => {

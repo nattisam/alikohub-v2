@@ -1,5 +1,13 @@
-import React from 'react';
-import { BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React from "react";
+import {
+  BarChart as ReBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 interface BarChartProps {
   data: any[];
@@ -9,7 +17,13 @@ interface BarChartProps {
   color?: string;
 }
 
-const BarChart: React.FC<BarChartProps> = ({ data, xKey, yKey, title, color = '#3b82f6' }) => {
+const BarChart: React.FC<BarChartProps> = ({
+  data,
+  xKey,
+  yKey,
+  title,
+  color = "#3b82f6",
+}) => {
   return (
     <div className="w-full h-full">
       {title && <h3 className="text-lg font-medium mb-2">{title}</h3>}

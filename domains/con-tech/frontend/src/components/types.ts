@@ -19,8 +19,8 @@ export interface Activity {
 
 export interface User {
   firebaseId: string | number;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   profilePicture?: string;
 }
 
@@ -50,8 +50,8 @@ export interface Document {
 }
 
 export interface SignupCredentials {
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   captchaToken?: string;
@@ -283,6 +283,8 @@ export interface TaskQuery {
   priority?: TaskPriority;
   dueDateBefore?: string;
   dueDateAfter?: string;
+  take?: number;
+  skip?: number;
 }
 
 export interface TaskStatsParams {
@@ -363,6 +365,8 @@ export interface Inspection {
   status: InspectionStatus;
   createdAt: string;
   updatedAt: string;
+  checklist?: ChecklistItem[];
+  photos?: string[];
 }
 
 export interface CreateInspectionDto {
@@ -412,6 +416,8 @@ export interface Comment {
   projectId: number;
   userId: string;
   content: string;
+  text?: string; // Legacy/Frontend property
+  author?: { name: string; avatar: string }; // Frontend property
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -420,8 +426,8 @@ export interface UserContextType {
   currentUser: CurrentUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<any>;
+  signup: (credentials: SignupCredentials) => Promise<any>;
   logout: () => void;
   updateUser: (user: CurrentUser) => void;
   refreshProfile: () => Promise<CurrentUser | null>;

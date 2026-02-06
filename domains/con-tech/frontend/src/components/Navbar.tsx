@@ -69,7 +69,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             >
               <UserCircle className="h-6 w-6 text-blue-600" />
               <span className="hidden text-sm font-medium text-gray-700 sm:inline">
-                {currentUser.firstname}
+                {currentUser.firstName}
               </span>
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </button>
