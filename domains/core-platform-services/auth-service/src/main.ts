@@ -12,7 +12,7 @@ async function bootstrap() {
     logger: winstonConfig,
   });
 
-  const port = parseInt(process.env.AUTH_SERVICE_PORT) || 3001;
+  const port = parseInt(process.env.AUTH_SERVICE_PORT || '3001', 10);
   
   // Centralized Global Error Handling
   app.useGlobalFilters(new GlobalExceptionFilter(), new RpcExceptionFilter());
@@ -31,7 +31,7 @@ async function bootstrap() {
     transport: Transport.TCP,
     options: {
       host: '0.0.0.0',
-      port: parseInt(process.env.AUTH_TCP_PORT) || 3011,
+      port: parseInt(process.env.AUTH_TCP_PORT || '3011', 10),
     },
   });
 
