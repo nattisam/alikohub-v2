@@ -42,7 +42,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         return;
     }
     try {
-      await this.channel.assertExchange(exchange, 'fanout', { durable: false });
+      await this.channel.assertExchange(exchange, 'fanout', { durable: true });
       await this.channel.publish(exchange, '', Buffer.from(JSON.stringify(message)));
     } catch (e) { console.warn('RabbitMQ publish failed', e.message); }
   }

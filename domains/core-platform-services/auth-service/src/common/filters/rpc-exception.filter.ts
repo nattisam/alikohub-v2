@@ -90,6 +90,18 @@ export class RpcExceptionFilter implements ExceptionFilter {
       this.logger.warn(`Handled Exception: ${message} (Status: ${status})`);
     }
 
+    if (host.getType() === 'http') {
+      const ctx = host.switchToHttp();
+      const response = ctx.getResponse();
+      const request = ctx.getRequest();
+
+      response.status(status).json({
+        ...errorResponse,
+        path: request.url,
+      });
+      return; 
+    }
+
     return throwError(() => new RpcException(errorResponse));
   }
 }
