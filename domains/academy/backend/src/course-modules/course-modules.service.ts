@@ -33,6 +33,51 @@ export class CourseModulesService {
     return await this.prisma.module.create({ data: dto });
   }
 
+  async findAll(user: AuthenticatedUser, query: any = {}) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    
+    // VISIBILITY: Non-admins only see modules of published courses or courses they instruct
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const where: any = {};
+    if (academyProfile.role !== 'ADMIN') {
+      where.OR = [
+        { course: { status: 'PUBLISHED' } },
+        { course: { instructorId: user.firebaseId } }
+      ];
+    }
+
+    const [modules, total] = await Promise.all([
+      this.prisma.module.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              instructorId: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.module.count({ where })
+    ]);
+
+    return {
+      items: modules,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
+
   async findAllByCourse(courseId: number, user: AuthenticatedUser, query: any = {}) {
     console.log(`=== Accessing Course Modules ===`);
     console.log(`User ID: ${user.firebaseId}`);

@@ -15,7 +15,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,
   });
-  const PORT = process.env.PORT || 3002;
+  const PORT = parseInt(process.env.PORT || '3002', 10);
   const configService = app.get(ConfigService);
 
   const microservice = app.connectMicroservice({
