@@ -225,4 +225,15 @@ export const authService = {
     );
     return response.data;
   },
+
+  uploadResume: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post("/upload/document", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return data;
+  },
 };

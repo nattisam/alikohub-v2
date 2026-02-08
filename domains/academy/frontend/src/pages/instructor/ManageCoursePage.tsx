@@ -7,23 +7,20 @@ import type {
 import { courseApi } from "../../api/courseApi";
 import AddLessonModal from "../../components/instructor/AddLessonModal";
 import AddModuleModal from "../../components/instructor/AddModuleModal";
+import LessonEditor from "../../components/instructor/LessonEditor";
 
 // Icons
 import {
-  ArrowLeft,
-  Play,
+  CheckCircle,
   Plus,
-  ChevronDown,
-  ChevronUp,
-  ChevronRight,
-  Eye,
-  Edit3,
-  BookOpen,
-  Users,
-  FileText,
   Video,
-  File,
-  Clock,
+  File as LucideFile,
+  Edit3,
+  ChevronUp,
+  ChevronDown,
+  AlertCircle,
+  BookOpen,
+  MoreHorizontal,
 } from "lucide-react";
 
 const ManageCoursePage: React.FC = () => {
@@ -31,72 +28,69 @@ const ManageCoursePage: React.FC = () => {
   const navigate = useNavigate();
   const courseId = parseInt(id || "0", 10);
 
+  // Layout State
+  const [loading, setLoading] = useState(true);
+
+  // Data State
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<CourseModule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
-  const [showAddLessonModal, setShowAddLessonModal] = useState(false);
-  const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
   const [moduleLessons, setModuleLessons] = useState<
     Record<number, CourseLesson[]>
   >({});
   const [lessonsLoading, setLessonsLoading] = useState<Record<number, boolean>>(
     {},
   );
+  const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
+  const [expandedLessonId, setExpandedLessonId] = useState<number | null>(null);
+  const [lessonContent, setLessonContent] = useState<Record<number, any[]>>({});
+
+  // Modals & Editors
   const [showAddModuleModal, setShowAddModuleModal] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [showAddLessonModal, setShowAddLessonModal] = useState(false);
+  const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  const [editorState, setEditorState] = useState<{
+    lessonId: number;
+    moduleId: number;
+  } | null>(null);
 
   useEffect(() => {
     if (courseId) {
-      fetchCourseDetails();
+      fetchCourseData();
     }
   }, [courseId]);
 
-  const fetchCourseDetails = async () => {
+  const fetchCourseData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
-      // TODO: Uncomment when backend authentication is fixed
-      // Fetch course details using the authenticated API directly
-      // const courseResponse = await academyApi.get(`/academy/courses/${courseId}`);
-      // setCourse(courseResponse.data);
+      // Fetch course
+      const courseResponse = await courseApi.getCourse(courseId);
+      const courseData = courseResponse.data;
+      setCourse(courseData);
 
-      // For now, using mock course data
-      const mockCourse = {
-        id: courseId,
-        title: `Course ${courseId}`,
-        status: "Published",
-        category: "Technology",
-        enrolledNum: 0,
-        createdAt: new Date().toISOString(),
-      };
-      setCourse(mockCourse);
-
-      // Fetch modules for the course
+      // Fetch modules
       const modulesResponse = await courseApi.getModules(courseId);
-      const data = modulesResponse?.data;
-      const modulesData = Array.isArray(data) ? data : data ? [data] : [];
-      setModules(modulesData);
+      const mData = modulesResponse?.data;
+      const modulesArray =
+        mData && Array.isArray(mData.items)
+          ? mData.items
+          : Array.isArray(mData)
+            ? mData
+            : mData
+              ? [mData]
+              : [];
+      setModules(modulesArray);
 
-      // Pre-populate moduleLessons with data from modules if available
+      // Initialize lessons map
       const initialLessons: Record<number, CourseLesson[]> = {};
-      modulesData.forEach((module: CourseModule) => {
-        if (module && typeof module.id === "number") {
-          // If the module has lessons property, use it, otherwise initialize as empty array
-          initialLessons[module.id] = Array.isArray(module.lessons)
-            ? module.lessons
-            : [];
+      modulesArray.forEach((m: CourseModule) => {
+        if (m && typeof m.id === "number") {
+          initialLessons[m.id] = Array.isArray(m.lessons) ? m.lessons : [];
         }
       });
       setModuleLessons(initialLessons);
     } catch (err: any) {
-      console.error("Error fetching course details:", err);
-      setError(
-        err.response?.data?.message ||
-          "Failed to fetch course details. Please try again.",
-      );
+      console.error("Error fetching course data:", err);
     } finally {
       setLoading(false);
     }
@@ -104,27 +98,23 @@ const ManageCoursePage: React.FC = () => {
 
   const fetchLessonsForModule = async (moduleId: number) => {
     setLessonsLoading((prev) => ({ ...prev, [moduleId]: true }));
-
     try {
-      // Check if lessons are already loaded for this module
-      if (moduleLessons[moduleId] && moduleLessons[moduleId].length > 0) {
-        // Lessons are already loaded, no need to fetch again
-        return;
-      }
+      const response = await courseApi.getInstructorLessons({
+        moduleId: moduleId,
+        page: 1,
+        pageSize: 10,
+      });
 
-      const response = await courseApi.getLessons(moduleId);
-      const lessonsData = Array.isArray(response?.data) ? response.data : [];
+      const lessons =
+        response.data?.items ||
+        (Array.isArray(response.data) ? response.data : []);
 
       setModuleLessons((prev) => ({
         ...prev,
-        [moduleId]: lessonsData,
+        [moduleId]: lessons,
       }));
-    } catch (err: any) {
-      console.error(`Error fetching lessons for module ${moduleId}:`, err);
-      setError(
-        err.response?.data?.message ||
-          "Failed to fetch lessons. Please try again.",
-      );
+    } catch (err) {
+      console.error("Failed to load lessons for module", moduleId, err);
     } finally {
       setLessonsLoading((prev) => ({ ...prev, [moduleId]: false }));
     }
@@ -132,12 +122,40 @@ const ManageCoursePage: React.FC = () => {
 
   const toggleModule = (moduleId: number) => {
     if (expandedModuleId === moduleId) {
-      // Collapse the module
       setExpandedModuleId(null);
     } else {
-      // Expand the module and fetch lessons
       setExpandedModuleId(moduleId);
       fetchLessonsForModule(moduleId);
+    }
+  };
+
+  const toggleLesson = (lessonId: number) => {
+    if (expandedLessonId === lessonId) {
+      setExpandedLessonId(null);
+    } else {
+      setExpandedLessonId(lessonId);
+      if (!lessonContent[lessonId]) {
+        fetchContentForLesson(lessonId);
+      }
+    }
+  };
+
+  const fetchContentForLesson = async (lessonId: number) => {
+    try {
+      const response = await courseApi.getInstructorContent({
+        lessonId: lessonId,
+        page: 1,
+        pageSize: 10,
+      });
+
+      const items =
+        response.data?.items ||
+        (Array.isArray(response.data) ? response.data : []);
+      setLessonContent((prev) => ({ ...prev, [lessonId]: items }));
+    } catch (err) {
+      console.error("Failed to fetch content for lesson", lessonId, err);
+    } finally {
+      // contentLoading removed
     }
   };
 
@@ -146,323 +164,296 @@ const ManageCoursePage: React.FC = () => {
     setShowAddLessonModal(true);
   };
 
-  const handleLessonAdded = () => {
-    // Refresh the lessons for the current module
-    if (selectedModuleId) {
-      fetchLessonsForModule(selectedModuleId);
-    }
+  const handleLessonCreated = (_: CourseLesson) => {
+    if (selectedModuleId) fetchLessonsForModule(selectedModuleId);
   };
 
-  const handleBackClick = () => {
-    navigate("/instructor/mycourses");
-  };
-
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <button
-              onClick={handleBackClick}
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Back to My Courses</span>
-            </button>
-          </div>
-          <div className="flex justify-center items-center h-64">
-            <div className="h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#f3f2ef]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0a66c2]"></div>
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <button
-              onClick={handleBackClick}
-              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Back to My Courses</span>
-            </button>
-          </div>
-          <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
-                  <span className="text-white text-xs">!</span>
-                </div>
-              </div>
-              <div className="ml-3">
-                <p className="text-red-800 font-medium">Error</p>
-                <p className="text-red-700 mt-1">{error}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-8">
+    <div className="min-h-screen flex flex-col font-sans text-[rgba(0,0,0,0.9)]">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 px-6 h-[52px] flex items-center justify-between shadow-none shrink-0">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto w-full">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm text-gray-800 hidden md:inline py-1 px-2 hover:bg-gray-100 rounded transition-colors cursor-pointer">
+              Course Manager
+            </span>
+          </div>
+
+          <div className="h-8 w-[1px] bg-gray-200 mx-2 hidden md:block"></div>
+
+          <div className="flex-1 flex items-center text-xs font-semibold text-gray-500">
+            <span className="hover:text-gray-900 cursor-pointer">
+              {course?.title}
+            </span>
+            <span className="mx-2">/</span>
+            <span className="text-gray-900">Curriculum</span>
+          </div>
+
           <button
             onClick={() => navigate("/instructor/mycourses")}
-            className="hover:text-indigo-600 transition-colors flex items-center gap-1"
+            className="text-[#0a66c2] hover:bg-blue-50 font-semibold px-4 py-1 rounded-full border border-[#0a66c2] transition-colors text-sm"
           >
-            <span>My Courses</span>
+            Exit Editor
           </button>
-          <ChevronRight size={16} />
-          <span className="text-indigo-600 font-medium">{course?.title}</span>
         </div>
+      </div>
 
-        {/* Course Header Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100 transition-all duration-300 hover:shadow-xl">
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
-                <span
-                  className={`px-3 py-1 text-xs rounded-full font-medium ${course?.status === "Published" ? "bg-green-100 text-green-800" : course?.status === "Draft" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}
-                >
-                  {course?.status}
-                </span>
-                <span className="text-sm text-gray-500 flex items-center gap-1">
-                  <Clock size={14} />
-                  Last updated 2 days ago
-                </span>
-              </div>
-
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-                {course?.title}
-              </h1>
-
-              <p className="text-gray-600 max-w-2xl text-lg mb-6">
-                Manage modules, lessons, and course structure.
-              </p>
-
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <BookOpen size={18} className="text-indigo-500" />
-                  <span>{modules.length} Modules</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <FileText size={18} className="text-indigo-500" />
-                  <span>
-                    {Object.values(moduleLessons).flat().length} Lessons
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Users size={18} className="text-indigo-500" />
-                  <span>{course?.enrolledNum || 0} Students</span>
-                </div>
+      <div className="max-w-6xl mx-auto w-full flex gap-6 py-6 flex-1 overflow-hidden">
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto space-y-4 pb-12">
+          {/* Status Banner */}
+          {course?.status === "REJECTED" && (
+            <div className="bg-[#fff3f2] border border-[#ffcfcc] rounded-lg p-4 flex gap-3 animate-in slide-in-from-top-2">
+              <AlertCircle size={20} className="text-[#d11124] shrink-0" />
+              <div>
+                <h4 className="text-[#d11124] font-semibold text-sm">
+                  Action Required
+                </h4>
+                <p className="text-gray-600 text-xs mt-0.5">
+                  {course?.rejectionReason ||
+                    "Please address feedback and resubmit."}
+                </p>
               </div>
             </div>
+          )}
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-xl text-sm hover:bg-indigo-700 transition-colors shadow-md">
-                <Edit3 size={16} />
-                Edit Details
-              </button>
-              <button className="flex items-center gap-2 border border-indigo-200 px-5 py-3 rounded-xl text-sm text-indigo-700 hover:bg-indigo-50 transition-colors">
-                <Eye size={16} />
-                Preview
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Course Curriculum */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookOpen size={24} className="text-indigo-600" />
-            Course Curriculum
-          </h2>
-        </div>
-
-        {/* Modules */}
-        <div className="space-y-4">
-          {Array.isArray(modules) &&
-            modules.map((module) => (
-              <div
-                key={module.id}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Curriculum Builder
+                </h2>
+                <p className="text-[12px] text-gray-500">
+                  Build your course structure with modules and lessons.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddModuleModal(true)}
+                className="bg-[#0a66c2] text-white px-4 py-1.5 rounded-full font-semibold hover:bg-[#004182] transition flex items-center gap-1.5 text-sm"
               >
-                {/* Module Header */}
-                <div
-                  onClick={() => toggleModule(module.id)}
-                  className="flex justify-between items-center p-6 cursor-pointer hover:bg-indigo-50 transition-colors"
-                >
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <BookOpen size={18} className="text-indigo-600" />
-                      {module.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                      <FileText size={14} className="text-indigo-500" />
-                      {moduleLessons[module.id]?.length || 0} lessons in this
-                      module
-                    </p>
-                  </div>
+                <Plus size={16} /> Add Module
+              </button>
+            </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500">
-                      {moduleLessons[module.id]?.length || 0} lessons
-                    </span>
-                    <span className="text-gray-400">
-                      {expandedModuleId === module.id ? (
-                        <ChevronUp size={20} />
-                      ) : (
-                        <ChevronDown size={20} />
-                      )}
-                    </span>
+            <div className="divide-y divide-gray-100">
+              {modules.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="text-gray-300" size={32} />
                   </div>
+                  <h3 className="text-sm font-semibold text-gray-900 font-sans">
+                    No modules added yet
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Get started by adding your first module.
+                  </p>
                 </div>
-
-                {/* Lessons */}
-                {expandedModuleId === module.id && (
-                  <div className="border-t border-gray-100 bg-gray-50 p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-gray-800 flex items-center gap-2">
-                        <Play size={18} className="text-indigo-500" />
-                        Lessons in "{module.title}"
-                      </h4>
-                      <button
-                        onClick={() => handleAddLessonClick(module.id)}
-                        className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <Plus size={16} />
-                        Add Lesson
-                      </button>
+              ) : (
+                modules.map((m) => (
+                  <div key={m.id} className="group transition-colors">
+                    <div
+                      onClick={() => toggleModule(m.id)}
+                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 bg-white"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="cursor-grab text-gray-300 hover:text-gray-500">
+                          <MoreHorizontal size={16} />
+                        </div>
+                        <div className="bg-gray-100 text-gray-600 p-2 rounded">
+                          <BookOpen size={16} />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-sm text-gray-900">
+                            {m.title}
+                          </h3>
+                          <span className="text-[11px] text-gray-500 font-medium">
+                            {moduleLessons[m.id]?.length || 0} Lessons
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {expandedModuleId === m.id ? (
+                          <ChevronUp size={20} className="text-gray-400" />
+                        ) : (
+                          <ChevronDown size={20} className="text-gray-400" />
+                        )}
+                      </div>
                     </div>
 
-                    {lessonsLoading[module.id] ? (
-                      <div className="flex justify-center py-6">
-                        <div className="h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    ) : Array.isArray(moduleLessons[module.id]) &&
-                      moduleLessons[module.id].length ? (
-                      <div className="space-y-3">
-                        {moduleLessons[module.id].map((lesson) => (
-                          <div
-                            key={lesson.id}
-                            className="flex justify-between items-center p-4 rounded-lg bg-white border border-gray-200 hover:shadow-sm transition-shadow"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
-                                {lesson.type === "VIDEO" && <Video size={20} />}
-                                {lesson.type === "QUIZ" && (
-                                  <FileText size={20} />
-                                )}
-                                {lesson.type === "WEBINAR" && (
-                                  <Users size={20} />
-                                )}
-                                {lesson.type === "ASSIGNMENT" && (
-                                  <File size={20} />
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {lesson.title}
-                                </p>
-                                <div className="flex gap-2 mt-1">
-                                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                                    {lesson.type}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                                    ID: {lesson.id}
-                                  </span>
+                    {expandedModuleId === m.id && (
+                      <div className="bg-[#f9fafb] px-4 pb-4 pt-0">
+                        <div className="space-y-2 ml-10 border-l border-gray-200 pl-4 py-2">
+                          {lessonsLoading[m.id] ? (
+                            <div className="flex items-center gap-2 text-gray-400 py-3 text-[11px] italic">
+                              <div className="animate-spin h-3 w-3 border-b border-gray-400 rounded-full"></div>
+                              Updating lessons...
+                            </div>
+                          ) : (
+                            (moduleLessons[m.id] || []).map((l) => (
+                              <div key={l.id} className="space-y-1">
+                                <div
+                                  className={`flex justify-between items-center py-2.5 px-3 bg-white border rounded transition-all text-sm group/lesson cursor-pointer ${expandedLessonId === l.id ? "border-blue-400 shadow-sm" : "border-gray-200 hover:border-blue-300"}`}
+                                  onClick={() => toggleLesson(l.id)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="text-gray-400">
+                                      {l.type === "VIDEO" ? (
+                                        <Video size={14} />
+                                      ) : (
+                                        <LucideFile size={14} />
+                                      )}
+                                    </div>
+                                    <span
+                                      className={`font-medium text-[13px] ${expandedLessonId === l.id ? "text-blue-600" : "text-gray-700"}`}
+                                    >
+                                      {l.title}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditorState({
+                                          lessonId: l.id,
+                                          moduleId: m.id,
+                                        });
+                                      }}
+                                      className="text-[#0a66c2] hover:text-[#004182] font-semibold text-[12px] opacity-0 group-hover/lesson:opacity-100 transition-opacity flex items-center gap-1"
+                                    >
+                                      <Edit3 size={12} /> Edit
+                                    </button>
+                                    {expandedLessonId === l.id ? (
+                                      <ChevronUp
+                                        size={14}
+                                        className="text-blue-400"
+                                      />
+                                    ) : (
+                                      <ChevronDown
+                                        size={14}
+                                        className="text-gray-400"
+                                      />
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            ))
+                          )}
 
-                            <button className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg transition-colors">
-                              <Edit3 size={16} />
-                              Edit
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <div className="flex justify-center mb-3">
-                          <FileText size={40} className="text-gray-300" />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddLessonClick(m.id);
+                            }}
+                            className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-gray-300 rounded text-gray-500 text-xs font-semibold hover:border-[#0a66c2] hover:text-[#0a66c2] hover:bg-blue-50 transition-all mt-2"
+                          >
+                            <Plus size={14} /> Add Lesson
+                          </button>
                         </div>
-                        <p className="text-gray-500 italic">
-                          No lessons added to this module yet
-                        </p>
-                        <button
-                          onClick={() => handleAddLessonClick(module.id)}
-                          className="mt-3 text-indigo-600 hover:text-indigo-800 text-sm font-medium inline-flex items-center gap-1"
-                        >
-                          <Plus size={14} />
-                          Add your first lesson
-                        </button>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            ))}
-          {modules.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <div className="flex justify-center mb-4">
-                <BookOpen size={48} className="text-gray-300" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No modules yet
-              </h3>
-              <p className="text-gray-500 max-w-md mx-auto mb-4">
-                This course doesn't have any modules. Create your first module
-                to organize your lessons.
-              </p>
-              <button
-                onClick={() => {
-                  setSelectedCourseId(courseId);
-                  setShowAddModuleModal(true);
-                }}
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <Plus size={16} />
-                Create First Module
-              </button>
+                ))
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Add Lesson Modal */}
-        {showAddLessonModal && selectedModuleId && (
-          <AddLessonModal
-            moduleId={selectedModuleId}
-            isOpen={showAddLessonModal}
-            onClose={() => setShowAddLessonModal(false)}
-            onLessonAdded={handleLessonAdded}
-          />
-        )}
+        {/* Right Sidebar - LinkedIn Style Profile-like Overview */}
+        <div className="w-[300px] space-y-4 shrink-0 hidden lg:block">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="h-14 bg-gray-100 border-b border-gray-200 flex items-center px-4">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Course Status
+              </span>
+            </div>
+            <div className="p-4 pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-sm text-gray-600">Current Status</span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    course?.status === "PUBLISHED"
+                      ? "bg-green-100 text-green-800"
+                      : course?.status === "PENDING_APPROVAL"
+                        ? "bg-orange-100 text-orange-800"
+                        : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {course?.status}
+                </span>
+              </div>
+              <h1 className="text-base font-bold text-gray-900 leading-snug mb-1">
+                {course?.title}
+              </h1>
+              <p className="text-[12px] text-gray-500 mb-4 line-clamp-2">
+                {course?.shortDescription}
+              </p>
 
-        {/* Add Module Modal */}
-        {showAddModuleModal && selectedCourseId && (
-          <AddModuleModal
-            courseId={selectedCourseId}
-            isOpen={showAddModuleModal}
-            onClose={() => {
-              setShowAddModuleModal(false);
-              setSelectedCourseId(null);
-            }}
-            onModuleAdded={() => {
-              // Refresh the modules list
-              fetchCourseDetails();
-            }}
-          />
-        )}
+              <div className="border-t border-gray-100 pt-4 mt-4 space-y-3">
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-gray-500">Modules</span>
+                  <span className="font-semibold text-gray-900">
+                    {modules.length}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-gray-500">Total Lessons</span>
+                  <span className="font-semibold text-gray-900">
+                    {Object.values(moduleLessons).flat().length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 text-[12px] text-gray-500">
+            <div className="flex items-center gap-2 mb-2 text-gray-900">
+              <CheckCircle size={14} />
+              <span className="font-semibold">Instructor Tips</span>
+            </div>
+            <ul className="space-y-1.5 list-disc pl-4 marker:text-gray-300">
+              <li>Keep lesson titles concise and clear.</li>
+              <li>Add a mix of video and text content.</li>
+              <li>Structure modules to follow a logical path.</li>
+            </ul>
+          </div>
+        </div>
       </div>
+
+      {showAddLessonModal && selectedModuleId && (
+        <AddLessonModal
+          moduleId={selectedModuleId}
+          isOpen={showAddLessonModal}
+          onClose={() => setShowAddLessonModal(false)}
+          onLessonAdded={handleLessonCreated}
+        />
+      )}
+
+      {showAddModuleModal && (
+        <AddModuleModal
+          courseId={courseId}
+          isOpen={showAddModuleModal}
+          onClose={() => setShowAddModuleModal(false)}
+          onModuleAdded={() => {
+            fetchCourseData();
+            setShowAddModuleModal(false);
+          }}
+        />
+      )}
+
+      {editorState && (
+        <LessonEditor
+          lessonId={editorState.lessonId}
+          moduleId={editorState.moduleId}
+          onClose={() => setEditorState(null)}
+          onUpdate={() => fetchLessonsForModule(editorState.moduleId)}
+        />
+      )}
     </div>
   );
 };

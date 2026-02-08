@@ -66,7 +66,7 @@ export const courseApi = {
 
   // Modules
   getModules: (courseId: number) =>
-    academyApi.get(`/academy/modules/instructor/${courseId}`),
+    academyApi.get(`/academy/modules/course/${courseId}`),
   getModule: (id: number) => academyApi.get(`/academy/modules/${id}`),
   createModule: (data: unknown) => academyApi.post("/academy/modules", data),
   updateModule: (id: number, data: unknown) =>
@@ -85,6 +85,8 @@ export const courseApi = {
   // Lessons
   getLessons: (moduleId: number) =>
     academyApi.get(`/academy/lessons/module/${moduleId}`),
+  getInstructorLessons: (params?: Record<string, unknown>) =>
+    academyApi.get("/academy/lessons/instructor/my", { params }),
   getLesson: (id: number) => academyApi.get(`/academy/lessons/${id}`),
   createLesson: (data: unknown) => academyApi.post("/academy/lessons", data),
   updateLesson: (id: number, data: unknown) =>
@@ -93,11 +95,15 @@ export const courseApi = {
 
   // Content
   getContent: (lessonId: number) =>
-    academyApi.get(`/content/lesson/${lessonId}`),
-  createContent: (data: unknown) => academyApi.post("/content", data),
+    academyApi.get(`/academy/content/lesson/${lessonId}`),
+  getInstructorContent: (params?: Record<string, unknown>) =>
+    academyApi.get("/academy/content/instructor/my", { params }),
+  createContent: (data: unknown) => academyApi.post("/academy/content", data),
+  uploadContent: (data: FormData) =>
+    academyApi.post("/academy/content/upload", data),
   updateContent: (id: number, data: unknown) =>
-    academyApi.put(`/content/${id}`, data),
-  deleteContent: (id: number) => academyApi.delete(`/content/${id}`),
+    academyApi.patch(`/academy/content/${id}`, data),
+  deleteContent: (id: number) => academyApi.delete(`/academy/content/${id}`),
 
   // Course Approval Workflow
   submitForApproval: (id: number) =>
@@ -108,6 +114,13 @@ export const courseApi = {
     academyApi.post(`/academy/courses/${id}/reject`, { reason }),
   updateCourseStatus: (id: number, status: string) =>
     academyApi.patch(`/academy/courses/${id}/status`, { status }),
+
+  // Exercises
+  getExercisesByModule: (moduleId: number) =>
+    academyApi.get(`/academy/exercises/module/${moduleId}`),
+  createExercise: (data: unknown) =>
+    academyApi.post("/academy/exercises", data),
+  deleteExercise: (id: number) => academyApi.delete(`/academy/exercises/${id}`),
 };
 
 // Export enrollmentApi as well

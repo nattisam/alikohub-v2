@@ -33,42 +33,49 @@ const MAX_RETRY_DELAY = 5000; // Maximum delay in ms
 
 // Helper function to calculate exponential backoff delay
 const getRetryDelay = (retryCount: number): number => {
-  const delay = Math.min(RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+  const delay = Math.min(
+    RETRY_DELAY * Math.pow(2, retryCount),
+    MAX_RETRY_DELAY,
+  );
   // Add jitter to prevent thundering herd
   return delay + Math.random() * 1000;
 };
 
 // Helper function to add retry config to request
-const addRetryConfig = (config: any & { __retryCount?: number }, retryCount: number = 0) => {
-  config.__retryCount = retryCount;
+const addRetryConfig = (config: any, retryCount: number = 0) => {
+  if (config) {
+    config.__retryCount = retryCount;
+  }
   return config;
 };
 
 // Response interceptor for handling 429 errors with retry logic
-const createRetryInterceptor = (instance: typeof academyApi | typeof authApi) => {
+const createRetryInterceptor = (
+  instance: typeof academyApi | typeof authApi,
+) => {
   instance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
       const config = error.config as AxiosRequestConfigWithRetry | undefined;
-      
+
       // Only retry on 429 errors
       if (error.response?.status === 429 && config) {
         const retryCount = config.__retryCount || 0;
-        
+
         if (retryCount < MAX_RETRIES) {
           const delay = getRetryDelay(retryCount);
-          
+
           // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, delay));
-          
+          await new Promise((resolve) => setTimeout(resolve, delay));
+
           // Update retry count and retry the request
           const newConfig = addRetryConfig({ ...config }, retryCount + 1);
           return instance.request(newConfig);
         }
       }
-      
+
       return Promise.reject(error);
-    }
+    },
   );
 };
 
@@ -76,7 +83,7 @@ const createRetryInterceptor = (instance: typeof academyApi | typeof authApi) =>
 export const academyApi = axios.create({
   baseURL: ACADEMY_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 10000,
 });

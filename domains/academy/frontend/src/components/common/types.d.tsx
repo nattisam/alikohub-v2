@@ -106,7 +106,13 @@ export interface CourseModule {
 
 export type LessonType = "QUIZ" | "VIDEO" | "WEBINAR" | "ASSIGNMENT";
 
-export type ContentType = "VIDEO" | "PDF" | "QUIZ" | "ASSIGNMENT" | "TEXT";
+export type ContentType =
+  | "VIDEO"
+  | "PDF"
+  | "QUIZ"
+  | "ASSIGNMENT"
+  | "TEXT"
+  | "IMAGE";
 
 export interface CourseLesson {
   id: number;
@@ -146,6 +152,7 @@ export interface LessonContent {
   title: string;
   type: ContentType;
   content?: string;
+  body?: string;
   contentUrl?: string;
   url: string;
   createdAt: string;

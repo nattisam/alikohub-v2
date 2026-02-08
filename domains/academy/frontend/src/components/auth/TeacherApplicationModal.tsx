@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { authService } from "../../services/auth-service";
-import { FaCheckCircle } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaCloudUploadAlt,
+  FaFilePdf,
+  FaSpinner,
+  FaTrash,
+} from "react-icons/fa";
 
 interface TeacherApplicationModalProps {
   onClose?: () => void;
@@ -25,17 +31,19 @@ interface TeacherApplicationData {
   }[];
 }
 
-const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({ 
-  onClose, 
+const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
+  onClose,
   onSuccess,
-  standalone = false
+  standalone = false,
 }) => {
   const navigate = useNavigate();
   const { user: currentUser, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState<TeacherApplicationData>({
     personalDetails: {
       firstname: currentUser?.firstname || "",
@@ -53,7 +61,7 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
   });
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -100,15 +108,72 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
     }));
   };
 
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type (PDF, heavy preference)
+    if (
+      file.type !== "application/pdf" &&
+      !file.type.includes("word") &&
+      !file.type.includes("document")
+    ) {
+      setError("Please upload a PDF or Word document.");
+      return;
+    }
+
+    // Validate size (e.g., 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size must be less than 5MB.");
+      return;
+    }
+
+    setUploadingResume(true);
+    setError(null);
+
+    try {
+      const response = await authService.uploadResume(file);
+      setFormData((prev) => ({
+        ...prev,
+        resumeUrl: response.url,
+      }));
+    } catch (err: any) {
+      console.error("Resume upload failed:", err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to upload resume. Please try again.",
+      );
+    } finally {
+      setUploadingResume(false);
+      // Reset input value to allow re-uploading the same file if needed (though unlikely)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const clearResume = () => {
+    setFormData((prev) => ({
+      ...prev,
+      resumeUrl: "",
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
+      if (!formData.resumeUrl) {
+        setError("Please upload your resume.");
+        setLoading(false);
+        return;
+      }
+
       // Remove any empty categories
       const filteredCategories = formData.teachingCategories.filter(
-        (category) => category.trim() !== ""
+        (category) => category.trim() !== "",
       );
 
       const applicationData = {
@@ -117,7 +182,7 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
       };
 
       await authService.applyTeacher(applicationData);
-      
+
       // After successful application, update the user's role status to pending
       if (currentUser) {
         const updatedUser = {
@@ -126,22 +191,22 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
           pendingRole: undefined,
           roleStatus: {
             ...currentUser.roleStatus,
-            instructor: 'pending',
+            instructor: "pending",
             applicationDate: new Date().toISOString(),
           },
-          availableRoles: [...(currentUser.availableRoles || []), 'INSTRUCTOR'],
+          availableRoles: [...(currentUser.availableRoles || []), "INSTRUCTOR"],
         };
-        
+
         updateUser(updatedUser);
       }
-      
+
       // Show success message
       setSubmitted(true);
-      
+
       // Redirect based on standalone mode
       setTimeout(() => {
         if (standalone) {
-          navigate('/');
+          navigate("/");
         } else {
           onSuccess?.();
         }
@@ -149,8 +214,8 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
     } catch (err: any) {
       console.error("Error applying for teacher role:", err);
       setError(
-        err.response?.data?.message || 
-        "Failed to submit application. Please try again."
+        err.response?.data?.message ||
+          "Failed to submit application. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -169,21 +234,23 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
             Application Submitted!
           </h2>
           <p className="text-gray-600 mb-6">
-            Thank you for applying to become an instructor. Your application is now under review. 
-            We will notify you once it has been approved.
+            Thank you for applying to become an instructor. Your application is
+            now under review. We will notify you once it has been approved.
           </p>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
             <p className="text-yellow-800 text-sm">
-              <strong>What's next?</strong> Our team will review your application within 2-3 business days. 
-              You'll receive an email notification about your application status.
+              <strong>What's next?</strong> Our team will review your
+              application within 2-3 business days. You'll receive an email
+              notification about your application status.
             </p>
           </div>
-          <p className="text-sm text-gray-500">
-            Redirecting to home page...
-          </p>
+          <p className="text-sm text-gray-500">Redirecting to home page...</p>
           <div className="mt-4">
             <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-600 animate-pulse" style={{ width: '100%' }}></div>
+              <div
+                className="h-full bg-blue-600 animate-pulse"
+                style={{ width: "100%" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -196,7 +263,9 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Instructor Application</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Instructor Application
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -216,7 +285,9 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
             <div className="space-y-6">
               {/* Personal Details */}
               <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-3">Personal Details</h3>
+                <h3 className="text-lg font-medium text-gray-800 mb-3">
+                  Personal Details
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -276,7 +347,9 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
               {/* Teaching Categories */}
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg font-medium text-gray-800">Teaching Categories</h3>
+                  <h3 className="text-lg font-medium text-gray-800">
+                    Teaching Categories
+                  </h3>
                   <button
                     type="button"
                     onClick={addCategory}
@@ -291,7 +364,9 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
                       <input
                         type="text"
                         value={category}
-                        onChange={(e) => handleCategoryChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleCategoryChange(index, e.target.value)
+                        }
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="e.g., Programming, Cloud Computing"
                         required
@@ -312,27 +387,74 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
 
               {/* Resume URL */}
               <div>
-                <h3 className="text-lg font-medium text-gray-800 mb-3">Resume</h3>
+                <h3 className="text-lg font-medium text-gray-800 mb-3">
+                  Resume
+                </h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Resume URL
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Resume (PDF/Word)
                   </label>
+
                   <input
-                    type="url"
-                    value={formData.resumeUrl}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        resumeUrl: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://example.com/resume.pdf"
-                    required
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Please provide a link to your resume (PDF format recommended)
-                  </p>
+
+                  {!formData.resumeUrl ? (
+                    <div
+                      onClick={() =>
+                        !uploadingResume && fileInputRef.current?.click()
+                      }
+                      className={`border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer ${uploadingResume ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {uploadingResume ? (
+                        <>
+                          <FaSpinner className="h-8 w-8 text-blue-500 animate-spin mb-2" />
+                          <p className="text-sm text-gray-600">Uploading...</p>
+                        </>
+                      ) : (
+                        <>
+                          <FaCloudUploadAlt className="h-10 w-10 text-gray-400 mb-2" />
+                          <p className="text-sm font-medium text-gray-700">
+                            Click to upload resume
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PDF or Word document (Max 5MB)
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center space-x-3 overflow-hidden">
+                        <FaFilePdf className="h-6 w-6 text-red-500 flex-shrink-0" />
+                        <div className="truncate">
+                          <p className="text-sm font-medium text-blue-900 truncate">
+                            Resume Uploaded
+                          </p>
+                          <a
+                            href={formData.resumeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline truncate block"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearResume}
+                        className="p-2 text-gray-500 hover:text-red-600 transition-colors"
+                        title="Remove file"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -349,7 +471,9 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
                       </label>
                       <textarea
                         value={item.answer}
-                        onChange={(e) => handleInterviewResponseChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleInterviewResponseChange(index, e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
                         required
                       />
