@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import AuthInput from './AuthInput';
 import AuthButton from './AuthButton';
 import SocialLoginButton from './SocialLoginButton';
-import ReCAPTCHA from 'react-google-recaptcha';
+// import ReCAPTCHA from 'react-google-recaptcha';
 
 interface SignupFormProps {
   onSubmit: (data: SignupFormData) => void;
   onSwitchToLogin: () => void;
   loading?: boolean;
-  recaptchaSiteKey?: string;
+  // recaptchaSiteKey?: string;
 }
 
 export interface SignupFormData {
@@ -17,7 +17,7 @@ export interface SignupFormData {
   email: string;
   password: string;
   agreeToTerms: boolean;
-  captchaToken?: string;
+  // captchaToken?: string;
 }
 
 interface FormErrors {
@@ -26,27 +26,27 @@ interface FormErrors {
   email?: string;
   password?: string;
   agreeToTerms?: string;
-  captchaToken?: string;
+  // captchaToken?: string;
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({
   onSubmit,
   onSwitchToLogin,
   loading = false,
-  recaptchaSiteKey
+  // recaptchaSiteKey
 }) => {
   const [formData, setFormData] = useState<SignupFormData>({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    agreeToTerms: false,
-    captchaToken: undefined
+    agreeToTerms: false
+    // captchaToken: undefined
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [captchaLoaded, setCaptchaLoaded] = useState(false);
-  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  // const [captchaLoaded, setCaptchaLoaded] = useState(false);
+  // const [captchaError, setCaptchaError] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -76,9 +76,9 @@ const SignupForm: React.FC<SignupFormProps> = ({
     }
     
     // Validate captcha if loaded
-    if (captchaLoaded && !formData.captchaToken) {
-      newErrors.captchaToken = 'Please complete the security check';
-    }
+    // if (captchaLoaded && !formData.captchaToken) {
+    //   newErrors.captchaToken = 'Please complete the security check';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -91,19 +91,19 @@ const SignupForm: React.FC<SignupFormProps> = ({
     }
   };
   
-  const handleCaptchaChange = (token: string | null) => {
-    setFormData(prev => ({
-      ...prev,
-      captchaToken: token || undefined
-    }));
+  // const handleCaptchaChange = (token: string | null) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     captchaToken: token || undefined
+  //   }));
     
-    if (token) {
-      setCaptchaError(null);
-      setCaptchaLoaded(true);
-    } else {
-      setCaptchaError('Please complete the security check');
-    }
-  };
+  //   if (token) {
+  //     setCaptchaError(null);
+  //     setCaptchaLoaded(true);
+  //   } else {
+  //     setCaptchaError('Please complete the security check');
+  //   }
+  // };
 
   const handleSocialLogin = (provider: string) => {
     console.log(`Login with ${provider}`);
@@ -205,7 +205,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
           <p className="text-sm text-red-600">{errors.agreeToTerms}</p>
         )}
 
-        {/* reCAPTCHA Widget */}
+        {/* reCAPTCHA Widget
         <div className="pt-4">
           {(recaptchaSiteKey && recaptchaSiteKey.length > 0) || (import.meta.env.VITE_RECAPTCHA_SITE_KEY && import.meta.env.VITE_RECAPTCHA_SITE_KEY.length > 0) ? (
             <ReCAPTCHA
@@ -226,7 +226,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
           {captchaError && (
             <p className="mt-1 text-sm text-red-600">{captchaError}</p>
           )}
-        </div>
+        </div> */}
         
         {/* Submit Button */}
         <div className="pt-4">
@@ -234,7 +234,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
             type="submit"
             variant="primary"
             loading={loading}
-            disabled={loading || !captchaLoaded || !formData.captchaToken}
+            // disabled={loading || !captchaLoaded || !formData.captchaToken}
           >
             Create account
           </AuthButton>

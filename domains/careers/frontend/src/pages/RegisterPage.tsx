@@ -17,12 +17,14 @@ export function RegisterPage() {
     setError(null)
     setIsSubmitting(true)
     try {
-      await register({ 
-        firstname: data.firstName, 
-        lastname: data.lastName, 
-        email: data.email, 
-        password: data.password, 
-        captchaToken: data.captchaToken || '' 
+      await register({
+        firstname: data.firstName,
+        lastname: data.lastName,
+        email: data.email,
+        password: data.password
+        // captchaToken: data.captchaToken || '' 
+        ,
+        // captchaToken: ""
       })
       navigate("/", { replace: true })
     } catch (err: any) {
@@ -51,7 +53,7 @@ export function RegisterPage() {
           onSubmit={handleSignup} 
           onSwitchToLogin={handleSwitchToLogin}
           loading={isSubmitting}
-          recaptchaSiteKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+          // recaptchaSiteKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
         />
       </div>
     </div>

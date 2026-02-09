@@ -1,3 +1,4 @@
+// PostList.tsx
 import type { Post } from '../types/post';
 import { PostCard } from './PostCard';
 import { LoadingState } from './states/LoadingState';
@@ -23,20 +24,12 @@ export function PostList({
   emptyMessage = "No content available at the moment.",
   loadingMessage = "Discovering the latest updates..."
 }: PostListProps) {
-  if (isLoading) {
-    return <LoadingState message={loadingMessage} />;
-  }
-
-  if (isError) {
-    return <ErrorState error={error} onRetry={onRetry} />;
-  }
-
-  if (posts.length === 0) {
-    return <EmptyState message={emptyMessage} />;
-  }
+  if (isLoading) return <LoadingState message={loadingMessage} />;
+  if (isError) return <ErrorState error={error} onRetry={onRetry} />;
+  if (posts.length === 0) return <EmptyState message={emptyMessage} />;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="max-w-3xl mx-auto divide-y divide-gray-200">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} />
       ))}
