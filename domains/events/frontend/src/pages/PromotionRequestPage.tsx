@@ -23,7 +23,9 @@ export default function PromotionRequestPage() {
     },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -33,22 +35,35 @@ export default function PromotionRequestPage() {
     mutation.mutate(formData);
   };
 
+  /* ================= SUCCESS STATE ================= */
   if (submitted) {
     return (
-      <div className="container mx-auto px-4 py-20">
-        <div className="max-w-2xl mx-auto text-center bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="relative min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center px-4"
+        style={{
+          backgroundImage:
+            "url('https://cdn.pixabay.com/photo/2024/02/28/17/16/ai-generated-8602502_1280.jpg')",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
+
+        <div className="relative z-10 max-w-2xl w-full text-center bg-gray-900/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/10">
+          <div className="w-20 h-20 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Request Submitted Successfully!</h1>
-          <p className="text-gray-600 text-lg mb-8">
+
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Request Submitted Successfully!
+          </h1>
+
+          <p className="text-gray-300 text-lg mb-8">
             Thank you for your interest in promoting with Aliko Events. Our administration team will review your request and contact you via email shortly.
           </p>
-          <button 
+
+          <button
             onClick={() => setSubmitted(false)}
-            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition"
+            className="bg-gradient-to-r from-violet-500 to-orange-500 text-white px-10 py-3 rounded-xl font-bold hover:scale-105 transition shadow-lg"
           >
             Submit Another Request
           </button>
@@ -57,148 +72,138 @@ export default function PromotionRequestPage() {
     );
   }
 
+  /* ================= FORM ================= */
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-            {/* Info Sidebar */}
-            <div className="md:w-1/3 bg-blue-600 p-8 md:p-12 text-white">
+    <div
+      className="relative min-h-screen text-gray-100 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage:
+          "url('https://cdn.pixabay.com/photo/2024/02/28/17/16/ai-generated-8602502_1280.jpg')",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/50 pointer-events-none"></div>
+
+      <div className="relative z-10 container mx-auto px-4 py-16">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden flex flex-col md:flex-row">
+
+            {/* ================= SIDEBAR ================= */}
+            <div className="md:w-1/3 bg-gradient-to-br from-violet-500 via-purple-600 to-orange-500 p-10 text-white">
               <h2 className="text-3xl font-bold mb-6">Partner With Us</h2>
-              <p className="text-blue-100 mb-8">
-                Are you looking to reach the AlikoHub community? Submit a promotion request for your upcoming event, news, or announcement.
+
+              <p className="text-white/90 mb-10">
+                Reach the AlikoHub community by promoting your event, news, or announcement.
               </p>
-              
-              <ul className="space-y-4 text-blue-100">
-                <li className="flex items-start">
-                  <svg className="w-6 h-6 mr-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Events promotion
-                </li>
-                <li className="flex items-start">
-                  <svg className="w-6 h-6 mr-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Internal news sharing
-                </li>
-                <li className="flex items-start">
-                  <svg className="w-6 h-6 mr-3 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Ecosystem updates
-                </li>
+
+              <ul className="space-y-5 text-white/90">
+                {['Events promotion', 'Internal news sharing', 'Ecosystem updates'].map(item => (
+                  <li key={item} className="flex items-start">
+                    <svg
+                      className="w-6 h-6 mr-3 text-white/80 drop-shadow"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
               </ul>
 
-              <div className="mt-12 pt-8 border-t border-blue-500">
-                <p className="text-sm text-blue-200">
-                  Submissions are reviewed manually by our Communications team.
+              <div className="mt-12 pt-8 border-t border-white/20">
+                <p className="text-sm text-white/70">
+                  Submissions are manually reviewed by our Communications team.
                 </p>
               </div>
             </div>
 
-            {/* Form */}
-            <div className="md:w-2/3 p-8 md:p-12">
-              <h1 className="text-3xl font-bold text-gray-900 mb-8">Promotion Request Form</h1>
-              
+            {/* ================= FORM ================= */}
+            <div className="md:w-2/3 p-10 bg-gray-950/70">
+              <h1 className="text-3xl font-bold text-white mb-10">
+                Promotion Request Form
+              </h1>
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
-                    <input
-                      type="text"
-                      name="companyName"
-                      required
-                      value={formData.companyName}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                      placeholder="Your Company Ltd."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person *</label>
-                    <input
-                      type="text"
-                      name="contactPerson"
-                      required
-                      value={formData.contactPerson}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                      placeholder="Jane Doe"
-                    />
-                  </div>
+                  {[
+                    { label: 'Company Name *', name: 'companyName', placeholder: 'Your Company Ltd.' },
+                    { label: 'Contact Person *', name: 'contactPerson', placeholder: 'Jane Doe' },
+                  ].map(field => (
+                    <div key={field.name}>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">
+                        {field.label}
+                      </label>
+                      <input
+                        type="text"
+                        name={field.name}
+                        required
+                        value={(formData as any)[field.name]}
+                        onChange={handleChange}
+                        placeholder={field.placeholder}
+                        className="w-full px-4 py-3 rounded-xl bg-gray-900 border border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                      />
+                    </div>
+                  ))}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                      placeholder="jane@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Promotion Type *</label>
-                  <select
-                    name="promotionType"
+                  <input
+                    type="email"
+                    name="email"
                     required
-                    value={formData.promotionType}
+                    value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none bg-white"
-                  >
-                    <option value="EVENT">Event Promotion</option>
-                    <option value="NEWS">News Item</option>
-                    <option value="ANNOUNCEMENT">Announcement</option>
-                  </select>
-                </div>
+                    placeholder="Email Address *"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-900 border border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                  />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Message / Details *</label>
-                  <textarea
-                    name="message"
-                    required
-                    rows={5}
-                    value={formData.message}
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Tell us about the content you'd like to promote..."
+                    placeholder="Phone Number"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-900 border border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
                   />
                 </div>
+
+                <select
+                  name="promotionType"
+                  value={formData.promotionType}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-900 border border-white/10 text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                >
+                  <option value="EVENT">Event Promotion</option>
+                  <option value="NEWS">News Item</option>
+                  <option value="ANNOUNCEMENT">Announcement</option>
+                </select>
+
+                <textarea
+                  name="message"
+                  rows={5}
+                  required
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Tell us about the content you'd like to promote..."
+                  className="w-full px-4 py-3 rounded-xl bg-gray-900 border border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition"
+                />
 
                 <button
                   type="submit"
                   disabled={mutation.isPending}
-                  className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition transform hover:scale-[1.02] active:scale-[0.98] ${
-                    mutation.isPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
+                  className={`w-full py-4 rounded-xl font-bold text-white transition transform hover:scale-[1.03] active:scale-[0.97] shadow-xl ${
+                    mutation.isPending
+                      ? 'bg-gray-600 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-violet-500 via-purple-600 to-orange-500 hover:shadow-orange-400/30'
                   }`}
                 >
-                  {mutation.isPending ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : 'Submit Request'}
+                  {mutation.isPending ? 'Processing...' : 'Submit Request'}
                 </button>
               </form>
             </div>
