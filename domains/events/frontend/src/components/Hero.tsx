@@ -37,22 +37,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* 🔥 floating person image */}
-      <img
-  src="https://i.pinimg.com/736x/1f/87/cb/1f87cb6b07a72b15e0ccac38ea774e58.jpg"
-  alt="speaker"
-  className="
-    absolute
-    right-10
-    bottom-[-60px]
-    w-[280px]
-    z-20
-    drop-shadow-2xl
-    rounded-xl
-    animate-float
-  "
-/>
-
     </section>
   );
 }
