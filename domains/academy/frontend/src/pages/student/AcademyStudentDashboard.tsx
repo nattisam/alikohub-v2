@@ -14,6 +14,7 @@ import {
   Clock,
   Trophy,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
@@ -131,8 +132,8 @@ const AcademyStudentDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-b-2 border-[#3E92D1] rounded-full" />
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
       </div>
     );
   }
@@ -152,13 +153,13 @@ const AcademyStudentDashboard = () => {
     (activeRole !== "STUDENT" && activeRole !== "INSTRUCTOR")
   ) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
+      <div className="min-h-screen bg-[#09090b] pt-24 text-slate-200">
         <div className="max-w-2xl mx-auto px-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-bold text-white mb-4">
               Select Your Role
             </h2>
-            <p className="text-gray-500 mb-8">
+            <p className="text-slate-400 mb-8">
               To access the student dashboard, please select the Student role.
             </p>
             <RoleSelectionModal onClose={() => navigate("/role")} />
@@ -175,7 +176,7 @@ const AcademyStudentDashboard = () => {
     activeRole !== "STUDENT"
   ) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
+      <div className="min-h-screen bg-[#09090b] pt-24">
         <TeacherApplicationModal standalone={true} />
       </div>
     );
@@ -183,7 +184,7 @@ const AcademyStudentDashboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24">
+      <div className="min-h-screen bg-[#09090b] pt-24">
         <ErrorState
           message="Failed to load dashboard"
           onRetry={() => setRefreshKey((prev) => prev + 1)}
@@ -194,10 +195,10 @@ const AcademyStudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-b-2 border-[#3E92D1] rounded-full mb-4" />
-        <p className="text-sm text-gray-400 font-medium">
-          Synchronizing your dashboard...
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin h-10 w-10 text-blue-600 mb-4" />
+        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+          Loading Dashboard...
         </p>
       </div>
     );
@@ -209,206 +210,215 @@ const AcademyStudentDashboard = () => {
   const otherCourses = courses.filter((c) => c.id !== mostRecentCourse?.id);
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-[#3E92D1]/30">
-      {/* Dynamic Hero Section - Netflix Style */}
+    <div className="min-h-screen bg-[#09090b] text-slate-200 font-sans selection:bg-blue-500/30">
+      {/* Dynamic Hero Section - Cinematic Featured Style */}
       {mostRecentCourse && (
-        <section className="relative h-[500px] w-full overflow-hidden">
-          {/* Background Gradient/Image Placeholder */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/80 to-transparent z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent z-10" />
-          <div className="absolute inset-0 bg-[#1e293b] animate-pulse">
-            {/* If we had a course thumbnail, we'd put it here */}
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_#3E92D1_1px,_transparent_1px)] bg-[size:32px_32px]"></div>
+        <section className="relative h-[60vh] min-h-[500px] w-full overflow-hidden border-b border-white/[0.05]">
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/90 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent z-10" />
+
+          {/* Abstract Pulse Background (Simulating Video Preview) */}
+          <div className="absolute inset-0 bg-blue-900/10 animate-pulse">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-[#09090b] to-[#09090b]"></div>
           </div>
 
-          <div className="relative z-20 max-w-7xl mx-auto px-6 h-full flex flex-col justify-center pt-16">
-            <div className="max-w-2xl space-y-6">
-              <div className="flex items-center gap-2">
-                <span className="bg-[#3E92D1] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                  Continue Learning
-                </span>
-                <span className="text-[#3E92D1] text-[10px] font-bold uppercase tracking-widest">
-                  {mostRecentCourse.progress || 0}% Complete
+          <div className="relative z-20 max-w-7xl mx-auto px-8 h-full flex flex-col justify-center">
+            <div className="max-w-3xl space-y-8 animate-in fade-in slide-in-from-left-10 duration-700">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30">
+                  <Play size={14} className="text-white fill-current ml-0.5" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
+                  Resume Learning
                 </span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white leading-tight">
-                {mostRecentCourse.title}
-              </h1>
-              <p className="text-lg text-gray-400 line-clamp-3 leading-relaxed">
-                {mostRecentCourse.shortDescription}
-              </p>
 
-              <div className="flex flex-wrap items-center gap-4 pt-4">
-                <button
-                  onClick={() =>
-                    navigate(`/student-dashboard/course/${mostRecentCourse.id}`)
-                  }
-                  className="bg-white text-black px-8 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-[#3E92D1] hover:text-white transition-all transform active:scale-95 shadow-xl shadow-white/5"
-                >
-                  <Play size={20} fill="currentColor" />
-                  Resume Course
-                </button>
-                <button
-                  onClick={() => setSelectedCourse(mostRecentCourse)}
-                  className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-8 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-white/20 transition-all"
-                >
-                  <Info size={20} />
-                  Course Details
-                </button>
+              <div>
+                <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white leading-[0.9] mb-4">
+                  {mostRecentCourse.title}
+                </h1>
+                <p className="text-lg text-slate-400 line-clamp-2 max-w-xl font-medium leading-relaxed">
+                  {mostRecentCourse.shortDescription}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  <span>Progress</span>
+                  <div className="flex-1 max-w-[200px] h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      style={{ width: `${mostRecentCourse.progress || 0}%` }}
+                      className="h-full bg-blue-600 rounded-full"
+                    />
+                  </div>
+                  <span className="text-white">
+                    {mostRecentCourse.progress || 0}%
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/student-dashboard/course/${mostRecentCourse.id}`,
+                      )
+                    }
+                    className="bg-white text-black px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all flex items-center gap-3 hover:scale-105 active:scale-95 shadow-xl shadow-white/5"
+                  >
+                    <Play size={16} fill="currentColor" />
+                    Continue Watching
+                  </button>
+                  <button
+                    onClick={() => setSelectedCourse(mostRecentCourse)}
+                    className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-3"
+                  >
+                    <Info size={16} />
+                    Details
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-12 space-y-16">
-        {/* Progress Stats Section */}
-        <section>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              {
-                label: "Overall Progress",
-                value: `${courses.length > 0 ? Math.round(courses.reduce((acc, c) => acc + (c.progress || 0), 0) / courses.length) : 0}%`,
-                icon: BarChart2,
-                color: "text-blue-400",
-                bg: "bg-blue-400/10",
-              },
-              {
-                label: "Completed",
-                value: courses.filter((c) => (c.progress || 0) >= 100).length,
-                icon: CheckCircle,
-                color: "text-green-400",
-                bg: "bg-green-400/10",
-              },
-              {
-                label: "Hours Learned",
-                value: "12.5h",
-                icon: Clock,
-                color: "text-purple-400",
-                bg: "bg-purple-400/10",
-              },
-              {
-                label: "Certificates",
-                value: "2",
-                icon: Trophy,
-                color: "text-orange-400",
-                bg: "bg-orange-400/10",
-              },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="bg-[#1e293b]/50 backdrop-blur-sm p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 ${stat.bg} ${stat.color} rounded-xl`}>
-                    <stat.icon size={20} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1.5">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-black text-white">
-                      {stat.value}
-                    </p>
-                  </div>
-                </div>
+      <main className="max-w-7xl mx-auto px-8 py-16 space-y-20">
+        {/* Stats Section with 'Glass' Cards */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            {
+              label: "Overall Progress",
+              value: `${courses.length > 0 ? Math.round(courses.reduce((acc, c) => acc + (c.progress || 0), 0) / courses.length) : 0}%`,
+              icon: BarChart2,
+              color: "text-blue-500",
+            },
+            {
+              label: "Completed",
+              value: courses.filter((c) => (c.progress || 0) >= 100).length,
+              icon: CheckCircle,
+              color: "text-emerald-500",
+            },
+            {
+              label: "Hours Learned",
+              value: "12.5h",
+              icon: Clock,
+              color: "text-purple-500",
+            },
+            {
+              label: "Certificates",
+              value: "2",
+              icon: Trophy,
+              color: "text-orange-500",
+            },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl hover:bg-white/[0.04] transition-colors"
+            >
+              <div className={`mb-4 ${stat.color}`}>
+                <stat.icon size={24} />
               </div>
-            ))}
-          </div>
+              <div className="text-3xl font-black text-white mb-1">
+                {stat.value}
+              </div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </section>
 
-        {/* My Courses Section */}
+        {/* My Courses Section - 'Playlist' Grid */}
         <section>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-white tracking-tight">
-              My Learning Path
+          <div className="flex items-center justify-between mb-8 border-b border-white/[0.05] pb-4">
+            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
+              <Layout size={20} className="text-blue-500" />
+              My Library
             </h2>
             <Link
               to="/courses"
-              className="text-sm font-bold text-[#3E92D1] hover:text-white transition-colors flex items-center gap-2 group"
+              className="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2 group"
             >
-              Explore More{" "}
+              Browse Catalog{" "}
               <ArrowRight
-                size={16}
+                size={14}
                 className="group-hover:translate-x-1 transition-transform"
               />
             </Link>
           </div>
 
           {enrollments.length === 0 ? (
-            <div className="bg-[#1e293b]/30 rounded-3xl p-12 text-center border border-dashed border-white/10">
-              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-600">
+            <div className="bg-white/[0.02] rounded-3xl p-16 text-center border border-dashed border-white/5 flex flex-col items-center">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 text-slate-600">
                 <Layout size={32} />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">
-                Your journey hasn't started yet
+              <h3 className="text-lg font-bold text-white mb-2">
+                Library Empty
               </h3>
-              <p className="text-gray-400 max-w-md mx-auto mb-8 font-medium">
-                Discover our library of courses and choose one that fits your
-                interests.
+              <p className="text-slate-500 max-w-sm mx-auto mb-8 text-sm">
+                Enroll in a course to start building your personal curriculum.
               </p>
               <button
                 onClick={() => navigate("/courses")}
-                className="bg-[#3E92D1] text-white px-8 py-3 rounded-full font-bold hover:bg-[#2d7bb5] transition-all"
+                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20"
               >
-                Browse Our Courses
+                Browse Courses
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {otherCourses.map((course) => (
                 <div
                   key={course.id}
-                  className="group bg-[#1e293b]/50 rounded-2xl border border-white/5 overflow-hidden hover:border-[#3E92D1]/50 hover:shadow-2xl hover:shadow-[#3E92D1]/10 transition-all duration-500 flex flex-col"
+                  className="group bg-[#0c0c0e] rounded-2xl border border-white/5 overflow-hidden hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 flex flex-col"
                 >
-                  <div className="p-8 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start gap-4 mb-4">
-                      <h3 className="text-lg font-bold text-white group-hover:text-[#3E92D1] transition-colors line-clamp-2 leading-tight">
+                  <div className="p-8 flex-1 flex flex-col relative">
+                    {/* Hover Glow Effect */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -translate-y-10 translate-x-10 group-hover:bg-blue-500/10 transition-colors" />
+
+                    <div className="relative z-10">
+                      <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight mb-3">
                         {course.title}
                       </h3>
+                      <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed mb-6">
+                        {course.shortDescription}
+                      </p>
                     </div>
 
-                    <p className="text-gray-400 text-sm mb-8 line-clamp-2 min-h-[2.5rem] leading-relaxed">
-                      {course.shortDescription}
-                    </p>
-
-                    <div className="mt-auto space-y-6">
-                      <div>
+                    <div className="mt-auto relative z-10">
+                      <div className="mb-6">
                         <div className="flex justify-between items-end mb-2">
-                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                            Course Progress
+                          <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                            Completed
                           </span>
-                          <span className="text-xs font-black text-[#3E92D1]">
+                          <span className="text-[10px] font-black text-blue-500">
                             {course.progress || 0}%
                           </span>
                         </div>
-                        <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
                           <div
-                            className="bg-[#3E92D1] h-full rounded-full transition-all duration-1000 ease-out"
+                            className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${course.progress || 0}%` }}
-                          ></div>
+                          />
                         </div>
                       </div>
 
                       <div className="flex gap-3">
                         <button
                           onClick={() => setSelectedCourse(course)}
-                          className="p-3 bg-white/5 text-white rounded-xl hover:bg-white/10 transition-all border border-white/5"
-                          title="View Statistics"
+                          className="p-3 bg-white/[0.03] text-slate-400 hover:text-white rounded-xl hover:bg-white/[0.05] transition-all border border-white/5"
                         >
-                          <BarChart2 size={18} />
+                          <BarChart2 size={16} />
                         </button>
                         <button
                           onClick={() =>
                             navigate(`/student-dashboard/course/${course.id}`)
                           }
-                          className="flex-1 px-6 py-3 bg-[#3E92D1] text-white rounded-xl font-bold text-sm hover:bg-[#2d7bb5] transition-all flex items-center justify-center gap-2 group/btn"
+                          className="flex-1 px-4 py-3 bg-white/[0.03] hover:bg-blue-600 hover:text-white text-slate-300 border border-white/5 hover:border-blue-500/30 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 group/btn"
                         >
                           Resume
-                          <ArrowRight
-                            size={16}
-                            className="group-hover:translate-x-1 transition-transform"
-                          />
+                          <Play size={10} fill="currentColor" />
                         </button>
                       </div>
                     </div>
@@ -422,38 +432,38 @@ const AcademyStudentDashboard = () => {
 
       {/* Progress Detail Modal */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-100">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0c0c0e] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#09090b]">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-white">
                   {selectedCourse.title}
                 </h2>
-                <p className="text-xs text-gray-400 mt-1">
-                  Detailed progress analysis
+                <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">
+                  Performance Analytics
                 </p>
               </div>
               <button
                 onClick={() => setSelectedCourse(null)}
-                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-50 rounded-full transition-all"
+                className="text-slate-500 hover:text-white p-2 hover:bg-white/5 rounded-full transition-all"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto">
+            <div className="p-8 overflow-y-auto">
               <StudentProgressTracker
                 course={selectedCourse}
                 userId={currentUser.firebaseId}
               />
             </div>
 
-            <div className="p-6 border-t border-gray-100 flex justify-end">
+            <div className="p-6 border-t border-white/10 bg-[#09090b] flex justify-end">
               <button
                 onClick={() => setSelectedCourse(null)}
-                className="px-6 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 font-semibold text-sm transition-all"
+                className="px-6 py-3 bg-white/5 text-slate-300 hover:text-white rounded-xl hover:bg-white/10 font-bold text-xs uppercase tracking-widest transition-all"
               >
-                Dismiss
+                Close
               </button>
             </div>
           </div>

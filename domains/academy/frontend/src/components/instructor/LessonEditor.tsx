@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from "react";
 import {
-  X,
   Trash2,
-  GripVertical,
   AlignLeft,
   Video,
   FileText,
-  HelpCircle,
-  Layout,
   ChevronLeft,
   Loader2,
-  CheckCircle2,
   ChevronRight,
   CheckSquare,
-  Layers,
+  Play,
+  Settings,
+  ArrowLeft,
 } from "lucide-react";
 import { courseApi } from "../../api/courseApi";
 
@@ -120,306 +117,319 @@ const LessonEditor: React.FC<LessonEditorProps> = ({
     }
   };
 
+  // Find the first video block to display in the "Player" area
+  const mainVideoBlock = blocks.find((b) => b.type === "VIDEO");
+
   return (
-    <div className="fixed inset-0 bg-[#070b13] z-[100] flex flex-col overflow-hidden text-slate-200">
-      {/* PREMIUM TOP HEADER */}
-      <header className="h-[80px] border-b border-white/[0.03] flex items-center justify-between px-10 bg-[#0a0f18]/80 backdrop-blur-3xl z-50 shrink-0">
-        <div className="flex items-center gap-8">
+    <div className="fixed inset-0 bg-[#09090b] z-[100] flex flex-col font-sans text-slate-200">
+      {/* HEADER - Matches screenshot: Dark, minimal, breadcrumb-like */}
+      <header className="h-16 border-b border-white/[0.08] bg-[#09090b] flex items-center justify-between px-6 shrink-0 z-50">
+        <div className="flex items-center gap-6">
           <button
             onClick={onClose}
-            className="group flex items-center gap-3 text-slate-400 hover:text-white transition-all"
+            className="group flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center group-hover:bg-indigo-600 group-hover:border-indigo-500 transition-all">
-              <ChevronLeft size={20} />
-            </div>
-            <span className="text-sm font-bold tracking-tight">
-              Studio Home
-            </span>
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Course</span>
           </button>
 
           <div className="h-6 w-px bg-white/10" />
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
-                Curriculum Drafting
-              </span>
+          <div>
+            <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-0.5">
+              Currently Editing
             </div>
-            <h2 className="text-white font-extrabold text-lg tracking-tight">
-              {lesson?.title || "Drafting..."}
-            </h2>
+            <h1 className="text-sm font-bold text-white tracking-wide">
+              {lesson?.title || "Untitled Lesson"}
+            </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
-          <button
-            onClick={onClose}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-2xl shadow-indigo-600/20 active:scale-95"
-          >
-            Finish Editing
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+              Draft Status
+            </span>
+            <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full w-[35%] bg-blue-600 rounded-full" />
+            </div>
+          </div>
+          <button className="p-2 text-slate-400 hover:text-white transition-colors">
+            <Settings size={20} />
           </button>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border border-white/10" />
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* SLIM LEFT RAIL */}
-        <nav className="w-20 border-r border-white/[0.03] flex flex-col items-center py-10 gap-10 bg-[#070b13] shrink-0 z-40">
-          <div className="flex flex-col items-center gap-5">
-            <button
-              onClick={() => setActiveTab("CONTENT")}
-              className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${activeTab === "CONTENT" ? "bg-indigo-600 text-white shadow-xl shadow-indigo-600/30" : "bg-white/[0.03] text-slate-500 hover:bg-white/10 hover:text-white border border-white/5"}`}
-              title="Content Designer"
-            >
-              <Layout size={20} />
-            </button>
-            <div className="h-px w-8 bg-white/5" />
-            <button
-              onClick={() => setActiveTab("ASSESSMENT")}
-              className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all ${activeTab === "ASSESSMENT" ? "bg-emerald-600 text-white shadow-xl shadow-emerald-600/30 text-emerald-100" : "bg-white/[0.03] text-slate-500 hover:bg-white/10 hover:text-white border border-white/5"}`}
-              title="Assessment Builder"
-            >
-              <CheckSquare size={20} />
-            </button>
-          </div>
-        </nav>
-
-        {/* MAIN STUDIO CANVAS */}
-        <main className="flex-1 overflow-y-auto bg-[#070b13] relative pt-16 pb-40 px-16 scroll-smooth thin-scrollbar">
-          <div className="max-w-[800px] mx-auto">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-40">
-                <Loader2 className="w-12 h-12 text-indigo-500/20 animate-spin mb-4" />
-                <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">
-                  Hydrating Studio Workspace...
-                </span>
+      <div className="flex flex-1 overflow-hidden">
+        {/* MAIN CONTENT - PLAYER STYLE */}
+        <div className="flex-1 flex flex-col overflow-y-auto bg-[#09090b] relative scroll-smooth no-scrollbar">
+          {/* VIDEO PLAYER AREA */}
+          <div className="w-full bg-black aspect-video relative group shrink-0 border-b border-white/5">
+            {mainVideoBlock ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-blue-600/20 group-hover:scale-110 transition-transform cursor-pointer">
+                    <Play size={32} className="text-white fill-current ml-1" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-400">
+                    Video Preview: {mainVideoBlock.title}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1 font-mono">
+                    {mainVideoBlock.url}
+                  </p>
+                </div>
+                {/* Simulated Controls */}
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent px-6 flex items-end pb-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-full space-y-2">
+                    <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden cursor-pointer">
+                      <div className="w-1/3 h-full bg-blue-600" />
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-medium text-white">
+                      <div className="flex gap-4">
+                        <span>12:45 / 24:00</span>
+                      </div>
+                      <div className="flex gap-4">
+                        <span className="bg-white/10 px-2 py-0.5 rounded">
+                          1.5x
+                        </span>
+                        <Settings size={14} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="animate-in fade-in slide-in-from-bottom-5 duration-700">
-                {activeTab === "CONTENT" ? (
-                  <>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600 bg-[#050505]">
+                <Video size={48} className="mb-4 opacity-20" />
+                <p className="text-sm font-medium uppercase tracking-widest opacity-40">
+                  No Video Content
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveTab("CONTENT");
+                    setActiveBuilder("VIDEO");
+                  }}
+                  className="mt-6 px-6 py-2 bg-white/5 hover:bg-white/10 rounded-full text-xs font-bold text-slate-400 border border-white/5 transition-all"
+                >
+                  Add Video Block
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* BELOW PLAYER - TABS & CONTENT */}
+          <div className="flex-1 max-w-5xl mx-auto w-full px-8 pb-32">
+            {/* TABS NAVIGATION */}
+            <div className="flex items-center gap-8 py-6 border-b border-white/[0.06] mb-8 sticky top-0 bg-[#09090b] z-10 transition-all">
+              <button
+                onClick={() => setActiveTab("CONTENT")}
+                className={`flex items-center gap-2 text-sm font-bold pb-4 border-b-2 transition-all ${
+                  activeTab === "CONTENT"
+                    ? "text-blue-500 border-blue-500"
+                    : "text-slate-500 border-transparent hover:text-white"
+                }`}
+              >
+                <div className="w-4 h-4 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-[10px]">
+                  i
+                </div>
+                About this Lesson
+              </button>
+              <button
+                onClick={() => setActiveTab("ASSESSMENT")}
+                className={`flex items-center gap-2 text-sm font-bold pb-4 border-b-2 transition-all ${
+                  activeTab === "ASSESSMENT"
+                    ? "text-blue-500 border-blue-500"
+                    : "text-slate-500 border-transparent hover:text-white"
+                }`}
+              >
+                <CheckSquare size={14} />
+                Exercises
+              </button>
+            </div>
+
+            {/* CONTENT AREA */}
+            <div>
+              {loading ? (
+                <div className="py-20 flex flex-col items-center">
+                  <Loader2 className="animate-spin text-blue-600 mb-4" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-600">
+                    Loading Content...
+                  </span>
+                </div>
+              ) : activeTab === "CONTENT" ? (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="mb-8">
                     <input
                       type="text"
                       value={lesson?.title || ""}
                       onChange={(e) =>
                         setLesson({ ...lesson, title: e.target.value })
                       }
-                      className="w-full bg-transparent border-none focus:ring-0 text-7xl font-black text-white p-0 tracking-tighter leading-[0.9] mb-16 placeholder-slate-900 focus:placeholder-slate-800 transition-all"
-                      placeholder="Lesson Title"
+                      className="w-full bg-transparent border-none focus:ring-0 text-3xl font-bold text-white p-0 tracking-tight placeholder-slate-700 block mb-4"
+                      placeholder="Add Lesson Title..."
                     />
-
-                    <div className="space-y-16">
-                      {blocks.length > 0 ? (
-                        blocks.map((block) => (
-                          <div key={block.id} className="group relative">
-                            {/* Hover Action Bar */}
-                            <div className="absolute -left-16 top-0 flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                              <button className="p-2 text-slate-600 hover:text-indigo-400 cursor-grab">
-                                <GripVertical size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteContent(block.id)}
-                                className="p-2 text-slate-600 hover:text-red-500"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-
-                            <div className="space-y-4">
-                              <div className="flex items-center gap-3">
-                                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-700 group-hover:text-indigo-500 transition-all">
-                                  {block.type} BLOCK
-                                </span>
-                                <div className="h-px flex-1 bg-white/[0.03]" />
-                              </div>
-
-                              {block.type === "TEXT" && (
-                                <div className="text-slate-400 text-xl font-medium leading-[1.6] whitespace-pre-wrap selection:bg-indigo-500/30 px-2 line-clamp-none">
-                                  {block.body}
-                                </div>
-                              )}
-
-                              {block.type === "VIDEO" && (
-                                <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black/40 group-hover:border-indigo-500/20 transition-all">
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-20 h-20 rounded-full bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center">
-                                      <Video
-                                        size={32}
-                                        className="text-indigo-500"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="absolute bottom-6 left-6 right-6">
-                                    <div className="bg-[#0a0f18]/90 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/5">
-                                      <span className="text-[10px] font-mono text-slate-500">
-                                        {block.url}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {block.type === "PDF" && (
-                                <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 flex items-center gap-6 group-hover:bg-white/[0.04] transition-all">
-                                  <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-xl shadow-indigo-600/20">
-                                    <FileText size={28} />
-                                  </div>
-                                  <div className="flex-1">
-                                    <h4 className="text-lg font-bold text-white mb-1">
-                                      Interactive PDF Resource
-                                    </h4>
-                                    <p className="text-sm text-slate-500 font-medium truncate max-w-sm">
-                                      {block.url}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="py-40 flex flex-col items-center justify-center text-center opacity-20">
-                          <AlignLeft size={64} className="mb-6" />
-                          <h3 className="text-2xl font-black uppercase tracking-tighter">
-                            Canvas Awaiting Content
-                          </h3>
-                          <p className="text-sm font-bold mt-2">
-                            Use the Action Bar to inject curriculum blocks.
-                          </p>
-                        </div>
-                      )}
+                    <div className="text-slate-500 text-lg leading-relaxed border-l-2 border-white/5 pl-4 ml-1">
+                      In this module, we dive deep into the fundamental building
+                      blocks...
                     </div>
-                  </>
-                ) : (
-                  /* ASSESSMENT VIEW */
-                  <div className="space-y-12">
-                    <header className="mb-16">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
-                          <CheckSquare size={16} />
-                        </span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">
-                          Knowledge Validation
-                        </span>
-                      </div>
-                      <h1 className="text-6xl font-black text-white tracking-tighter leading-tight">
-                        Mastery Certification
-                      </h1>
-                      <p className="text-slate-500 text-lg mt-4 font-medium leading-relaxed max-w-xl">
-                        Design challenging questions to ensure graduates have
-                        truly retained the core concepts of this lesson.
-                      </p>
-                    </header>
+                  </div>
 
-                    <div className="space-y-6">
-                      {exercises.map((ex, idx) => (
+                  {blocks.filter((b) => b.type !== "VIDEO").length > 0 ? (
+                    blocks
+                      .filter((b) => b.type !== "VIDEO")
+                      .map((block) => (
                         <div
-                          key={ex.id}
-                          className="bg-white/[0.02] border border-white/5 rounded-3xl p-10 group hover:border-emerald-500/20 transition-all relative overflow-hidden"
+                          key={block.id}
+                          className="group relative pl-4 border-l-2 border-white/5 hover:border-blue-500/50 transition-colors"
                         >
-                          <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-600/5 blur-3xl rounded-full translate-x-10 -translate-y-10" />
-                          <div className="relative z-10">
-                            <div className="flex justify-between items-start mb-8">
-                              <div className="flex items-center gap-4">
-                                <span className="w-10 h-10 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-sm font-black text-emerald-500">
-                                  {idx + 1}
-                                </span>
-                                <div>
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">
-                                    {ex.type.replace("_", " ")}
-                                  </span>
-                                  <h4 className="text-xl font-bold text-white">
-                                    {ex.title}
-                                  </h4>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => handleDeleteExercise(ex.id)}
-                                className="text-slate-700 hover:text-red-500 transition-colors p-2"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                            <p className="text-slate-400 text-lg font-medium leading-relaxed mb-8">
-                              {ex.question}
-                            </p>
-
-                            {ex.type === "MULTIPLE_CHOICE" && (
-                              <div className="grid grid-cols-2 gap-3">
-                                {(ex.options as string[]).map((opt) => (
-                                  <div
-                                    key={opt}
-                                    className={`px-5 py-4 rounded-2xl border text-sm font-bold flex items-center justify-between ${opt === ex.correctAnswer ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/[0.03] border-white/5 text-slate-500"}`}
-                                  >
-                                    {opt}
-                                    {opt === ex.correctAnswer && (
-                                      <CheckCircle2 size={16} />
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {ex.type === "TRUE_FALSE" && (
-                              <div className="flex gap-4">
-                                {["true", "false"].map((val) => (
-                                  <div
-                                    key={val}
-                                    className={`flex-1 py-4 rounded-2xl border text-center text-sm font-black uppercase tracking-widest ${val === ex.correctAnswer ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/[0.03] border-white/5 text-slate-700"}`}
-                                  >
-                                    {val}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                          <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleDeleteContent(block.id)}
+                              className="p-2 text-slate-600 hover:text-red-500"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
-                        </div>
-                      ))}
 
-                      {exercises.length === 0 && (
-                        <div className="py-32 border-2 border-dashed border-white/5 rounded-[40px] flex flex-col items-center justify-center text-center opacity-20">
-                          <HelpCircle size={48} className="mb-4" />
-                          <h3 className="text-xl font-black uppercase tracking-widest">
-                            No Assessment Records
-                          </h3>
-                          <p className="text-xs font-bold mt-2">
-                            Trigger a builder from the right panel to add
-                            validation.
-                          </p>
+                          <div className="mb-2">
+                            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded">
+                              {block.type}
+                            </span>
+                          </div>
+
+                          {block.type === "TEXT" && (
+                            <div className="text-slate-300 text-lg leading-relaxed whitespace-pre-wrap">
+                              {block.body}
+                            </div>
+                          )}
+
+                          {block.type === "PDF" && (
+                            <div className="bg-white/[0.03] rounded-xl p-4 flex items-center gap-4 border border-white/5 hover:bg-white/[0.05] transition-colors cursor-pointer">
+                              <div className="w-12 h-12 bg-[#2d3748] rounded-lg flex items-center justify-center text-red-400">
+                                <FileText size={24} />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-white font-medium">
+                                  {block.title || "PDF Resource"}
+                                </h4>
+                                <p className="text-sm text-slate-500">
+                                  {block.url}
+                                </p>
+                              </div>
+                              <div className="px-3 py-1 bg-white/10 rounded text-xs font-bold text-white">
+                                Download
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      ))
+                  ) : (
+                    <div className="py-12 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
+                      <p className="text-slate-500 text-sm font-medium">
+                        No additional content blocks.
+                      </p>
+                      <p className="text-slate-600 text-xs mt-1">
+                        Use the sidebar to add text or resources.
+                      </p>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </main>
-
-        {/* DYNAMIC RIGHT ACTION BAR */}
-        <aside className="w-[450px] border-l border-white/[0.03] bg-[#0a0f18] flex flex-col shrink-0">
-          {activeBuilder ? (
-            <div className="flex flex-col h-full animate-in slide-in-from-right-10 duration-500">
-              <div className="p-10 border-b border-white/5 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
-                      Builder Active
-                    </span>
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  </div>
-                  <h3 className="text-2xl font-black text-white tracking-tight">
-                    Add {activeBuilder.replace("_", " ")}
-                  </h3>
+                  )}
                 </div>
+              ) : (
+                /* ASSESSMENT TAB */
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-white">
+                      Lesson Quiz
+                    </h2>
+                    <span className="text-sm text-slate-500">
+                      {exercises.length} Questions
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {exercises.map((ex, idx) => (
+                      <div
+                        key={ex.id}
+                        className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 group hover:border-blue-500/30 transition-all"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-600/10 text-blue-500 flex items-center justify-center text-sm font-bold border border-blue-500/20">
+                              {idx + 1}
+                            </div>
+                            <h3 className="text-white font-bold">{ex.title}</h3>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteExercise(ex.id)}
+                            className="text-slate-600 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <p className="text-slate-300 mb-4 pl-11">
+                          {ex.question}
+                        </p>
+                        <div className="pl-11 grid grid-cols-2 gap-2">
+                          {ex.type === "MULTIPLE_CHOICE" &&
+                            (ex.options as string[]).map((opt) => (
+                              <div
+                                key={opt}
+                                className={`px-4 py-3 rounded-lg text-sm border ${opt === ex.correctAnswer ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-black/20 border-white/5 text-slate-500"}`}
+                              >
+                                {opt}
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {exercises.length === 0 && (
+                    <div className="py-16 text-center">
+                      <CheckSquare
+                        size={48}
+                        className="mx-auto text-slate-700 mb-4"
+                      />
+                      <h3 className="text-slate-400 font-bold">
+                        No Exercises Yet
+                      </h3>
+                      <button
+                        onClick={() => setActiveBuilder("TEXT")}
+                        className="text-blue-500 text-sm mt-2 hover:underline"
+                      >
+                        Create your first question
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT SIDEBAR - "Playlist" Style Tools */}
+        <aside className="w-[400px] bg-[#0c0c0e] border-l border-white/[0.08] flex flex-col shrink-0">
+          <div className="p-6 border-b border-white/[0.08]">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-1">
+              {activeBuilder ? "Builder Active" : "Course Tools"}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {activeBuilder
+                ? "Configure your new block"
+                : "Drag elements to the canvas"}
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 thin-scrollbar">
+            {activeBuilder ? (
+              <div className="animate-in slide-in-from-right-10 duration-300">
                 <button
                   onClick={() => setActiveBuilder(null)}
-                  className="w-10 h-10 rounded-xl bg-white/[0.03] hover:bg-white/10 flex items-center justify-center text-slate-500 hover:text-white transition-all"
+                  className="mb-6 flex items-center gap-2 text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wider"
                 >
-                  <X size={20} />
+                  <ChevronLeft size={16} /> Cancel
                 </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-10 thin-scrollbar pb-32">
                 {activeTab === "CONTENT" ? (
                   <ContentBuilderForm
                     type={activeBuilder}
@@ -444,155 +454,134 @@ const LessonEditor: React.FC<LessonEditorProps> = ({
                   />
                 )}
               </div>
-            </div>
-          ) : (
-            /* DEFAULT SIDEBAR: LESSON SETTINGS */
-            <div className="flex flex-col h-full animate-in fade-in duration-700">
-              <div className="p-10 border-b border-white/5">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 mb-6">
-                  Action Hub
-                </h3>
-                <div className="space-y-4">
-                  {activeTab === "CONTENT" ? (
-                    <>
-                      <BuilderTrigger
-                        icon={<AlignLeft />}
-                        label="Rich Text"
-                        desc="Write educational copy"
-                        onClick={() => setActiveBuilder("TEXT")}
-                        color="indigo"
-                      />
-                      <BuilderTrigger
-                        icon={<Video />}
-                        label="Video Motion"
-                        desc="Embed YouTube/Vimeo"
-                        onClick={() => setActiveBuilder("VIDEO")}
-                        color="indigo"
-                      />
-                      <BuilderTrigger
-                        icon={<FileText />}
-                        label="Resource PDF"
-                        desc="Upload technical docs"
-                        onClick={() => setActiveBuilder("PDF")}
-                        color="indigo"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <BuilderTrigger
-                        icon={<Layers />}
-                        label="Multiple Choice"
-                        desc="Binary or multi-option"
-                        onClick={() => setActiveBuilder("TEXT")}
-                        color="emerald"
-                        forceLabel="QUIZ"
-                      />
-                      <BuilderTrigger
-                        icon={<HelpCircle />}
-                        label="True / False"
-                        desc="Simple binary validation"
-                        onClick={() => setActiveBuilder("TEXT")}
-                        color="emerald"
-                        forceLabel="QUIZ"
-                      />
-                    </>
-                  )}
+            ) : (
+              /* TOOL LIST (Styled like Playlist Items) */
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest pl-2 mb-3">
+                    Content Blocks
+                  </h4>
+
+                  <button
+                    onClick={() => setActiveBuilder("VIDEO")}
+                    className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-xl p-4 flex items-center gap-4 transition-all group text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-blue-600/10 text-blue-500 flex items-center justify-center border border-blue-500/20 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <Video size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                        Video Player
+                      </h5>
+                      <p className="text-xs text-slate-500">
+                        Embed MP4 or Stream
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-700 group-hover:text-slate-400"
+                    />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveBuilder("TEXT")}
+                    className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-xl p-4 flex items-center gap-4 transition-all group text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-purple-600/10 text-purple-500 flex items-center justify-center border border-purple-500/20 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                      <AlignLeft size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">
+                        Rich Text
+                      </h5>
+                      <p className="text-xs text-slate-500">
+                        Narrative & Images
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-700 group-hover:text-slate-400"
+                    />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveBuilder("PDF")}
+                    className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-xl p-4 flex items-center gap-4 transition-all group text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-orange-600/10 text-orange-500 flex items-center justify-center border border-orange-500/20 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                      <FileText size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-sm font-bold text-white group-hover:text-orange-400 transition-colors">
+                        Resource PDF
+                      </h5>
+                      <p className="text-xs text-slate-500">
+                        Downloadable Assets
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-700 group-hover:text-slate-400"
+                    />
+                  </button>
+                </div>
+
+                <div className="h-px bg-white/5" />
+
+                <div className="space-y-1">
+                  <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest pl-2 mb-3">
+                    Interactivity
+                  </h4>
+                  <button
+                    onClick={() => {
+                      setActiveTab("ASSESSMENT");
+                      setActiveBuilder("TEXT");
+                    }}
+                    className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-xl p-4 flex items-center gap-4 transition-all group text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-emerald-600/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                      <CheckSquare size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
+                        Quiz Question
+                      </h5>
+                      <p className="text-xs text-slate-500">
+                        Multiple Choice / T&F
+                      </p>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-700 group-hover:text-slate-400"
+                    />
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-12 thin-scrollbar">
-                <section>
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
-                      Contextual Data
-                    </h4>
-                    <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/5 px-2 py-1 rounded">
-                      Auto-Saving
-                    </span>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-                        Publish Status
-                      </span>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-white">
-                          Live Production
-                        </span>
-                        <div className="w-10 h-5 bg-indigo-600 rounded-full flex items-center justify-end px-1">
-                          <div className="w-3 h-3 bg-white rounded-full" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-                        Completion Mode
-                      </span>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-white">
-                          Sequential Only
-                        </span>
-                        <CheckCircle2 size={16} className="text-emerald-500" />
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div className="p-10 pt-0 shrink-0">
-                <button
-                  onClick={onClose}
-                  className="w-full py-5 bg-white/[0.03] border border-white/5 hover:border-red-500/40 hover:bg-red-500/5 text-slate-500 hover:text-red-500 rounded-[28px] text-[10px] font-black uppercase tracking-widest transition-all"
-                >
-                  Discard Draft
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="p-6 border-t border-white/[0.08] bg-[#0c0c0e]">
+            <button
+              onClick={onClose}
+              className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span>Save & Finish Editing</span>
+            </button>
+          </div>
         </aside>
       </div>
     </div>
   );
 };
 
-// --- SUB-COMPONENTS ---
-
-const BuilderTrigger = ({
-  icon,
-  label,
-  desc,
-  onClick,
-  color,
-  forceLabel,
-}: any) => (
-  <button
-    onClick={() => onClick(forceLabel || label.split(" ")[1].toUpperCase())}
-    className="w-full p-4 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center gap-4 group hover:border-white/10 hover:bg-white/[0.05] transition-all text-left"
-  >
-    <div
-      className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${color === "indigo" ? "bg-indigo-600/10 text-indigo-500 group-hover:bg-indigo-600 group-hover:text-white" : "bg-emerald-600/10 text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white"}`}
-    >
-      {React.cloneElement(icon, { size: 24 })}
-    </div>
-    <div className="flex-1">
-      <div className="text-sm font-black text-white group-hover:translate-x-1 transition-transform tracking-tight">
-        {label}
-      </div>
-      <div className="text-[10px] font-bold text-slate-600 mt-0.5">{desc}</div>
-    </div>
-    <ChevronRight
-      size={16}
-      className="text-slate-800 group-hover:text-slate-400 group-hover:translate-x-1 transition-all"
-    />
-  </button>
-);
+// --- SUB-COMPONENTS (Styles Updated) ---
 
 const ContentBuilderForm: React.FC<{
   type: BlockType;
   lessonId: number;
   onCancel: () => void;
   onSuccess: (block: LessonBlock) => void;
-}> = ({ type, lessonId, onCancel, onSuccess }) => {
+}> = ({ type, lessonId, onSuccess }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [url, setUrl] = useState("");
@@ -626,65 +615,56 @@ const ContentBuilderForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="space-y-3">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-          Internal Reference
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          Block Title
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:border-indigo-600 focus:ring-0 placeholder-slate-800"
-          placeholder="e.g. Intro Section Part 1"
+          className="w-full bg-white/[0.05] border border-white/10 rounded-xl p-4 text-sm font-medium text-white focus:border-blue-600 focus:ring-0 placeholder-slate-600 transition-colors"
+          placeholder="e.g. Introduction"
         />
       </div>
 
       {type === "TEXT" ? (
-        <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-            Educational Narrative
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            Content
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full bg-white/[0.03] border border-white/10 rounded-3xl p-6 text-base font-medium leading-relaxed text-slate-300 focus:border-indigo-600 focus:ring-0 placeholder-slate-800 min-h-[350px] thin-scrollbar"
-            placeholder="Write your lesson content here..."
+            className="w-full bg-white/[0.05] border border-white/10 rounded-xl p-4 text-sm font-medium text-slate-300 focus:border-blue-600 focus:ring-0 placeholder-slate-600 min-h-[200px] thin-scrollbar transition-colors"
+            placeholder="Write content..."
             required
           />
         </div>
       ) : (
-        <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-            {type === "VIDEO" ? "Dynamic Stream URL" : "Document Cloud Link"}
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {type === "VIDEO" ? "Video URL" : "File URL"}
           </label>
           <input
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:border-indigo-600 focus:ring-0 placeholder-slate-800 font-mono"
+            className="w-full bg-white/[0.05] border border-white/10 rounded-xl p-4 text-sm font-mono text-blue-400 focus:border-blue-600 focus:ring-0 placeholder-slate-700 transition-colors"
             placeholder="https://..."
             required
           />
         </div>
       )}
 
-      <div className="flex gap-4 pt-10">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-5 bg-white/[0.03] text-slate-500 rounded-[24px] text-[10px] font-black uppercase tracking-widest"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-[2] py-5 bg-indigo-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-indigo-600/20 active:scale-95 transition-all"
-        >
-          {loading ? "Synthesizing..." : "Commit to Canvas"}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+      >
+        {loading ? "Saving..." : "Add to Lesson"}
+      </button>
     </form>
   );
 };
@@ -694,7 +674,7 @@ const QuizBuilderForm: React.FC<{
   lessonId: number;
   onCancel: () => void;
   onSuccess: () => void;
-}> = ({ moduleId, lessonId, onCancel, onSuccess }) => {
+}> = ({ moduleId, lessonId, onSuccess }) => {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"MULTIPLE_CHOICE" | "TRUE_FALSE">(
     "MULTIPLE_CHOICE",
@@ -733,69 +713,60 @@ const QuizBuilderForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="space-y-3">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-          Assessment Goal
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          Question Title
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:border-indigo-600 focus:ring-0 placeholder-slate-800"
-          placeholder="e.g. Master React Hooks"
+          className="w-full bg-white/[0.05] border border-white/10 rounded-xl p-4 text-sm font-medium text-white focus:border-blue-600 focus:ring-0 placeholder-slate-600 transition-colors"
+          placeholder="e.g. Concept Check"
           required
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-            Validation Logic
-          </label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as any)}
-            className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-5 text-xs font-bold text-white focus:border-indigo-600 focus:ring-0"
-          >
-            <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-            <option value="TRUE_FALSE">True / False</option>
-          </select>
-        </div>
-        <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-            Reward Points
-          </label>
-          <input
-            type="number"
-            value={points}
-            onChange={(e) => setPoints(Number(e.target.value))}
-            className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-5 text-sm font-bold text-white focus:border-indigo-600 focus:ring-0"
-          />
-        </div>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as any)}
+          className="bg-white/[0.05] border border-white/10 rounded-xl p-4 text-xs font-bold text-white focus:border-blue-600 focus:ring-0"
+        >
+          <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+          <option value="TRUE_FALSE">True / False</option>
+        </select>
+        <input
+          type="number"
+          value={points}
+          onChange={(e) => setPoints(Number(e.target.value))}
+          className="bg-white/[0.05] border border-white/10 rounded-xl p-4 text-xs font-bold text-white focus:border-blue-600 focus:ring-0"
+          placeholder="Points"
+        />
       </div>
 
-      <div className="space-y-3">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-          Strategic Question
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          Question Text
         </label>
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          className="w-full bg-white/[0.03] border border-white/10 rounded-3xl p-6 text-sm font-bold text-white focus:border-indigo-600 focus:ring-0 placeholder-slate-800 min-h-[120px]"
-          placeholder="Pose the challenge..."
+          className="w-full bg-white/[0.05] border border-white/10 rounded-xl p-4 text-sm font-medium text-slate-300 focus:border-blue-600 focus:ring-0 placeholder-slate-600 min-h-[100px]"
+          placeholder="Ask something..."
           required
         />
       </div>
 
       {type === "MULTIPLE_CHOICE" ? (
-        <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-            Propositions (Select Verified)
+        <div className="space-y-3">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            Options (Click circle to select correct)
           </label>
           <div className="space-y-2">
             {options.map((opt, idx) => (
-              <div key={idx} className="relative group">
+              <div key={idx} className="relative">
                 <input
                   type="text"
                   value={opt}
@@ -804,14 +775,14 @@ const QuizBuilderForm: React.FC<{
                     n[idx] = e.target.value;
                     setOptions(n);
                   }}
-                  className={`w-full bg-white/[0.03] border rounded-2xl p-5 text-xs font-bold pr-14 transition-all ${correctAnswer === opt && opt !== "" ? "border-emerald-500 text-emerald-400 bg-emerald-500/5" : "border-white/10 text-slate-400 focus:border-indigo-600"}`}
+                  className={`w-full bg-white/[0.03] border rounded-xl p-4 text-xs font-medium pr-12 transition-all ${correctAnswer === opt && opt !== "" ? "border-green-500 text-green-400 bg-green-500/5" : "border-white/10 text-slate-400 focus:border-blue-600"}`}
                   placeholder={`Option ${idx + 1}`}
                 />
                 <button
                   type="button"
                   onClick={() => setCorrectAnswer(opt)}
                   disabled={!opt}
-                  className={`absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all ${correctAnswer === opt && opt !== "" ? "bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-500/20 scale-110" : "border-slate-800 hover:border-slate-600"}`}
+                  className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border transition-all ${correctAnswer === opt && opt !== "" ? "bg-green-500 border-green-500" : "border-slate-600 hover:border-slate-400"}`}
                 />
               </div>
             ))}
@@ -824,7 +795,7 @@ const QuizBuilderForm: React.FC<{
               key={val}
               type="button"
               onClick={() => setCorrectAnswer(val.toLowerCase())}
-              className={`flex-1 py-8 rounded-[32px] border-2 font-black uppercase tracking-widest text-[10px] transition-all ${correctAnswer === val.toLowerCase() ? "bg-emerald-600 border-emerald-500 text-white shadow-2xl shadow-emerald-600/30" : "bg-white/[0.02] border-white/5 text-slate-600"}`}
+              className={`flex-1 py-4 rounded-xl border font-bold uppercase tracking-widest text-[10px] transition-all ${correctAnswer === val.toLowerCase() ? "bg-green-600 border-green-500 text-white" : "bg-white/[0.02] border-white/5 text-slate-600 hover:bg-white/[0.05]"}`}
             >
               {val}
             </button>
@@ -832,22 +803,13 @@ const QuizBuilderForm: React.FC<{
         </div>
       )}
 
-      <div className="flex gap-4 pt-10">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-5 bg-white/[0.03] text-slate-500 rounded-[24px] text-[10px] font-black uppercase tracking-widest"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-[2] py-5 bg-emerald-600 text-white rounded-[24px] text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-emerald-600/20 active:scale-95 transition-all"
-        >
-          {loading ? "Validating..." : "Commit Assessment"}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20"
+      >
+        {loading ? "Saving..." : "Add Question"}
+      </button>
     </form>
   );
 };

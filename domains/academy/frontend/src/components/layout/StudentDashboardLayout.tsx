@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  BookOpen,
-  User,
-  Menu,
-  X,
-  Plus
-} from "lucide-react";
+import { LayoutDashboard, BookOpen, User, Menu, X, Plus } from "lucide-react";
 
 interface NavItem {
   path: string;
@@ -15,7 +8,9 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -48,7 +43,7 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[45] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -71,7 +66,9 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-           <p className="px-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-4 lg:hidden">Navigation</p>
+          <p className="px-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-4 lg:hidden">
+            Navigation
+          </p>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -87,7 +84,14 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                   }
                 `}
               >
-                <Icon size={18} className={active ? "text-white" : "text-white/30 group-hover:text-white/60"} />
+                <Icon
+                  size={18}
+                  className={
+                    active
+                      ? "text-white"
+                      : "text-white/30 group-hover:text-white/60"
+                  }
+                />
                 <span>{item.label}</span>
               </Link>
             );
@@ -96,21 +100,19 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
         {/* Footer Link */}
         <div className="p-4 border-t border-white/5 space-y-2">
-           <Link 
-              to="/courses"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-           >
-              <Plus size={14} />
-              Explore Courses
-           </Link>
+          <Link
+            to="/courses"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <Plus size={14} />
+            Explore Courses
+          </Link>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 bg-gray-50 p-4 md:p-8">
-          <div className="max-w-7xl mx-auto h-full">
-            {children}
-          </div>
+        <div className="max-w-7xl mx-auto h-full">{children}</div>
       </main>
     </div>
   );
