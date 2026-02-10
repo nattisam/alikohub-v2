@@ -1,4 +1,4 @@
-import { api } from '../lib/api';
+import { api } from "../lib/api";
 
 export interface Job {
   id: string;
@@ -28,25 +28,28 @@ export const getJobById = async (jobId: string): Promise<Job> => {
 
 export const getAllJobs = async (): Promise<Job[]> => {
   try {
-    const response = await api.get('/careers/jobs');
+    const response = await api.get("/careers/jobs");
     return response.data;
   } catch (error) {
-    console.error('Error fetching jobs:', error);
+    console.error("Error fetching jobs:", error);
     throw error;
   }
 };
 
-export const createJob = async (jobData: Omit<Job, 'id'>): Promise<Job> => {
+export const createJob = async (jobData: Omit<Job, "id">): Promise<Job> => {
   try {
-    const response = await api.post('/careers/jobs', jobData);
+    const response = await api.post("/careers/jobs", jobData);
     return response.data;
   } catch (error) {
-    console.error('Error creating job:', error);
+    console.error("Error creating job:", error);
     throw error;
   }
 };
 
-export const updateJob = async (jobId: string, jobData: Partial<Job>): Promise<Job> => {
+export const updateJob = async (
+  jobId: string,
+  jobData: Partial<Job>,
+): Promise<Job> => {
   try {
     const response = await api.put(`/careers/jobs/${jobId}`, jobData);
     return response.data;
@@ -61,6 +64,18 @@ export const deleteJob = async (jobId: string): Promise<void> => {
     await api.delete(`/careers/jobs/${jobId}`);
   } catch (error) {
     console.error(`Error deleting job with ID ${jobId}:`, error);
+    throw error;
+  }
+};
+
+export const closeJob = async (jobId: string): Promise<Job> => {
+  try {
+    const response = await api.patch(`/careers/jobs/${jobId}`, {
+      status: "CLOSED",
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error closing job with ID ${jobId}:`, error);
     throw error;
   }
 };

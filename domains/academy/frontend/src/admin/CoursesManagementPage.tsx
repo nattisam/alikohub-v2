@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { courseApi } from "../api/courseApi";
-import {
-  FaTimes,
-  FaCheck,
-  FaBan,
-  FaBook,
-  FaUser,
-  FaTag,
-  FaMoneyBillWave,
-} from "react-icons/fa";
+import { FaCheck, FaBan, FaBook } from "react-icons/fa";
 
 interface Course {
   id: number;
@@ -94,196 +86,170 @@ const ReviewCourseModal: React.FC<ReviewCourseModalProps> = ({
 
   if (!course) return null;
 
-  const isActionable =
-    course.status === "PENDING_APPROVAL" || course.status === "DRAFT";
+  const isActionable = course.status === "PENDING_APPROVAL";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#10141d] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-800 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-start p-8 pb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Review Course
-            </h2>
-            <div className="flex items-center gap-2 text-gray-400">
-              <FaBook className="w-5 h-5 text-gray-500" />
-              <span className="text-sm font-medium">Reviewing:</span>
-              <span className="text-white font-semibold">{course.title}</span>
-              <span
-                className={`ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                  course.status === "DRAFT"
-                    ? "bg-yellow-500/20 text-yellow-500"
-                    : "bg-blue-500/20 text-blue-500"
-                }`}
-              >
-                {course.status.replace("_", " ")}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
-          >
-            <FaTimes size={20} />
-          </button>
+        <div className="px-6 pt-6 pb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Review Course</h2>
+          <p className="text-sm text-gray-500">
+            You’re about to review this course content
+          </p>
         </div>
 
-        <div className="px-8 py-4 space-y-6">
-          {/* Info Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#171f29] p-5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
-                <FaUser size={12} />
-                <div className="text-[10px] uppercase tracking-widest font-bold">
-                  Instructor
-                </div>
-              </div>
-              <div className="text-white font-semibold truncate text-sm">
+        {/* Divider */}
+        <div className="border-t border-gray-100" />
+
+        {/* Scrollable Content Area */}
+        <div className="max-h-[70vh] overflow-y-auto">
+          {/* Summary rows */}
+          <div className="px-6 py-4 space-y-3 text-sm border-b border-gray-50">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Title</span>
+              <span
+                className="font-medium text-gray-900 truncate max-w-[240px]"
+                title={course.title}
+              >
+                {course.title}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-gray-500">Instructor</span>
+              <span className="font-medium text-gray-900">
                 {course.instructor
                   ? `${course.instructor.firstname} ${course.instructor.lastname}`
                   : "Unknown"}
-              </div>
+              </span>
             </div>
-            <div className="bg-[#171f29] p-5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
-                <FaTag size={12} />
-                <div className="text-[10px] uppercase tracking-widest font-bold">
-                  Category
-                </div>
-              </div>
-              <div className="text-white font-semibold truncate text-sm">
+
+            <div className="flex justify-between">
+              <span className="text-gray-500">Category</span>
+              <span className="font-medium text-gray-900">
                 {course.category}
-              </div>
+              </span>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#171f29] p-5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
-                <FaMoneyBillWave size={12} />
-                <div className="text-[10px] uppercase tracking-widest font-bold">
-                  Price
-                </div>
-              </div>
-              <div className="text-white font-semibold truncate text-sm">
+
+            <div className="flex justify-between">
+              <span className="text-gray-500">Price</span>
+              <span className="font-medium text-gray-900 text-emerald-600 font-bold">
                 {course.price ? `$${course.price}` : "Free"}
-              </div>
-            </div>
-            <div className="bg-[#171f29] p-5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
-                <FaTags size={12} />
-                <div className="text-[10px] uppercase tracking-widest font-bold">
-                  Level
-                </div>
-              </div>
-              <div className="text-white font-semibold truncate text-sm">
-                {course.targetLevel || "All Levels"}
-              </div>
+              </span>
             </div>
           </div>
 
-          {isActionable ? (
-            /* Comments & Actions */
-            <div className="flex flex-col h-full">
-              <div className="flex-1">
-                <label className="block text-sm text-gray-300 font-medium mb-2.5">
-                  Reviewer Comments / Reason
+          {/* Detailed Info / Description */}
+          <div className="px-6 py-4 border-b border-gray-50">
+            <span className="text-gray-500 block mb-2 font-medium text-sm">
+              Short Description
+            </span>
+            <p className="text-sm text-gray-700 leading-relaxed font-medium bg-gray-50 p-4 rounded-xl border border-gray-100">
+              {course.shortDescription || "No description provided."}
+            </p>
+          </div>
+
+          {/* Notes or Status - Still inside scrollable */}
+          <div className="px-6 py-6 bg-gray-50/30">
+            {isActionable ? (
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Reviewer Notes
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-[#171f29] border border-white/10 rounded-xl p-4 text-gray-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 outline-none resize-none h-32 text-sm placeholder-gray-600 transition-all font-medium"
-                  placeholder="Provide specific feedback or reasons for this decision..."
+                  className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none h-28 shadow-sm transition-all"
+                  placeholder="Provide internal notes or feedback for the instructor..."
                 />
-                <p className="text-[11px] text-gray-500 mt-2.5 leading-relaxed">
-                  This feedback will help track the review history.
+              </div>
+            ) : (
+              <div
+                className={`p-6 rounded-2xl border ${
+                  course.status === "PUBLISHED"
+                    ? "bg-emerald-50 border-emerald-100 shadow-sm"
+                    : course.status === "REJECTED"
+                      ? "bg-red-50 border-red-100 shadow-sm"
+                      : "bg-gray-50 border-gray-100 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  {course.status === "PUBLISHED" ? (
+                    <div className="bg-emerald-500 rounded-full p-1.5 shadow-sm shadow-emerald-200">
+                      <FaCheck size={12} className="text-white" />
+                    </div>
+                  ) : course.status === "REJECTED" ? (
+                    <div className="bg-red-500 rounded-full p-1.5 shadow-sm shadow-red-200">
+                      <FaBan size={12} className="text-white" />
+                    </div>
+                  ) : (
+                    <div className="bg-gray-400 rounded-full p-1.5 shadow-sm shadow-gray-200">
+                      <FaBook size={12} className="text-white" />
+                    </div>
+                  )}
+                  <span
+                    className={`text-lg font-bold ${
+                      course.status === "PUBLISHED"
+                        ? "text-emerald-700"
+                        : course.status === "REJECTED"
+                          ? "text-red-700"
+                          : "text-gray-600"
+                    }`}
+                  >
+                    Course {course.status.replace("_", " ")}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm font-medium">
+                  This course was processed on{" "}
+                  {new Date(course.updatedAt).toLocaleDateString()}.
                 </p>
-              </div>
-
-              {/* Actions - Integrated */}
-              <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-white/5">
-                {/* Reject Button */}
-                <button
-                  onClick={() => onReject(course.id, notes)}
-                  disabled={isProcessing}
-                  className="px-6 py-2.5 rounded-full bg-[#1a0f0f] border border-red-900/30 text-red-500 font-semibold text-xs hover:bg-[#2a1212] transition-all flex items-center gap-2 disabled:opacity-50 tracking-wide uppercase"
-                >
-                  <FaBan size={12} />
-                  Reject
-                </button>
-
-                {/* Approve Button */}
-                <button
-                  onClick={() => onApprove(course.id, notes)}
-                  disabled={isProcessing}
-                  className="px-6 py-2.5 rounded-full bg-[#00e376] text-black font-bold text-xs hover:bg-[#00c968] transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-green-900/20 tracking-wide uppercase"
-                >
-                  <div className="bg-black rounded-full p-0.5">
-                    <FaCheck size={8} className="text-white" />
-                  </div>
-                  {course.status === "DRAFT"
-                    ? "Publish Course"
-                    : "Approve Course"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Status Display */
-            <div
-              className={`p-6 rounded-xl border ${
-                course.status === "PUBLISHED"
-                  ? "bg-green-500/10 border-green-500/20"
-                  : course.status === "REJECTED"
-                    ? "bg-red-500/10 border-red-500/20"
-                    : "bg-gray-500/10 border-gray-500/20"
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                {course.status === "PUBLISHED" ? (
-                  <div className="bg-green-500 rounded-full p-1">
-                    <FaCheck size={12} className="text-black" />
-                  </div>
-                ) : course.status === "REJECTED" ? (
-                  <div className="bg-red-500 rounded-full p-1">
-                    <FaBan size={12} className="text-white" />
-                  </div>
-                ) : (
-                  <div className="bg-gray-500 rounded-full p-1">
-                    <FaBook size={12} className="text-white" />
+                {course.rejectionReason && (
+                  <div className="mt-4 text-xs text-red-700 bg-red-100/50 p-3 rounded-xl border border-red-100 font-medium">
+                    <span className="font-bold uppercase tracking-wider text-[10px]">
+                      Rejection Reason:
+                    </span>
+                    <p className="mt-1">{course.rejectionReason}</p>
                   </div>
                 )}
-                <span
-                  className={`text-lg font-bold ${
-                    course.status === "PUBLISHED"
-                      ? "text-green-500"
-                      : course.status === "REJECTED"
-                        ? "text-red-500"
-                        : "text-gray-400"
-                  }`}
-                >
-                  Course {course.status.replace("_", " ")}
-                </span>
               </div>
-              <p className="text-gray-400 text-sm">
-                This course has already been processed.
-              </p>
-              {course.rejectionReason && (
-                <div className="mt-3 text-sm text-red-400 bg-red-900/10 p-3 rounded-lg border border-red-900/20">
-                  <span className="font-semibold">Rejection Reason:</span>{" "}
-                  {course.rejectionReason}
-                </div>
-              )}
-            </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer - Fixed at bottom */}
+        <div className="px-6 py-4 bg-gray-100 flex justify-end gap-3 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
+          >
+            Close
+          </button>
+
+          {isActionable && (
+            <>
+              <button
+                onClick={() => onReject(course.id, notes)}
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 disabled:opacity-50 transition-colors"
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => onApprove(course.id, notes)}
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 disabled:opacity-50 transition-colors"
+              >
+                Approve
+              </button>
+            </>
           )}
         </div>
       </div>
     </div>
   );
 };
-
-// Also adding missing icon
-import { FaTags } from "react-icons/fa";
-
+// CoursesManagementPage component
 const CoursesManagementPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -368,19 +334,6 @@ const CoursesManagementPage = () => {
       console.error("Error rejecting course:", error);
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handlePublish = async (id: number) => {
-    // Keep this separate as it might not need the review modal?
-    // Usually 'Publish' is same as Approve if coming from Draft, but here we have PENDING_APPROVAL flow.
-    // If Admin is forcing publish on DRAFT course (rare but possible), we can keep original logic or integrate.
-    // The previous code had a specific button for DRAFT -> PUBLISH.
-    try {
-      await courseApi.updateCourseStatus(id, "PUBLISHED");
-      fetchCourses();
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -512,15 +465,6 @@ const CoursesManagementPage = () => {
                                  I'll hide the explicit buttons for Pending. 
                                  For Published/Draft, I will keep the existing utility buttons for convenience as they are not "Pending Review".
                              */}
-                          {course.status === "DRAFT" && (
-                            <button
-                              onClick={() => handlePublish(course.id)}
-                              className="text-blue-600 hover:text-blue-900 text-xs px-2"
-                              title="Publish"
-                            >
-                              Publish
-                            </button>
-                          )}
                         </div>
                       )}
                     </div>

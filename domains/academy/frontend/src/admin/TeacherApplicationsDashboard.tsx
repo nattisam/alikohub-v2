@@ -1,35 +1,48 @@
 import React, { useState } from "react";
 import { authService } from "../services/auth-service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaTimes, FaCheck, FaBan, FaUserCircle } from "react-icons/fa";
+import { FaCheck, FaBan } from "react-icons/fa";
 
 // Define TypeScript interfaces
 interface TeacherApplication {
   id: string;
   userId: string;
-  personalDetails: {
-    firstname: string;
-    lastname: string;
-    email: string;
-    phone?: string;
+  domain: string;
+  requestedRole: string;
+  formData: {
+    status: string;
+    documents: {
+      name: string;
+      url: string;
+    }[];
+    resumeUrl: string;
+    submittedAt: string;
+    personalDetails: {
+      email: string;
+      phone: string;
+      lastname: string;
+      firstname: string;
+    };
+    interviewResponses: {
+      question: string;
+      answer: string;
+    }[];
+    teachingCategories: string[];
   };
-  teachingCategories: string[];
-  resumeUrl?: string;
-  interviewResponses: {
-    question: string;
-    answer: string;
-  }[];
-  documents?: {
-    name: string;
-    url: string;
-  }[];
   status: "PENDING" | "APPROVED" | "REJECTED";
+  reviewedBy: string | null;
+  reviewNotes: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
+    id: number;
+    firebaseId: string;
     firstname: string;
     lastname: string;
     email: string;
+    profilePicture: string | null;
+    createdAt: string;
+    status: string;
   };
 }
 
@@ -52,155 +65,172 @@ const ReviewApplicationModal: React.FC<ReviewModalProps> = ({
 
   if (!application) return null;
 
-  // Extract derived data
   const department =
-    application.teachingCategories && application.teachingCategories.length > 0
-      ? application.teachingCategories.join(", ")
+    application.formData.teachingCategories?.length > 0
+      ? application.formData.teachingCategories.join(", ")
       : "General";
 
-  const experienceQ = application.interviewResponses?.find(
-    (r) =>
-      r.question.toLowerCase().includes("experience") ||
-      r.question.toLowerCase().includes("years"),
-  );
-  // Truncate experience if it's too long for the card, or show "View Details"
-  const experience = experienceQ
-    ? experienceQ.answer.length > 30
-      ? experienceQ.answer.substring(0, 30) + "..."
-      : experienceQ.answer
-    : "See Resume";
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#10141d] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-800 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-start p-8 pb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Review Teacher Application
-            </h2>
-            <div className="flex items-center gap-2 text-gray-400">
-              <FaUserCircle className="w-5 h-5 text-gray-500" />
-              <span className="text-sm font-medium">Reviewing:</span>
-              <span className="text-white font-semibold">
+        <div className="px-6 pt-6 pb-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Review Teacher Application
+          </h2>
+          <p className="text-sm text-gray-500">
+            You’re about to review this candidate
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-100" />
+
+        {/* Scrollable Content Area */}
+        <div className="max-h-[70vh] overflow-y-auto">
+          {/* Summary rows */}
+          <div className="px-6 py-4 space-y-3 text-sm border-b border-gray-50">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Name</span>
+              <span className="font-medium text-gray-900">
                 {application.user.firstname} {application.user.lastname}
               </span>
             </div>
+
+            <div className="flex justify-between">
+              <span className="text-gray-500">Email</span>
+              <span className="font-medium text-gray-900">
+                {application.user.email}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-gray-500">Department</span>
+              <span className="font-medium text-gray-900">{department}</span>
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-gray-500">Resume</span>
+              {application.formData.resumeUrl ? (
+                <a
+                  href={application.formData.resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-600 font-semibold hover:underline bg-emerald-50 px-3 py-1 rounded-md text-xs"
+                >
+                  View Resume
+                </a>
+              ) : (
+                <span className="text-gray-400">Not provided</span>
+              )}
+            </div>
+
+            {application.formData.documents?.length > 0 && (
+              <div className="pt-2">
+                <span className="text-gray-500 block mb-2 font-medium">
+                  Supporting Documents
+                </span>
+                <div className="space-y-2">
+                  {application.formData.documents.map((doc, idx) => (
+                    <a
+                      key={idx}
+                      href={doc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between bg-gray-50 p-3 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100 group"
+                    >
+                      <span className="text-gray-700 truncate max-w-[200px] text-xs font-medium">
+                        {doc.name || `Document ${idx + 1}`}
+                      </span>
+                      <span className="text-emerald-600 font-bold text-[10px] uppercase group-hover:underline">
+                        View
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Notes or Status - Still inside scrollable */}
+          <div className="px-6 py-6 bg-gray-50/30">
+            {application.status === "PENDING" ? (
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  Reviewer Notes
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-none h-28 shadow-sm transition-all"
+                  placeholder="Provide internal notes or feedback for the candidate..."
+                />
+              </div>
+            ) : (
+              <div
+                className={`p-6 rounded-2xl border ${
+                  application.status === "APPROVED"
+                    ? "bg-emerald-50 border-emerald-100 shadow-sm"
+                    : "bg-red-50 border-red-100 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  {application.status === "APPROVED" ? (
+                    <div className="bg-emerald-500 rounded-full p-1.5 shadow-sm shadow-emerald-200">
+                      <FaCheck size={12} className="text-white" />
+                    </div>
+                  ) : (
+                    <div className="bg-red-500 rounded-full p-1.5 shadow-sm shadow-red-200">
+                      <FaBan size={12} className="text-white" />
+                    </div>
+                  )}
+                  <span
+                    className={`text-lg font-bold ${
+                      application.status === "APPROVED"
+                        ? "text-emerald-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    Application {application.status}
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm font-medium">
+                  This application was processed on{" "}
+                  {new Date(application.updatedAt).toLocaleDateString()}.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer - Fixed at bottom */}
+        <div className="px-6 py-4 bg-gray-100 flex justify-end gap-3 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="px-5 py-2 rounded-xl border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-200 transition-colors"
           >
-            <FaTimes size={20} />
+            Close
           </button>
-        </div>
 
-        <div className="px-8 py-4 space-y-6">
-          {/* Info Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#171f29] p-5 rounded-xl border border-white/5">
-              <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
-                Department
-              </div>
-              <div
-                className="text-white font-semibold truncate text-sm"
-                title={department}
+          {application.status === "PENDING" && (
+            <>
+              <button
+                onClick={() => onReject(application.id, notes)}
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
-                {department}
-              </div>
-            </div>
-            <div className="bg-[#171f29] p-5 rounded-xl border border-white/5">
-              <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
-                Experience
-              </div>
-              <div
-                className="text-white font-semibold truncate text-sm"
-                title={experienceQ?.answer}
+                Reject
+              </button>
+              <button
+                onClick={() => onApprove(application.id, notes)}
+                disabled={isProcessing}
+                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 disabled:opacity-50 transition-colors"
               >
-                {experience}
-              </div>
-            </div>
-          </div>
-
-          {application.status === "PENDING" ? (
-            /* Comments */
-            <div>
-              <label className="block text-sm text-gray-300 font-medium mb-2.5">
-                Reviewer Comments / Reason
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full bg-[#171f29] border border-white/10 rounded-xl p-4 text-gray-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 outline-none resize-none h-32 text-sm placeholder-gray-600 transition-all font-medium"
-                placeholder="Provide specific feedback or reasons for this decision..."
-              />
-              <p className="text-[11px] text-gray-500 mt-2.5 leading-relaxed">
-                This feedback will be visible to other administrators and
-                partially shared with the applicant upon rejection.
-              </p>
-            </div>
-          ) : (
-            /* Status Display */
-            <div
-              className={`p-6 rounded-xl border ${
-                application.status === "APPROVED"
-                  ? "bg-green-500/10 border-green-500/20"
-                  : "bg-red-500/10 border-red-500/20"
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                {application.status === "APPROVED" ? (
-                  <div className="bg-green-500 rounded-full p-1">
-                    <FaCheck size={12} className="text-black" />
-                  </div>
-                ) : (
-                  <div className="bg-red-500 rounded-full p-1">
-                    <FaBan size={12} className="text-white" />
-                  </div>
-                )}
-                <span
-                  className={`text-lg font-bold ${
-                    application.status === "APPROVED"
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  Application {application.status}
-                </span>
-              </div>
-              <p className="text-gray-400 text-sm">
-                This application has already been processed.
-              </p>
-            </div>
+                Approve
+              </button>
+            </>
           )}
         </div>
-
-        {/* Footer actions - Only show for PENDING applications */}
-        {application.status === "PENDING" && (
-          <div className="px-8 py-6 bg-[#0c1016] flex justify-end gap-4 border-t border-white/5">
-            {/* Reject Button */}
-            <button
-              onClick={() => onReject(application.id, notes)}
-              disabled={isProcessing}
-              className="px-6 py-2.5 rounded-full bg-[#1a0f0f] border border-red-900/30 text-red-500 font-semibold text-xs hover:bg-[#2a1212] transition-all flex items-center gap-2 disabled:opacity-50 tracking-wide uppercase"
-            >
-              <FaBan size={12} />
-              Reject
-            </button>
-
-            {/* Approve Button */}
-            <button
-              onClick={() => onApprove(application.id, notes)}
-              disabled={isProcessing}
-              className="px-6 py-2.5 rounded-full bg-[#00e376] text-black font-bold text-xs hover:bg-[#00c968] transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-green-900/20 tracking-wide uppercase"
-            >
-              <div className="bg-black rounded-full p-0.5">
-                <FaCheck size={8} className="text-white" />
-              </div>
-              Approve Application
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -474,9 +504,9 @@ const TeacherApplicationsDashboard: React.FC = () => {
                         {new Date(application.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 hover:text-blue-800">
-                        {application.resumeUrl ? (
+                        {application.formData.resumeUrl ? (
                           <a
-                            href={application.resumeUrl}
+                            href={application.formData.resumeUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline"

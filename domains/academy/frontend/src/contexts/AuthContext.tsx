@@ -46,51 +46,62 @@ const buildUser = (user: any): CurrentUser => {
   }
 
   const academyUser = user?.academyUser;
-  
+
   // Convert backend lowercase roles to frontend uppercase format
   const convertRoleToUppercase = (role: string) => {
-    if (!role || typeof role !== 'string') return role;
-    
+    if (!role || typeof role !== "string") return role;
+
     switch (role.toLowerCase()) {
-      case 'instructor':
-      case 'teacher':
-        return 'INSTRUCTOR';
-      case 'student':
-        return 'STUDENT';
-      case 'admin':
-        return 'ADMIN';
-      case 'user':
-        return 'USER';
-      case 'course_manager':
-        return 'COURSE_MANAGER';
+      case "instructor":
+      case "teacher":
+        return "INSTRUCTOR";
+      case "student":
+        return "STUDENT";
+      case "admin":
+        return "ADMIN";
+      case "user":
+        return "USER";
+      case "course_manager":
+        return "COURSE_MANAGER";
       default:
         return role.toUpperCase();
     }
   };
 
-  const convertedAcademyUser = academyUser ? {
-    ...academyUser,
-    role: convertRoleToUppercase(academyUser?.role),
-    activeRole: convertRoleToUppercase(academyUser?.activeRole),
-  } : null;
+  const convertedAcademyUser = academyUser
+    ? {
+        ...academyUser,
+        role: convertRoleToUppercase(academyUser?.role),
+        activeRole: convertRoleToUppercase(academyUser?.activeRole),
+      }
+    : null;
 
   return {
     ...user,
-    firstName: user?.firstname || user?.firstName || '',
-    lastName: user?.lastname || user?.lastName || '',
+    firstName: user?.firstname || user?.firstName || "",
+    lastName: user?.lastname || user?.lastName || "",
     academyUser: convertedAcademyUser,
-    academyRole: convertRoleToUppercase(academyUser?.role) || 'USER',
-    academyActiveRole: convertRoleToUppercase(user?.academyActiveRole) || convertRoleToUppercase(academyUser?.activeRole) || convertRoleToUppercase(academyUser?.role) || 'USER',
+    academyRole: convertRoleToUppercase(academyUser?.role) || "USER",
+    academyActiveRole:
+      convertRoleToUppercase(user?.academyActiveRole) ||
+      convertRoleToUppercase(academyUser?.activeRole) ||
+      convertRoleToUppercase(academyUser?.role) ||
+      "USER",
 
-    hasSelectedRole: !!(convertedAcademyUser?.role && convertedAcademyUser.role !== 'USER'),
+    hasSelectedRole: !!(
+      convertedAcademyUser?.role && convertedAcademyUser.role !== "USER"
+    ),
 
     // Include INSTRUCTOR in availableRoles if user has applied and been approved
     // Include INSTRUCTOR if the user has an approved instructor application status
     availableRoles: [
-      'STUDENT',
+      "STUDENT",
       // Include INSTRUCTOR if user's role is INSTRUCTOR or if they have an approved instructor application
-      ...((convertedAcademyUser?.role === 'INSTRUCTOR' || user?.roleStatus?.instructor === 'approved') ? ['INSTRUCTOR'] : []),
-      ...(user?.globalRole === 'ADMIN' ? ['ADMIN'] : []),
+      ...(convertedAcademyUser?.role === "INSTRUCTOR" ||
+      user?.roleStatus?.instructor === "approved"
+        ? ["INSTRUCTOR"]
+        : []),
+      ...(user?.globalRole === "ADMIN" ? ["ADMIN"] : []),
     ].filter((v, i, a) => a.indexOf(v) === i), // Unique roles
   };
 };
@@ -102,40 +113,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isRoleSwitching, setIsRoleSwitching] = useState(false);
 
- useEffect(() => {
-  const token = localStorage.getItem("accessToken");
-  const rawUser = localStorage.getItem("user");
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const rawUser = localStorage.getItem("user");
 
-  if (token && rawUser) {
-    try {
-      setUser(JSON.parse(rawUser));   // trust cached user
-    } catch {
-      setUser(null);
-    }
-  }
-
-  setIsLoading(false);
-
-  // Listen for logout events from other tabs
-  const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === null || e.key === "accessToken" || e.key === "user") {
-      if (!localStorage.getItem("accessToken") || !localStorage.getItem("user")) {
+    if (token && rawUser) {
+      try {
+        setUser(JSON.parse(rawUser)); // trust cached user
+      } catch {
         setUser(null);
       }
     }
-  };
 
-  const handleUserLoggedOut = () => setUser(null);
+    setIsLoading(false);
 
-  window.addEventListener("storage", handleStorageChange);
-  window.addEventListener("userLoggedOut", handleUserLoggedOut);
+    // Listen for logout events from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === null || e.key === "accessToken" || e.key === "user") {
+        if (
+          !localStorage.getItem("accessToken") ||
+          !localStorage.getItem("user")
+        ) {
+          setUser(null);
+        }
+      }
+    };
 
-  return () => {
-    window.removeEventListener("storage", handleStorageChange);
-    window.removeEventListener("userLoggedOut", handleUserLoggedOut);
-  };
-}, []);
+    const handleUserLoggedOut = () => setUser(null);
 
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("userLoggedOut", handleUserLoggedOut);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userLoggedOut", handleUserLoggedOut);
+    };
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: (c: LoginCredentials) => authService.login(c),
@@ -157,8 +170,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const finalUser = buildUser(data.user);
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
-        
-        console.error('Error fetching profile after login:', error);
+
+        console.error("Error fetching profile after login:", error);
       }
     },
   });
@@ -183,8 +196,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const finalUser = buildUser(data.user);
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
-        
-        console.error('Error fetching profile after signup:', error);
+
+        console.error("Error fetching profile after signup:", error);
       }
     },
   });
@@ -200,30 +213,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         // Already handled in mutationFn, just return
         return;
       }
-      
+
       // Handle normal role selection
       if (res?.accessToken) {
         localStorage.setItem("accessToken", res.accessToken);
       }
 
       // Use the user data from the response which contains the updated role information
-      const updatedUserFromResponse = res.user || (await authService.getProfile());
-      
+      const updatedUserFromResponse =
+        res.user || (await authService.getProfile());
+
       // When selecting a role for the first time, also set it as the active role by calling switchRole
       const updated = buildUser(updatedUserFromResponse);
-      
+
       // Update the user in context
       updateUser(updated);
-      
+
       // After selecting a role, automatically switch to that role to make it the active role
       try {
-        const switchRes = await authService.switchRole(updated.academyActiveRole as Role);
+        const switchRes = await authService.switchRole(
+          updated.academyActiveRole as Role,
+        );
         // Use the user data from the switch response which contains the updated active role
-        const switchedUserFromResponse = switchRes.user || (await authService.getProfile());
+        const switchedUserFromResponse =
+          switchRes.user || (await authService.getProfile());
         const switchedUser = buildUser(switchedUserFromResponse);
         updateUser(switchedUser);
       } catch (error) {
-        console.error('Error switching to selected role:', error);
+        console.error("Error switching to selected role:", error);
         // If switch fails, still update with the selected role data
         updateUser(updated);
       }
@@ -241,9 +258,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const logout = () => {
     localStorage.clear();
     setUser(null);
-    
+
     // Dispatch a custom event to notify other tabs about logout
-    window.dispatchEvent(new CustomEvent('userLoggedOut'));
+    window.dispatchEvent(new CustomEvent("userLoggedOut"));
   };
 
   const updateUser = (u: CurrentUser) => {
@@ -266,7 +283,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       // Use the user data from the response which contains the updated active role
-      const updatedUserFromResponse = res.user || (await authService.getProfile());
+      const updatedUserFromResponse =
+        res.user || (await authService.getProfile());
 
       // Build user with the response data which contains the correct active role
       const updated = buildUser(updatedUserFromResponse);
@@ -291,9 +309,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const refreshProfile = async () => {
     if (!user) return null;
-    
+
     await authService.getProfile();
-    // Profile is already updated if the service updates some internal state, 
+    // Profile is already updated if the service updates some internal state,
     // but here we just want to refresh. Actually, we should use the result.
     const updated = buildUser(await authService.getProfile());
     updateUser(updated);
@@ -313,8 +331,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     await applyAsInstructorMutation.mutateAsync(data);
   };
 
-  const loginError = loginMutation.error ? (loginMutation.error as any).response?.data?.message || loginMutation.error.message : null;
-  const signupError = signupMutation.error ? (signupMutation.error as any).response?.data?.message || signupMutation.error.message : null;
+  const extractErrorMessage = (error: any) => {
+    if (!error) return null;
+
+    // Axios error handling
+    if (error.response?.data) {
+      const data = error.response.data;
+      if (typeof data === "string") return data;
+      if (data.message) {
+        return Array.isArray(data.message)
+          ? data.message.join(". ")
+          : data.message;
+      }
+      if (data.error) return data.error;
+    }
+
+    // Fallback to error message or status text
+    return error.message || "An unexpected error occurred. Please try again.";
+  };
+
+  const loginError = extractErrorMessage(loginMutation.error);
+  const signupError = extractErrorMessage(signupMutation.error);
 
   return (
     <AuthContext.Provider
