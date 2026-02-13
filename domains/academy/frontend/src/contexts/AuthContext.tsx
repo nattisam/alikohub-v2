@@ -204,13 +204,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const selectRoleMutation = useMutation({
     mutationFn: ({ role }: { role: Role }) => {
-      // For non-instructor roles, make the API call
       return authService.selectRole(role);
     },
-    onSuccess: async (res) => {
-      // Check if this was an instructor application case
+    onSuccess: async (res, variables) => {
+      // Handle the case where the API returned instructor application required
       if (res && res.error === "INSTRUCTOR_APPLICATION_REQUIRED") {
-        // Already handled in mutationFn, just return
         return;
       }
 
@@ -219,30 +217,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         localStorage.setItem("accessToken", res.accessToken);
       }
 
-      // Use the user data from the response which contains the updated role information
+      // Initial user update with the selected role
       const updatedUserFromResponse =
         res.user || (await authService.getProfile());
-
-      // When selecting a role for the first time, also set it as the active role by calling switchRole
       const updated = buildUser(updatedUserFromResponse);
-
-      // Update the user in context
       updateUser(updated);
 
-      // After selecting a role, automatically switch to that role to make it the active role
+      // Now automatically switch to that role to make it the active role immediately
       try {
-        const switchRes = await authService.switchRole(
-          updated.academyActiveRole as Role,
-        );
-        // Use the user data from the switch response which contains the updated active role
+        const switchRes = await authService.switchRole(variables.role);
+
+        // Final update with the switched role which refreshes the activeRole and JWT
+        if (switchRes?.accessToken) {
+          localStorage.setItem("accessToken", switchRes.accessToken);
+        }
+
         const switchedUserFromResponse =
           switchRes.user || (await authService.getProfile());
         const switchedUser = buildUser(switchedUserFromResponse);
         updateUser(switchedUser);
       } catch (error) {
         console.error("Error switching to selected role:", error);
-        // If switch fails, still update with the selected role data
-        updateUser(updated);
       }
     },
   });

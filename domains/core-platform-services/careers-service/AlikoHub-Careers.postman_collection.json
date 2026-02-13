@@ -279,7 +279,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:3006",
+			"value": "https://api.consultancy.alikohub.com",
 			"type": "string"
 		},
 		{

@@ -86,7 +86,8 @@ const ReviewCourseModal: React.FC<ReviewCourseModalProps> = ({
 
   if (!course) return null;
 
-  const isActionable = course.status === "PENDING_APPROVAL";
+  const isActionable =
+    course.status === "PENDING_APPROVAL" || course.status === "DRAFT";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
@@ -201,8 +202,9 @@ const ReviewCourseModal: React.FC<ReviewCourseModalProps> = ({
                   </span>
                 </div>
                 <p className="text-gray-600 text-sm font-medium">
-                  This course was processed on{" "}
-                  {new Date(course.updatedAt).toLocaleDateString()}.
+                  {course.status === "DRAFT"
+                    ? "This course is currently in draft and has not been submitted yet."
+                    : `This course was processed on ${new Date(course.updatedAt).toLocaleDateString()}.`}
                 </p>
                 {course.rejectionReason && (
                   <div className="mt-4 text-xs text-red-700 bg-red-100/50 p-3 rounded-xl border border-red-100 font-medium">
@@ -443,7 +445,8 @@ const CoursesManagementPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex space-x-2">
-                      {course.status === "PENDING_APPROVAL" ? (
+                      {course.status === "PENDING_APPROVAL" ||
+                      course.status === "DRAFT" ? (
                         <button
                           onClick={() => setSelectedCourse(course)}
                           className="bg-gray-900 text-white hover:bg-gray-800 px-4 py-1.5 rounded-md text-xs font-medium transition-colors"

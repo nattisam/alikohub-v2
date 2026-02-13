@@ -10,7 +10,7 @@ import {
   FaExchangeAlt,
   FaUserPlus,
 } from "react-icons/fa";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const ProfilePage = () => {
   const {
@@ -19,7 +19,7 @@ const ProfilePage = () => {
     isLoading,
     switchRoleMutation,
   } = useAuth();
-  
+
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,20 +30,78 @@ const ProfilePage = () => {
       try {
         // Use the mutation directly to get access to its state
         await switchRoleMutation.mutateAsync(role);
-      } catch (error) {
+
+        // Show success modal
+        Swal.fire({
+          showConfirmButton: false,
+          background: "transparent",
+          backdrop: "rgba(0,0,0,0.3)",
+          timer: 2500,
+          html: `
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-[360px] text-center">
+              <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-lg font-semibold text-gray-900">
+                Role Switched Successfully
+              </h2>
+
+              <p class="text-sm text-gray-500 mt-2">
+                You are now using the ${role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()} role.
+              </p>
+            </div>
+          `,
+        });
+      } catch (error: any) {
         console.error("Failed to switch role:", error);
-        alert("Failed to switch role. Please try again.");
+
+        // Extract error message
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Your instructor application is pending approval.";
+
+        // Show failure modal
+        Swal.fire({
+          showConfirmButton: false,
+          background: "transparent",
+          backdrop: "rgba(0,0,0,0.3)",
+          timer: 3000,
+          html: `
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-[360px] text-center">
+              <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-lg font-semibold text-gray-900">
+                Failed to Switch Role
+              </h2>
+
+              <p class="text-sm text-gray-500 mt-2">
+                ${errorMessage}
+              </p>
+            </div>
+          `,
+        });
       } finally {
         // Close the dropdown after role switch attempt
         setIsRoleDropdownOpen(false);
       }
     }
   };
-  
+
   const handleChooseRole = () => {
-    navigate('/role');
+    navigate("/role");
   };
-  
 
   // If user is loading, show loading indicator
   if (isLoading) {
@@ -60,7 +118,7 @@ const ProfilePage = () => {
   // If user is not logged in, redirect to login
   if (!currentUser) {
     // Check if we are in a browser environment
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.location.href = "/auth/login";
     }
     return null;
@@ -82,7 +140,11 @@ const ProfilePage = () => {
             <p className="text-gray-600 mb-6">
               To access your profile, please select a role.
             </p>
-            <RoleSelectionModal onClose={() => { if (typeof window !== 'undefined') window.location.href = "/"; }} />
+            <RoleSelectionModal
+              onClose={() => {
+                if (typeof window !== "undefined") window.location.href = "/";
+              }}
+            />
           </div>
         </div>
       </div>
@@ -107,7 +169,7 @@ const ProfilePage = () => {
   }, [currentUser]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -115,8 +177,6 @@ const ProfilePage = () => {
       [name]: value,
     }));
   };
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,10 +194,10 @@ const ProfilePage = () => {
         lastname: formData.lastname,
         bio: formData.bio,
       };
-      
+
       const response = await apiClient.patch(
         `/users/${currentUser.firebaseId}`,
-        updateData
+        updateData,
       );
 
       if (response?.data) {
@@ -173,25 +233,22 @@ const ProfilePage = () => {
             </div>
           `,
           didOpen: () => {
-            const btn = document.getElementById('lms-success-btn');
+            const btn = document.getElementById("lms-success-btn");
             if (btn) btn.onclick = () => Swal.close();
-          }
+          },
         });
-
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error updating profile',
-        text: error?.response?.data?.message || "Please try again."
+        icon: "error",
+        title: "Error updating profile",
+        text: error?.response?.data?.message || "Please try again.",
       });
     } finally {
       setLoading(false);
     }
   };
-
-
 
   if (!currentUser) {
     return (
@@ -223,7 +280,8 @@ const ProfilePage = () => {
               </p>
             </div>
             {/* Role Switching Dropdown - Show if user has any available roles */}
-            {currentUser?.availableRoles && currentUser.availableRoles.length > 0 && (
+            {currentUser?.availableRoles &&
+              currentUser.availableRoles.length > 0 && (
                 <div className="relative">
                   <button
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
@@ -242,14 +300,14 @@ const ProfilePage = () => {
                       <div className="py-1" role="menu">
                         {currentUser.availableRoles
                           .filter((role) =>
-                            ["STUDENT", "INSTRUCTOR"].includes(role)
+                            ["STUDENT", "INSTRUCTOR"].includes(role),
                           ) // Only show valid academy roles
                           .map((role) => (
                             <button
                               key={role}
                               onClick={() =>
                                 handleRoleChange(
-                                  role as "STUDENT" | "INSTRUCTOR"
+                                  role as "STUDENT" | "INSTRUCTOR",
                                 )
                               }
                               className={`block px-4 py-2 text-sm w-full text-left ${
@@ -268,14 +326,14 @@ const ProfilePage = () => {
                   )}
                 </div>
               )}
-              {/* Button to navigate to role selection page to choose additional roles */}
-              <button
-                onClick={handleChooseRole}
-                className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <FaUserPlus className="mr-2 h-4 w-4" />
-                Choose Role
-              </button>
+            {/* Button to navigate to role selection page to choose additional roles */}
+            <button
+              onClick={handleChooseRole}
+              className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <FaUserPlus className="mr-2 h-4 w-4" />
+              Choose Role
+            </button>
           </div>
 
           <div className="border-t border-gray-200">
@@ -382,20 +440,21 @@ const ProfilePage = () => {
                       Cancel
                     </button>
                     {(() => {
-                      const hasChanges = currentUser && (
-                        formData.firstname !== (currentUser.firstname || "") ||
-                        formData.lastname !== (currentUser.lastname || "") ||
-                        formData.bio !== (currentUser.bio || "")
-                      );
-                      
+                      const hasChanges =
+                        currentUser &&
+                        (formData.firstname !== (currentUser.firstname || "") ||
+                          formData.lastname !== (currentUser.lastname || "") ||
+                          formData.bio !== (currentUser.bio || ""));
+
                       return (
                         <button
                           type="submit"
                           disabled={loading || !hasChanges}
                           className={`inline-flex justify-center items-center py-2.5 px-8 border text-sm font-semibold rounded-full transition-all duration-200 
-                            ${loading || !hasChanges 
-                              ? "bg-[#0D72BA]/5 text-[#0D72BA]/30 border-[#0D72BA]/10 cursor-not-allowed" 
-                              : "bg-[#0D72BA] text-white border-transparent hover:bg-[#0b619e] hover:shadow-lg active:scale-95 shadow-md shadow-[#0D72BA]/20"
+                            ${
+                              loading || !hasChanges
+                                ? "bg-[#0D72BA]/5 text-[#0D72BA]/30 border-[#0D72BA]/10 cursor-not-allowed"
+                                : "bg-[#0D72BA] text-white border-transparent hover:bg-[#0b619e] hover:shadow-lg active:scale-95 shadow-md shadow-[#0D72BA]/20"
                             }`}
                         >
                           {loading ? (
@@ -434,10 +493,10 @@ const ProfilePage = () => {
                       </dd>
                     </div>
                     <div className="sm:col-span-2">
-                       <dt className="text-sm font-medium text-gray-500">Bio</dt>
-                       <dd className="mt-1 text-sm text-gray-900">
-                         {currentUser.bio || "No bio provided"}
-                       </dd>
+                      <dt className="text-sm font-medium text-gray-500">Bio</dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {currentUser.bio || "No bio provided"}
+                      </dd>
                     </div>
                   </div>
 

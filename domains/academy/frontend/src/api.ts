@@ -18,13 +18,13 @@ const PORT = import.meta.env.VITE_API_PORT || 3006;
 const ACADEMY_BASE_URL =
   env === "development"
     ? `http://localhost:${PORT}` // your local dev server
-    : "https://alikohub.com/api/academy"; // production server
+    : "https://api.consultancy.alikohub.com/api/academy"; // production server
 
 // Auth service URL
 const AUTH_BASE_URL =
   env === "development"
     ? `http://localhost:${PORT}/auth`
-    : "https://alikohub.com/api/auth";
+    : "https://api.consultancy.alikohub.com/api/auth";
 
 // Retry configuration - reduced retries to prevent cascading
 const MAX_RETRIES = 1; // Only retry once to avoid cascading with React Query

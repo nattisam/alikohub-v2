@@ -408,6 +408,39 @@ const ManageCoursePage: React.FC = () => {
                   </span>
                 </div>
               </div>
+
+              {(course?.status === "DRAFT" ||
+                course?.status === "REJECTED") && (
+                <div className="mt-6">
+                  <button
+                    onClick={async () => {
+                      if (
+                        window.confirm(
+                          "Are you sure you want to submit this course for review?",
+                        )
+                      ) {
+                        try {
+                          await courseApi.submitForApproval(courseId);
+                          fetchCourseData();
+                          alert(
+                            "Course submitted successfully! An admin will review it soon.",
+                          );
+                        } catch (err) {
+                          console.error("Failed to submit course:", err);
+                          alert("Failed to submit course. Please try again.");
+                        }
+                      }
+                    }}
+                    className="w-full bg-[#0a66c2] text-white py-2 rounded-full font-semibold hover:bg-[#004182] transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+                  >
+                    <CheckCircle size={14} /> Submit for Review
+                  </button>
+                  <p className="text-[10px] text-gray-500 mt-2 text-center">
+                    Once submitted, you won't be able to make changes until it's
+                    reviewed.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

@@ -12,15 +12,16 @@ interface RoleSelectionModalProps {
   allowAdditionalRoles?: boolean; // If true, show modal even if user has already selected a role
 }
 
-const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ 
-  onClose, 
-  allowAdditionalRoles = false // Default to false to maintain existing behavior
+const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
+  onClose,
+  allowAdditionalRoles = false, // Default to false to maintain existing behavior
 }) => {
   const { user, isLoading: authLoading, selectRoleMutation } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [error, setError] = useState<string>("");
-    const [showInstructorApplication, setShowInstructorApplication] = useState<boolean>(false);
+  const [showInstructorApplication, setShowInstructorApplication] =
+    useState<boolean>(false);
 
   const handleRoleSelect = (role: "STUDENT" | "INSTRUCTOR") => {
     setSelectedRole(role);
@@ -32,24 +33,22 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
       setError("Please select a role first.");
       return;
     }
-    
+
     setError("");
-    
+
     if (selectedRole === "INSTRUCTOR") {
       // For instructor, show the application modal directly instead of calling selectRole
       setShowInstructorApplication(true);
       return;
     }
-    
+
     // Use the mutation directly to get access to its state
     try {
-      await selectRoleMutation.mutateAsync({ role: selectedRole as "STUDENT" | "INSTRUCTOR" });
-      
-      // Don't navigate automatically - user needs to switch role manually from profile
-      // Show success message and close modal
-      alert(`${selectedRole} role selected successfully! You can now switch to this role from your profile.`);
-      
-      // Close the modal if provided
+      await selectRoleMutation.mutateAsync({
+        role: selectedRole as "STUDENT" | "INSTRUCTOR",
+      });
+
+      // Close the modal and the dashboard router will handle redirecting to the correct active dashboard
       if (onClose) {
         onClose();
       }
@@ -61,8 +60,9 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
 
   // If user has already completed the initial role selection (indicated by hasSelectedRole), don't show the modal
   // According to the experience lesson, we should use hasSelectedRole to control role selection visibility
-  const hasSelectedRole = user?.hasSelectedRole || user?.academyUser?.hasSelectedRole;
-  
+  const hasSelectedRole =
+    user?.hasSelectedRole || user?.academyUser?.hasSelectedRole;
+
   // Only return null if user has selected a role AND we're not allowing additional roles
   if (hasSelectedRole && !allowAdditionalRoles) {
     return null;
@@ -71,13 +71,13 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
   return (
     <>
       {showInstructorApplication ? (
-        <TeacherApplicationModal 
+        <TeacherApplicationModal
           onClose={() => setShowInstructorApplication(false)}
           onSuccess={() => {
             // After successful application, close the modal and navigate to dashboard
             setShowInstructorApplication(false);
             if (onClose) onClose();
-            navigate('/dashboard');
+            navigate("/dashboard");
           }}
         />
       ) : (
@@ -85,7 +85,9 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Role</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Select Your Role
+                </h2>
                 <p className="text-gray-600">
                   Choose the role you want to use in the academy platform
                 </p>
@@ -99,10 +101,10 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
 
               <div className="space-y-4">
                 {/* Student Role Card */}
-                <div 
+                <div
                   className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                    selectedRole === "STUDENT" 
-                      ? "border-blue-500 bg-blue-50" 
+                    selectedRole === "STUDENT"
+                      ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
                   }`}
                   onClick={() => handleRoleSelect("STUDENT")}
@@ -114,7 +116,9 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg text-gray-800">Student</h3>
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        Student
+                      </h3>
                       <p className="text-gray-600 text-sm mt-1">
                         Access courses, assignments, and learning materials
                       </p>
@@ -123,10 +127,10 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
                 </div>
 
                 {/* Instructor Role Card */}
-                <div 
+                <div
                   className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                    selectedRole === "INSTRUCTOR" 
-                      ? "border-blue-500 bg-blue-50" 
+                    selectedRole === "INSTRUCTOR"
+                      ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
                   }`}
                   onClick={() => handleRoleSelect("INSTRUCTOR")}
@@ -138,7 +142,9 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg text-gray-800">Instructor</h3>
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        Instructor
+                      </h3>
                       <p className="text-gray-600 text-sm mt-1">
                         Create and manage courses, grade assignments
                       </p>
@@ -155,14 +161,14 @@ const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({
                     </div>
                   </div>
                 </div>
-
-
               </div>
 
               <div className="mt-6">
                 <button
                   onClick={handleSubmitRole}
-                  disabled={!selectedRole || selectRoleMutation.isPending || authLoading}
+                  disabled={
+                    !selectedRole || selectRoleMutation.isPending || authLoading
+                  }
                   className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
                     !selectedRole || selectRoleMutation.isPending || authLoading
                       ? "bg-gray-400 cursor-not-allowed"

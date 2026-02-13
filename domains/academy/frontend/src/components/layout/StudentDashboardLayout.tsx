@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, BookOpen, User, Menu, X, Plus } from "lucide-react";
+import {
+  LayoutDashboard,
+  BookOpen,
+  User,
+  Menu,
+  X,
+  Plus,
+  GraduationCap,
+} from "lucide-react";
 
 interface NavItem {
   path: string;
@@ -15,9 +23,13 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems: NavItem[] = [
-    { path: "/student-dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/student-dashboard/mycourses", label: "Courses", icon: BookOpen },
-    { path: "/student-dashboard/profile", label: "Profile", icon: User },
+    { path: "/student-dashboard", label: "Overview", icon: LayoutDashboard },
+    {
+      path: "/student-dashboard/mycourses",
+      label: "My Courses",
+      icon: BookOpen,
+    },
+    { path: "/student-dashboard/profile", label: "My Profile", icon: User },
   ];
 
   const isActive = (path: string) => {
@@ -51,61 +63,64 @@ const StudentDashboardLayout: React.FC<{ children: React.ReactNode }> = ({
 
       {/* Sidebar - Height adjusted to account for AcademyHeader (h-16) if parent layout doesn't handle it */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-16 left-0 z-50 lg:z-10 h-screen lg:h-[calc(100vh-64px)] w-64 bg-[#2e3b4d] border-r border-white/10 transition-all duration-300 ease-in-out flex flex-col
+        className={`fixed lg:sticky top-0 lg:top-16 left-0 z-50 lg:z-10 h-screen lg:h-[calc(100vh-64px)] w-64 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        {/* Sidebar Navigation Header (Mobile only) */}
-        <div className="lg:hidden px-6 py-6 bg-[#2e3b4d] border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-[#3E92D1] flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SH</span>
+        {/* Brand Header */}
+        <div className="p-5 border-b border-gray-200 bg-[#0C69AD]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 shadow-sm">
+              <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-white text-lg">Student Hub</span>
+            <div>
+              <h1 className="text-lg font-bold text-white tracking-tight">
+                Student Hub
+              </h1>
+              <p className="text-xs text-white/80 leading-tight mt-1">
+                Your learning journey starts here
+              </p>
+            </div>
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          <p className="px-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-4 lg:hidden">
-            Navigation
-          </p>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group
-                  ${
-                    active
-                      ? "bg-[#3E92D1] text-white shadow-lg shadow-blue-500/20"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }
-                `}
-              >
-                <Icon
-                  size={18}
-                  className={
-                    active
-                      ? "text-white"
-                      : "text-white/30 group-hover:text-white/60"
-                  }
-                />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 p-4 space-y-6 overflow-y-auto custom-scrollbar">
+          <div>
+            <p className="px-3 text-xs font-semibold text-indigo-600 uppercase tracking-widest mb-4">
+              Academic
+            </p>
+            <ul className="space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <li key={item.path}>
+                    <Link
+                      to={item.path}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                        active
+                          ? "bg-[#0C69AD] text-white shadow-md font-semibold"
+                          : "text-gray-600 hover:bg-[#0A5FA0] hover:text-white hover:shadow-sm"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </nav>
 
         {/* Footer Link */}
-        <div className="p-4 border-t border-white/5 space-y-2">
+        <div className="p-4 border-t border-gray-100">
           <Link
             to="/courses"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-[#0C69AD] transition-all duration-300"
           >
-            <Plus size={14} />
-            Explore Courses
+            <Plus className="w-4 h-4" />
+            <span className="truncate">Explore Courses</span>
           </Link>
         </div>
       </aside>

@@ -1,5 +1,5 @@
 async function test() {
-  const registerRes = await fetch('http://localhost:3006/auth/register', {
+  const registerRes = await fetch('https://api.consultancy.alikohub.com/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -21,7 +21,7 @@ async function test() {
   const token = regData.accessToken;
   console.log('Token received');
 
-  const coursesRes = await fetch('http://localhost:3006/academy/courses?page=1&pageSize=10', {
+  const coursesRes = await fetch('https://api.consultancy.alikohub.com/academy/courses?page=1&pageSize=10', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   

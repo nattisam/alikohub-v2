@@ -6,7 +6,6 @@ import AcademyStudentDashboard from "../../pages/student/AcademyStudentDashboard
 import StudentCourseOverview from "../../pages/student/StudentCourseOverview";
 import StudentProfile from "../../pages/student/StudentProfile";
 import StudentDashboardLayout from "./StudentDashboardLayout";
-import LessonPage from "../../pages/student/LessonPage";
 import ModulePage from "../../pages/student/ModulePage";
 
 import NotFoundState from "../states/NotFoundState";
@@ -71,7 +70,7 @@ const StudentDashboardRouter: React.FC = () => {
     <Routes>
       <Route
         path="course/:courseId/lesson/:lessonId"
-        element={<LessonPage />}
+        element={<ModulePage />}
       />
       <Route
         path="*"

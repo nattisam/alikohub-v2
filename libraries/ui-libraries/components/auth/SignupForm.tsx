@@ -219,11 +219,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
           (import.meta.env.VITE_RECAPTCHA_SITE_KEY &&
             import.meta.env.VITE_RECAPTCHA_SITE_KEY.length > 0) ? (
             <ReCAPTCHA
-              sitekey={
-                recaptchaSiteKey ||
-                import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-                ""
-              }
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
               onChange={handleCaptchaChange}
               onErrored={() => {
                 setCaptchaError(

@@ -43,7 +43,7 @@ const Services = ({
               window.open("http://localhost:4200", "_blank");
             } else {
               // For production, use the subdomain
-              window.open("https://academy.alikohub.com", "_blank");
+              window.open("https://api.consultancy.alikohub.com", "_blank");
             }
           }}
         />

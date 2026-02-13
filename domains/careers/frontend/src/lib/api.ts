@@ -1,7 +1,8 @@
-import axios, { AxiosError } from "axios"
+import axios, { AxiosError } from "axios";
 
 // Base API client for careers services
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://api.consultancy.alikohub.com";
 
 // Retry configuration
 const MAX_RETRIES = 3;
@@ -10,7 +11,10 @@ const MAX_RETRY_DELAY = 10000; // Maximum delay in ms
 
 // Helper function to calculate exponential backoff delay
 const getRetryDelay = (retryCount: number): number => {
-  const delay = Math.min(RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+  const delay = Math.min(
+    RETRY_DELAY * Math.pow(2, retryCount),
+    MAX_RETRY_DELAY,
+  );
   // Add jitter to prevent thundering herd
   return delay + Math.random() * 1000;
 };
@@ -26,26 +30,28 @@ const createRetryInterceptor = (instance: typeof api | typeof publicApi) => {
   instance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      const config = error.config as (any & { __retryCount?: number }) | undefined;
-      
+      const config = error.config as
+        | (any & { __retryCount?: number })
+        | undefined;
+
       // Only retry on 429 errors
       if (error.response?.status === 429 && config) {
         const retryCount = config.__retryCount || 0;
-        
+
         if (retryCount < MAX_RETRIES) {
           const delay = getRetryDelay(retryCount);
-          
+
           // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, delay));
-          
+          await new Promise((resolve) => setTimeout(resolve, delay));
+
           // Update retry count and retry the request
           const newConfig = addRetryConfig({ ...config }, retryCount + 1);
           return instance.request(newConfig);
         }
       }
-      
+
       return Promise.reject(error);
-    }
+    },
   );
 };
 
@@ -53,17 +59,17 @@ const createRetryInterceptor = (instance: typeof api | typeof publicApi) => {
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: false,
-})
+});
 
 // API client for public requests (no auth required)
 export const publicApi = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: false,
-})
+});
 
 // Request interceptor for authenticated API client
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -76,17 +82,15 @@ createRetryInterceptor(api);
 createRetryInterceptor(publicApi);
 
 // Export types
-export type AuthRole = "USER" | "ADMIN" | "RECRUITER"
+export type AuthRole = "USER" | "ADMIN" | "RECRUITER";
 
 export interface AuthUser {
-  id: string
-  email: string
-  role: AuthRole
+  id: string;
+  email: string;
+  role: AuthRole;
 }
 
 export interface AuthResponse {
-  accessToken: string
-  user: AuthUser
+  accessToken: string;
+  user: AuthUser;
 }
-
-
