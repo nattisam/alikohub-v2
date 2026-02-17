@@ -78,6 +78,12 @@ export interface CurrentUser {
     applicationDate?: string;
     approvalDate?: string;
   };
+  instructorStatus?: "active" | "pending" | "rejected" | "not_applied" | string;
+  hasTeacherApplication?: boolean;
+  hasAcademyRole?: boolean;
+  canAccessDashboard?: boolean;
+  canEnrollCourses?: boolean;
+  canCreateCourses?: boolean;
   academyProfile?: {
     id: string;
     userId: string;
@@ -177,6 +183,11 @@ export const authService = {
     const { data } = await api.post("/auth/academy/switch-role", {
       newRole: backendRole,
     });
+    return data;
+  },
+
+  getUserAcademyStatus: async (userId: string) => {
+    const { data } = await api.get(`/auth/academy/user-status/${userId}`);
     return data;
   },
 

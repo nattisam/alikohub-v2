@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,30 +9,42 @@ import {
 } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
-import NotFoundState from "./components/states/NotFoundState";
+import PageLoader from "./components/common/PageLoader";
 
-import LoginPage from "./pages/auth/LoginPage";
+// Lazy-loaded components
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
+const AcademyHomePage = lazy(() => import("./pages/user/AcademyHomePage"));
+const AcademyAboutPage = lazy(() => import("./pages/user/AcademyAboutPage"));
+const AcademyContactUsPage = lazy(
+  () => import("./pages/user/AcademyContactUsPage"),
+);
+const CourseDetailsPage = lazy(() => import("./pages/user/CourseDetailsPage"));
+const CategoryPage = lazy(() => import("./pages/user/CategoryPage"));
+const ProfilePage = lazy(() => import("./pages/user/ProfilePage"));
+const NotFoundState = lazy(() => import("./components/states/NotFoundState"));
+
+const InstructorDashboardRouter = lazy(
+  () => import("./components/layout/InstructorDashboardRouter"),
+);
+const StudentDashboardRouter = lazy(
+  () => import("./components/layout/StudentDashboardRouter"),
+);
+const DashboardRouter = lazy(
+  () => import("./components/layout/DashboardRouter"),
+);
+
+const TeacherApplicationsDashboard = lazy(
+  () => import("./admin/TeacherApplicationsDashboard"),
+);
+const AdminDashboard = lazy(() => import("./admin/AdminDashboard"));
+const CoursesManagementPage = lazy(
+  () => import("./admin/CoursesManagementPage"),
+);
+
 import RedirectIfAuthenticated from "./components/auth/RedirectIfAuthenticated";
-import SignupPage from "./pages/auth/SignupPage";
-import AcademyHomePage from "./pages/user/AcademyHomePage";
-import AcademyAboutPage from "./pages/user/AcademyAboutPage";
-import AcademyContactUsPage from "./pages/user/AcademyContactUsPage";
-
-import InstructorDashboardRouter from "./components/layout/InstructorDashboardRouter";
-import StudentDashboardRouter from "./components/layout/StudentDashboardRouter";
-import CoursesPage from "./pages/user/CoursesPage";
-import CourseDetailsPage from "./pages/user/CourseDetailsPage";
 import AcademyHeader from "./components/layout/AcademyHeader";
-import EventDetailsPage from "./pages/user/EventDetailsPage";
-
-import DashboardRouter from "./components/layout/DashboardRouter";
 import RoleSelectionModal from "./components/auth/RoleSelectionModal";
-import ProfilePage from "./pages/user/ProfilePage";
-
-import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
-import AdminDashboard from "./admin/AdminDashboard";
-import CoursesManagementPage from "./admin/CoursesManagementPage";
-
 import AppRoute from "./components/common/AppRoute";
 import AdminRoute from "./components/common/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -145,145 +158,139 @@ function App() {
     <ErrorBoundary>
       <Router>
         <RoleModalContainer />
-        <Routes>
-          {/* Public routes - with admin redirection */}
-          <Route element={<PublicLayout />}>
-            <Route
-              path="/"
-              element={
-                <PublicRoute>
-                  <AcademyHomePage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/about"
-              element={
-                <PublicRoute>
-                  <AcademyAboutPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/contact"
-              element={
-                <PublicRoute>
-                  <AcademyContactUsPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/courses"
-              element={
-                <PublicRoute>
-                  <CoursesPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/courses/:courseId"
-              element={
-                <PublicRoute>
-                  <CourseDetailsPage />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/events/:eventId"
-              element={
-                <PublicRoute>
-                  <EventDetailsPage />
-                </PublicRoute>
-              }
-            />
-          </Route>
-
-          {/* Auth routes — redirect authenticated users */}
-          <Route
-            path="/auth/login"
-            element={
-              <RedirectIfAuthenticated redirectPath="/">
-                <LoginPage />
-              </RedirectIfAuthenticated>
-            }
-          />
-          <Route
-            path="/auth/signup"
-            element={
-              <RedirectIfAuthenticated redirectPath="/">
-                <SignupPage />
-              </RedirectIfAuthenticated>
-            }
-          />
-
-          {/* Smart dashboard router */}
-          <Route path="/dashboard" element={<DashboardRouter />} />
-
-          {/* Student dashboard tree */}
-          <Route element={<DashboardLayout />}>
-            <Route
-              path="/student-dashboard/*"
-              element={
-                <AppRoute requiredRole="STUDENT">
-                  <StudentDashboardRouter />
-                </AppRoute>
-              }
-            />
-          </Route>
-
-          {/* Instructor dashboard */}
-          <Route element={<DashboardLayout />}>
-            <Route
-              path="/instructor/*"
-              element={
-                <AppRoute requiredRole="INSTRUCTOR">
-                  <InstructorDashboardRouter />
-                </AppRoute>
-              }
-            />
-          </Route>
-
-          {/* Profile & settings - only accessible by non-admin users */}
-          <Route element={<DashboardLayout />}>
-            <Route
-              path="/profile"
-              element={
-                <AppRoute allowNoRole={true}>
-                  <ProfilePage />
-                </AppRoute>
-              }
-            />
-          </Route>
-
-          {/* Admin routes - completely separate tree */}
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminLayout />
-              </AdminRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route
-              path="teacher-applications"
-              element={<TeacherApplicationsDashboard />}
-            />
-            <Route path="courses" element={<CoursesManagementPage />} />
-            <Route path="*" element={<NotFoundState />} />
-          </Route>
-
-          {/* Fallback */}
-          <Route
-            path="*"
-            element={
-              <NotFoundState
-                title="Page Not Found"
-                message="The page you are looking for does not exist."
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public routes - with admin redirection */}
+            <Route element={<PublicLayout />}>
+              <Route
+                path="/"
+                element={
+                  <PublicRoute>
+                    <AcademyHomePage />
+                  </PublicRoute>
+                }
               />
-            }
-          />
-        </Routes>
+              <Route
+                path="/about"
+                element={
+                  <PublicRoute>
+                    <AcademyAboutPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/contact"
+                element={
+                  <PublicRoute>
+                    <AcademyContactUsPage />
+                  </PublicRoute>
+                }
+              />
+
+              <Route
+                path="/courses/:courseId"
+                element={
+                  <PublicRoute>
+                    <CourseDetailsPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/category/:categoryName"
+                element={
+                  <PublicRoute>
+                    <CategoryPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/auth/login"
+                element={
+                  <RedirectIfAuthenticated redirectPath="/">
+                    <LoginPage />
+                  </RedirectIfAuthenticated>
+                }
+              />
+
+              <Route
+                path="/auth/signup"
+                element={
+                  <RedirectIfAuthenticated redirectPath="/">
+                    <SignupPage />
+                  </RedirectIfAuthenticated>
+                }
+              />
+            </Route>
+
+            {/* Smart dashboard router */}
+            <Route path="/dashboard" element={<DashboardRouter />} />
+
+            {/* Student dashboard tree */}
+            <Route element={<DashboardLayout />}>
+              <Route
+                path="/student-dashboard/*"
+                element={
+                  <AppRoute requiredRole="STUDENT">
+                    <StudentDashboardRouter />
+                  </AppRoute>
+                }
+              />
+            </Route>
+
+            {/* Instructor dashboard */}
+            <Route element={<DashboardLayout />}>
+              <Route
+                path="/instructor/*"
+                element={
+                  <AppRoute requiredRole="INSTRUCTOR">
+                    <InstructorDashboardRouter />
+                  </AppRoute>
+                }
+              />
+            </Route>
+
+            {/* Profile & settings - only accessible by non-admin users */}
+            <Route element={<DashboardLayout />}>
+              <Route
+                path="/profile"
+                element={
+                  <AppRoute allowNoRole={true}>
+                    <ProfilePage />
+                  </AppRoute>
+                }
+              />
+            </Route>
+
+            {/* Admin routes - completely separate tree */}
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route
+                path="teacher-applications"
+                element={<TeacherApplicationsDashboard />}
+              />
+              <Route path="courses" element={<CoursesManagementPage />} />
+              <Route path="*" element={<NotFoundState />} />
+            </Route>
+
+            {/* Fallback */}
+            <Route
+              path="*"
+              element={
+                <NotFoundState
+                  title="Page Not Found"
+                  message="The page you are looking for does not exist."
+                />
+              }
+            />
+          </Routes>
+        </Suspense>
       </Router>
     </ErrorBoundary>
   );

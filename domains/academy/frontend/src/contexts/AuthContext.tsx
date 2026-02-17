@@ -85,6 +85,7 @@ const buildUser = (user: any): CurrentUser => {
     academyUser: convertedAcademyUser,
     academyRole: convertRoleToUppercase(academyUser?.role) || "USER",
     academyActiveRole:
+      convertRoleToUppercase(user?.currentRole) ||
       convertRoleToUppercase(user?.academyActiveRole) ||
       convertRoleToUppercase(academyUser?.activeRole) ||
       convertRoleToUppercase(academyUser?.role) ||
@@ -93,14 +94,25 @@ const buildUser = (user: any): CurrentUser => {
     hasSelectedRole: !!(
       convertedAcademyUser?.role && convertedAcademyUser.role !== "USER"
     ),
+    hasTeacherApplication: user.hasTeacherApplication || false,
+    instructorStatus:
+      user.instructorStatus || user.roleStatus?.instructor || "not_applied",
+    hasAcademyRole: user.hasAcademyRole || false,
+    canAccessDashboard: user.canAccessDashboard || false,
+    canEnrollCourses: user.canEnrollCourses || false,
+    canCreateCourses: user.canCreateCourses || false,
 
     // Include INSTRUCTOR in availableRoles if user has applied and been approved
     // Include INSTRUCTOR if the user has an approved instructor application status
     availableRoles: [
       "STUDENT",
-      // Include INSTRUCTOR if user's role is INSTRUCTOR or if they have an approved instructor application
+      // Include INSTRUCTOR if user's role is INSTRUCTOR, if they have an approved instructor application,
+      // or if they have permissions to create courses (which implies they are an instructor)
       ...(convertedAcademyUser?.role === "INSTRUCTOR" ||
-      user?.roleStatus?.instructor === "approved"
+      user?.roleStatus?.instructor === "approved" ||
+      user?.instructorStatus === "active" ||
+      user?.instructorStatus === "approved" ||
+      user?.canCreateCourses === true
         ? ["INSTRUCTOR"]
         : []),
       ...(user?.globalRole === "ADMIN" ? ["ADMIN"] : []),
@@ -154,8 +166,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const loginMutation = useMutation({
-    mutationFn: (c: LoginCredentials) => authService.login(c),
-    onSuccess: async (data) => {
+    mutationFn: async (c: LoginCredentials) => {
+      // Create a timeout promise to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Invalid email or password")),
+          5000, // 5 seconds is plenty for a login check
+        ),
+      );
+
+      return Promise.race([authService.login(c), timeoutPromise]);
+    },
+    retry: false,
+    onSuccess: async (data: any) => {
       // Store the token first to make it available for subsequent API calls
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
@@ -169,7 +192,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         localStorage.setItem("user", JSON.stringify(finalUser));
       } catch (error) {
         // If profile fetch fails, we should still have the user data from login
-        // Build user with the login response data as fallback
         const finalUser = buildUser(data.user);
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
@@ -246,7 +268,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   const login = async (email: string, password: string) => {
-    await loginMutation.mutateAsync({ email, password });
+    try {
+      // Clear any previous transition error states
+      await loginMutation.mutateAsync({ email, password });
+    } catch (err) {
+      // Error is already captured by loginMutation.error
+      console.error("Login call failed:", err);
+      throw err;
+    }
   };
 
   const signup = async (credentials: SignupCredentials) => {
@@ -308,12 +337,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const refreshProfile = async () => {
     if (!user) return null;
 
-    await authService.getProfile();
-    // Profile is already updated if the service updates some internal state,
-    // but here we just want to refresh. Actually, we should use the result.
-    const updated = buildUser(await authService.getProfile());
-    updateUser(updated);
-    return updated;
+    try {
+      const profile = await authService.getProfile();
+      let academyStatus = {};
+
+      try {
+        academyStatus = await authService.getUserAcademyStatus(
+          user.id.toString(),
+        );
+      } catch (e) {
+        console.error("Failed to fetch academy status:", e);
+      }
+
+      const updated = buildUser({
+        ...profile,
+        ...academyStatus,
+      });
+
+      updateUser(updated);
+      return updated;
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+      return null;
+    }
   };
 
   const applyAsInstructorMutation = useMutation({
@@ -332,6 +378,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const extractErrorMessage = (error: any) => {
     if (!error) return null;
 
+    // If it's the custom error thrown by our timeout
+    if (error.message === "Invalid email or password") {
+      return error.message;
+    }
+
     // Axios error handling
     if (error.response?.data) {
       const data = error.response.data;
@@ -344,8 +395,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (data.error) return data.error;
     }
 
+    // Handle string errors
+    if (typeof error === "string") return error;
+
     // Fallback to error message or status text
-    return error.message || "An unexpected error occurred. Please try again.";
+    return (
+      error.message || "A server error occurred. Please try again in a moment."
+    );
   };
 
   const loginError = extractErrorMessage(loginMutation.error);

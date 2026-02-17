@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { courseApi } from "../../api/courseApi";
+import api from "../../lib/api";
 import {
   FaCheck,
   FaChevronRight,
@@ -108,12 +109,6 @@ const InstructorCreateCourse: React.FC = () => {
       // Let's use a direct call if needed, or better, use the authService resume upload pattern but for images.
       // Actually, let's use the `academyApi` directly here for valid endpoint /upload/image via gateway
 
-      // We will perform a direct axios call to the upload endpoint used in authService but for images
-      // The auth service used `api.post("/upload/document")`.
-      // We will use `api.post("/upload/image")`.
-      // We need to import `api` from `../../lib/api`.
-
-      const { api } = await import("../../lib/api");
       const { data } = await api.post("/upload/image", formData, {
         headers: {
           "Content-Type": "multipart/form-data",

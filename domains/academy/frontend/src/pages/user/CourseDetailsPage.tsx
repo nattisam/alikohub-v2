@@ -191,10 +191,10 @@ const CourseDetailsPage: React.FC = () => {
             Course Not Found
           </h2>
           <button
-            onClick={() => navigate("/courses")}
+            onClick={() => navigate("/")}
             className="text-[#3E92D1] hover:underline"
           >
-            Back to Courses
+            Back home
           </button>
         </div>
       </div>

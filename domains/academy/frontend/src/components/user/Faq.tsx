@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { FiPlus, FiMinus } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 const Faq = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const navigate = useNavigate();
 
   const faqs = [
     {
@@ -80,7 +82,10 @@ const Faq = () => {
           <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4">
             Still have questions?
           </h2>
-          <button className="px-8 py-3 bg-[#0095DA] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all">
+          <button
+            onClick={() => navigate("/contact")}
+            className="px-8 py-3 bg-[#0095DA] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+          >
             Get in touch
           </button>
         </div>

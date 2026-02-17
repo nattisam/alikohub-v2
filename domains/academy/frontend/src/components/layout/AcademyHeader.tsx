@@ -31,7 +31,7 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
 
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { logout, setRoleModalOpen } = useAuth();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,7 +82,6 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
             {[
               { to: "/", label: "Home" },
               { to: "/about", label: "About" },
-              { to: "/courses", label: "Courses" },
               { to: "/contact", label: "Contact" },
             ].map((item) => (
               <Link
@@ -115,17 +114,6 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                     Admin Panel
                   </Link>
                 )}
-
-                {/* Choose Role */}
-                {!currentUser.hasSelectedRole &&
-                  currentUser.globalRole !== "ADMIN" && (
-                    <button
-                      onClick={() => setRoleModalOpen(true)}
-                      className="bg-sky-600 hover:bg-sky-700 text-white px-5 h-10 rounded-full text-sm font-medium flex items-center justify-center shadow-md transition-all active:scale-95"
-                    >
-                      Choose Role
-                    </button>
-                  )}
 
                 {/* Profile Dropdown */}
                 <div className="relative" ref={profileDropdownRef}>
@@ -222,7 +210,6 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
           <div className="md:hidden mt-2 rounded-xl bg-white border border-slate-200 shadow-xl overflow-hidden animate-in slide-in-from-top-2">
             {[
               { to: "/", label: "Home" },
-              { to: "/courses", label: "Courses" },
               { to: "/about", label: "About" },
               { to: "/contact", label: "Contact" },
             ].map((item) => (

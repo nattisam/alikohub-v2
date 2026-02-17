@@ -13,16 +13,18 @@ const CATEGORIES = [
       "Explore Science, Technology, Engineering, and Mathematics fundamentals.",
     color: "from-[#17469E]/10 to-transparent",
     borderColor: "hover:border-[#17469E]/50",
-    route: "/courses?category=STEM",
+    route: "/category/STEM",
+    category: "STEM"
   },
   {
-    name: "Tech",
+    name: "Technology",
     image: "/techLogo.jpg",
     description:
       "Master modern technology skills, from programming to system design.",
     color: "from-[#F0802D]/10 to-transparent",
     borderColor: "hover:border-[#F0802D]/50",
-    route: "/courses?category=Technology",
+    route: "/category/Technology",
+    category: "Technology"
   },
   {
     name: "Health",
@@ -31,7 +33,8 @@ const CATEGORIES = [
       "Advance your career in healthcare with our comprehensive medical courses.",
     color: "from-green-600/10 to-transparent",
     borderColor: "hover:border-green-600/50",
-    route: "/courses?category=Health",
+    route: "/category/Health",
+    category: "Health"
   },
 ];
 
@@ -45,12 +48,8 @@ const ExploreCategories: React.FC<ExploreCategoriesProps> = ({
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {CATEGORIES.map((cat) => {
-            // Try both Tech and Technology for the count
-            const count =
-              filterCoursesByCategory(cat.name).length ||
-              (cat.name === "Tech"
-                ? filterCoursesByCategory("Technology").length
-                : 0);
+            // Get course count for the category
+            const count = filterCoursesByCategory(cat.category).length;
 
             return (
               <div

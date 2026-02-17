@@ -325,7 +325,7 @@ const AcademyStudentDashboard = () => {
               My Library
             </h2>
             <Link
-              to="/courses"
+              to="/"
               className="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2 group"
             >
               Browse Catalog{" "}
@@ -348,7 +348,7 @@ const AcademyStudentDashboard = () => {
                 Enroll in a course to start building your personal curriculum.
               </p>
               <button
-                onClick={() => navigate("/courses")}
+                onClick={() => navigate("/")}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20"
               >
                 Browse Courses

@@ -189,12 +189,13 @@ const TeacherApplicationModal: React.FC<TeacherApplicationModalProps> = ({
           ...currentUser,
           // Remove pendingRole since application is now submitted
           pendingRole: undefined,
+          hasTeacherApplication: true,
+          instructorStatus: "pending",
           roleStatus: {
             ...currentUser.roleStatus,
             instructor: "pending",
             applicationDate: new Date().toISOString(),
           },
-          availableRoles: [...(currentUser.availableRoles || []), "INSTRUCTOR"],
         };
 
         updateUser(updatedUser);

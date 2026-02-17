@@ -7,11 +7,11 @@ interface RedirectIfAuthenticatedProps {
   redirectPath?: string;
 }
 
-const RedirectIfAuthenticated: React.FC<RedirectIfAuthenticatedProps> = ({ 
-  children, 
-  redirectPath = "/" 
+const RedirectIfAuthenticated: React.FC<RedirectIfAuthenticatedProps> = ({
+  children,
+  redirectPath = "/",
 }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   // If we're still loading, show a loading indicator
@@ -28,6 +28,10 @@ const RedirectIfAuthenticated: React.FC<RedirectIfAuthenticatedProps> = ({
 
   // If user is authenticated, redirect to the specified path
   if (isAuthenticated) {
+    // If user is an admin, redirect to admin panel directly to avoid home page glitch
+    if (user?.globalRole === "ADMIN") {
+      return <Navigate to="/admin" replace />;
+    }
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 

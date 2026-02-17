@@ -1,13 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import apiClient from "../../lib/api";
-import {
-  FaUser,
-  FaSave,
-  FaEdit,
-  FaExchangeAlt,
-  FaUserPlus,
-} from "react-icons/fa";
+import { FaUser, FaSave, FaEdit, FaExchangeAlt } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 const ProfilePage = () => {
@@ -16,12 +10,26 @@ const ProfilePage = () => {
     updateUser,
     isLoading,
     switchRoleMutation,
-    setRoleModalOpen,
   } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside handler for role dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        roleDropdownRef.current &&
+        !roleDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR") => {
     if (currentUser) {
@@ -95,10 +103,6 @@ const ProfilePage = () => {
         setIsRoleDropdownOpen(false);
       }
     }
-  };
-
-  const handleChooseRole = () => {
-    setRoleModalOpen(true);
   };
 
   // If user is loading, show loading indicator
@@ -254,7 +258,7 @@ const ProfilePage = () => {
             {/* Role Switching Dropdown - Show if user has any available roles */}
             {currentUser?.availableRoles &&
               currentUser.availableRoles.length > 0 && (
-                <div className="relative">
+                <div className="relative" ref={roleDropdownRef}>
                   <button
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                     disabled={switchRoleMutation.isPending}
@@ -298,14 +302,6 @@ const ProfilePage = () => {
                   )}
                 </div>
               )}
-            {/* Button to navigate to role selection page to choose additional roles */}
-            <button
-              onClick={handleChooseRole}
-              className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              <FaUserPlus className="mr-2 h-4 w-4" />
-              Choose Role
-            </button>
           </div>
 
           <div className="border-t border-gray-200">

@@ -4,8 +4,10 @@ import {
   FaCertificate,
   FaChalkboardTeacher,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const DeliveryMethod = () => {
+  const navigate = useNavigate();
   const deliveries = [
     {
       icon: <FaUsers className="text-4xl text-[#17469E]" />,
@@ -58,7 +60,10 @@ const DeliveryMethod = () => {
       </div>
 
       <div className="mt-12 flex justify-center">
-        <button className="px-8 py-3 bg-[#0095DA] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all">
+        <button
+          onClick={() => navigate("/about")}
+          className="px-8 py-3 bg-[#0095DA] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+        >
           Learn More
         </button>
       </div>
