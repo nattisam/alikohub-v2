@@ -36,6 +36,8 @@ interface AuthContextType {
   applyAsInstructorMutation: UseMutationResult<any, any, any, unknown>;
   loginError: string | null;
   signupError: string | null;
+  isRoleModalOpen: boolean;
+  setRoleModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -112,6 +114,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRoleSwitching, setIsRoleSwitching] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -370,6 +373,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         applyAsInstructorMutation,
         loginError,
         signupError,
+        isRoleModalOpen,
+        setRoleModalOpen: setIsRoleModalOpen,
       }}
     >
       {children}

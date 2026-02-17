@@ -18,12 +18,11 @@ import {
 } from "lucide-react";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import ErrorState from "../../components/states/ErrorState";
 
 const AcademyStudentDashboard = () => {
-  const { user: currentUser, isLoading } = useAuth();
+  const { user: currentUser, isLoading, setRoleModalOpen } = useAuth();
   const navigate = useNavigate();
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -54,8 +53,10 @@ const AcademyStudentDashboard = () => {
     )
       return;
 
-    navigate("/role");
-  }, [currentUser, isLoading, navigate]);
+    // Trigger global role selection modal and redirect to home if no role
+    setRoleModalOpen(true);
+    navigate("/");
+  }, [currentUser, isLoading, navigate, setRoleModalOpen]);
 
   const fetchDashboardData = async () => {
     const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
@@ -148,25 +149,12 @@ const AcademyStudentDashboard = () => {
   const pendingRole = currentUser?.pendingRole;
   const instructorStatus = currentUser?.roleStatus?.instructor;
 
+  // Role selection handled by useEffect and global modal
   if (
     !hasSelectedRole ||
     (activeRole !== "STUDENT" && activeRole !== "INSTRUCTOR")
   ) {
-    return (
-      <div className="min-h-screen bg-[#09090b] pt-24 text-slate-200">
-        <div className="max-w-2xl mx-auto px-6">
-          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-8 text-center">
-            <h2 className="text-xl font-bold text-white mb-4">
-              Select Your Role
-            </h2>
-            <p className="text-slate-400 mb-8">
-              To access the student dashboard, please select the Student role.
-            </p>
-            <RoleSelectionModal onClose={() => navigate("/role")} />
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (

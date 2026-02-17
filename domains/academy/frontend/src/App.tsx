@@ -25,7 +25,7 @@ import AcademyHeader from "./components/layout/AcademyHeader";
 import EventDetailsPage from "./pages/user/EventDetailsPage";
 
 import DashboardRouter from "./components/layout/DashboardRouter";
-import RolesPage from "./pages/user/RolesPage";
+import RoleSelectionModal from "./components/auth/RoleSelectionModal";
 import ProfilePage from "./pages/user/ProfilePage";
 
 import TeacherApplicationsDashboard from "./admin/TeacherApplicationsDashboard";
@@ -125,12 +125,26 @@ const DashboardLayout = () => {
   );
 };
 
+const RoleModalContainer = () => {
+  const { isRoleModalOpen, setRoleModalOpen } = useAuth();
+
+  if (!isRoleModalOpen) return null;
+
+  return (
+    <RoleSelectionModal
+      onClose={() => setRoleModalOpen(false)}
+      allowAdditionalRoles={true}
+    />
+  );
+};
+
 // -------------------- App --------------------
 
 function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <RoleModalContainer />
         <Routes>
           {/* Public routes - with admin redirection */}
           <Route element={<PublicLayout />}>
@@ -205,9 +219,6 @@ function App() {
           {/* Smart dashboard router */}
           <Route path="/dashboard" element={<DashboardRouter />} />
 
-          {/* Role selection */}
-          <Route path="/role" element={<RolesPage />} />
-
           {/* Student dashboard tree */}
           <Route element={<DashboardLayout />}>
             <Route
@@ -237,7 +248,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <AppRoute>
+                <AppRoute allowNoRole={true}>
                   <ProfilePage />
                 </AppRoute>
               }

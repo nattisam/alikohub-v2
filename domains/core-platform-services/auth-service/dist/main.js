@@ -12,7 +12,7 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: winston_config_1.winstonConfig,
     });
-    const port = parseInt(process.env.AUTH_SERVICE_PORT) || 3001;
+    const port = parseInt(process.env.AUTH_SERVICE_PORT || '3001', 10);
     app.useGlobalFilters(new http_exception_filter_1.GlobalExceptionFilter(), new rpc_exception_filter_1.RpcExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
@@ -23,7 +23,7 @@ async function bootstrap() {
         transport: microservices_1.Transport.TCP,
         options: {
             host: '0.0.0.0',
-            port: parseInt(process.env.AUTH_TCP_PORT) || 3011,
+            port: parseInt(process.env.AUTH_TCP_PORT || '3011', 10),
         },
     });
     await app.startAllMicroservices();

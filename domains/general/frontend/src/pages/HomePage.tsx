@@ -8,7 +8,7 @@ import Header from "../components/header.tsx";
 import Services from "../components/services.tsx";
 import { useVisibleSection } from "../hooks/useVisibleSection.tsx";
 import { footerConfig } from "../components/FooterConfig.tsx";
-import Consultancy from "../assets/Consultancy.jpg";
+import Event from "../assets/Event.jpg";
 import Tech from "../assets/Tech.png";
 import Academy from "../assets/Academy.jpg";
 import HappyStudent from "../assets/happy-student.png";
@@ -38,7 +38,7 @@ const HomePage = () => {
       about: aboutRef,
       "contact-us": contactRef,
     },
-    10
+    10,
   );
 
   useEffect(() => {
@@ -71,11 +71,8 @@ const HomePage = () => {
     if (location.state?.scrollTo === "home") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    if (location.pathname === "/careers") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   }, [location.state, location.pathname, navigate]);
-  
+
   return (
     <>
       <Header currentSection={visbleSection} />
@@ -88,30 +85,28 @@ const HomePage = () => {
           imageSrc={HappyStudent}
           cards={[
             {
-              img: Consultancy,
+              img: Event,
               title: "Aliko Events",
               scrollTo: "events",
-              position: "absolute rotate-6 left-0 not-lg:left-8 -bottom-5 z-10",
+              subdomain: "events",
             },
             {
               img: Academy,
               title: "Aliko Academy",
               scrollTo: "academy",
-              position:
-                "absolute rotate-3 left-12 not-lg:left-18 bottom-4 z-20",
+              subdomain: "academy",
             },
             {
               img: Tech,
               title: "Aliko Con-Tech",
               scrollTo: "tech",
-              position: "absolute rotate-3 left-32 bottom-8 z-30",
+              subdomain: "tech",
             },
             {
               img: consu,
               title: "Aliko Consultancy",
               scrollTo: "consultancy",
-              position:
-                "absolute rotate-3 left-48 not-lg:left-40 bottom-15 z-30",
+              subdomain: "consultancy",
             },
           ]}
           floatingImages={[

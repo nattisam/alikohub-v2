@@ -17,7 +17,7 @@ const CourseStats: React.FC<CourseStatsProps> = ({ courses }) => {
   const totalEstimatedTime = courses.reduce((sum, course) => sum + (course.estimatedTime || 0), 0);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-white rounded-lg shadow-md">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-12">
       <div className="flex items-center p-4 bg-blue-50 rounded-lg shadow-sm">
         <FaBook className="text-blue-600 text-3xl mr-4" />
         <div>

@@ -1,6 +1,5 @@
 import { FaChevronDown, FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import Card from "./../../../../../libraries/ui-libraries/components/Card.tsx";
 import Button from "./../../../../../libraries/ui-libraries/components/Button.tsx";
 import type { HTMLAttributes } from "react";
 
@@ -8,7 +7,7 @@ type HeroCard = {
   img: string;
   title: string;
   scrollTo?: string;
-  position: string;
+  subdomain?: string;
 };
 
 type FloatingImage = {
@@ -66,9 +65,32 @@ const Hero = ({
   imageWrapperClassName = "",
   customContent,
 }: HeroProps) => {
+  const getSubdomainUrl = (subdomain?: string) => {
+    if (!subdomain) return null;
+    return `https://${subdomain}.alikohub.com`;
+  };
+
+  const handleCardClick = (
+    e: React.MouseEvent,
+    scrollTo?: string,
+    subdomain?: string,
+  ) => {
+    const url = getSubdomainUrl(subdomain);
+    if (url) {
+      e.preventDefault();
+      window.open(url, "_blank");
+    } else if (scrollTo) {
+      // Handle internal scroll if no subdomain
+      const element = document.getElementById(scrollTo);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
   return (
     <main
-      className={`relative w-full min-h-screen overflow-hidden bg-gradient-to-r from-[#F5F8F3] via-[#F5F8F3] to-[#B0DAFE] ${className}`}
+      className={`relative w-full min-h-screen bg-gradient-to-r from-[#F5F8F3] via-[#F5F8F3] to-[#B0DAFE] ${className}`}
     >
       <section
         className={`relative px-6 sm:px-10 md:px-16 pt-20 md:pt-32 flex flex-col lg:flex-row items-center justify-between z-10 ${sectionClassName}`}
@@ -110,7 +132,7 @@ const Hero = ({
             </div>
           )}
 
-          <div className="flex flex-col-reverse sm:flex-col gap-6">
+          <div className="flex flex-col gap-6 mt-8">
             {/* Buttons */}
             {showButtons && (
               <div
@@ -133,33 +155,6 @@ const Hero = ({
                 />
               </div>
             )}
-
-            {cards.length > 0 && (
-              <div className="relative mb-8 lg:mt-4 w-full max-w-[520px] h-[220px]">
-                {cards.map(({ img, title, scrollTo, position }, i) => (
-                  <Link
-                    key={i}
-                    to="/"
-                    state={scrollTo ? { scrollTo } : undefined}
-                  >
-                    <div
-                      className={`${position} w-40 lg:w-44 lg:h-44 h-40 mr-10 sm:w-36 sm:h-36`}
-                    >
-                      <div className="relative w-full h-full border-2 border-white rounded-bl-3xl rounded-tr-2xl rounded-tl-md rounded-br-md shadow-lg shadow-black overflow-hidden cursor-pointer transform transition duration-300 hover:scale-105 hover:z-[99]">
-                        <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
-                        <Card
-                          img={img}
-                          imgClassName="w-full h-full object-cover"
-                          title={title}
-                          className="w-full h-full"
-                          titleClassName="absolute text-[#FFC107] font-bold text-[9px] lg:text-xs bottom-3 left-2 z-20"
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
@@ -175,6 +170,39 @@ const Hero = ({
           </div>
         )}
       </section>
+
+      {/* Horizontal Carousel */}
+      {cards.length > 0 && (
+        <div className="relative w-full overflow-x-auto no-scrollbar pb-12 mt-4 md:mt-8 group z-20">
+          <div className="flex gap-6 sm:gap-8 px-6 sm:px-10 md:px-16 min-w-max">
+            {cards.map(({ img, title, scrollTo, subdomain }, i) => (
+              <Link
+                key={i}
+                to={getSubdomainUrl(subdomain) ? "#" : "/"}
+                state={scrollTo ? { scrollTo } : undefined}
+                onClick={(e) => handleCardClick(e, scrollTo, subdomain)}
+                className="block transform transition-all duration-500 hover:scale-105"
+              >
+                <div className="relative w-64 h-40 sm:w-72 sm:h-44 md:w-80 md:h-48 rounded-3xl overflow-hidden border-2 border-white shadow-2xl group/card">
+                  <img
+                    src={img}
+                    alt={title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-70 group-hover/card:opacity-80 transition-opacity" />
+                  <div className="absolute bottom-0 left-0 p-6 w-full">
+                    <h3 className="text-white font-bold text-lg md:text-xl drop-shadow-lg mb-1">
+                      {title}
+                    </h3>
+                    <div className="w-8 h-1 bg-[#38A1FF] rounded-full transform origin-left transition-all duration-300 group-hover/card:w-16" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {customContent}
       {backgroundImage && (
         <img

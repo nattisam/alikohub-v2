@@ -1,7 +1,6 @@
 import React from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import RoleSelectionModal from "../auth/RoleSelectionModal";
 import AcademyStudentDashboard from "../../pages/student/AcademyStudentDashboard";
 import StudentCourseOverview from "../../pages/student/StudentCourseOverview";
 import StudentProfile from "../../pages/student/StudentProfile";
@@ -11,7 +10,7 @@ import ModulePage from "../../pages/student/ModulePage";
 import NotFoundState from "../states/NotFoundState";
 
 const StudentDashboardRouter: React.FC = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, setRoleModalOpen } = useAuth();
   const navigate = useNavigate();
 
   // Check the active role from the user's academyUser
@@ -31,29 +30,16 @@ const StudentDashboardRouter: React.FC = () => {
       if (activeRole === "INSTRUCTOR") {
         navigate("/instructor");
       } else {
-        // Redirect to role selection if they don't have the right role
-        navigate("/role");
+        // Trigger global role selection modal and redirect to home
+        setRoleModalOpen(true);
+        navigate("/");
       }
     }
-  }, [currentUser, activeRole]);
+  }, [currentUser, activeRole, setRoleModalOpen, navigate]);
 
-  // If user hasn't selected a role yet, show role selection modal
+  // If user hasn't selected a role yet, redirections handled by useEffect
   if (currentUser && !hasSelectedRole) {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Select Your Role
-            </h2>
-            <p className="text-gray-600 mb-6">
-              To access the student dashboard, please select the Student role.
-            </p>
-            <RoleSelectionModal onClose={() => navigate("/")} />
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Return null if redirecting

@@ -4,16 +4,21 @@ import { courseService } from "../services/course-service";
 
 export const useCourses = () => {
   // Use React Query with the same queryKey as useAllCourses to share cache
-  const { data: courses = [], isLoading, isError, error: queryError } = useQuery({
+  const {
+    data: courses = [],
+    isLoading,
+    isError,
+    error: queryError,
+  } = useQuery({
     queryKey: ["all-courses"],
     queryFn: async () => {
       const response = await courseService.getPublishedCourses();
       return Array.isArray(response) ? response : [];
     },
-    staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
-    gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
-    refetchOnWindowFocus: false,   // prevent refetch on window focus
-    refetchOnReconnect: false,     // prevent refetch on reconnect
+    staleTime: 30 * 60 * 1000, // 30 minutes - cache longer to reduce API calls
+    gcTime: 45 * 60 * 1000, // 45 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // prevent refetch on window focus
+    refetchOnReconnect: false, // prevent refetch on reconnect
     retry: (failureCount, error: any) => {
       // Don't retry on 429 - let axios handle it to prevent cascading retries
       if (error?.response?.status === 429) {
@@ -25,27 +30,30 @@ export const useCourses = () => {
 
   // Extract categories from courses using useMemo for performance
   const categories = useMemo(() => {
-    const validCategories = ['Technology', 'STEM', 'Health'];
+    const validCategories = ["Technology", "Tech", "STEM", "Health"];
     const uniqueCategories = Array.from(
       new Set(
         courses
-          .map(course => course.category)
-          .filter((category): category is any => 
-            typeof category === 'string' && 
-            category.length > 0 && 
-            validCategories.includes(category)
-          )
-      )
+          .map((course) => course.category)
+          .filter(
+            (category): category is any =>
+              typeof category === "string" &&
+              category.length > 0 &&
+              validCategories.includes(category),
+          ),
+      ),
     );
-    
+
     // Fallback to default categories if no valid categories found
-    return uniqueCategories.length > 0 ? uniqueCategories : ["Technology", "STEM", "Health"];
+    return uniqueCategories.length > 0
+      ? uniqueCategories
+      : ["STEM", "Technology", "Health"];
   }, [courses]);
 
   // Format error message
   const error = useMemo(() => {
     if (!isError) return null;
-    
+
     const status = (queryError as any)?.response?.status;
     if (status === 401 || status === 404) {
       // 401 (Unauthorized) and 404 (Not Found) are not "fatal" errors for the course list
@@ -58,18 +66,26 @@ export const useCourses = () => {
 
   const filterCoursesByCategory = (targetCategory: string) => {
     // Only include courses with valid categories
-    const validCategories = ['Technology', 'STEM', 'Health'];
+    const validCategories = [
+      "Technology",
+      "Tech",
+      "STEM",
+      "Health",
+      "AI",
+      "Software Engineering",
+    ];
     return courses.filter((course) => {
-      if (!course.category || !validCategories.includes(course.category)) return false;
+      if (!course.category || !validCategories.includes(course.category))
+        return false;
       return course.category.toLowerCase() === targetCategory.toLowerCase();
     });
   };
 
-  return { 
-    courses, 
-    categories, 
-    loading: isLoading, 
-    error, 
-    filterCoursesByCategory 
+  return {
+    courses,
+    categories,
+    loading: isLoading,
+    error,
+    filterCoursesByCategory,
   };
 };

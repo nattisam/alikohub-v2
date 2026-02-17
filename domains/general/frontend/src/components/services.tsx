@@ -16,6 +16,14 @@ const Services = ({
   techRef,
   eventsRef,
 }: Props) => {
+  const getSubdomainUrl = (subdomain: string) => {
+    return `https://${subdomain}.alikohub.com`;
+  };
+
+  const navigateToSubdomain = (subdomain: string) => {
+    window.open(getSubdomainUrl(subdomain), "_blank");
+  };
+
   return (
     <section className="p-6 bg-[#F5F8F3] font-sans h-fit">
       <div className="flex justify-center">
@@ -36,16 +44,7 @@ const Services = ({
           reverse
           align="left"
           refProp={academyRef}
-          onClick={() => {
-            // Navigate to the academy subdomain based on environment
-            if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-              // For local development, use port 5173 for the academy frontend
-              window.open("http://localhost:4200", "_blank");
-            } else {
-              // For production, use the subdomain
-              window.open("https://api.consultancy.alikohub.com", "_blank");
-            }
-          }}
+          onClick={() => navigateToSubdomain("academy")}
         />
 
         <ServiceBlock
@@ -54,7 +53,7 @@ const Services = ({
           img={consultancy}
           align="right"
           refProp={consultancyRef}
-          onClick={() => console.log("Consultancy clicked")}
+          onClick={() => navigateToSubdomain("consultancy")}
         />
 
         <ServiceBlock
@@ -64,6 +63,7 @@ const Services = ({
           reverse
           align="left"
           refProp={techRef}
+          onClick={() => navigateToSubdomain("tech")}
         />
 
         <ServiceBlock
@@ -72,7 +72,7 @@ const Services = ({
           img={consultancy}
           align="right"
           refProp={eventsRef}
-          onClick={() => console.log("Events clicked")}
+          onClick={() => navigateToSubdomain("events")}
         />
       </div>
     </section>

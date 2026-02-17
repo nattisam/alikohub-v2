@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import apiClient from "../../lib/api";
 import {
   FaUser,
@@ -18,9 +16,9 @@ const ProfilePage = () => {
     updateUser,
     isLoading,
     switchRoleMutation,
+    setRoleModalOpen,
   } = useAuth();
 
-  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -100,7 +98,7 @@ const ProfilePage = () => {
   };
 
   const handleChooseRole = () => {
-    navigate("/role");
+    setRoleModalOpen(true);
   };
 
   // If user is loading, show loading indicator
@@ -124,32 +122,6 @@ const ProfilePage = () => {
     return null;
   }
 
-  // Allow users with globalRole USER to access their profile
-  // If user hasn't selected a role yet and doesn't have globalRole USER, show role selection modal
-
-  if (!currentUser?.academyRole && currentUser?.globalRole !== "USER") {
-    // We need to show the role selection modal
-    // For now, we'll just show a message directing them to select a role
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Select Your Role
-            </h2>
-            <p className="text-gray-600 mb-6">
-              To access your profile, please select a role.
-            </p>
-            <RoleSelectionModal
-              onClose={() => {
-                if (typeof window !== "undefined") window.location.href = "/";
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
