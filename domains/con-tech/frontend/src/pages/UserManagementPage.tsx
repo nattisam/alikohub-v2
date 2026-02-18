@@ -10,11 +10,9 @@ import {
   Loader2,
   X,
   HardHat,
-  
   Building2,
 } from "lucide-react";
-import { contechAPI } from "../services/api";
-import { useUsersByRole } from "../queries/users";
+import { useUsersByRole, useCreateUser } from "../queries/users";
 import ServerError from "../components/common/ServerError";
 
 const UserManagementPage = () => {
@@ -49,7 +47,7 @@ const UserManagementPage = () => {
     password: "",
     role: "CONTRACTOR",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createUserMutation = useCreateUser();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,42 +67,38 @@ const UserManagementPage = () => {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
 
-    try {
-      await contechAPI.createUser({
+    createUserMutation.mutate(
+      {
         email: formData.email,
         firstname: formData.firstName,
         lastname: formData.lastName,
         password: formData.password,
         role: formData.role,
-      });
-
-      setIsModalOpen(false);
-      // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        role: "CONTRACTOR",
-      });
-
-      // Refetch to see new user
-      if (formData.role === "CONTRACTOR") refetchContractors();
-      else refetchClients();
-
-      alert(`User ${formData.firstName} created successfully!`);
-    } catch (err: any) {
-      console.error("Failed to create user:", err);
-      setError(
-        err.response?.data?.message ||
-          "Failed to create user. Please try again.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          setIsModalOpen(false);
+          // Reset form
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            role: "CONTRACTOR",
+          });
+          alert(`User ${formData.firstName} created successfully!`);
+        },
+        onError: (err: any) => {
+          console.error("Failed to create user:", err);
+          setError(
+            err.response?.data?.message ||
+              "Failed to create user. Please try again.",
+          );
+        },
+      },
+    );
   };
 
   const loading = loadingContractors || loadingClients;
@@ -293,10 +287,10 @@ const UserManagementPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={createUserMutation.isPending}
                   className="flex-[2] bg-gray-900 text-white font-bold rounded-xl py-3.5 shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isSubmitting ? (
+                  {createUserMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Creating...

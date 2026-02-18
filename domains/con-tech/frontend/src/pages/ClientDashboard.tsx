@@ -236,11 +236,17 @@ const ClientDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+              <button
+                onClick={() => navigate("/client/projects")}
+                className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+              >
                 <FileText className="w-4 h-4 mr-2" />
                 Download Budget Report
               </button>
-              <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+              <button
+                onClick={() => navigate("/client/projects")}
+                className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+              >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 View Detailed Timeline
               </button>

@@ -2,18 +2,23 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDashboard, useUser } from "../hooks";
 import EmptyState from "../components/common/EmptyState";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../components/ui/card";
-import { Search, Plus, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Calendar,
+  Loader2,
+  Briefcase,
+  ChevronRight,
+} from "lucide-react";
 
 const ProjectsPage = () => {
   const { currentUser } = useUser();
-  const { projects, loadingProjects, errorProjects } =
-    useDashboard();
+  const { projects, loadingProjects, errorProjects } = useDashboard();
   const isError = !!errorProjects;
-  // const [filteredProjects, setFilteredProjects] = useState<any[]>([]); // Replaced with useMemo
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const { projectId } = useParams();
+
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
@@ -21,11 +26,11 @@ const ProjectsPage = () => {
     }
   }, [currentUser, navigate]);
 
-  const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+  const isGlobalAdmin = currentUser?.globalRole === "ADMIN";
   const userRole = currentUser?.role;
-  const isAdmin = isGlobalAdmin || userRole === 'ADMIN';
-  const isContractor = userRole === 'CONTRACTOR';
-  const isClient = userRole === 'CLIENT';
+  const isAdmin = isGlobalAdmin || userRole === "ADMIN";
+  const isContractor = userRole === "CONTRACTOR";
+  const isClient = userRole === "CLIENT";
 
   const prefix = useMemo(() => {
     if (isAdmin) return "/admin";
@@ -40,7 +45,7 @@ const ProjectsPage = () => {
       return projectsList.filter(
         (project) =>
           project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          project.description?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
     return projectsList;
@@ -60,27 +65,39 @@ const ProjectsPage = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-10 w-10 animate-spin text-[#3E92D1]" />
-        <p className="mt-4 text-sm font-medium text-gray-500">Loading projects...</p>
+        <p className="mt-4 text-sm font-medium text-gray-500">
+          Loading projects...
+        </p>
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {isError && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4 rounded-md">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <svg
+                className="h-5 w-5 text-red-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-red-800">
-                Error loading projects: {(errorProjects as any)?.message || 'An unknown error occurred.'}
+                Error loading projects:{" "}
+                {(errorProjects as any)?.message ||
+                  "An unknown error occurred."}
               </p>
-              <button 
-                onClick={() => window.location.reload()} 
+              <button
+                onClick={() => window.location.reload()}
                 className="mt-2 text-sm font-medium text-red-700 hover:text-red-900 underline"
               >
                 Retry
@@ -92,7 +109,9 @@ const ProjectsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and track your construction projects</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage and track your construction projects
+          </p>
         </div>
         {isAdmin && (
           <button
@@ -106,79 +125,127 @@ const ProjectsPage = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="relative group max-w-xl">
+      <div className="relative group">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#3E92D1] transition-colors">
           <Search className="h-4 w-4" />
         </div>
         <input
           type="text"
-          className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm"
+          className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-50 focus:border-[#3E92D1] transition-all shadow-sm"
           placeholder="Search projects..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      {/* Projects Grid */}
+      {/* Projects Table */}
       {filteredProjects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <Card 
-              key={project.id}
-              className="border-none shadow-sm hover:shadow-md transition-all duration-200 group flex flex-col h-full"
-            >
-              <CardHeader className="pb-3 px-6 pt-6">
-                <div className="flex justify-between items-start mb-2">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      project.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : 
-                      project.status === "ACTIVE" ? "bg-blue-50 text-[#3E92D1] border-blue-100" : 
-                      project.status === "PLANNED" ? "bg-amber-50 text-amber-700 border-amber-100" : 
-                      "bg-gray-50 text-gray-700 border-gray-100"
-                    }`}
-                  >
-                    {project.status.replace("_", " ")}
-                  </span>
-                </div>
-                <CardTitle className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-[#3E92D1] transition-colors">
-                  {project.name}
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="px-6 pb-6 flex-grow">
-                <p className="text-sm text-gray-500 line-clamp-3 leading-relaxed">
-                  {project.description || "No description provided."}
-                </p>
-                
-                <div className="flex items-center text-xs font-medium text-gray-400 mt-6 pt-4 border-t border-gray-50">
-                  <Calendar className="h-3.5 w-3.5 mr-2 text-gray-400" />
-                  <span>
-                    {new Date(project.startDate ?? "").toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} — {new Date(project.endDate ?? "").toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </span>
-                </div>
-              </CardContent>
-
-              <CardFooter className="px-6 pb-6 pt-0">
-                 <button
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-left text-sm text-gray-500">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-6 py-4 font-semibold">Project Name</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold">Timeline</th>
+                <th className="px-6 py-4 font-semibold">Progress</th>
+                <th className="px-6 py-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 border-t border-gray-100">
+              {filteredProjects.map((project: any) => (
+                <tr
+                  key={project.id}
+                  className="group hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => navigate(`${prefix}/projects/${project.id}`)}
-                  className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-9 px-4 py-2 group/btn"
                 >
-                  View Details
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                </button>
-              </CardFooter>
-            </Card>
-          ))}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#3E92D1]">
+                        <Briefcase className="h-5 w-5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 group-hover:text-[#3E92D1] transition-colors">
+                          {project.name}
+                        </span>
+                        <span className="text-xs text-gray-400 line-clamp-1 max-w-[250px]">
+                          {project.description || "No description provided."}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        project.status === "COMPLETED"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : project.status === "ACTIVE"
+                            ? "bg-blue-50 text-[#3E92D1]"
+                            : project.status === "PLANNED"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-gray-50 text-gray-700"
+                      }`}
+                    >
+                      {project.status.replace("_", " ")}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col text-xs text-gray-500 font-medium">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                        <span>
+                          Ends{" "}
+                          {new Date(project.endDate ?? "").toLocaleDateString(
+                            undefined,
+                            { month: "short", day: "numeric", year: "numeric" },
+                          )}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-gray-400">
+                        Created{" "}
+                        {new Date(project.createdAt ?? "").toLocaleDateString()}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="w-24">
+                      <div className="flex justify-between text-[10px] text-gray-400 mb-1 font-bold italic">
+                        <span>{project.progress || 0}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-[#3E92D1] h-1.5 rounded-full transition-all duration-500"
+                          style={{ width: `${project.progress || 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-100 bg-white text-gray-400 transition-all hover:border-[#3E92D1] hover:text-[#3E92D1] group-hover:shadow-sm">
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
-        <EmptyState 
+        <EmptyState
           title={searchTerm ? "No matching projects" : "No projects found"}
-          message={searchTerm ? `We couldn't find any projects matching "${searchTerm}". Try another search term.` : "No projects have been assigned to you yet."}
-          actionText={isAdmin && !searchTerm ? "Start Your First Project" : "Clear Search"}
-          onAction={isAdmin && !searchTerm ? handleCreateProject : () => setSearchTerm("")}
-          icon={
-            <Search className="h-10 w-10 text-gray-300" />
+          message={
+            searchTerm
+              ? `We couldn't find any projects matching "${searchTerm}". Try another search term.`
+              : "No projects have been assigned to you yet."
           }
+          actionText={
+            isAdmin && !searchTerm ? "Start Your First Project" : "Clear Search"
+          }
+          onAction={
+            isAdmin && !searchTerm
+              ? handleCreateProject
+              : () => setSearchTerm("")
+          }
+          icon={<Search className="h-10 w-10 text-gray-300" />}
         />
       )}
     </div>

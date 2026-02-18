@@ -1,38 +1,31 @@
+import { useQuery } from "@tanstack/react-query";
+import { getPublishedPostsByType } from "../services/post-service";
+import { PostType } from "../types/post";
+import type { Event } from "./data/events";
 import EventCard from "./EventCard";
 
 export default function UpcomingEvents() {
-  const events = [
-    {
-      id: 1,
-      title: "FinTech Innovators 2026",
-      location: "Lagos, Nigeria",
-      date: "Feb 10, 2026",
-      manager: "John Doe",
-      status: "UPCOMING",
-      description: "A meetup for fintech enthusiasts across Africa.",
-      image: "/images/event1.jpg", 
-    },
-    {
-      id: 2,
-      title: "AI & Robotics Africa",
-      location: "Nairobi, Kenya",
-      date: "Mar 5, 2026",
-      manager: "Jane Smith",
-      status: "UPCOMING",
-      description: "Exploring AI and robotics innovations in Africa.",
-      image: "/images/event2.jpg",
-    },
-    {
-      id: 3,
-      title: "Sustainable Tech Expo",
-      location: "Accra, Ghana",
-      date: "Apr 12, 2026",
-      manager: "Samuel Kofi",
-      status: "UPCOMING",
-      description: "Showcasing sustainable technology solutions.",
-      image: "/images/event3.jpg",
-    },
-  ];
+  const { data: postsData = [], isLoading } = useQuery({
+    queryKey: ["published-posts", "upcoming"],
+    queryFn: () => getPublishedPostsByType(PostType.EVENT),
+  });
+
+  const posts = Array.isArray(postsData) ? postsData : [];
+
+  // Limit to 3 upcoming events
+  const events: Event[] = posts.slice(0, 3).map((post) => ({
+    id: post.id,
+    title: post.title,
+    location: post.location || "Online",
+    date: post.eventDate || post.createdAt,
+    manager: post.createdByName || "Admin",
+    status: "UPCOMING" as const,
+    description: post.shortDescription,
+    image: post.coverImage || "/images/event-placeholder.jpg",
+  }));
+
+  if (isLoading) return null; // Or a skeleton
+  if (events.length === 0) return null;
 
   return (
     <section
@@ -52,7 +45,7 @@ export default function UpcomingEvents() {
 
         <div className="flex flex-col md:flex-row gap-8 justify-center flex-wrap">
           {events.map((event, index) => (
-            <EventCard key={index} event={event} darkMode />
+            <EventCard key={index} event={event} />
           ))}
         </div>
       </div>

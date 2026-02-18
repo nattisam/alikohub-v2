@@ -202,15 +202,24 @@ const ContractorDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+            <button
+              onClick={() => navigate("/contractor/projects")}
+              className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+            >
               <ImageIcon className="w-4 h-4 mr-2" />
               Upload Site Photos
             </button>
-            <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+            <button
+              onClick={() => navigate("/contractor/projects")}
+              className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+            >
               <FileText className="w-4 h-4 mr-2" />
               Submit Day Report
             </button>
-            <button className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2">
+            <button
+              onClick={() => navigate("/contractor/projects")}
+              className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+            >
               <MessageSquare className="w-4 h-4 mr-2" />
               Update Project Status
             </button>
@@ -241,39 +250,26 @@ const ContractorDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                    <AlertCircle className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Foundation Milestone Approval
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Client feedback received • 2h ago
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100">
+              <div className="w-10 h-10 rounded-full bg-[#3E92D1]/10 flex items-center justify-center text-[#3E92D1] shrink-0">
+                <MessageSquare className="w-5 h-5" />
               </div>
-              <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#3E92D1]">
-                    <ImageIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Site Photo Request: Zone B
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Admin request for documentation
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  Project-level communication
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Messages and updates are managed per project. Open a project
+                  to communicate with clients and post updates.
+                </p>
               </div>
+              <button
+                onClick={() => navigate("/contractor/projects")}
+                className="shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-[#3E92D1] hover:text-[#2E82C1] transition-colors"
+              >
+                View Projects
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </CardContent>
         </Card>

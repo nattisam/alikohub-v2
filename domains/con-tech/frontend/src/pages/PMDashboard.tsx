@@ -283,10 +283,10 @@ const PMDashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-lg font-bold text-gray-900">
-              Consolidated Growth Metrics
+              Project Status Breakdown
             </CardTitle>
             <p className="text-xs text-gray-500 mt-1">
-              Project completion speed and efficiency over time
+              Distribution of projects by current status
             </p>
           </div>
           <Activity className="w-5 h-5 text-gray-300" />
@@ -295,14 +295,21 @@ const PMDashboard = () => {
           <div className="h-72">
             <BarChart
               data={[
-                { month: "Jan", progress: 20 },
-                { month: "Feb", progress: 35 },
-                { month: "Mar", progress: 45 },
-                { month: "Apr", progress: 60 },
+                { status: "Active", count: dashboardData.projectStats.active },
+                {
+                  status: "Planned",
+                  count: dashboardData.projectStats.planned,
+                },
+                {
+                  status: "Completed",
+                  count: dashboardData.projectStats.completed,
+                },
+                { status: "Total", count: dashboardData.projectStats.total },
               ]}
-              xKey="month"
-              yKey="progress"
-              title="Global Project Trajectory"
+              xKey="status"
+              yKey="count"
+              title=""
+              color="#3E92D1"
             />
           </div>
         </CardContent>

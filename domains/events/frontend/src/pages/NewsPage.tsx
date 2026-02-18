@@ -1,85 +1,33 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getAllPublishedPosts } from '../services/post-service';
-import { PostType } from '../types/post';
-import { ArrowRight } from 'lucide-react';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getAllPublishedPosts } from "../services/post-service";
+import { PostType } from "../types/post";
+import { ArrowRight } from "lucide-react";
+import { LoadingState } from "../components/states/LoadingState";
+import { ErrorState } from "../components/states/ErrorState";
 
 export default function NewsPage() {
   const [openPostId, setOpenPostId] = useState<string | null>(null);
 
-  const { data: postsData = [] } = useQuery({
-    queryKey: ['published-posts', 'news-and-announcements'],
+  const {
+    data: posts = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["published-posts", "news-and-announcements"],
     queryFn: async () => {
       const allPosts = await getAllPublishedPosts();
       return allPosts.filter(
-        p => p.type === PostType.NEWS || p.type === PostType.ANNOUNCEMENT
+        (p) => p.type === PostType.NEWS || p.type === PostType.ANNOUNCEMENT,
       );
     },
-    enabled: false,
   });
 
-  const posts = [
-    {
-      id: '1',
-      title: 'Enterprise API V2 Integration Now Live',
-      content:
-        'We are excited to announce our latest integration capabilities for enterprise partners, featuring enhanced security protocols and faster data streaming.',
-      fullContent:
-        'This update introduces OAuth 2.1 compliance, real-time streaming endpoints, advanced rate limiting, and improved developer documentation. Enterprise clients can now onboard faster with increased reliability and performance.',
-      type: 'NEWS',
-      secondary: 'UPDATE',
-      author: 'Sarah Jenkins',
-      time: '2 hours ago',
-      image:
-        'https://i.pinimg.com/736x/5f/c9/f1/5fc9f13c0ffd4e367f5cbea6cac38de3.jpg',
-    },
-    {
-      id: '2',
-      title: 'Annual Global Tech Summit 2024 Keynote',
-      content:
-        "AlikoHub's CEO will be presenting our 5-year vision for decentralized infrastructure at the upcoming Global Tech Summit.",
-      fullContent:
-        'The keynote will focus on decentralized cloud architecture, AI-powered infrastructure optimization, and sustainable scaling strategies across emerging markets.',
-      type: 'NEWS',
-      author: 'Marcus Chen',
-      time: 'Yesterday',
-      image:
-        'https://i.pinimg.com/736x/81/6a/9f/816a9fefb27a7969f31f95dc6b71e959.jpg',
-    },
-    {
-      id: '3',
-      title: 'Q2 Performance & Security Audit Results',
-      content:
-        'Detailed breakdown of our security performance metrics following the recent infrastructure hardening phase.',
-      fullContent:
-        'Our Q2 audit confirms 99.99% uptime, zero critical vulnerabilities, and significant improvements in threat detection and response times across all services.',
-      type: 'UPDATED',
-      secondary: 'INSIGHTS',
-      author: 'Elena Rodriguez',
-      time: 'May 12',
-      image:
-        'https://i.pinimg.com/736x/81/6a/9f/816a9fefb27a7969f31f95dc6b71e959.jpg',
-    },
-    {
-      id: '4',
-      title: 'New Partnership: AlikoHub & CloudMatrix',
-      content:
-        'Expanding our cloud footprint with strategic data center alliances in EMEA regions.',
-      fullContent:
-        'This partnership enables low-latency cloud services across Europe, the Middle East, and Africa, supporting enterprise-scale deployments and regulatory compliance.',
-      type: 'ANNOUNCEMENT',
-      author: 'Sarah Jenkins',
-      time: 'May 10',
-      image:
-        'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
-    },
-  ];
-
   const typeColors: Record<string, string> = {
-    NEWS: 'bg-blue-600 text-white',
-    ANNOUNCEMENT: 'bg-purple-600 text-white',
-    UPDATED: 'bg-green-600 text-white',
-    INSIGHTS: 'bg-yellow-600 text-black',
+    NEWS: "bg-blue-600 text-white",
+    ANNOUNCEMENT: "bg-purple-600 text-white",
   };
 
   return (
@@ -99,83 +47,113 @@ export default function NewsPage() {
           News & <span className="text-blue-400">Announcements</span>
         </h1>
         <p className="mt-4 text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-          Stay updated with the latest news, success stories, and important announcements from the AlikoHub ecosystem.
+          Stay updated with the latest news and important announcements from the
+          AlikoHub ecosystem.
         </p>
       </div>
 
       {/* News Feed */}
       <div className="relative container mx-auto px-4 py-4 z-10">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {posts.map((post, index) => (
-            <article
-              key={post.id}
-              className={`flex flex-col md:flex-row gap-6 p-6 bg-gray-800/70 rounded-xl shadow-lg transition-shadow ${
-                index % 2 === 1 ? 'md:flex-row-reverse' : ''
-              }`}
-            >
-              {/* Image */}
-              {post.image && (
-                <div className="w-full md:w-1/3 h-48 rounded-xl overflow-hidden">
-                  <img
-                    src={post.image}
-                    alt={post.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
+        <div className="max-w-7xl mx-auto space-y-12 pb-20">
+          {isLoading ? (
+            <LoadingState message="Loading updates..." />
+          ) : isError ? (
+            <ErrorState error={error} onRetry={refetch} />
+          ) : posts.length === 0 ? (
+            <div className="text-center py-20 bg-gray-800/50 rounded-3xl border border-white/5">
+              <p className="text-gray-400 text-xl font-medium">
+                No news or announcements yet.
+              </p>
+            </div>
+          ) : (
+            posts.map((post, index) => (
+              <article
+                key={post.id}
+                className={`flex flex-col md:flex-row gap-8 p-8 bg-gray-900/60 backdrop-blur-md rounded-3xl border border-white/5 shadow-2xl transition-all hover:bg-gray-900/80 ${
+                  index % 2 === 1 ? "md:flex-row-reverse" : ""
+                }`}
+              >
+                {/* Image */}
+                <div className="w-full md:w-2/5 h-64 md:h-80 rounded-2xl overflow-hidden shadow-inner bg-gray-800 flex-shrink-0">
+                  {post.coverImage ? (
+                    <img
+                      src={post.coverImage}
+                      alt={post.title}
+                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-700">
+                      <svg
+                        className="w-20 h-20"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Content */}
-              <div className="flex-1">
-                <div className="flex justify-between mb-2 flex-wrap gap-2">
-                  <div className="flex gap-2">
+                {/* Content */}
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex items-center gap-3 mb-4">
                     <span
-                      className={`text-xs font-bold px-2 py-1 rounded-md ${
-                        typeColors[post.type] ?? 'bg-gray-600'
+                      className={`text-[10px] font-black tracking-widest px-3 py-1 rounded-full uppercase shadow-sm ${
+                        typeColors[post.type] ?? "bg-gray-600"
                       }`}
                     >
                       {post.type}
                     </span>
-                    {post.secondary && (
-                      <span
-                        className={`text-xs font-semibold px-2 py-1 rounded-md ${
-                          typeColors[post.secondary] ?? 'bg-gray-700'
-                        }`}
-                      >
-                        {post.secondary}
-                      </span>
-                    )}
+                    <span className="text-xs text-gray-500 font-bold">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">{post.time}</span>
+
+                  <h2 className="text-3xl md:text-4xl font-black mb-4 leading-tight text-white group-hover:text-blue-400 transition-colors">
+                    {post.title}
+                  </h2>
+
+                  <p className="text-gray-300 text-lg mb-6 leading-relaxed line-clamp-3">
+                    {post.shortDescription}
+                  </p>
+
+                  {/* Expanded content */}
+                  {openPostId === post.id && (
+                    <div className="mb-6 p-6 bg-gray-950/50 backdrop-blur-sm border border-white/5 rounded-2xl text-gray-300 leading-relaxed max-h-[400px] overflow-y-auto custom-scrollbar">
+                      {post.content.split("\n").map((para, i) => (
+                        <p key={i} className="mb-4 last:mb-0">
+                          {para}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() =>
+                      setOpenPostId(openPostId === post.id ? null : post.id)
+                    }
+                    className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-widest text-blue-400 hover:text-white transition-all group"
+                  >
+                    {openPostId === post.id ? "Show less" : "Read Full Story"}
+                    <ArrowRight
+                      size={18}
+                      className={`transition-transform flex-shrink-0 ${
+                        openPostId === post.id
+                          ? "-rotate-90"
+                          : "group-hover:translate-x-1"
+                      }`}
+                    />
+                  </button>
                 </div>
-
-                <h2 className="text-2xl font-semibold mb-3">{post.title}</h2>
-
-                <p className="text-gray-300 mb-4">{post.content}</p>
-
-                {/* Expanded content */}
-                {openPostId === post.id && (
-                  <div className="mb-4 p-4 bg-gray-900/70 border border-gray-700 rounded-lg text-sm text-gray-300">
-                    {post.fullContent}
-                  </div>
-                )}
-
-                <button
-                  onClick={() =>
-                    setOpenPostId(openPostId === post.id ? null : post.id)
-                  }
-                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300"
-                >
-                  {openPostId === post.id ? 'Read less' : 'Read more'}
-                  <ArrowRight
-                    size={16}
-                    className={`transition-transform ${
-                      openPostId === post.id ? 'rotate-90' : ''
-                    }`}
-                  />
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -1,20 +1,36 @@
-import { api, publicApi } from '../lib/api';
-import type { Post, CreatePostDto, UpdatePostDto, PostType, PostStatus } from '../types/post';
+import { api, publicApi } from "../lib/api";
+import type {
+  Post,
+  CreatePostDto,
+  UpdatePostDto,
+  PostType,
+} from "../types/post";
+
+// Helper to extract items from paginated response
+const extractPosts = (data: any): Post[] => {
+  if (data && Array.isArray(data.items)) {
+    return data.items;
+  }
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+};
 
 // Public API - No authentication required
 export const getAllPublishedPosts = async (): Promise<Post[]> => {
   try {
-    const response = await publicApi.get('/events');
-    return response.data;
+    const response = await publicApi.get("/events");
+    return extractPosts(response.data);
   } catch (error) {
-    console.error('Error fetching published posts:', error);
+    console.error("Error fetching published posts:", error);
     throw error;
   }
 };
 
 export const getPublishedPostById = async (postId: string): Promise<Post> => {
   try {
-    const response = await publicApi.get(`/events/posts/published/${postId}`);
+    const response = await publicApi.get(`/events/${postId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching post with ID ${postId}:`, error);
@@ -22,30 +38,36 @@ export const getPublishedPostById = async (postId: string): Promise<Post> => {
   }
 };
 
-export const getPublishedPostsByType = async (type: PostType): Promise<Post[]> => {
+export const getPublishedPostsByType = async (
+  type: PostType,
+): Promise<Post[]> => {
   try {
-    const response = await publicApi.get(`/events/posts/published?type=${type}`);
-    return response.data;
+    const response = await publicApi.get(`/events?type=${type}`);
+    return extractPosts(response.data);
   } catch (error) {
     console.error(`Error fetching posts of type ${type}:`, error);
     throw error;
   }
 };
 
-// Content Manager API - Requires authentication
+// Internal Management API - Requires authentication
 export const createDraft = async (postData: CreatePostDto): Promise<Post> => {
   try {
-    const response = await api.post('/events/posts/draft', postData);
+    const response = await api.post("/manage/events", postData);
     return response.data;
   } catch (error) {
-    console.error('Error creating draft:', error);
+    console.error("Error creating draft:", error);
     throw error;
   }
 };
 
-export const updateDraft = async (postId: string, postData: UpdatePostDto): Promise<Post> => {
+export const updateDraft = async (
+  postId: string,
+  postData: UpdatePostDto,
+): Promise<Post> => {
   try {
-    const response = await api.put(`/events/posts/draft/${postId}`, postData);
+    // API Gateway uses PATCH for updates
+    const response = await api.patch(`/manage/events/${postId}`, postData);
     return response.data;
   } catch (error) {
     console.error(`Error updating draft with ID ${postId}:`, error);
@@ -55,7 +77,7 @@ export const updateDraft = async (postId: string, postData: UpdatePostDto): Prom
 
 export const submitForReview = async (postId: string): Promise<Post> => {
   try {
-    const response = await api.post(`/events/posts/${postId}/submit`);
+    const response = await api.post(`/manage/events/${postId}/submit`);
     return response.data;
   } catch (error) {
     console.error(`Error submitting post ${postId} for review:`, error);
@@ -63,22 +85,13 @@ export const submitForReview = async (postId: string): Promise<Post> => {
   }
 };
 
-export const getMyDrafts = async (): Promise<Post[]> => {
-  try {
-    const response = await api.get('/events/posts/my-drafts');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching my drafts:', error);
-    throw error;
-  }
-};
-
 export const getMyPosts = async (): Promise<Post[]> => {
   try {
-    const response = await api.get('/events/posts/my-posts');
-    return response.data;
+    // findAllPosts with user context on gateway
+    const response = await api.get("/manage/events");
+    return extractPosts(response.data);
   } catch (error) {
-    console.error('Error fetching my posts:', error);
+    console.error("Error fetching my posts:", error);
     throw error;
   }
 };
@@ -86,67 +99,74 @@ export const getMyPosts = async (): Promise<Post[]> => {
 // Admin API - Requires admin authentication
 export const getPendingPosts = async (): Promise<Post[]> => {
   try {
-    const response = await api.get('/events/posts/pending');
-    return response.data;
+    const response = await api.get("/manage/events?status=PENDING");
+    return extractPosts(response.data);
   } catch (error) {
-    console.error('Error fetching pending posts:', error);
+    console.error("Error fetching pending posts:", error);
     throw error;
   }
 };
 
 export const getAllPosts = async (): Promise<Post[]> => {
   try {
-    const response = await api.get('/events/posts');
-    return response.data;
+    const response = await api.get("/manage/events");
+    return extractPosts(response.data);
   } catch (error) {
-    console.error('Error fetching all posts:', error);
+    console.error("Error fetching all posts:", error);
     throw error;
   }
 };
 
-export const approvePost = async (postId: string): Promise<Post> => {
+export const reviewPost = async (
+  postId: string,
+  status: "PUBLISHED" | "REJECTED" | "APPROVED",
+  rejectionReason?: string,
+): Promise<Post> => {
   try {
-    const response = await api.post(`/events/posts/${postId}/approve`);
+    const response = await api.post(`/manage/events/${postId}/review`, {
+      status,
+      rejectionReason,
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error approving post ${postId}:`, error);
+    console.error(`Error reviewing post ${postId}:`, error);
     throw error;
   }
 };
 
-export const rejectPost = async (postId: string, feedback: string): Promise<Post> => {
-  try {
-    const response = await api.post(`/events/posts/${postId}/reject`, { feedback });
-    return response.data;
-  } catch (error) {
-    console.error(`Error rejecting post ${postId}:`, error);
-    throw error;
-  }
-};
-
-export const publishPost = async (postId: string): Promise<Post> => {
-  try {
-    const response = await api.post(`/events/posts/${postId}/publish`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error publishing post ${postId}:`, error);
-    throw error;
-  }
-};
+// Helper aliases for existing code
+export const approvePost = (postId: string) => reviewPost(postId, "PUBLISHED");
+export const rejectPost = (postId: string, feedback: string) =>
+  reviewPost(postId, "REJECTED", feedback);
 
 export const unpublishPost = async (postId: string): Promise<Post> => {
+  // unpublishing can be done by moving back to APPROVED or DRAFT
+  return reviewPost(postId, "APPROVED");
+};
+
+export const getPostById = async (postId: string): Promise<Post> => {
   try {
-    const response = await api.post(`/events/posts/${postId}/unpublish`);
+    // Try management endpoint first (Author/Admin context)
+    const response = await api.get(`/manage/events/${postId}`);
     return response.data;
   } catch (error) {
-    console.error(`Error unpublishing post ${postId}:`, error);
-    throw error;
+    console.log(
+      `Internal fetch failed for post ${postId}, trying public endpoint...`,
+    );
+    try {
+      // Fallback to public endpoint
+      const response = await publicApi.get(`/events/${postId}`);
+      return response.data;
+    } catch (fallbackError) {
+      console.error(`Error fetching post ${postId}:`, fallbackError);
+      throw fallbackError;
+    }
   }
 };
 
 export const deletePost = async (postId: string): Promise<void> => {
   try {
-    await api.delete(`/events/posts/${postId}`);
+    await api.delete(`/manage/events/${postId}`);
   } catch (error) {
     console.error(`Error deleting post ${postId}:`, error);
     throw error;

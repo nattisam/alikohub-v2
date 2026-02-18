@@ -1,130 +1,26 @@
-import { Plus } from 'lucide-react';
-
-import SearchBar from '../components/SearchBar';
-import ViewToggle from '../components/ViewToggle';
-import { PostList } from '../components/PostList';
-import type { Post } from '../types/post';
-
-// Mock data with images
-const mockPosts: Post[] = [
-  {
-    id: '1',
-    title: 'AlikoHub Tech Meetup',
-    type: 'event',
-    content: 'Join us for our monthly tech meetup where we discuss the latest in AI and blockchain.',
-    createdAt: '2026-01-29',
-    author: {
-      name: 'Eyu',
-      avatar: '/images/avater1.jpg',
-    },
-    image: 'https://i.pinimg.com/736x/e5/ca/00/e5ca00308bacd2ec74b0b12bb60755d0.jpg',
-  },
-  {
-    id: '2',
-    title: 'Startup Pitch Night',
-    type: 'event',
-    content: 'Pitch your startup idea and get feedback from experienced investors.',
-    createdAt: '2026-02-05',
-    author: {
-      name: 'Alice',
-      avatar: '/images/avater2.jpg',
-    },
-    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: '3',
-    title: 'React Workshop',
-    type: 'event',
-    content: 'Hands-on workshop for React beginners and enthusiasts.',
-    createdAt: '2026-02-10',
-    author: {
-      name: 'Bob',
-      avatar: '/images/avater3.jpg',
-    },
-    image: 'https://i.pinimg.com/1200x/df/b8/9a/dfb89a8f304d3fb95c9b4327e22ca19f.jpg',
-  },
-  
-  {
-    id: '4',
-    title: 'AlikoHub Tech Meetup',
-    type: 'event',
-    content: 'Join us for our monthly tech meetup where we discuss the latest in AI and blockchain.',
-    createdAt: '2026-01-29',
-    author: {
-      name: 'Eyu',
-      avatar: '/images/avater1.jpg',
-    },
-    image: 'https://i.pinimg.com/736x/e5/ca/00/e5ca00308bacd2ec74b0b12bb60755d0.jpg',
-  },
-
-  {
-    id: '5',
-    title: 'React Workshop',
-    type: 'event',
-    content: 'Hands-on workshop for React beginners and enthusiasts.',
-    createdAt: '2026-02-10',
-    author: {
-      name: 'Bob',
-      avatar: '/images/avater3.jpg',
-    },
-    image: 'https://i.pinimg.com/1200x/df/b8/9a/dfb89a8f304d3fb95c9b4327e22ca19f.jpg',
-  },
-
-  
-  {
-    id: '6',
-    title: 'Startup Pitch Night',
-    type: 'event',
-    content: 'Pitch your startup idea and get feedback from experienced investors.',
-    createdAt: '2026-02-05',
-    author: {
-      name: 'Alice',
-      avatar: '/images/avater2.jpg',
-    },
-    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: '7',
-    title: 'AlikoHub Tech Meetup',
-    type: 'event',
-    content: 'Join us for our monthly tech meetup where we discuss the latest in AI and blockchain.',
-    createdAt: '2026-01-29',
-    author: {
-      name: 'Eyu',
-      avatar: '/images/avater1.jpg',
-    },
-    image: 'https://i.pinimg.com/736x/e5/ca/00/e5ca00308bacd2ec74b0b12bb60755d0.jpg',
-  },
-  {
-    id: '8',
-    title: 'React Workshop',
-    type: 'event',
-    content: 'Hands-on workshop for React beginners and enthusiasts.',
-    createdAt: '2026-02-10',
-    author: {
-      name: 'Bob',
-      avatar: '/images/avater3.jpg',
-    },
-    image: 'https://i.pinimg.com/1200x/df/b8/9a/dfb89a8f304d3fb95c9b4327e22ca19f.jpg',
-  },
-  {
-    id: '9',
-    title: 'Startup Pitch Night',
-    type: 'event',
-    content: 'Pitch your startup idea and get feedback from experienced investors.',
-    createdAt: '2026-02-05',
-    author: {
-      name: 'Alice',
-      avatar: '/images/avater2.jpg',
-    },
-    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
-  },
-  // Add the remaining mockPosts here as needed
-];
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getPublishedPostsByType } from "../services/post-service";
+import { PostType } from "../types/post";
+import { LoadingState } from "../components/states/LoadingState";
+import { ErrorState } from "../components/states/ErrorState";
+import { PostList } from "../components/PostList";
+import SearchBar from "../components/SearchBar";
+import ViewToggle from "../components/ViewToggle";
 
 export default function EventsPage() {
-  const isLoading = false;
-  const isError = false;
+  const navigate = useNavigate();
+
+  const {
+    data: events = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["published-posts", "events"],
+    queryFn: () => getPublishedPostsByType(PostType.EVENT),
+  });
 
   return (
     <div
@@ -146,14 +42,9 @@ export default function EventsPage() {
               <div>
                 <h1 className="text-3xl font-bold text-white">Events</h1>
                 <p className="text-sm text-gray-200 mt-1">
-                  Manage and discover all AlikoHub platform events in one place.
+                  Upcoming and past AlikoHub ecosystem events.
                 </p>
               </div>
-
-              <button className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-blue-700 transition">
-                <Plus className="w-4 h-4" />
-                Create Event
-              </button>
             </div>
 
             {/* Search + View Controls */}
@@ -166,12 +57,18 @@ export default function EventsPage() {
 
         {/* Events List */}
         <main className="max-w-7xl mx-auto px-6 py-12">
-          <PostList
-            posts={mockPosts}
-            isLoading={isLoading}
-            isError={isError}
-            emptyMessage="No events found at the moment. Please check back soon!"
-          />
+          {isLoading ? (
+            <LoadingState message="Fetching events..." />
+          ) : isError ? (
+            <ErrorState error={error} onRetry={refetch} />
+          ) : (
+            <PostList
+              posts={events}
+              isLoading={isLoading}
+              isError={isError}
+              emptyMessage="No events found at the moment. Please check back soon!"
+            />
+          )}
         </main>
       </div>
     </div>

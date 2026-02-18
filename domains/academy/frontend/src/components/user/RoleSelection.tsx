@@ -8,7 +8,9 @@ const RoleSelection: React.FC = () => {
   const { user, selectRole, switchRole, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingRole, setProcessingRole] = useState<
+    "STUDENT" | "INSTRUCTOR" | null
+  >(null);
   const [localInstructorPending, setLocalInstructorPending] = useState(false);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ const RoleSelection: React.FC = () => {
   const currentRole = user.academyActiveRole;
 
   const handleStudentSelection = async () => {
-    setIsProcessing(true);
+    setProcessingRole("STUDENT");
     try {
       // If user already has student role, just switch to it
       if (user.hasSelectedRole && user.availableRoles?.includes("STUDENT")) {
@@ -40,14 +42,14 @@ const RoleSelection: React.FC = () => {
     } catch (error) {
       console.error("Error selecting student role:", error);
     } finally {
-      setIsProcessing(false);
+      setProcessingRole(null);
     }
   };
 
   const handleInstructorSelection = () => {
     // If user already has instructor role, switch to it
     if (hasInstructorRole) {
-      setIsProcessing(true);
+      setProcessingRole("INSTRUCTOR");
       switchRole("INSTRUCTOR")
         .then(() => {
           navigate("/instructor");
@@ -56,7 +58,7 @@ const RoleSelection: React.FC = () => {
           console.error("Error switching to instructor role:", error);
         })
         .finally(() => {
-          setIsProcessing(false);
+          setProcessingRole(null);
         });
     } else {
       // Otherwise, open the application modal
@@ -143,10 +145,10 @@ const RoleSelection: React.FC = () => {
 
               <button
                 onClick={handleStudentSelection}
-                disabled={isProcessing}
+                disabled={processingRole !== null}
                 className="w-full px-6 py-3 bg-[#17469E] text-white font-semibold rounded-lg hover:bg-[#044C96] transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {isProcessing
+                {processingRole === "STUDENT"
                   ? "Processing..."
                   : currentRole === "STUDENT"
                     ? "Current Role ✓"
@@ -187,7 +189,7 @@ const RoleSelection: React.FC = () => {
 
               <button
                 onClick={handleInstructorSelection}
-                disabled={isProcessing || isInstructorPending}
+                disabled={processingRole !== null || isInstructorPending}
                 className={`w-full px-6 py-3 text-white font-semibold rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                   isInstructorPending
                     ? "bg-yellow-500 hover:bg-yellow-600"
@@ -196,7 +198,7 @@ const RoleSelection: React.FC = () => {
                       : "bg-[#F0802D] hover:bg-[#d97326]"
                 }`}
               >
-                {isProcessing
+                {processingRole === "INSTRUCTOR"
                   ? "Processing..."
                   : currentRole === "INSTRUCTOR"
                     ? "Current Role ✓"

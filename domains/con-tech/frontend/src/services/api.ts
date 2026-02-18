@@ -210,13 +210,21 @@ export const contechAPI = {
   // Reports endpoints
   getReports: async (projectId?: number) => {
     if (!projectId) {
-      // Return empty array when no project ID is provided
       return [];
     }
     const response = await apiClient.get(
       `/client-reports/project/${projectId}`,
     );
     return response.data;
+  },
+
+  getAllReports: async () => {
+    try {
+      const response = await apiClient.get("/client-reports");
+      return response.data;
+    } catch {
+      return [];
+    }
   },
 
   getReport: async (id: number) => {
@@ -303,12 +311,68 @@ export const contechAPI = {
     return response.data;
   },
 
-  // Dashboard endpoints
-  getClientDashboardData: async (reportId?: number) => {
-    const response = await apiClient.get(
-      reportId ? `/client-reports/${reportId}` : "/client-reports",
-    );
+  createMilestone: async (data: {
+    projectId: number;
+    name: string;
+    date?: string;
+    description?: string;
+  }) => {
+    const response = await apiClient.post("/milestones", data);
     return response.data;
+  },
+
+  updateMilestone: async (id: number, data: Record<string, unknown>) => {
+    const response = await apiClient.patch(`/milestones/${id}`, data);
+    return response.data;
+  },
+
+  // Dashboard endpoints
+  getClientDashboardData: async () => {
+    try {
+      // Derive client dashboard data from projects
+      const projectsResponse = await apiClient.get("/projects");
+      const projects =
+        projectsResponse.data.items || projectsResponse.data || [];
+      const projectList = Array.isArray(projects) ? projects : [];
+
+      // Calculate aggregate progress from all client projects
+      const totalProgress = projectList.reduce(
+        (sum: number, p: any) => sum + (p.progress || 0),
+        0,
+      );
+      const avgProgress =
+        projectList.length > 0
+          ? Math.round(totalProgress / projectList.length)
+          : 0;
+
+      return {
+        projectProgress: avgProgress,
+        budget: 0,
+        spent: 0,
+        remaining: 0,
+        recentUpdates: projectList.slice(0, 5).map((p: any, i: number) => ({
+          id: p.id || i,
+          title: `${p.name} — ${p.status?.replace(/_/g, " ") || "Active"}`,
+          time: p.updatedAt
+            ? new Date(p.updatedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "N/A",
+        })),
+        inspectionSummary: { passed: 0, failed: 0, pending: 0 },
+      };
+    } catch {
+      return {
+        projectProgress: 0,
+        budget: 0,
+        spent: 0,
+        remaining: 0,
+        recentUpdates: [],
+        inspectionSummary: { passed: 0, failed: 0, pending: 0 },
+      };
+    }
   },
 
   getProjectManagerDashboardData: async () => {
@@ -317,7 +381,18 @@ export const contechAPI = {
   },
 
   getContractorDashboardData: async () => {
-    const response = await apiClient.get("/dashboard/contractor");
-    return response.data;
+    try {
+      const response = await apiClient.get("/dashboard/contractor");
+      return response.data;
+    } catch {
+      // Endpoint may not exist yet — return safe defaults
+      return {
+        assignedTasks: 0,
+        overdueTasks: 0,
+        pendingTasks: 0,
+        todayInspections: [],
+        openIssues: { total: 0, critical: 0, minor: 0 },
+      };
+    }
   },
 };

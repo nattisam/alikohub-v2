@@ -1,14 +1,18 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { RequireAuth } from './components/auth/RequireAuth';
-import { EventsLayout } from './components/layout/EventsLayout';
-import HomePage from './pages/HomePage';
-import EventsPage from './pages/EventsPage';
-import PostDetailPage from './pages/PostDetailPage';
-import NewsPage from './pages/NewsPage';
-import PromotionRequestPage from './pages/PromotionRequestPage';
-import LoginPage from './pages/LoginPage';
-import ContentManagerDashboard from './pages/content-manager/ContentManagerDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import { createBrowserRouter } from "react-router-dom";
+import { RequireAuth } from "./components/auth/RequireAuth";
+import { EventsLayout } from "./components/layout/EventsLayout";
+import HomePage from "./pages/HomePage";
+import EventsPage from "./pages/EventsPage";
+import PostDetailPage from "./pages/PostDetailPage";
+import NewsPage from "./pages/NewsPage";
+import PromotionRequestPage from "./pages/PromotionRequestPage";
+import LoginPage from "./pages/LoginPage";
+import ContentManagerDashboard from "./pages/content-manager/ContentManagerDashboard";
+import CreatePostPage from "./pages/content-manager/CreatePostPage";
+import EditPostPage from "./pages/content-manager/EditPostPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminReviewPage from "./pages/admin/AdminReviewPage";
+import ContentManagersManagementPage from "./pages/admin/ContentManagersManagementPage";
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +37,22 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "content-manager/create",
+        element: (
+          <RequireAuth roles={["CONTENT_MANAGER"]}>
+            <CreatePostPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "content-manager/edit/:id",
+        element: (
+          <RequireAuth roles={["CONTENT_MANAGER"]}>
+            <EditPostPage />
+          </RequireAuth>
+        ),
+      },
+      {
         path: "admin",
         element: (
           <RequireAuth roles={["ADMIN"]}>
@@ -40,6 +60,22 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
-    ]
-  }
+      {
+        path: "admin/review/:id",
+        element: (
+          <RequireAuth roles={["ADMIN"]}>
+            <AdminReviewPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "admin/users",
+        element: (
+          <RequireAuth roles={["ADMIN"]}>
+            <ContentManagersManagementPage />
+          </RequireAuth>
+        ),
+      },
+    ],
+  },
 ]);

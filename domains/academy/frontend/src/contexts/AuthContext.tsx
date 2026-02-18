@@ -85,9 +85,9 @@ const buildUser = (user: any): CurrentUser => {
     academyUser: convertedAcademyUser,
     academyRole: convertRoleToUppercase(academyUser?.role) || "USER",
     academyActiveRole:
-      convertRoleToUppercase(user?.currentRole) ||
       convertRoleToUppercase(user?.academyActiveRole) ||
       convertRoleToUppercase(academyUser?.activeRole) ||
+      convertRoleToUppercase(user?.currentRole) ||
       convertRoleToUppercase(academyUser?.role) ||
       "USER",
 

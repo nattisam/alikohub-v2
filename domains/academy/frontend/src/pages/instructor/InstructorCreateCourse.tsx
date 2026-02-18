@@ -509,28 +509,83 @@ const InstructorCreateCourse: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Price (USD)
-                    </label>
-                    <div className="relative">
-                      <FaDollarSign
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                        size={14}
-                      />
-                      <input
-                        type="number"
-                        value={formData.price}
-                        onChange={(e) =>
-                          handleUpdateField({ price: Number(e.target.value) })
-                        }
-                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm font-semibold focus:ring-1 focus:ring-[#0a66c2] bg-white"
-                        placeholder="0.00"
-                      />
+                  <div className="space-y-4 p-6 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Course Type
+                      </label>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                          formData.price === 0
+                            ? "bg-green-100 text-green-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {formData.price === 0
+                          ? "Free Content"
+                          : "Premium Course"}
+                      </span>
                     </div>
-                    <p className="text-[10px] text-gray-500 italic">
-                      Zero means the course is free.
-                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateField({ price: 0 })}
+                        className={`py-2 text-xs font-bold rounded-md transition-all ${
+                          formData.price === 0
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Free
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleUpdateField({
+                            price:
+                              formData.price === 0 ? 19.99 : formData.price,
+                          })
+                        }
+                        className={`py-2 text-xs font-bold rounded-md transition-all ${
+                          formData.price > 0
+                            ? "bg-white text-[#0a66c2] shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Paid
+                      </button>
+                    </div>
+
+                    {formData.price > 0 && (
+                      <div className="space-y-3 pt-2 animate-in slide-in-from-top-2 duration-200">
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Price (USD)
+                        </label>
+                        <div className="relative group">
+                          <FaDollarSign
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0a66c2] transition-colors"
+                            size={14}
+                          />
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={(e) =>
+                              handleUpdateField({
+                                price: Math.max(0.01, Number(e.target.value)),
+                              })
+                            }
+                            className="w-full pl-8 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-100 focus:border-[#0a66c2] transition-all outline-none"
+                            placeholder="19.99"
+                          />
+                        </div>
+                        <p className="text-[10px] text-gray-400 italic">
+                          Recommended: $9.99 - $199.99 for maximum reach.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -560,7 +615,6 @@ const InstructorCreateCourse: React.FC = () => {
             )}
           </div>
 
-          {/* Footer - Consistent with LinkedIn Style pill buttons */}
           <div className="mt-8 flex justify-between items-center mb-10">
             <button
               onClick={

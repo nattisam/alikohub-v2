@@ -1,37 +1,46 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Bell, UserCircle, ChevronDown, LayoutDashboard, User, LogOut } from 'lucide-react';
-import { useDashboard, useUser } from '../hooks';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import {
+  UserCircle,
+  ChevronDown,
+  LayoutDashboard,
+  User,
+  LogOut,
+  Menu,
+} from "lucide-react";
+import { useUser } from "../hooks";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarProps {
-  notificationCount?: number;
+  onMenuClick?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = () => {
-  const { notifications, addNotification, removeNotification } = useDashboard();
+const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   const { currentUser, logout } = useUser();
   const [showOptions, setShowOptions] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+  const isGlobalAdmin = currentUser?.globalRole === "ADMIN";
   const userRole = currentUser?.role;
 
   const dashboardPath = useMemo(() => {
-    if (isGlobalAdmin || userRole === 'ADMIN') return '/admin';
-    if (userRole === 'CONTRACTOR') return '/contractor';
-    if (userRole === 'CLIENT') return '/client';
-    return '/';
+    if (isGlobalAdmin || userRole === "ADMIN") return "/admin";
+    if (userRole === "CONTRACTOR") return "/contractor";
+    if (userRole === "CLIENT") return "/client";
+    return "/";
   }, [isGlobalAdmin, userRole]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowOptions(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const toggleDropdown = () => setShowOptions(!showOptions);
@@ -41,26 +50,25 @@ const Navbar: React.FC<NavbarProps> = () => {
     setShowOptions(false);
   };
 
-  const handleBellClick = () => {
-    addNotification('New update received');
-    setTimeout(() => removeNotification(notifications[notifications.length - 1]?.id || 0), 5000);
-  };
-
   return (
-    <nav className="sticky top-0 z-20 flex h-[73px] items-center justify-end border-b border-gray-300 bg-[#FFFFFF] px-4 shadow-none md:px-8">
+    <nav className="sticky top-0 z-20 flex h-[73px] items-center justify-between border-b border-gray-300 bg-[#FFFFFF] px-4 shadow-none md:px-8">
       <div className="flex items-center gap-4">
         <button
-          onClick={handleBellClick}
-          className="relative rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#3E92D1]"
+          onClick={onMenuClick}
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 md:hidden transition-colors"
+          aria-label="Toggle Menu"
         >
-          <Bell className="h-5 w-5" />
-          {notifications.length > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
-              {notifications.length}
-            </span>
-          )}
+          <Menu className="h-6 w-6" />
         </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="w-8 h-8 rounded bg-[#3E92D1] flex items-center justify-center">
+            <span className="text-white font-bold text-sm">CT</span>
+          </div>
+          <span className="font-bold text-gray-900 text-lg">Con-Tech</span>
+        </div>
+      </div>
 
+      <div className="flex items-center gap-4">
         {currentUser && (
           <div className="relative" ref={dropdownRef}>
             <button
@@ -68,9 +76,14 @@ const Navbar: React.FC<NavbarProps> = () => {
               className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100"
             >
               <UserCircle className="h-6 w-6 text-blue-600" />
-              <span className="hidden text-sm font-medium text-gray-700 sm:inline">
-                {currentUser.firstName}
-              </span>
+              <div className="hidden sm:flex flex-col items-start leading-tight">
+                <span className="text-sm font-bold text-gray-900">
+                  {currentUser.firstName}
+                </span>
+                <span className="text-[10px] uppercase font-bold text-gray-400">
+                  {userRole?.toLowerCase()}
+                </span>
+              </div>
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </button>
 

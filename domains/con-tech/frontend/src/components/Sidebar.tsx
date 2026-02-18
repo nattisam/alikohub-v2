@@ -1,12 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   FaProjectDiagram,
   FaFileAlt,
   FaHome,
-  FaBars,
-  FaTimes,
   FaUserFriends,
   FaInfoCircle,
+  FaUserCircle,
 } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "../hooks";
@@ -18,10 +17,14 @@ interface SidebarItem {
   path: string;
 }
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { currentUser } = useUser();
-  const [isOpen, setIsOpen] = useState(true);
 
   const isGlobalAdmin = currentUser?.globalRole === "ADMIN";
   const userRole = currentUser?.role;
@@ -36,14 +39,12 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById("sidebar");
-      const toggleButton = document.getElementById("sidebar-toggle");
 
       if (
         isOpen &&
+        window.innerWidth < 768 &&
         sidebar &&
-        !sidebar.contains(event.target as Node) &&
-        toggleButton &&
-        !toggleButton.contains(event.target as Node)
+        !sidebar.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -53,11 +54,17 @@ const Sidebar: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   const sidebarItems = useMemo(() => {
     const items: SidebarItem[] = [];
-    const prefix = isAdmin ? "/admin" : isContractor ? "/contractor" : isClient ? "/client" : "";
+    const prefix = isAdmin
+      ? "/admin"
+      : isContractor
+        ? "/contractor"
+        : isClient
+          ? "/client"
+          : "";
 
     if (!prefix) return items;
 
@@ -104,28 +111,26 @@ const Sidebar: React.FC = () => {
       });
     }
 
+    // Profile link for all roles
+    items.push({
+      id: "Profile",
+      label: "My Profile",
+      icon: <FaUserCircle />,
+      path: `${prefix}/profile`,
+    });
+
     return items;
   }, [isAdmin, isContractor, isClient]);
 
   return (
     <>
-      {/* Toggle Button */}
-      <button
-        id="sidebar-toggle"
-        className="md:hidden fixed top-5 left-5 z-50 p-2.5 rounded-lg bg-white text-slate-700 shadow-lg hover:bg-slate-50 transition-colors duration-200"
-        onClick={toggleSidebar}
-        aria-label="Toggle sidebar"
-      >
-        {isOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
-      </button>
-
       <aside
         id="sidebar"
         className={`fixed md:sticky top-0 left-0 z-40 h-screen w-64 overflow-y-auto bg-[#2e3b4d] border-r border-white/10 transition-all duration-300 ease-in-out
           ${
             isOpen
-              ? "md:translate-x-0 translate-x-0"
-              : "md:translate-x-0 -translate-x-full"
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden"
           }
         `}
       >
@@ -137,7 +142,9 @@ const Sidebar: React.FC = () => {
             </div>
             <span className="font-bold text-white text-lg">Con-Tech</span>
           </div>
-          <p className="text-xs text-white/50 mt-2 uppercase tracking-wider font-semibold">Navigation</p>
+          <p className="text-xs text-white/50 mt-2 uppercase tracking-wider font-semibold">
+            Navigation
+          </p>
         </div>
 
         {/* Navigation Items */}
@@ -159,7 +166,9 @@ const Sidebar: React.FC = () => {
                   >
                     <span
                       className={`text-base transition-colors ${
-                        isActive ? "text-white" : "text-white/40 group-hover:text-white/80"
+                        isActive
+                          ? "text-white"
+                          : "text-white/40 group-hover:text-white/80"
                       }`}
                     >
                       {item.icon}

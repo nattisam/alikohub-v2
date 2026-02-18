@@ -22,7 +22,9 @@ import {
   ShieldCheck,
   Download,
   Share2,
+  CreditCard,
 } from "lucide-react";
+import StripeCheckoutModal from "../../components/course/StripeCheckoutModal";
 
 const CourseDetailsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -53,6 +55,7 @@ const CourseDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"curriculum" | "reviews">(
     "curriculum",
   );
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Fetch user enrollments (Preserved Logic with Retry)
   useEffect(() => {
@@ -124,6 +127,12 @@ const CourseDetailsPage: React.FC = () => {
       return;
     }
 
+    // If it's a paid course, open the checkout modal instead of enrolling immediately
+    if (course && course.price && course.price > 0) {
+      setIsCheckoutOpen(true);
+      return;
+    }
+
     try {
       setEnrolling(true);
       const response = await enrollmentApi.createEnrollment({
@@ -158,6 +167,42 @@ const CourseDetailsPage: React.FC = () => {
             (err.response?.data?.message || "Please try again."),
         );
       }
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    // After successful payment, call the enrollment API
+    performEnrollment();
+  };
+
+  const performEnrollment = async () => {
+    try {
+      setEnrolling(true);
+      const response = await enrollmentApi.createEnrollment({
+        courseId: parseInt(courseId || "0", 10),
+      });
+
+      if (response?.status === 201) {
+        if (course) {
+          setUserEnrollments((prev) => {
+            if (prev.some((c) => c.id === course.id)) return prev;
+            return [...prev, course];
+          });
+        }
+        // Refresh enrollments
+        try {
+          const enrollmentResponse = await enrollmentApi.getMyCourses();
+          if (Array.isArray(enrollmentResponse?.data)) {
+            setUserEnrollments(enrollmentResponse.data);
+          }
+        } catch (e) {
+          console.error("Error refreshing enrollments", e);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error enrolling in course:", err);
     } finally {
       setEnrolling(false);
     }
@@ -206,6 +251,7 @@ const CourseDetailsPage: React.FC = () => {
     (acc, m) => acc + (m?.lessons?.length || 0),
     0,
   );
+  // Reverting to match backend "minutes" expectation
   const estimatedHours = course?.estimatedTime
     ? Math.floor(course.estimatedTime / 60)
     : 0;
@@ -393,7 +439,7 @@ const CourseDetailsPage: React.FC = () => {
                 <div className="flex items-end gap-2 mb-2">
                   <span className="text-3xl font-bold text-gray-900">
                     {course.price && course.price > 0
-                      ? `$${course.price.toFixed(2)}`
+                      ? `$${(course.price / 100).toFixed(2)}`
                       : "Free"}
                   </span>
                 </div>
@@ -431,6 +477,17 @@ const CourseDetailsPage: React.FC = () => {
                 )}
               </button>
 
+              {/* Progress Demo Button - For showing the UI progress as requested */}
+              {!isEnrolled && (
+                <button
+                  onClick={() => setIsCheckoutOpen(true)}
+                  className="w-full py-2 px-4 rounded-md font-semibold text-xs flex items-center justify-center gap-2 mb-4 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-300 border-dashed transition-all"
+                >
+                  <CreditCard size={14} />
+                  Demo Stripe UI
+                </button>
+              )}
+
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <button className="flex items-center justify-center gap-2 py-2 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50">
                   <Share2 size={16} /> Share
@@ -467,6 +524,14 @@ const CourseDetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <StripeCheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        courseTitle={course?.title || "Course"}
+        price={course?.price || 19.99} // Default to demo price if free
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

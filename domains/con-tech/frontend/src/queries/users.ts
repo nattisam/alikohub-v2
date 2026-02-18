@@ -33,6 +33,20 @@ export const useUpdateUserProfile = () => {
   });
 };
 
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => {
+      return contechAPI.createUser(data);
+    },
+    onSuccess: () => {
+      // Invalidate all user lists to ensure the directory updates
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
 export const useCreateUserProfile = () => {
   const queryClient = useQueryClient();
 
