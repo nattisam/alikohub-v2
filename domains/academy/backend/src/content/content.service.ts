@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { UploadContentDto } from './dto/upload-content.dto';
-import { AuthenticatedUser, UserService } from 'src/user/user.service';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 import { ClientProxy } from '@nestjs/microservices';
 import { Inject } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';

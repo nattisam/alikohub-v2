@@ -4,11 +4,11 @@ import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseStatus } from '../generated/client';
-import { AuthenticatedUser } from 'src/user/user.service';
-import { AcademyProfileGuard } from 'src/auth';
-import { RoleGuard } from 'src/auth/role-guard/role-guard';
-import { Roles } from 'src/auth/role-guard/roles.decorator';
-import { JoiValidationPipe } from 'src/common/pipes/joi-validation.pipe';
+import { AuthenticatedUser } from '../user/user.service';
+import { AcademyProfileGuard } from '../auth';
+import { RoleGuard } from '../auth/role-guard/role-guard';
+import { Roles } from '../auth/role-guard/roles.decorator';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   CreateCourseSchema,
   UpdateCourseSchema,

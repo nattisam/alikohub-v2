@@ -2,10 +2,10 @@ import { Controller, UseGuards, UsePipes, Logger } from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { AuthenticatedUser } from 'src/user/user.service';
-import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
-import { Roles } from 'src/auth/role-guard/roles.decorator';
-import { RoleGuard } from 'src/auth/role-guard/role-guard';
+import { AuthenticatedUser } from '../user/user.service';
+import { AcademyProfileGuard } from '../auth/academy-profile.guard';
+import { Roles } from '../auth/role-guard/roles.decorator';
+import { RoleGuard } from '../auth/role-guard/role-guard';
 import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   CreateEnrollmentSchema,

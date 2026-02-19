@@ -2,11 +2,11 @@ import { Controller, UseGuards, UsePipes, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
-import { AuthenticatedUser } from 'src/user/user.service';
-import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
-import { RoleGuard } from 'src/auth/role-guard/role-guard';
-import { Roles } from 'src/auth/role-guard/roles.decorator';
-import { JoiValidationPipe } from 'src/common/pipes/joi-validation.pipe';
+import { AuthenticatedUser } from '../user/user.service';
+import { AcademyProfileGuard } from '../auth/academy-profile.guard';
+import { RoleGuard } from '../auth/role-guard/role-guard';
+import { Roles } from '../auth/role-guard/roles.decorator';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   CreateNotificationSchema,
   NotificationIdSchema,

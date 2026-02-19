@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { CreateCohortDto } from './dto/create-cohort.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthenticatedUser, UserService } from 'src/user/user.service';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
 export class CohortsService {

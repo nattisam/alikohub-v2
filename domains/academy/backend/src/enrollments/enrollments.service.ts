@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { AuthenticatedUser, UserService } from 'src/user/user.service';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 import { CourseStatus } from '../generated/client';
 
 @Injectable()

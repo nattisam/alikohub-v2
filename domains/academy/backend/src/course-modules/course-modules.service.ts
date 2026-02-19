@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
 import { UpdateCourseModuleDto } from './dto/update-course-module.dto';
-import { AuthenticatedUser, UserService } from 'src/user/user.service';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 
 // The verified user object passed from the API Gateway
 

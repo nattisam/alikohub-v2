@@ -5,11 +5,11 @@ import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { SubmitExerciseDto } from './dto/submit-exercise.dto';
 import { GradeExerciseDto } from './dto/grade-exercise.dto';
-import { AuthenticatedUser } from 'src/user/user.service';
-import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
-import { RoleGuard } from 'src/auth/role-guard/role-guard';
-import { Roles } from 'src/auth/role-guard/roles.decorator';
-import { JoiValidationPipe } from 'src/common/pipes/joi-validation.pipe';
+import { AuthenticatedUser } from '../user/user.service';
+import { AcademyProfileGuard } from '../auth/academy-profile.guard';
+import { RoleGuard } from '../auth/role-guard/role-guard';
+import { Roles } from '../auth/role-guard/roles.decorator';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   CreateExerciseSchema,
   UpdateExerciseSchema,

@@ -1,7 +1,7 @@
 import { Controller, UsePipes, Logger } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { UserApplicationService } from './user-application.service';
-import { JoiValidationPipe } from 'src/common/pipes/joi-validation.pipe';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import { UserPromotionEventSchema } from './user-application.validation';
 
 @Controller()

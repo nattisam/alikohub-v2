@@ -4,12 +4,12 @@ import { ContentService } from './content.service';
 import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { UploadContentDto } from './dto/upload-content.dto';
-import { AuthenticatedUser } from 'src/user/user.service';
-import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
-import { RoleGuard } from 'src/auth/role-guard/role-guard';
-import { Roles } from 'src/auth/role-guard/roles.decorator';
+import { AuthenticatedUser } from '../user/user.service';
+import { AcademyProfileGuard } from '../auth/academy-profile.guard';
+import { RoleGuard } from '../auth/role-guard/role-guard';
+import { Roles } from '../auth/role-guard/roles.decorator';
 import { ContentType } from '../generated/client';
-import { JoiValidationPipe } from 'src/common/pipes/joi-validation.pipe';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   CreateContentSchema,
   UpdateContentSchema,

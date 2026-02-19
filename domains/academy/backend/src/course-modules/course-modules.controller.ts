@@ -9,12 +9,12 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CourseModulesService } from './course-modules.service';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
 import { UpdateCourseModuleDto } from './dto/update-course-module.dto';
-import { AuthenticatedUser } from 'src/user/user.service';
-import { AcademyProfileGuard } from 'src/auth/academy-profile.guard';
-import { RoleGuard } from 'src/auth/role-guard/role-guard';
-import { Roles } from 'src/auth/role-guard/roles.decorator';
-import { RpcExceptionFilter } from 'src/common/filters/rpc-exception.filter';
-import { JoiValidationPipe } from 'src/common/pipes/joi-validation.pipe';
+import { AuthenticatedUser } from '../user/user.service';
+import { AcademyProfileGuard } from '../auth/academy-profile.guard';
+import { RoleGuard } from '../auth/role-guard/role-guard';
+import { Roles } from '../auth/role-guard/roles.decorator';
+import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
+import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   CreateCourseModuleSchema,
   UpdateCourseModuleSchema,
