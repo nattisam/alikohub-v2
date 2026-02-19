@@ -91,7 +91,7 @@ export class ProjectsService {
     const pageSize = Math.min(query.pageSize || 10, 50);
     const skip = (page - 1) * pageSize;
 
-    const where: any = {};
+    const where: Record<string, any> = {};
     
     // RBAC Filtering
     if (profile.role === 'CONTRACTOR') {
@@ -139,9 +139,9 @@ export class ProjectsService {
 
     const enrichedProjects = projects.map((project) => ({
       ...project,
-      manager: users.find((u) => u.firebaseId === project.manager) || null,
-      client: project.clientId ? users.find((u) => u.firebaseId === project.clientId) || null : null,
-      contractor: project.contractorId ? users.find((u) => u.firebaseId === project.contractorId) || null : null,
+      manager: (users as AuthenticatedUser[]).find((u) => u.firebaseId === project.manager) || null,
+      client: project.clientId ? (users as AuthenticatedUser[]).find((u) => u.firebaseId === project.clientId) || null : null,
+      contractor: project.contractorId ? (users as AuthenticatedUser[]).find((u) => u.firebaseId === project.contractorId) || null : null,
       taskStats: {
         total: project.tasks.length,
         completed: project.tasks.filter((t) => t.status === 'COMPLETED').length,
@@ -310,7 +310,7 @@ export class ProjectsService {
 
   async getProjectStats(user: AuthenticatedUser, manager?: string) {
     const profile = await this.userService.getOrCreateProfile(user);
-    const where: any = manager ? { manager } : {};
+    const where: Record<string, any> = manager ? { manager } : {};
 
     // Filter by role if not Admin
     if (profile.role === 'CONTRACTOR') {
@@ -496,7 +496,7 @@ export class ProjectsService {
 
     const enrichedUpdates = updates.map((update) => ({
       ...update,
-      author: authors.find((a) => a.firebaseId === update.authorId) || null,
+      author: (authors as AuthenticatedUser[]).find((a) => a.firebaseId === update.authorId) || null,
     }));
 
     return {
@@ -610,7 +610,7 @@ export class ProjectsService {
 
     const enrichedDocuments = documents.map((doc) => ({
       ...doc,
-      uploader: uploaders.find((u) => u.firebaseId === doc.uploadedBy) || null,
+      uploader: (uploaders as AuthenticatedUser[]).find((u) => u.firebaseId === doc.uploadedBy) || null,
     }));
 
     return {

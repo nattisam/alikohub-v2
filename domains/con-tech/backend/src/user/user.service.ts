@@ -97,8 +97,7 @@ export class UserService {
         where: { userId },
       });
 
-      // Fetch the user's full profile from Auth Service to get globalRole
-      const authUser: any = await this.getUserById(userId);
+      const authUser = (await this.getUserById(userId)) as AuthenticatedUser | null;
       
       // If the user has globalRole = ADMIN in Auth Service, sync as ADMIN in ConTech
       if (authUser?.globalRole === 'ADMIN') {
@@ -124,9 +123,9 @@ export class UserService {
         return;
       }
 
-      const authRecord: any = await firstValueFrom(
+      const authRecord = (await firstValueFrom(
         this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
-      );
+      )) as AuthenticatedUser | null;
 
       if (authRecord) {
         // Priority: 1. activeRole (if switched), 2. role (base role)
@@ -150,33 +149,36 @@ export class UserService {
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to sync user ${userId} from auth service`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to sync user ${userId} from auth service`, errorMessage);
     }
   }
 
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<AuthenticatedUser | null> {
     try {
-      return await firstValueFrom(
+      return (await firstValueFrom(
         this.authClient.send({ cmd: 'get_user_profile' }, { firebaseId: userId }),
-      );
+      )) as AuthenticatedUser;
     } catch (error) {
-      this.logger.error(`Failed to fetch user ${userId}`, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch user ${userId}`, errorMessage);
       return null;
     }
   }
 
-  async getUsersByIds(userIds: string[]) {
+  async getUsersByIds(userIds: string[]): Promise<AuthenticatedUser[]> {
     try {
-      return await firstValueFrom(
+      return (await firstValueFrom(
         this.authClient.send({ cmd: 'get_users_by_ids' }, { userIds }),
-      );
+      )) as AuthenticatedUser[];
     } catch (error) {
-      this.logger.error('Failed to fetch multiple users', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error('Failed to fetch multiple users', errorMessage);
       return [];
     }
   }
 
-  async updateProfile(user: AuthenticatedUser, updateData: any) {
+  async updateProfile(user: AuthenticatedUser, updateData: Partial<ConTechUserProfile>) {
     const profile = await this.prisma.contechProfile.update({
       where: { userId: user.firebaseId },
       data: updateData,

@@ -10,6 +10,7 @@ export interface UserData {
 	status?: string;
 	profilePicture?: string;
 	bio?: string;
+	password?: string;
 }
 
 export interface ApplicationData {
@@ -18,6 +19,7 @@ export interface ApplicationData {
 	requestedRole: string;
 	formData?: object;
 	resumeUrl?: string;
+	personalDetails?: any;
 }
 
 @Injectable()
