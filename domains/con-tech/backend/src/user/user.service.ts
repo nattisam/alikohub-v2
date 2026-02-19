@@ -12,6 +12,7 @@ export type AuthenticatedUser = {
   role: string;
   globalRole?: string;
   status: string;
+  activeRole?: string;
 };
 
 export type ConTechUserProfile = {

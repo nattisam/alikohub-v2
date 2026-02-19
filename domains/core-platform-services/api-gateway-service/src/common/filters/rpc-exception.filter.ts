@@ -7,7 +7,7 @@ import { Request, Response } from 'express';
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -15,22 +15,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error = 'Internal Server Error';
-    let details: any = null;
+    let details: unknown = null;
 
     // 1. Handle explicit RpcException
     if (exception instanceof RpcException) {
       const rpcError = exception.getError();
       if (typeof rpcError === 'object' && rpcError !== null) {
         // Safely extract status code - ensure it's a valid number
-        const rawStatus = (rpcError as any).statusCode || (rpcError as any).status;
+        const rpcErrorObj = rpcError as Record<string, unknown>;
+        const rawStatus = rpcErrorObj.statusCode || rpcErrorObj.status;
         if (typeof rawStatus === 'number' && rawStatus >= 100 && rawStatus <= 599) {
           statusCode = rawStatus;
         } else {
           statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
         }
-        message = (rpcError as any).message || 'RPC Error';
-        error = (rpcError as any).error || 'RPC Error';
-        details = (rpcError as any).details || null;
+        message = String(rpcErrorObj.message || 'RPC Error');
+        error = String(rpcErrorObj.error || 'RPC Error');
+        details = rpcErrorObj.details || null;
       } else {
         statusCode = HttpStatus.BAD_REQUEST;
         message = typeof rpcError === 'string' ? rpcError : 'RPC Error';
@@ -39,10 +40,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // 2. Handle standard Nest HttpException
     else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
-      const resp = exception.getResponse() as any;
+      const resp = exception.getResponse() as Record<string, unknown>;
       if (typeof resp === 'object') {
         message = Array.isArray(resp.message) ? resp.message[0] : resp.message || exception.message;
-        error = resp.error || 'Identity Error';
+        error = String(resp.error || 'Identity Error');
         details = resp.details || null;
       } else {
         message = resp;
@@ -50,29 +51,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
     // 3. Handle serialized errors from microservices (passed as generic objects)
     else if (exception && typeof exception === 'object') {
+      const exc = exception as Record<string, any>;
       // Microservices often return { message, statusCode, error } or { response: { message, statusCode } }
       // Or sometimes they wrap it in { error: { statusCode, ... } }
-      const rawStatus = exception.statusCode || 
-                        exception.status || 
-                        exception.response?.statusCode || 
-                        exception.response?.status ||
-                        exception.error?.statusCode ||
-                        exception.error?.status;
+      const rawStatus = exc.statusCode || 
+                        exc.status || 
+                        exc.response?.statusCode || 
+                        exc.response?.status ||
+                        exc.error?.statusCode ||
+                        exc.error?.status;
       
       if (typeof rawStatus === 'number' && !isNaN(rawStatus) && rawStatus >= 100 && rawStatus <= 599) {
         statusCode = rawStatus;
       }
       
-      const rawMessage = exception.message || exception.response?.message || exception.error?.message;
+      const rawMessage = exc.message || exc.response?.message || exc.error?.message;
       message = Array.isArray(rawMessage) ? rawMessage[0] : rawMessage || message;
       
-      const rawError = exception.error?.error || exception.error || exception.response?.error;
+      const rawError = exc.error?.error || exc.error || exc.response?.error;
       error = typeof rawError === 'string' ? rawError : (statusCode === 500 ? 'Internal Server Error' : 'Microservice Error');
       
-      details = exception.details || exception.response?.details || exception.error?.details || null;
+      details = exc.details || exc.response?.details || exc.error?.details || null;
       
       // Handle connection errors
-      if (exception.code === 'ECONNREFUSED') {
+      if (exc.code === 'ECONNREFUSED') {
          statusCode = HttpStatus.SERVICE_UNAVAILABLE;
          message = 'A downstream service is currently unavailable. Please try again later.';
          error = 'Service Unavailable';
@@ -81,7 +83,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // 4. Handle generic Error objects
     else if (exception instanceof Error) {
       message = exception.message;
-      if ((exception as any).code === 'ECONNREFUSED') {
+      const errorWithCode = exception as Error & { code?: string };
+      if (errorWithCode.code === 'ECONNREFUSED') {
         statusCode = HttpStatus.SERVICE_UNAVAILABLE;
         message = 'Service connection failed.';
         error = 'Service Unavailable';
@@ -92,8 +95,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const logMessage = `${request.method} ${request.url} - ${statusCode} - ${message}`;
     if (statusCode >= 500) {
       this.logger.error(logMessage);
-      if (exception.stack) {
-        this.logger.error(exception.stack);
+      const excWithStack = exception as { stack?: string };
+      if (excWithStack.stack) {
+        this.logger.error(excWithStack.stack);
       } else {
         // Log the whole exception object if there's no stack trace
         console.error('[CRITICAL] Internal Error without stack trace:', exception);

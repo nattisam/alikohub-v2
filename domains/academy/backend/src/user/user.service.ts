@@ -17,6 +17,7 @@ export type AuthenticatedUser = {
   role: string;
   globalRole?: string;
   status: string;
+  activeRole?: string;
 };
 
 export type AcademyUserProfile = {
@@ -137,7 +138,7 @@ export class UserService {
       this.logger.log(`[UserService] Syncing user ${userId} from Auth service (TCP 3011)...`);
       const authRecord = await firstValueFrom(
         this.authClient.send({ cmd: 'sync_academy_user' }, { userId }).pipe(timeout(5000))
-      ) as any;
+      ) as AuthenticatedUser;
 
       if (authRecord) {
         this.logger.log(`[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`);
@@ -173,9 +174,10 @@ export class UserService {
       } else {
         this.logger.warn(`[UserService] No auth record returned for ${userId}`);
       }
-    } catch (error: any) {
-      console.error(`[UserService] FAILED to sync user ${userId} from auth service:`, error);
-      this.logger.error(`[UserService] Failed to sync user ${userId} from auth service:`, error);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`[UserService] FAILED to sync user ${userId} from auth service:`, errorMessage);
+      this.logger.error(`[UserService] Failed to sync user ${userId} from auth service:`, errorMessage);
       // Don't rethrow yet, we might want to proceed with a default profile
     }
   }

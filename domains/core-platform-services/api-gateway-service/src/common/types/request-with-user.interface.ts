@@ -10,6 +10,7 @@ export type AuthenticatedUser = {
   };
   careersRole?: string;
   careersStatus?: string;
+  activeRole?: string;
 };
 
 export interface RequestWithUser extends Request {

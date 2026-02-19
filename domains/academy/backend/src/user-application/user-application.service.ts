@@ -10,10 +10,10 @@ export class UserApplicationService {
   async updateUserRole(userId: string, role: string) {
     if (!Object.values(AcademyRole).includes(role as AcademyRole)) {
       this.logger.error(
-        'Invalid role "  + role +  \ received for user ' + userId + '. Skipping.'
- );
- return;
- }
+        `Invalid role "${role}" received for user ${userId}. Skipping.`
+      );
+      return;
+    }
 
  const newRole = role as AcademyRole;
  const updatedProfile = await this.prisma.academyProfile.upsert({

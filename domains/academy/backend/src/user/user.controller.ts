@@ -42,7 +42,7 @@ export class UserController {
     // New method for role selection - matching ConTech pattern more closely
     @MessagePattern({ cmd: 'select_academy_role' })
     @UsePipes(new JoiValidationPipe(SelectRoleSchema))
-    async selectRole(@Payload() payload: { user: any; userId: string; role: AcademyRole }) {
+    async selectRole(@Payload() payload: { user: AuthenticatedUser; userId: string; role: AcademyRole }) {
         this.logger.log(`Received selectRole request for user: ${payload.userId} to role: ${payload.role}`);
 
         const userId = payload.userId;
