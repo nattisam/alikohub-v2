@@ -19,10 +19,12 @@ export class RoleGuard implements CanActivate {
       return true;
     }
 
-    const data = context.switchToRpc().getData() as Record<string, any>;
+    const data = context.switchToRpc().getData<{
+      contechProfile?: { role?: string };
+    }>();
 
     // Get the contechProfile attached by the ConTechProfileGuard
-    const { contechProfile } = data;
+    const contechProfile = data.contechProfile;
 
     if (!contechProfile || !contechProfile.role) {
       // This should ideally never happen if the ConTechProfileGuard ran first

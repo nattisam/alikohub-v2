@@ -19,25 +19,26 @@ import { Observable, throwError } from 'rxjs';
 export class RpcExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(RpcExceptionFilter.name);
 
-  catch(exception: any, host: ArgumentsHost): Observable<any> {
+  catch(exception: unknown, _host: ArgumentsHost): Observable<any> {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error = 'Internal Server Error';
-    let details: any = null;
+    let details: Record<string, unknown> | null = null;
 
     // 1. Handle Nest HTTP Exceptions (e.g. ForbiddenException, NotFoundException)
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const response = exception.getResponse() as any;
+      const response = exception.getResponse();
 
-      if (typeof response === 'object') {
-        message = Array.isArray(response.message)
-          ? response.message[0]
-          : response.message || exception.message;
-        error = response.error || 'Http Error';
-        details = response.details || null;
+      if (typeof response === 'object' && response !== null) {
+        const resObj = response as Record<string, unknown>;
+        message = Array.isArray(resObj.message)
+          ? String(resObj.message[0])
+          : String(resObj.message || exception.message);
+        error = String(resObj.error || 'Http Error');
+        details = (resObj.details as Record<string, unknown>) || null;
       } else {
-        message = response;
+        message = String(response);
         error = 'Http Error';
       }
     }
@@ -48,12 +49,14 @@ export class RpcExceptionFilter implements ExceptionFilter {
       );
 
       switch (exception.code) {
-        case 'P2002': // Unique constraint violation
+        case 'P2002': {
+          // Unique constraint violation
           status = HttpStatus.CONFLICT;
           const target = (exception.meta?.target as string[])?.join(', ');
           message = `Unique constraint violation. A record with this ${target || 'field'} already exists.`;
           error = 'Conflict';
           break;
+        }
         case 'P2025': // Record not found
           status = HttpStatus.NOT_FOUND;
           message = 'The requested record was not found.';
@@ -93,7 +96,7 @@ export class RpcExceptionFilter implements ExceptionFilter {
     };
 
     // Log the error for debugging
-    if (status >= 500) {
+    if (status >= (HttpStatus.INTERNAL_SERVER_ERROR as number)) {
       this.logger.error(`Fatal Error: ${JSON.stringify(errorResponse)}`);
     } else {
       this.logger.warn(`Handled Exception: ${message} (Status: ${status})`);

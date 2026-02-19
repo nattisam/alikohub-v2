@@ -127,9 +127,10 @@ export class UserService {
         return;
       }
 
-      const authRecord = (await firstValueFrom(
-        this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
-      )) as Record<string, any> | null;
+      const authRecord: { activeRole?: string; role?: string } | null =
+        await firstValueFrom(
+          this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
+        );
 
       if (authRecord) {
         // Priority: 1. activeRole (if switched), 2. role (base role)
@@ -218,7 +219,7 @@ export class UserService {
         where: { userId },
       });
 
-      let updatedProfile;
+      let updatedProfile: import('../generated/client').ContechProfile;
       if (existingProfile) {
         updatedProfile = await this.prisma.contechProfile.update({
           where: { userId },

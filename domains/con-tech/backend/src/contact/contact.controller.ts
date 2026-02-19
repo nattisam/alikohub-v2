@@ -24,11 +24,12 @@ export class ContactController {
   ) {
     this.logger.log(`Received contact inquiry from: ${dto.email}`);
     try {
-      return await this.contactService.sendContactEmail(dto);
+      const result: unknown = await this.contactService.sendContactEmail(dto);
+      return result;
     } catch (error) {
       this.logger.error(
-        `Failed to handle contact inquiry from ${dto.email}: ${error.message}`,
-        error.stack,
+        `Failed to handle contact inquiry from ${dto.email}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }

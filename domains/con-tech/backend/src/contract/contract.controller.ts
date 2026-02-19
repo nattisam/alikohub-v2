@@ -15,7 +15,6 @@ import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
 import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   UpdateContractStatusSchema,
-  AddChangeOrderSchema,
   ContractIdSchema,
 } from './contract.validation';
 
@@ -53,8 +52,8 @@ export class ContractController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to upload contract for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to upload contract for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -79,8 +78,8 @@ export class ContractController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to update status for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to update status for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -112,8 +111,8 @@ export class ContractController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to add change order to contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to add change order to contract ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -134,8 +133,8 @@ export class ContractController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to generate signed URL for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to generate signed URL for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -155,8 +154,8 @@ export class ContractController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to fetch contracts for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch contracts for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }

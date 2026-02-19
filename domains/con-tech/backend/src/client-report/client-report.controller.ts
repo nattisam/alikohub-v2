@@ -39,8 +39,8 @@ export class ClientReportController {
       return await this.clientReportsService.create(payload.dto, payload.user);
     } catch (error) {
       this.logger.error(
-        `Failed to create client report for project ID ${payload.dto.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to create client report for project ID ${payload.dto.projectId} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -62,8 +62,8 @@ export class ClientReportController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to fetch reports for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch reports for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -84,8 +84,8 @@ export class ClientReportController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to fetch report detail for ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch report detail for ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }

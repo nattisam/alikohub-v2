@@ -47,8 +47,8 @@ export class InspectionsController {
       return await this.inspectionsService.create(dto, files);
     } catch (error) {
       this.logger.error(
-        `Failed to create inspection for project ID ${dto.projectId} by user ${user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to create inspection for project ID ${dto.projectId} by user ${user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -76,8 +76,8 @@ export class InspectionsController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to fetch inspections for project ID ${projectId} by user ${user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch inspections for project ID ${projectId} by user ${user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -93,8 +93,8 @@ export class InspectionsController {
       return await this.inspectionsService.findOne(payload.id, payload.user);
     } catch (error) {
       this.logger.error(
-        `Failed to fetch inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -120,8 +120,8 @@ export class InspectionsController {
       return await this.inspectionsService.update(dto.id, dto, payload.user);
     } catch (error) {
       this.logger.error(
-        `Failed to update inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to update inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -139,8 +139,8 @@ export class InspectionsController {
       return await this.inspectionsService.remove(payload.id, payload.user);
     } catch (error) {
       this.logger.error(
-        `Failed to remove inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to remove inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }

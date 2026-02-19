@@ -4,7 +4,7 @@ import * as winston from 'winston';
 const { combine, timestamp, printf, colorize } = winston.format;
 
 const customFormat = printf(({ level, message, timestamp }) => {
-  return `[${timestamp}] ${level}: ${message}`;
+  return `[${String(timestamp)}] ${String(level)}: ${String(message)}`;
 });
 
 export const winstonLogger = winston.createLogger({

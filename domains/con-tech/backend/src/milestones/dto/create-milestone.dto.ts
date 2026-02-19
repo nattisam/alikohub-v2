@@ -3,7 +3,6 @@ import {
   IsString,
   IsOptional,
   IsInt,
-  IsDate,
   IsEnum,
 } from 'class-validator';
 import { MilestoneStatus } from '../../generated/client';

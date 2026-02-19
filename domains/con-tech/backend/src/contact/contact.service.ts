@@ -18,12 +18,13 @@ export class ContactService {
       `Forwarding contact inquiry from ${dto.email} to Auth Service`,
     );
     try {
-      return await firstValueFrom(
+      const result: unknown = await firstValueFrom(
         this.authClient.send({ cmd: 'send_contact_email' }, dto),
       );
+      return result;
     } catch (error) {
       this.logger.error(
-        `Failed to send contact email to Auth Service: ${error.message}`,
+        `Failed to send contact email to Auth Service: ${(error as Error).message}`,
       );
       throw error;
     }

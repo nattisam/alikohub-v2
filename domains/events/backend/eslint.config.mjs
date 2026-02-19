@@ -1,7 +1,7 @@
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import prettierPlugin from 'eslint-plugin-prettier';
-import prettierConfig from 'eslint-config-prettier';
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+import prettierPlugin from "eslint-plugin-prettier";
+import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -12,22 +12,22 @@ export default tseslint.config(
       prettier: prettierPlugin,
     },
     rules: {
-      'prettier/prettier': 'error',
-      '@typescript-eslint/interface-name-prefix': 'off',
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
+      "prettier/prettier": "error",
+      "@typescript-eslint/interface-name-prefix": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
         {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
     },
   },
   {
-    ignores: ['node_modules', 'dist', 'eslint.config.mjs'],
+    ignores: ["node_modules", "dist", "eslint.config.mjs", "src/generated"],
   },
 );

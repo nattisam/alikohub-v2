@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; // Adjust the path to your Prisma service
 import { CreateClientReportDto } from './dto/create-client-report.dto';
-import { Prisma } from '../generated/client';
+import { Prisma, Project } from '../generated/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
@@ -18,9 +18,9 @@ export class ClientReportService {
 
   async create(
     createClientReportDto: CreateClientReportDto,
-    user: AuthenticatedUser,
+    _user: AuthenticatedUser,
   ) {
-    const { projectId, summary, KPIs, title } = createClientReportDto;
+    const { projectId, summary, KPIs, title: _title } = createClientReportDto;
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -34,7 +34,7 @@ export class ClientReportService {
       data: {
         projectId,
         summary,
-        KPIs: KPIs as any,
+        KPIs: KPIs as unknown as Prisma.InputJsonValue,
       },
     });
   }
@@ -84,7 +84,7 @@ export class ClientReportService {
       );
     }
 
-    const project = (report as any).Project;
+    const project = (report as unknown as { Project: Project }).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
       throw new ForbiddenException(

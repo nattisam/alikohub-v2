@@ -62,7 +62,8 @@ export class NotificationsService {
     const student = await this.userService.getUserById(studentId);
     if (!student) return;
 
-    const message = `${student.name} completed module "${moduleTitle}" in "${course.title}".`;
+    const studentName = `${student.firstname} ${student.lastname}`.trim();
+    const message = `${studentName} completed module "${moduleTitle}" in "${course.title}".`;
 
     return this.prisma.notification.create({
       data: {

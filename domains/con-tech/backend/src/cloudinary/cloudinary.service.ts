@@ -8,11 +8,13 @@ import {
 } from 'cloudinary';
 import { Readable } from 'stream';
 
-// Import Multer's file type directly
-import { File as MulterFile } from 'multer';
-
-// Define a type alias for Multer's file object for clarity
-export type MulterFile = MulterFile;
+// Define MulterFile type locally
+interface MulterFile {
+  buffer: Buffer;
+  originalname: string;
+  mimetype?: string;
+  size?: number;
+}
 
 @Injectable()
 export class CloudinaryService {
@@ -61,7 +63,9 @@ export class CloudinaryService {
           result: UploadApiResponse | undefined,
         ) => {
           if (error) {
-            return reject(new InternalServerErrorException(error.message));
+            return reject(
+              new InternalServerErrorException((error as Error).message),
+            );
           }
           if (result) {
             resolve(result);

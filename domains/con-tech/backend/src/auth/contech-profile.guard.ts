@@ -4,14 +4,17 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserService } from '../user/user.service';
+import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
 export class ConTechProfileGuard implements CanActivate {
   constructor(private userService: UserService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToRpc().getData() as Record<string, any>;
+    const request = context.switchToRpc().getData<{
+      user?: AuthenticatedUser;
+      contechProfile?: import('../user/user.service').ConTechUserProfile;
+    }>();
     const user = request.user;
 
     if (!user) {
@@ -23,7 +26,7 @@ export class ConTechProfileGuard implements CanActivate {
       const profile = await this.userService.getOrCreateProfile(user);
       request.contechProfile = profile;
       return true;
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedException('Failed to get ConTech profile');
     }
   }

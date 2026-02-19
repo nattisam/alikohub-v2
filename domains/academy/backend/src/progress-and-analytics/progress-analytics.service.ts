@@ -285,7 +285,10 @@ export class ProgressAndAnalyticsService {
           courseId,
         );
         return {
-          student: { id: student.firebaseId, name: student.name },
+          student: {
+            id: student.firebaseId,
+            name: `${student.firstname} ${student.lastname}`.trim(),
+          },
           ...progress,
         };
       }),

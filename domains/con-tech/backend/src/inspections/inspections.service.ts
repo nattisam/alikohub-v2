@@ -7,8 +7,8 @@ import { PrismaService } from '../prisma/prisma.service'; // Your Prisma service
 import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Your Cloudinary service
 import { CreateInspectionDto } from './dto/create-inspection.dto';
 import { UpdateInspectionDto } from './dto/update-inspection.dto';
-import { MulterFile } from 'multer';
 import { AuthenticatedUser, UserService } from '../user/user.service';
+import { Prisma, Project } from '../generated/client';
 @Injectable()
 export class InspectionsService {
   constructor(
@@ -17,14 +17,17 @@ export class InspectionsService {
     private userService: UserService,
   ) {}
 
-  async create(createInspectionDto: CreateInspectionDto, files: any[]) {
+  async create(
+    createInspectionDto: CreateInspectionDto,
+    files: { buffer: string; originalname: string }[],
+  ) {
     const photoUploadPromises = files.map((file) => {
       const fileBuffer = Buffer.from(file.buffer, 'base64');
 
       const mockFile = {
         buffer: fileBuffer,
         originalname: file.originalname,
-      } as MulterFile; // Create a mock file object for the service
+      };
 
       return this.cloudinaryService.uploadImage(mockFile);
     });
@@ -36,9 +39,10 @@ export class InspectionsService {
       data: {
         projectId: createInspectionDto.projectId,
         inspector: createInspectionDto.inspectorId, // Mapping inspectorId to inspector
-        status: createInspectionDto.status as string,
+        status: createInspectionDto.status,
         photos: photoUrls, // Stored as Json array
-        checklist: createInspectionDto.checklist as any, // Stored as Json
+        checklist:
+          createInspectionDto.checklist as unknown as Prisma.InputJsonValue, // Stored as Json
         isVisibleToClient: createInspectionDto.isVisibleToClient ?? false,
       },
     });
@@ -72,7 +76,7 @@ export class InspectionsService {
     }
 
     const { skip = 0, take = 20 } = pagination;
-    const where: any = { projectId };
+    const where: Prisma.InspectionWhereInput = { projectId };
     if (profile.role === 'CLIENT') {
       where.isVisibleToClient = true;
     }
@@ -94,7 +98,7 @@ export class InspectionsService {
       throw new NotFoundException(`Inspection with ID ${id} not found.`);
     }
 
-    const project = (inspection as any).Project;
+    const project = (inspection as unknown as { Project: Project }).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
       throw new ForbiddenException(
@@ -118,14 +122,14 @@ export class InspectionsService {
     updateInspectionDto: UpdateInspectionDto,
     user: AuthenticatedUser,
   ) {
-    await this.findOne(id, user);
+    const _inspection = await this.findOne(id, user); // RBAC
 
     return this.prisma.inspection.update({
       where: { id },
       data: {
         ...updateInspectionDto,
-        status: updateInspectionDto.status as string,
-      } as any,
+        status: updateInspectionDto.status,
+      } as Prisma.InspectionUpdateInput,
     });
   }
 

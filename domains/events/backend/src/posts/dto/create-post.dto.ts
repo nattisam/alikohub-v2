@@ -1,5 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { PostType } from '../../generated/client';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+} from "class-validator";
+import { PostType } from "../../generated/client";
 
 export class CreatePostDto {
   @IsEnum(PostType)

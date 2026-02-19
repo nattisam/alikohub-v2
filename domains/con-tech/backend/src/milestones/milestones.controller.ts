@@ -51,8 +51,8 @@ export class MilestonesController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to create milestone "${payload.createMilestoneDto.title}" by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to create milestone "${payload.createMilestoneDto.title}" by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -77,8 +77,8 @@ export class MilestonesController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to fetch milestones for project ID ${payload.findAllMilestonesDto.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch milestones for project ID ${payload.findAllMilestonesDto.projectId} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -94,8 +94,8 @@ export class MilestonesController {
       return await this.milestonesService.findOne(payload.id, payload.user);
     } catch (error) {
       this.logger.error(
-        `Failed to fetch milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -124,8 +124,8 @@ export class MilestonesController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to update milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to update milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -143,8 +143,8 @@ export class MilestonesController {
       return await this.milestonesService.remove(payload.id, payload.user);
     } catch (error) {
       this.logger.error(
-        `Failed to remove milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to remove milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -167,8 +167,8 @@ export class MilestonesController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to submit milestone ID ${payload.id} for review by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to submit milestone ID ${payload.id} for review by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
@@ -197,8 +197,8 @@ export class MilestonesController {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to create review for milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to create review for milestone ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }

@@ -7,7 +7,12 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { TaskStatus, TaskPriority, Prisma } from '../generated/client';
+import {
+  TaskStatus as _TaskStatus,
+  TaskPriority as _TaskPriority,
+  Prisma,
+  Project,
+} from '../generated/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 
 type FindTasksQuery = {
@@ -147,8 +152,7 @@ export class TasksService {
     if (!task) throw new NotFoundException('Task not found');
 
     const contechProfile = await this.userService.getOrCreateProfile(user);
-    const project = (task as unknown as { Project: Record<string, any> })
-      .Project;
+    const project = task.Project;
 
     // RBAC Check
     if (contechProfile.role === 'CLIENT') {
@@ -188,7 +192,7 @@ export class TasksService {
     });
     if (!task) throw new NotFoundException('Task not found');
 
-    const project = (task as any).Project as Record<string, any>;
+    const project = task.Project;
     const canUpdate =
       contechProfile.role === 'ADMIN' ||
       project.contractorId === user.firebaseId ||
@@ -223,7 +227,7 @@ export class TasksService {
     });
     if (!task) throw new NotFoundException('Task not found');
 
-    const project = (task as any).Project as Record<string, any>;
+    const project = (task as unknown as { Project: Project }).Project;
     if (
       contechProfile.role !== 'ADMIN' &&
       project.contractorId !== user.firebaseId
@@ -247,7 +251,7 @@ export class TasksService {
     });
     if (!task) throw new NotFoundException('Task not found');
 
-    const project = (task as any).Project as Record<string, any>;
+    const project = (task as unknown as { Project: Project }).Project;
     if (
       task.assignedTo !== user.firebaseId &&
       project.contractorId !== user.firebaseId

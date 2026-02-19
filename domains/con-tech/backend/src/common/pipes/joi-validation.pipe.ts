@@ -11,11 +11,11 @@ import * as Joi from 'joi';
 export class JoiValidationPipe implements PipeTransform {
   constructor(private schema: Joi.ObjectSchema) {}
 
-  transform(value: any, metadata: ArgumentMetadata) {
+  transform(value: unknown, _metadata: ArgumentMetadata) {
     const { error, value: validatedValue } = this.schema.validate(value, {
       abortEarly: false,
       stripUnknown: true,
-    });
+    }) as { error?: Joi.ValidationError; value: unknown };
 
     if (error) {
       const messages = error.details.map((d) => d.message).join(', ');

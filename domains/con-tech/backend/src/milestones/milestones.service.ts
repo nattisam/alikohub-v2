@@ -9,6 +9,7 @@ import { UpdateMilestoneDto } from './dto/update-milestone.dto';
 import { CreateMilestoneReviewDto } from './dto/create-milestone-review.dto';
 import { FindAllMilestonesDto } from './dto/find-all-milestones.dto';
 import { AuthenticatedUser, UserService } from '../user/user.service';
+import { Prisma, Project } from '../generated/client';
 
 @Injectable()
 export class MilestonesService {
@@ -48,7 +49,7 @@ export class MilestonesService {
     const profile = await this.userService.getOrCreateProfile(user);
     const { projectId, status, search, page = 1, limit = 10 } = dto;
 
-    const where: any = {};
+    const where: Prisma.MilestoneWhereInput = {};
 
     if (projectId) {
       const project = await this.prisma.project.findUnique({
@@ -127,7 +128,7 @@ export class MilestonesService {
     });
     if (!milestone) throw new NotFoundException('Milestone not found');
 
-    const project = (milestone as any).Project;
+    const project = (milestone as unknown as { Project: Project }).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
       throw new ForbiddenException(
@@ -151,7 +152,7 @@ export class MilestonesService {
     updateMilestoneDto: UpdateMilestoneDto,
     user: AuthenticatedUser,
   ) {
-    const milestone = await this.findOne(id, user); // RBAC Check
+    const _milestone = await this.findOne(id, user); // RBAC Check
 
     // Only Admin/PM/Contractor can update milestone details (e.g. progress)
     // Client is Read-Only
@@ -169,7 +170,7 @@ export class MilestonesService {
   }
 
   async remove(id: number, user: AuthenticatedUser) {
-    const milestone = await this.findOne(id, user); // RBAC check
+    const _milestone = await this.findOne(id, user); // RBAC check
 
     const profile = await this.userService.getOrCreateProfile(user);
     // Only Admin/PM can remove. Controller already checks @Roles but double check here if needed.
@@ -183,12 +184,12 @@ export class MilestonesService {
     const deletedMilestone = await this.prisma.milestone.delete({
       where: { id },
     });
-    await this.updateProjectProgress(milestone.projectId);
+    await this.updateProjectProgress(_milestone.projectId);
     return deletedMilestone;
   }
 
   async submitForReview(id: number, user: AuthenticatedUser) {
-    const milestone = await this.findOne(id, user); // RBAC
+    const _milestone = await this.findOne(id, user); // RBAC
 
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT') {
@@ -210,7 +211,7 @@ export class MilestonesService {
     dto: CreateMilestoneReviewDto,
     user: AuthenticatedUser,
   ) {
-    const milestone = await this.findOne(id, user); // RBAC
+    const _milestone = await this.findOne(id, user); // RBAC
     const profile = await this.userService.getOrCreateProfile(user);
 
     if (profile.role !== 'ADMIN') {
@@ -220,7 +221,7 @@ export class MilestonesService {
     const updatedMilestone = await this.prisma.milestone.update({
       where: { id },
       data: {
-        status: dto.status as any,
+        status: dto.status,
         // Any other notes?
       },
     });

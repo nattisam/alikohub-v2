@@ -6,10 +6,17 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Assuming you have this service
-import { v2 as cloudinary } from 'cloudinary';
-import { ContractStatus } from '../generated/client';
+import { v2 as _cloudinary } from 'cloudinary';
+import { ContractStatus, Prisma, Project } from '../generated/client';
 import { AddChangeOrderDto } from './dto/add-change-order.dto';
 import { AuthenticatedUser, UserService } from '../user/user.service';
+
+interface MulterFile {
+  buffer: Buffer;
+  originalname: string;
+  mimetype: string;
+  size: number;
+}
 
 @Injectable()
 export class ContractService {
@@ -50,7 +57,7 @@ export class ContractService {
       mimetype: string;
       size: number;
     },
-    user: AuthenticatedUser,
+    _user: AuthenticatedUser,
   ) {
     // Verify project exists
     const project = await this.prisma.project.findUnique({
@@ -64,12 +71,12 @@ export class ContractService {
     const fileBuffer = Buffer.from(file.buffer, 'base64');
 
     // Create mock Multer file for Cloudinary upload
-    const mockFile = {
+    const mockFile: MulterFile = {
       buffer: fileBuffer,
       originalname: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
-    } as any;
+    };
 
     // Upload to Cloudinary as raw file (for documents like PDFs)
     const uploadResult = await this.cloudinaryService.uploadRaw(mockFile, {
@@ -88,8 +95,12 @@ export class ContractService {
     });
   }
 
-  async updateStatus(id: number, status: string, user: AuthenticatedUser) {
-    const contract = await this.findContractById(id, user); // RBAC included
+  async updateStatus(
+    id: number,
+    status: ContractStatus,
+    user: AuthenticatedUser,
+  ) {
+    const _contract = await this.findContractById(id, user); // RBAC included
 
     // Extra check: Only Pm/Admin/Client can update status.
     // Contractor probably shouldn't update contract status.
@@ -117,8 +128,11 @@ export class ContractService {
       where: { id },
       data: {
         changeOrders: [
-          ...((contract.changeOrders as any[]) || []),
-          { ...changeOrderDto, createdAt: new Date() },
+          ...((contract.changeOrders as Prisma.JsonArray) || []),
+          {
+            ...changeOrderDto,
+            createdAt: new Date().toISOString(),
+          } as unknown as Prisma.JsonObject,
         ],
       },
     });
@@ -168,7 +182,7 @@ export class ContractService {
       throw new NotFoundException(`Contract with ID ${id} not found.`);
     }
 
-    const project = (contract as any).Project;
+    const project = (contract as unknown as { Project: Project }).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
       throw new ForbiddenException(

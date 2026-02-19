@@ -1,7 +1,7 @@
 import { Controller, Logger, UsePipes, UseFilters } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ProjectsService } from '../projects/projects.service';
-import { UserService } from '../user/user.service';
+import { UserService, AuthenticatedUser } from '../user/user.service';
 import { ContechRole } from '../generated/client';
 import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
 import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
@@ -20,7 +20,7 @@ export class AdminController {
   @MessagePattern({ cmd: 'get_admin_dashboard' })
   @UsePipes(new JoiValidationPipe(AdminDashboardSchema))
   async getDashboard(@Payload() payload: Record<string, any>) {
-    const { user } = payload as { user: any };
+    const { user } = payload as { user: AuthenticatedUser };
     this.logger.log(
       `Fetching admin dashboard data (requested by: ${user.firebaseId})`,
     );
@@ -60,7 +60,12 @@ export class AdminController {
   @MessagePattern({ cmd: 'list_contech_users' })
   @UsePipes(new JoiValidationPipe(ListProfilesSchema))
   async listUsers(@Payload() payload: Record<string, any>) {
-    const { user, role, page, pageSize } = payload;
+    const { user, role, page, pageSize } = payload as {
+      user: AuthenticatedUser;
+      role: ContechRole;
+      page?: number;
+      pageSize?: number;
+    };
     this.logger.log(
       `Listing users with role: ${role || 'all'} (requested by admin: ${user.firebaseId})`,
     );
