@@ -1,4 +1,10 @@
-import { Controller, UseGuards, UsePipes, Logger, UseFilters } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  UsePipes,
+  Logger,
+  UseFilters,
+} from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -19,7 +25,7 @@ import {
   CreateProjectUpdateSchema,
   GetProjectUpdatesSchema,
   AddProjectDocumentSchema,
-  AddProjectCommentSchema
+  AddProjectCommentSchema,
 } from './projects.validation';
 
 @Controller()
@@ -39,11 +45,16 @@ export class ProjectsController {
   async create(
     @Payload() payload: { dto: CreateProjectDto; user: AuthenticatedUser },
   ) {
-    this.logger.log(`Creating project "${payload.dto.name}" by admin: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Creating project "${payload.dto.name}" by admin: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.create(payload.dto, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to create project "${payload.dto.name}" for user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create project "${payload.dto.name}" for user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -51,11 +62,16 @@ export class ProjectsController {
   @MessagePattern({ cmd: 'find_all_projects' })
   @UsePipes(new JoiValidationPipe(FindAllProjectsSchema))
   async findAll(@Payload() payload: { query: any; user: AuthenticatedUser }) {
-    this.logger.log(`Fetching all projects with query: ${JSON.stringify(payload.query)} for user: ${payload.user?.firebaseId}`);
+    this.logger.log(
+      `Fetching all projects with query: ${JSON.stringify(payload.query)} for user: ${payload.user?.firebaseId}`,
+    );
     try {
       return await this.projectsService.findAll(payload.query, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to fetch projects with query ${JSON.stringify(payload.query)} for user ${payload.user?.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch projects with query ${JSON.stringify(payload.query)} for user ${payload.user?.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -63,37 +79,48 @@ export class ProjectsController {
   @MessagePattern({ cmd: 'find_project_by_id' })
   @UsePipes(new JoiValidationPipe(ProjectIdSchema))
   async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    this.logger.log(`Fetching details for project ID: ${payload.id} by user: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Fetching details for project ID: ${payload.id} by user: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.findOne(payload.id, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to fetch project details for ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch project details for ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  @MessagePattern({cmd: 'find_contractor'})
+  @MessagePattern({ cmd: 'find_contractor' })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
-  async findallcontractor(){
+  async findallcontractor() {
     this.logger.log(`Fetching all contractors list (admin operation)`);
     try {
       return await this.projectsService.getContracrors();
     } catch (error) {
-      this.logger.error(`Failed to fetch contractors: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch contractors: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  @MessagePattern({cmd: 'find_inspector'})
+  @MessagePattern({ cmd: 'find_inspector' })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
-  async findallinspector(){
+  async findallinspector() {
     this.logger.log(`Fetching all inspectors list (admin operation)`);
     try {
       return await this.projectsService.getInspectors();
     } catch (error) {
-      this.logger.error(`Failed to fetch inspectors: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch inspectors: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -110,7 +137,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Updating project ID: ${payload.id} by admin: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Updating project ID: ${payload.id} by admin: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.update(
         payload.id,
@@ -118,7 +147,10 @@ export class ProjectsController {
         payload.user,
       );
     } catch (error) {
-      this.logger.error(`Failed to update project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -128,11 +160,16 @@ export class ProjectsController {
   @Roles('ADMIN')
   @UsePipes(new JoiValidationPipe(ProjectIdSchema))
   async remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    this.logger.log(`Removing project ID: ${payload.id} by admin: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Removing project ID: ${payload.id} by admin: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.remove(payload.id, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to remove project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to remove project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -149,7 +186,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Updating status for project ID: ${payload.id} to ${payload.status} by: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Updating status for project ID: ${payload.id} to ${payload.status} by: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.updateStatus(
         payload.id,
@@ -157,7 +196,10 @@ export class ProjectsController {
         payload.user,
       );
     } catch (error) {
-      this.logger.error(`Failed to update status for project ID ${payload.id} to ${payload.status} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update status for project ID ${payload.id} to ${payload.status} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -166,13 +208,27 @@ export class ProjectsController {
   @UseGuards(RoleGuard)
   @Roles('ADMIN', 'CONTRACTOR')
   async updatePhotos(
-    @Payload() payload: { id: number; photos: string[]; user: AuthenticatedUser },
+    @Payload()
+    payload: {
+      id: number;
+      photos: string[];
+      user: AuthenticatedUser;
+    },
   ) {
-    this.logger.log(`Updating photos for project ID: ${payload.id} by: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Updating photos for project ID: ${payload.id} by: ${payload.user.firebaseId}`,
+    );
     try {
-      return await this.projectsService.updatePhotos(payload.id, payload.photos, payload.user);
+      return await this.projectsService.updatePhotos(
+        payload.id,
+        payload.photos,
+        payload.user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to update photos for project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update photos for project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -183,11 +239,19 @@ export class ProjectsController {
   async getStats(
     @Payload() payload: { manager?: string; user: AuthenticatedUser },
   ) {
-    this.logger.log(`Fetching project stats for manager: ${payload.manager || 'all'} (requested by: ${payload.user.firebaseId})`);
+    this.logger.log(
+      `Fetching project stats for manager: ${payload.manager || 'all'} (requested by: ${payload.user.firebaseId})`,
+    );
     try {
-      return await this.projectsService.getProjectStats(payload.user, payload.manager);
+      return await this.projectsService.getProjectStats(
+        payload.user,
+        payload.manager,
+      );
     } catch (error) {
-      this.logger.error(`Failed to fetch project stats for user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch project stats for user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -205,7 +269,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Updating progress for project ID: ${payload.id} to ${payload.progress}% by: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Updating progress for project ID: ${payload.id} to ${payload.progress}% by: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.updateProgress(
         payload.id,
@@ -214,7 +280,10 @@ export class ProjectsController {
         payload.notes,
       );
     } catch (error) {
-      this.logger.error(`Failed to update progress for project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update progress for project ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -232,7 +301,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Creating update for project ID: ${payload.projectId} by: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Creating update for project ID: ${payload.projectId} by: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.createProjectUpdate(
         payload.projectId,
@@ -241,7 +312,10 @@ export class ProjectsController {
         payload.isVisibleToClient,
       );
     } catch (error) {
-      this.logger.error(`Failed to create update for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create update for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -257,7 +331,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Fetching updates for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`);
+    this.logger.log(
+      `Fetching updates for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`,
+    );
     try {
       return await this.projectsService.getProjectUpdates(
         payload.projectId,
@@ -266,7 +342,10 @@ export class ProjectsController {
         payload.pageSize,
       );
     } catch (error) {
-      this.logger.error(`Failed to fetch updates for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch updates for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -279,11 +358,18 @@ export class ProjectsController {
     @Payload()
     payload: {
       projectId: number;
-      dto: { title: string; url: string; fileType?: string; isVisibleToClient?: boolean };
+      dto: {
+        title: string;
+        url: string;
+        fileType?: string;
+        isVisibleToClient?: boolean;
+      };
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Adding document "${payload.dto.title}" to project ID: ${payload.projectId} by: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Adding document "${payload.dto.title}" to project ID: ${payload.projectId} by: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.projectsService.addDocument(
         payload.projectId,
@@ -291,7 +377,10 @@ export class ProjectsController {
         payload.user,
       );
     } catch (error) {
-      this.logger.error(`Failed to add document to project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to add document to project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -307,7 +396,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Fetching documents for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`);
+    this.logger.log(
+      `Fetching documents for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`,
+    );
     try {
       return await this.projectsService.getDocuments(
         payload.projectId,
@@ -316,7 +407,10 @@ export class ProjectsController {
         payload.pageSize,
       );
     } catch (error) {
-      this.logger.error(`Failed to fetch documents for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch documents for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -331,7 +425,9 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Adding comment to project ID: ${payload.projectId} by: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Adding comment to project ID: ${payload.projectId} by: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.commentsService.create(
         payload.projectId,
@@ -339,7 +435,10 @@ export class ProjectsController {
         payload.user,
       );
     } catch (error) {
-      this.logger.error(`Failed to add comment to project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to add comment to project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -353,14 +452,19 @@ export class ProjectsController {
       user: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Fetching comments for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`);
+    this.logger.log(
+      `Fetching comments for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`,
+    );
     try {
       return await this.commentsService.findByProject(
         payload.projectId,
         payload.user,
       );
     } catch (error) {
-      this.logger.error(`Failed to fetch comments for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch comments for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

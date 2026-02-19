@@ -47,7 +47,10 @@ export class ContentService {
       throw new ForbiddenException(
         'You do not have permission to add content to this lesson.',
       );
-    if (!dto.lessonId) throw new BadRequestException('lessonId is required for direct content creation');
+    if (!dto.lessonId)
+      throw new BadRequestException(
+        'lessonId is required for direct content creation',
+      );
 
     return this.prisma.content.create({ data: dto as any });
   }
@@ -76,7 +79,12 @@ export class ContentService {
 
     // Case 1: File URL already provided (e.g., from API Gateway refactor)
     if (dto.contentUrl) {
-      console.log('[DEBUG] Using provided contentUrl:', dto.contentUrl, 'for lessonId:', dto.lessonId);
+      console.log(
+        '[DEBUG] Using provided contentUrl:',
+        dto.contentUrl,
+        'for lessonId:',
+        dto.lessonId,
+      );
       try {
         return await this.prisma.content.create({
           data: {
@@ -106,9 +114,10 @@ export class ContentService {
     try {
       console.log('[DEBUG] Starting file serialization and upload...');
       // Decode base64 buffer if it's a string (from microservice transport)
-      const fileBuffer = typeof file.buffer === 'string' 
-        ? Buffer.from(file.buffer, 'base64') 
-        : file.buffer;
+      const fileBuffer =
+        typeof file.buffer === 'string'
+          ? Buffer.from(file.buffer, 'base64')
+          : file.buffer;
 
       const uploadPayload = {
         file: {
@@ -125,7 +134,10 @@ export class ContentService {
         this.fileUploadClient.send({ cmd: 'upload_file' }, uploadPayload),
       );
 
-      console.log('[DEBUG] Upload response received:', JSON.stringify(uploadResponse));
+      console.log(
+        '[DEBUG] Upload response received:',
+        JSON.stringify(uploadResponse),
+      );
 
       if (!uploadResponse || !uploadResponse.url) {
         throw new Error('Upload service returned invalid response');
@@ -142,7 +154,10 @@ export class ContentService {
           },
         });
       } catch (prismaError: any) {
-        console.error('[ERROR] Prisma create content failed after upload:', prismaError);
+        console.error(
+          '[ERROR] Prisma create content failed after upload:',
+          prismaError,
+        );
         throw prismaError;
       }
     } catch (error: any) {
@@ -188,9 +203,9 @@ export class ContentService {
       this.prisma.content.findMany({
         skip,
         take: pageSize,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.content.count()
+      this.prisma.content.count(),
     ]);
 
     return {
@@ -198,11 +213,15 @@ export class ContentService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
-  async findByLesson(lessonId: number, user: AuthenticatedUser, query: any = {}) {
+  async findByLesson(
+    lessonId: number,
+    user: AuthenticatedUser,
+    query: any = {},
+  ) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
 
     const lesson = await this.prisma.lesson.findUnique({
@@ -223,9 +242,9 @@ export class ContentService {
           userId: user.firebaseId,
           OR: [
             { courseId: lesson.module.courseId, cohortId: null },
-            { cohort: { courseId: lesson.module.courseId } }
+            { cohort: { courseId: lesson.module.courseId } },
           ],
-          status: 'ACTIVE'
+          status: 'ACTIVE',
         },
       });
       isEnrolled = !!enrollment;
@@ -247,7 +266,7 @@ export class ContentService {
         take: pageSize,
         orderBy: { createdAt: 'asc' },
       }),
-      this.prisma.content.count({ where: { lessonId } })
+      this.prisma.content.count({ where: { lessonId } }),
     ]);
 
     return {
@@ -255,13 +274,16 @@ export class ContentService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
   async findByInstructor(user: AuthenticatedUser, query: any = {}) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+    if (
+      academyProfile.role !== 'INSTRUCTOR' &&
+      academyProfile.role !== 'ADMIN'
+    ) {
       throw new ForbiddenException('Instructor role required');
     }
 
@@ -273,10 +295,10 @@ export class ContentService {
       lesson: {
         module: {
           course: {
-            instructorId: user.firebaseId
-          }
-        }
-      }
+            instructorId: user.firebaseId,
+          },
+        },
+      },
     };
 
     if (query.type) where.type = query.type;
@@ -297,14 +319,14 @@ export class ContentService {
                 select: {
                   id: true,
                   title: true,
-                  course: { select: { id: true, title: true } }
-                }
-              }
-            }
-          }
-        }
+                  course: { select: { id: true, title: true } },
+                },
+              },
+            },
+          },
+        },
       }),
-      this.prisma.content.count({ where })
+      this.prisma.content.count({ where }),
     ]);
 
     return {
@@ -312,7 +334,7 @@ export class ContentService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 

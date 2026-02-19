@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; // Your Prisma service
 import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Your Cloudinary service
 import { CreateInspectionDto } from './dto/create-inspection.dto';
@@ -16,7 +20,7 @@ export class InspectionsService {
   async create(createInspectionDto: CreateInspectionDto, files: any[]) {
     const photoUploadPromises = files.map((file) => {
       const fileBuffer = Buffer.from(file.buffer, 'base64');
-      
+
       const mockFile = {
         buffer: fileBuffer,
         originalname: file.originalname,
@@ -42,16 +46,29 @@ export class InspectionsService {
     return inspection;
   }
 
-  async findAllForProject(projectId: number, pagination: { skip?: number; take?: number }, user: AuthenticatedUser) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+  async findAllForProject(
+    projectId: number,
+    pagination: { skip?: number; take?: number },
+    user: AuthenticatedUser,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) throw new NotFoundException('Project not found');
 
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view inspections for this project.');
+      throw new ForbiddenException(
+        'You do not have permission to view inspections for this project.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view inspections for this project.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view inspections for this project.',
+      );
     }
 
     const { skip = 0, take = 20 } = pagination;
@@ -70,7 +87,7 @@ export class InspectionsService {
   async findOne(id: number, user: AuthenticatedUser) {
     const inspection = await this.prisma.inspection.findUnique({
       where: { id },
-      include: { Project: true }
+      include: { Project: true },
     });
 
     if (!inspection) {
@@ -80,16 +97,27 @@ export class InspectionsService {
     const project = (inspection as any).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view this inspection.');
+      throw new ForbiddenException(
+        'You do not have permission to view this inspection.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view this inspection.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view this inspection.',
+      );
     }
 
     return inspection;
   }
 
-  async update(id: number, updateInspectionDto: UpdateInspectionDto, user: AuthenticatedUser) {
+  async update(
+    id: number,
+    updateInspectionDto: UpdateInspectionDto,
+    user: AuthenticatedUser,
+  ) {
     await this.findOne(id, user);
 
     return this.prisma.inspection.update({

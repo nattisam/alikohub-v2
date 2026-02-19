@@ -1,9 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AcademyProfileGuard implements CanActivate {
-  constructor(private userService: UserService) { }
+  constructor(private userService: UserService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToRpc().getData();
@@ -18,7 +23,7 @@ export class AcademyProfileGuard implements CanActivate {
       const profile = await this.userService.getOrCreateProfile(user);
       request.academyProfile = profile;
       return true;
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedException('Failed to get Academy profile');
     }
   }

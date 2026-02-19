@@ -10,7 +10,7 @@ export class UserApplicationService {
   async updateUserRole(userId: string, role: string) {
     if (!Object.values(ContechRole).includes(role as ContechRole)) {
       this.logger.error(
-        `Invalid role "${role}" received for user ${userId}. Skipping.`
+        `Invalid role "${role}" received for user ${userId}. Skipping.`,
       );
       return;
     }
@@ -28,7 +28,7 @@ export class UserApplicationService {
     });
 
     this.logger.log(
-      `Successfully updated role for user ${userId} to ${updatedProfile.role}`
+      `Successfully updated role for user ${userId} to ${updatedProfile.role}`,
     );
     return updatedProfile;
   }

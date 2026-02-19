@@ -9,10 +9,10 @@ export class RoleGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Get the required roles from the @Roles() decorator
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredRoles) {
       // If no roles are specified, allow access.
@@ -20,7 +20,7 @@ export class RoleGuard implements CanActivate {
     }
 
     const data = context.switchToRpc().getData();
-    
+
     // Get the academyProfile attached by the AcademyProfileGuard
     const { academyProfile } = data;
 
@@ -30,12 +30,15 @@ export class RoleGuard implements CanActivate {
     }
 
     // Check if the user's role is included in the list of required roles.
-    const hasRequiredRole = requiredRoles.some((role) => academyProfile.role === role);
+    const hasRequiredRole = requiredRoles.some(
+      (role) => academyProfile.role === role,
+    );
 
     if (!hasRequiredRole) {
       throw new RpcException({
         statusCode: 403,
-        message: 'You do not have the required permissions to perform this action.',
+        message:
+          'You do not have the required permissions to perform this action.',
         error: 'Forbidden',
       });
     }

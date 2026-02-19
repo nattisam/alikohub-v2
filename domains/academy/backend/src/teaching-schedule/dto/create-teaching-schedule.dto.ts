@@ -1,31 +1,38 @@
 import { ScheduleType } from '../../generated/client';
-import { IsString, IsOptional, IsDate, IsEnum, IsNumber, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsDate,
+  IsEnum,
+  IsNumber,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateTeachingScheduleDto {
-    @IsString()
-    title: string;
+  @IsString()
+  title: string;
 
-    @IsOptional()
-    @IsString()
-    description?: string;
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-    @IsString()
-    startTime: string;
+  @IsString()
+  startTime: string;
 
-    @IsString()
-    endTime: string;
+  @IsString()
+  endTime: string;
 
-    @IsEnum(ScheduleType)
-    type: ScheduleType;
+  @IsEnum(ScheduleType)
+  type: ScheduleType;
 
-    @IsNumber()
-    courseId: number;
+  @IsNumber()
+  courseId: number;
 
-    @IsOptional()
-    @IsBoolean()
-    isRecurring?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  isRecurring?: boolean;
 
-    @IsOptional()
-    @IsString()
-    recurrencePattern?: string;
+  @IsOptional()
+  @IsString()
+  recurrencePattern?: string;
 }

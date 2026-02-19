@@ -4,11 +4,6 @@ import { AcademyRole } from '../generated/client';
 import { firstValueFrom, timeout } from 'rxjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-enum GlobalRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-}
-
 export type AuthenticatedUser = {
   firebaseId: string;
   email: string;
@@ -43,43 +38,51 @@ export class UserService {
   constructor(
     @Inject('AUTH_SERVICE') private authClient: ClientProxy,
     private prisma: PrismaService,
-  ) { }
+  ) {}
 
   // ... (getUserById / getUsersByIds methods remain same) ...
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<AuthenticatedUser | null> {
     try {
       this.logger.log(`Fetching user details for: ${userId} from Auth Service`);
       const payload = {
         firebaseId: userId,
       };
 
-      const user = await firstValueFrom(
+      const user = (await firstValueFrom(
         this.authClient.send({ cmd: 'get_user_profile' }, payload),
+      )) as AuthenticatedUser;
+      this.logger.log(
+        `Received user details for ${userId}: ${JSON.stringify(user)}`,
       );
-      this.logger.log(`Received user details for ${userId}: ${JSON.stringify(user)}`);
       return user;
     } catch (error) {
-      this.logger.error(`Failed to fetch user ${userId}`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch user ${userId}`, errorMessage);
       return null;
     }
   }
 
-  async getUsersByIds(userIds: string[]) {
+  async getUsersByIds(userIds: string[]): Promise<AuthenticatedUser[]> {
     try {
       // The payload is simple: an object with a 'userIds' property
       const payload = { userIds };
 
-      const users = await firstValueFrom(
+      const users = (await firstValueFrom(
         this.authClient.send({ cmd: 'get_users_by_ids' }, payload),
-      );
+      )) as AuthenticatedUser[];
       return users;
     } catch (error) {
-      this.logger.error(`Failed to fetch users`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch users`, errorMessage);
       return []; // Return an empty array on failure
     }
   }
 
-  async getOrCreateProfile(user: AuthenticatedUser): Promise<AcademyUserProfile> {
+  async getOrCreateProfile(
+    user: AuthenticatedUser,
+  ): Promise<AcademyUserProfile> {
     await this.syncFromAuth(user.firebaseId);
 
     // Fetch fresh user data from Auth Service to ensure we have the latest details
@@ -93,9 +96,7 @@ export class UserService {
 
     if (!profile) {
       const roleToAssign =
-        user.globalRole === 'ADMIN'
-          ? AcademyRole.ADMIN
-          : AcademyRole.USER;
+        user.globalRole === 'ADMIN' ? AcademyRole.ADMIN : AcademyRole.USER;
       profile = await this.prisma.academyProfile.create({
         data: {
           userId: user.firebaseId,
@@ -135,16 +136,22 @@ export class UserService {
 
   private async syncFromAuth(userId: string) {
     try {
-      this.logger.log(`[UserService] Syncing user ${userId} from Auth service (TCP 3011)...`);
-      const authRecord = await firstValueFrom(
-        this.authClient.send({ cmd: 'sync_academy_user' }, { userId }).pipe(timeout(5000))
-      ) as AuthenticatedUser;
+      this.logger.log(
+        `[UserService] Syncing user ${userId} from Auth service (TCP 3011)...`,
+      );
+      const authRecord = (await firstValueFrom(
+        this.authClient
+          .send({ cmd: 'sync_academy_user' }, { userId })
+          .pipe(timeout(5000)),
+      )) as AuthenticatedUser;
 
       if (authRecord) {
-        this.logger.log(`[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`);
+        this.logger.log(
+          `[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`,
+        );
         // Determine effective role: prioritize ADMIN > INSTRUCTOR > STUDENT > USER
         let effectiveRole = authRecord.activeRole || authRecord.role;
-        
+
         // If the user is a global admin, they are an admin in Academy too
         if (authRecord.globalRole === 'ADMIN' || authRecord.role === 'ADMIN') {
           effectiveRole = 'ADMIN';
@@ -152,7 +159,7 @@ export class UserService {
           // If approved as instructor, use it if not already admin
           effectiveRole = 'INSTRUCTOR';
         }
-        
+
         if (effectiveRole) {
           await this.prisma.academyProfile.upsert({
             where: { userId },
@@ -167,17 +174,24 @@ export class UserService {
               hasSelectedRole: authRecord.activeRole ? true : undefined,
             },
           });
-          this.logger.log(`[UserService] Successfully synced user ${userId}. Academy role set to: ${effectiveRole}`);
+          this.logger.log(
+            `[UserService] Successfully synced user ${userId}. Academy role set to: ${effectiveRole}`,
+          );
         } else {
-          this.logger.warn(`[UserService] No role found in auth record for ${userId}`);
+          this.logger.warn(
+            `[UserService] No role found in auth record for ${userId}`,
+          );
         }
       } else {
         this.logger.warn(`[UserService] No auth record returned for ${userId}`);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[UserService] FAILED to sync user ${userId} from auth service:`, errorMessage);
-      this.logger.error(`[UserService] Failed to sync user ${userId} from auth service:`, errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `[UserService] Failed to sync user ${userId} from auth service:`,
+        errorMessage,
+      );
       // Don't rethrow yet, we might want to proceed with a default profile
     }
   }
@@ -186,7 +200,7 @@ export class UserService {
   async selectRole(userId: string, role: AcademyRole) {
     try {
       const existingProfile = await this.prisma.academyProfile.findUnique({
-        where: { userId }
+        where: { userId },
       });
 
       if (existingProfile) {
@@ -195,7 +209,7 @@ export class UserService {
           where: { userId },
           data: {
             role: role,
-            hasSelectedRole: true
+            hasSelectedRole: true,
           },
         });
       } else {
@@ -204,12 +218,14 @@ export class UserService {
           data: {
             userId: userId,
             role: role,
-            hasSelectedRole: true
+            hasSelectedRole: true,
           },
         });
       }
     } catch (error) {
-      this.logger.error('Error in selectRole:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error('Error in selectRole:', errorMessage);
       throw error;
     }
   }

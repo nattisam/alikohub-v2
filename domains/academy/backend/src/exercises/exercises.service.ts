@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
@@ -14,7 +13,10 @@ import { ExerciseType, SubmissionStatus } from '../generated/client';
 
 @Injectable()
 export class ExercisesService {
-  constructor(private prisma: PrismaService, private userService: UserService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService,
+  ) {}
 
   async create(dto: CreateExerciseDto, user: AuthenticatedUser) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
@@ -30,7 +32,9 @@ export class ExercisesService {
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to add exercises to this module.');
+      throw new ForbiddenException(
+        'You do not have permission to add exercises to this module.',
+      );
     }
 
     return this.prisma.exercise.create({
@@ -40,7 +44,11 @@ export class ExercisesService {
     });
   }
 
-  async findAllByModule(moduleId: number, user: AuthenticatedUser, query: any = {}) {
+  async findAllByModule(
+    moduleId: number,
+    user: AuthenticatedUser,
+    query: any = {},
+  ) {
     await this.verifyModuleAccess(moduleId, user);
 
     const page = Number(query.page) || 1;
@@ -54,12 +62,15 @@ export class ExercisesService {
         take: pageSize,
         orderBy: { order: 'asc' },
       }),
-      this.prisma.exercise.count({ where: { moduleId } })
+      this.prisma.exercise.count({ where: { moduleId } }),
     ]);
 
     // Strip correct answers for students
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    const module = await this.prisma.module.findUnique({ where: { id: moduleId }, include: { course: true } });
+    const module = await this.prisma.module.findUnique({
+      where: { id: moduleId },
+      include: { course: true },
+    });
     if (!module) throw new NotFoundException('Module not found');
 
     const isInstructor = module.course.instructorId === user.firebaseId;
@@ -67,8 +78,8 @@ export class ExercisesService {
 
     let items = exercises;
     if (!isInstructor && !isAdmin) {
-      items = exercises.map(ex => {
-        const { correctAnswer, ...rest } = ex;
+      items = exercises.map((ex) => {
+        const { correctAnswer: _correctAnswer, ...rest } = ex;
         return rest;
       }) as any;
     }
@@ -78,13 +89,16 @@ export class ExercisesService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
   async findByInstructor(user: AuthenticatedUser, query: any = {}) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+    if (
+      academyProfile.role !== 'INSTRUCTOR' &&
+      academyProfile.role !== 'ADMIN'
+    ) {
       throw new ForbiddenException('Instructor role required');
     }
 
@@ -95,9 +109,9 @@ export class ExercisesService {
     const where: any = {
       module: {
         course: {
-          instructorId: user.firebaseId
-        }
-      }
+          instructorId: user.firebaseId,
+        },
+      },
     };
 
     if (query.moduleId) where.moduleId = Number(query.moduleId);
@@ -109,17 +123,17 @@ export class ExercisesService {
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
-        include: { 
-          module: { 
-            include: { 
-              course: { 
-                select: { id: true, title: true } 
-              } 
-            } 
-          } 
-        }
+        include: {
+          module: {
+            include: {
+              course: {
+                select: { id: true, title: true },
+              },
+            },
+          },
+        },
       }),
-      this.prisma.exercise.count({ where })
+      this.prisma.exercise.count({ where }),
     ]);
 
     return {
@@ -127,16 +141,16 @@ export class ExercisesService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
   async findOne(id: number, user: AuthenticatedUser) {
     const exercise = await this.prisma.exercise.findUnique({
       where: { id },
-      include: { 
+      include: {
         module: { include: { course: true } },
-        lesson: true
+        lesson: true,
       },
     });
     if (!exercise) throw new NotFoundException('Exercise not found');
@@ -144,11 +158,12 @@ export class ExercisesService {
     await this.verifyModuleAccess(exercise.moduleId, user);
 
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    const isInstructor = exercise.module.course.instructorId === user.firebaseId;
+    const isInstructor =
+      exercise.module.course.instructorId === user.firebaseId;
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      const { correctAnswer, ...rest } = exercise;
+      const { correctAnswer: _correctAnswer, ...rest } = exercise;
       return rest;
     }
 
@@ -163,11 +178,14 @@ export class ExercisesService {
     if (!exercise) throw new NotFoundException('Exercise not found');
 
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    const isInstructor = exercise.module.course.instructorId === user.firebaseId;
+    const isInstructor =
+      exercise.module.course.instructorId === user.firebaseId;
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to update this exercise.');
+      throw new ForbiddenException(
+        'You do not have permission to update this exercise.',
+      );
     }
 
     return this.prisma.exercise.update({
@@ -184,11 +202,14 @@ export class ExercisesService {
     if (!exercise) throw new NotFoundException('Exercise not found');
 
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    const isInstructor = exercise.module.course.instructorId === user.firebaseId;
+    const isInstructor =
+      exercise.module.course.instructorId === user.firebaseId;
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to delete this exercise.');
+      throw new ForbiddenException(
+        'You do not have permission to delete this exercise.',
+      );
     }
 
     return this.prisma.exercise.delete({ where: { id } });
@@ -197,7 +218,7 @@ export class ExercisesService {
   async submit(id: number, dto: SubmitExerciseDto, user: AuthenticatedUser) {
     const exercise = await this.prisma.exercise.findUnique({
       where: { id },
-      include: { module: { include: { course: true } } }
+      include: { module: { include: { course: true } } },
     });
     if (!exercise) throw new NotFoundException('Exercise not found');
 
@@ -208,7 +229,10 @@ export class ExercisesService {
     let status: SubmissionStatus = SubmissionStatus.GRADED;
 
     // Auto-grading logic
-    if (exercise.type === ExerciseType.MULTIPLE_CHOICE || exercise.type === ExerciseType.TRUE_FALSE) {
+    if (
+      exercise.type === ExerciseType.MULTIPLE_CHOICE ||
+      exercise.type === ExerciseType.TRUE_FALSE
+    ) {
       // Comparison might differ based on data types (string vs object). Assuming simple equality for now.
       isCorrect = dto.answer === exercise.correctAnswer;
       score = isCorrect ? exercise.points : 0;
@@ -217,8 +241,10 @@ export class ExercisesService {
       // answer: [{"left": "A", "right": "1"}, ...]
       // correctAnswer: [{"left": "A", "right": "1"}, ...]
       const answerPairs = Array.isArray(dto.answer) ? dto.answer : [];
-      const correctPairs = Array.isArray(exercise.correctAnswer) ? exercise.correctAnswer : [];
-      
+      const correctPairs = Array.isArray(exercise.correctAnswer)
+        ? exercise.correctAnswer
+        : [];
+
       // Simple check: stringify and compare sorted or use validation util
       // For now, strict JSON equality
       if (JSON.stringify(answerPairs) === JSON.stringify(correctPairs)) {
@@ -237,8 +263,8 @@ export class ExercisesService {
       where: {
         userId_exerciseId: {
           userId: user.firebaseId,
-          exerciseId: id
-        }
+          exerciseId: id,
+        },
       },
       update: {
         answer: dto.answer,
@@ -246,7 +272,7 @@ export class ExercisesService {
         score,
         status,
         updatedAt: new Date(),
-        attemptCount: { increment: 1 }
+        attemptCount: { increment: 1 },
       },
       create: {
         userId: user.firebaseId,
@@ -255,23 +281,32 @@ export class ExercisesService {
         isCorrect,
         score,
         status,
-      }
+      },
     });
   }
 
-  async grade(submissionId: number, dto: GradeExerciseDto, user: AuthenticatedUser) {
+  async grade(
+    submissionId: number,
+    dto: GradeExerciseDto,
+    user: AuthenticatedUser,
+  ) {
     const submission = await this.prisma.exerciseSubmission.findUnique({
       where: { id: submissionId },
-      include: { exercise: { include: { module: { include: { course: true } } } } }
+      include: {
+        exercise: { include: { module: { include: { course: true } } } },
+      },
     });
     if (!submission) throw new NotFoundException('Submission not found');
 
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    const isInstructor = submission.exercise.module.course.instructorId === user.firebaseId;
+    const isInstructor =
+      submission.exercise.module.course.instructorId === user.firebaseId;
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to grade this exercise.');
+      throw new ForbiddenException(
+        'You do not have permission to grade this exercise.',
+      );
     }
 
     return this.prisma.exerciseSubmission.update({
@@ -280,8 +315,8 @@ export class ExercisesService {
         isCorrect: dto.isCorrect,
         score: dto.score,
         feedback: dto.feedback,
-        status: SubmissionStatus.GRADED
-      }
+        status: SubmissionStatus.GRADED,
+      },
     });
   }
 
@@ -301,24 +336,26 @@ export class ExercisesService {
 
     // Check enrollment
     const directEnrollment = await this.prisma.enrollment.findFirst({
-        where: {
-          userId: user.firebaseId,
-          courseId: module.courseId,
-          cohortId: null,
-          status: 'ACTIVE'
-        }
+      where: {
+        userId: user.firebaseId,
+        courseId: module.courseId,
+        cohortId: null,
+        status: 'ACTIVE',
+      },
     });
 
     const cohortEnrollment = await this.prisma.enrollment.findFirst({
-        where: {
-          userId: user.firebaseId,
-          cohort: { courseId: module.courseId },
-          status: 'ACTIVE'
-        }
+      where: {
+        userId: user.firebaseId,
+        cohort: { courseId: module.courseId },
+        status: 'ACTIVE',
+      },
     });
 
     if (!directEnrollment && !cohortEnrollment) {
-      throw new ForbiddenException('You must be enrolled in this course to access exercises.');
+      throw new ForbiddenException(
+        'You must be enrolled in this course to access exercises.',
+      );
     }
   }
 }

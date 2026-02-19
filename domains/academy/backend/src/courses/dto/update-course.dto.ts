@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsArray, IsInt, IsEnum } from "class-validator";
-import { CourseStatus } from "../../generated/client";
+import { IsOptional, IsString, IsArray, IsInt, IsEnum } from 'class-validator';
+import { CourseStatus } from '../../generated/client';
 
 export class UpdateCourseDto {
   @IsString()

@@ -1,4 +1,10 @@
-import { Controller, UseGuards, UsePipes, Logger, UseFilters } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  UsePipes,
+  Logger,
+  UseFilters,
+} from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ContractService } from './contract.service';
 import { UpdateContractStatusDto } from './dto/update-contract-status.dto';
@@ -10,7 +16,7 @@ import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
 import {
   UpdateContractStatusSchema,
   AddChangeOrderSchema,
-  ContractIdSchema
+  ContractIdSchema,
 } from './contract.validation';
 
 @Controller()
@@ -18,17 +24,27 @@ import {
 @UseFilters(RpcExceptionFilter)
 export class ContractController {
   private readonly logger = new Logger(ContractController.name);
-  constructor(private readonly contractsService: ContractService) { }
+  constructor(private readonly contractsService: ContractService) {}
 
   @MessagePattern({ cmd: 'uploadContract' })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
-  async uploadContract(@Payload() payload: { 
-    projectId: number; 
-    file: { buffer: string; originalname: string; mimetype: string; size: number };
-    user: AuthenticatedUser 
-  }) {
-    this.logger.log(`Uploading contract for project ID: ${payload.projectId} by admin: ${payload.user.firebaseId}`);
+  async uploadContract(
+    @Payload()
+    payload: {
+      projectId: number;
+      file: {
+        buffer: string;
+        originalname: string;
+        mimetype: string;
+        size: number;
+      };
+      user: AuthenticatedUser;
+    },
+  ) {
+    this.logger.log(
+      `Uploading contract for project ID: ${payload.projectId} by admin: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.contractsService.uploadAndCreateContract(
         payload.projectId,
@@ -36,7 +52,10 @@ export class ContractController {
         payload.user,
       );
     } catch (error) {
-      this.logger.error(`Failed to upload contract for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to upload contract for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -45,12 +64,24 @@ export class ContractController {
   @UseGuards(RoleGuard)
   @Roles('ADMIN', 'CLIENT')
   @UsePipes(new JoiValidationPipe(UpdateContractStatusSchema))
-  async updateStatus(@Payload() payload: { id: number; user: AuthenticatedUser } & UpdateContractStatusDto) {
-    this.logger.log(`Updating status for contract ID: ${payload.id} to ${payload.status} by: ${payload.user.firebaseId}`);
+  async updateStatus(
+    @Payload()
+    payload: { id: number; user: AuthenticatedUser } & UpdateContractStatusDto,
+  ) {
+    this.logger.log(
+      `Updating status for contract ID: ${payload.id} to ${payload.status} by: ${payload.user.firebaseId}`,
+    );
     try {
-      return await this.contractsService.updateStatus(payload.id, payload.status, payload.user);
+      return await this.contractsService.updateStatus(
+        payload.id,
+        payload.status,
+        payload.user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to update status for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update status for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -62,35 +93,71 @@ export class ContractController {
   // But controller expects { id, addChangeOrderDto, user }. I'll rename in schema or adjust here.
   // Actually, I'll adjust the schema to match the controller or vice-versa.
   // The schema has { contractId, dto, user }. I'll rename fields in the controller call to match.
-  async addChangeOrder(@Payload() payload: { id: number; addChangeOrderDto: AddChangeOrderDto; user: AuthenticatedUser }) {
-    this.logger.log(`Adding change order to contract ID: ${payload.id} by admin: ${payload.user.firebaseId}`);
+  async addChangeOrder(
+    @Payload()
+    payload: {
+      id: number;
+      addChangeOrderDto: AddChangeOrderDto;
+      user: AuthenticatedUser;
+    },
+  ) {
+    this.logger.log(
+      `Adding change order to contract ID: ${payload.id} by admin: ${payload.user.firebaseId}`,
+    );
     try {
-      return await this.contractsService.addChangeOrder(payload.id, payload.addChangeOrderDto, payload.user);
+      return await this.contractsService.addChangeOrder(
+        payload.id,
+        payload.addChangeOrderDto,
+        payload.user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to add change order to contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to add change order to contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
   @MessagePattern({ cmd: 'getContractViewUrl' })
   @UsePipes(new JoiValidationPipe(ContractIdSchema))
-  async getSecureViewUrl(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    this.logger.log(`Generating secure view URL for contract ID: ${payload.id} (requested by: ${payload.user.firebaseId})`);
+  async getSecureViewUrl(
+    @Payload() payload: { id: number; user: AuthenticatedUser },
+  ) {
+    this.logger.log(
+      `Generating secure view URL for contract ID: ${payload.id} (requested by: ${payload.user.firebaseId})`,
+    );
     try {
-      return await this.contractsService.generateSignedUrl(payload.id, payload.user);
+      return await this.contractsService.generateSignedUrl(
+        payload.id,
+        payload.user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to generate signed URL for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to generate signed URL for contract ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
 
   @MessagePattern({ cmd: 'getContractsByProjectId' })
-  async getContractsByProjectId(@Payload() payload: { projectId: number; user: AuthenticatedUser }) {
-    this.logger.log(`Fetching contracts for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`);
+  async getContractsByProjectId(
+    @Payload() payload: { projectId: number; user: AuthenticatedUser },
+  ) {
+    this.logger.log(
+      `Fetching contracts for project ID: ${payload.projectId} (requested by: ${payload.user.firebaseId})`,
+    );
     try {
-      return await this.contractsService.findByProjectId(payload.projectId, payload.user);
+      return await this.contractsService.findByProjectId(
+        payload.projectId,
+        payload.user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to fetch contracts for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch contracts for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

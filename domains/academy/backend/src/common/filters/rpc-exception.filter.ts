@@ -21,23 +21,38 @@ export class RpcExceptionFilter implements ExceptionFilter {
     let details: any = null;
 
     // 1. Check for HttpException (duck typing + constructor check + name check)
-    if (exception && (
-      exception instanceof HttpException || 
-      (typeof exception.getStatus === 'function' && typeof exception.getResponse === 'function') ||
-      exception.constructor?.name === 'ForbiddenException' ||
-      exception.constructor?.name === 'NotFoundException' ||
-      exception.constructor?.name === 'BadRequestException' ||
-      (exception as any).name === 'ForbiddenException' || 
-      (exception as any).name === 'NotFoundException' ||
-      (exception as any).message?.includes('permission') // desperate fallback for 403
-    )) {
-      status = typeof exception.getStatus === 'function' ? exception.getStatus() : 
-               ((exception.constructor?.name === 'ForbiddenException' || (exception as any).name === 'ForbiddenException' || (exception as any).message?.includes('permission')) ? 403 : 
-               ((exception.constructor?.name === 'NotFoundException' || (exception as any).name === 'NotFoundException') ? 404 : 400));
-               
-      const response = typeof exception.getResponse === 'function' ? exception.getResponse() : exception.message;
+    if (
+      exception &&
+      (exception instanceof HttpException ||
+        (typeof exception.getStatus === 'function' &&
+          typeof exception.getResponse === 'function') ||
+        exception.constructor?.name === 'ForbiddenException' ||
+        exception.constructor?.name === 'NotFoundException' ||
+        exception.constructor?.name === 'BadRequestException' ||
+        (exception as any).name === 'ForbiddenException' ||
+        (exception as any).name === 'NotFoundException' ||
+        (exception as any).message?.includes('permission')) // desperate fallback for 403
+    ) {
+      status =
+        typeof exception.getStatus === 'function'
+          ? exception.getStatus()
+          : exception.constructor?.name === 'ForbiddenException' ||
+              (exception as any).name === 'ForbiddenException' ||
+              (exception as any).message?.includes('permission')
+            ? 403
+            : exception.constructor?.name === 'NotFoundException' ||
+                (exception as any).name === 'NotFoundException'
+              ? 404
+              : 400;
+
+      const response =
+        typeof exception.getResponse === 'function'
+          ? exception.getResponse()
+          : exception.message;
       if (typeof response === 'object') {
-        message = Array.isArray(response.message) ? response.message[0] : response.message || exception.message;
+        message = Array.isArray(response.message)
+          ? response.message[0]
+          : response.message || exception.message;
         error = response.error || 'Http Error';
         details = response.details || null;
       } else {
@@ -46,17 +61,23 @@ export class RpcExceptionFilter implements ExceptionFilter {
       }
     }
     // 2. Check for objects with explicit status properties
-    else if (exception && (exception.statusCode || exception.status) && typeof (exception.statusCode || exception.status) === 'number') {
-        const rawStatus = exception.statusCode || exception.status;
-        if (rawStatus >= 100 && rawStatus <= 599) {
-            status = rawStatus;
-            message = exception.message || 'Error';
-            error = 'Error';
-        }
+    else if (
+      exception &&
+      (exception.statusCode || exception.status) &&
+      typeof (exception.statusCode || exception.status) === 'number'
+    ) {
+      const rawStatus = exception.statusCode || exception.status;
+      if (rawStatus >= 100 && rawStatus <= 599) {
+        status = rawStatus;
+        message = exception.message || 'Error';
+        error = 'Error';
+      }
     }
     // 3. Prisma Known Errors
     else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      this.logger.error(`Prisma Known Error: ${exception.code} - ${exception.message}`);
+      this.logger.error(
+        `Prisma Known Error: ${exception.code} - ${exception.message}`,
+      );
       switch (exception.code) {
         case 'P2002':
           status = HttpStatus.CONFLICT;
@@ -98,11 +119,15 @@ export class RpcExceptionFilter implements ExceptionFilter {
     else if (exception instanceof Error) {
       message = exception.message;
       this.logger.error(`Unhandled error: ${message}`, exception.stack);
-    } 
+    }
     // 8. Catch-all
     else {
-      console.error('[CRITICAL] Academy Microservice hit a non-Error exception:', exception);
-      if (exception?.constructor) console.error('Constructor:', exception.constructor.name);
+      console.error(
+        '[CRITICAL] Academy Microservice hit a non-Error exception:',
+        exception,
+      );
+      if (exception?.constructor)
+        console.error('Constructor:', exception.constructor.name);
       console.dir(exception, { depth: null });
     }
 

@@ -38,7 +38,7 @@ import { AppController } from './app.controller';
     NotificationsModule,
     UserApplicationModule,
     TeachingScheduleModule,
-    ExercisesModule
+    ExercisesModule,
   ],
   controllers: [AppController],
   providers: [
@@ -48,6 +48,6 @@ import { AppController } from './app.controller';
       provide: APP_FILTER,
       useClass: RpcExceptionFilter,
     },
-  ]
+  ],
 })
-export class AppModule { }
+export class AppModule {}

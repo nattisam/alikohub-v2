@@ -23,12 +23,20 @@ type FindAllQuery = {
 
 @Injectable()
 export class CoursesService {
-  constructor(private prisma: PrismaService, private userService: UserService) { }
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService,
+  ) {}
 
   async create(dto: CreateCourseDto, user: AuthenticatedUser) {
-    const academyProfile = await this.userService.getOrCreateProfile(user)
-    if (academyProfile.role !== AcademyRole.INSTRUCTOR && academyProfile.role !== AcademyRole.ADMIN) {
-      throw new ForbiddenException('You do not have permission to create a course.')
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (
+      academyProfile.role !== AcademyRole.INSTRUCTOR &&
+      academyProfile.role !== AcademyRole.ADMIN
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to create a course.',
+      );
     }
 
     const instructorId = user.firebaseId;
@@ -36,13 +44,16 @@ export class CoursesService {
     const exists = await this.prisma.course.findFirst({
       where: { title: dto.title, instructorId: instructorId },
     });
-    if (exists) throw new BadRequestException('You already have a course with this title');
- 
+    if (exists)
+      throw new BadRequestException(
+        'You already have a course with this title',
+      );
+
     // Validate URL if provided
     if (dto.thumbnail) {
       try {
         new URL(dto.thumbnail);
-      } catch (e) {
+      } catch (_e) {
         throw new BadRequestException('Invalid thumbnail URL');
       }
     }
@@ -80,7 +91,9 @@ export class CoursesService {
             name: `${course.title} - Default Cohort`,
             courseId: course.id,
             startDate: new Date(),
-            endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 1 year from now
+            endDate: new Date(
+              new Date().setFullYear(new Date().getFullYear() + 1),
+            ), // 1 year from now
           },
         });
       } catch (cohortError) {
@@ -104,11 +117,16 @@ export class CoursesService {
         }>;
       }>;
     },
-    user: AuthenticatedUser
+    user: AuthenticatedUser,
   ) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    if (academyProfile.role !== AcademyRole.INSTRUCTOR && academyProfile.role !== AcademyRole.ADMIN) {
-      throw new ForbiddenException('You do not have permission to create a course.');
+    if (
+      academyProfile.role !== AcademyRole.INSTRUCTOR &&
+      academyProfile.role !== AcademyRole.ADMIN
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to create a course.',
+      );
     }
 
     const instructorId = user.firebaseId;
@@ -117,7 +135,10 @@ export class CoursesService {
     const exists = await this.prisma.course.findFirst({
       where: { title: dto.title, instructorId: instructorId },
     });
-    if (exists) throw new BadRequestException('You already have a course with this title');
+    if (exists)
+      throw new BadRequestException(
+        'You already have a course with this title',
+      );
 
     // Create course with modules and lessons in a transaction
     const course = await this.prisma.$transaction(async (prisma) => {
@@ -150,7 +171,9 @@ export class CoursesService {
             name: `${newCourse.title} - Default Cohort`,
             courseId: newCourse.id,
             startDate: new Date(),
-            endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 1 year from now
+            endDate: new Date(
+              new Date().setFullYear(new Date().getFullYear() + 1),
+            ), // 1 year from now
           },
         });
       }
@@ -252,27 +275,29 @@ export class CoursesService {
               },
             },
             // Conditional include for full content when pending approval
-            ...(query.status === CourseStatus.PENDING_APPROVAL ? {
-              modules: {
-                orderBy: { createdAt: 'asc' },
-                include: {
-                  lessons: {
-                    orderBy: { order: 'asc' },
+            ...(query.status === CourseStatus.PENDING_APPROVAL
+              ? {
+                  modules: {
+                    orderBy: { createdAt: 'asc' },
                     include: {
-                      contents: {
-                        orderBy: { createdAt: 'asc' }
+                      lessons: {
+                        orderBy: { order: 'asc' },
+                        include: {
+                          contents: {
+                            orderBy: { createdAt: 'asc' },
+                          },
+                          exercises: {
+                            orderBy: { order: 'asc' },
+                          },
+                        },
                       },
                       exercises: {
-                        orderBy: { order: 'asc' }
-                      }
-                    }
+                        orderBy: { order: 'asc' },
+                      },
+                    },
                   },
-                  exercises: {
-                    orderBy: { order: 'asc' }
-                  }
                 }
-              }
-            } : {})
+              : {}),
           },
         }),
         this.prisma.course.count({ where }),
@@ -283,20 +308,25 @@ export class CoursesService {
       const instructorIds = [...new Set(courses.map((c) => c.instructorId))];
 
       // Fetch all required instructors in a single batch call from Auth Service
-      const authInstructors = await this.userService.getUsersByIds(instructorIds);
+      const authInstructors =
+        await this.userService.getUsersByIds(instructorIds);
 
       // Map everything back to response objects
       const items = courses.map((course: any) => {
-        const authInfo = authInstructors.find((i: any) => i.firebaseId === course.instructorId);
-        
+        const authInfo = authInstructors.find(
+          (i: any) => i.firebaseId === course.instructorId,
+        );
+
         return {
           ...course,
           modulesCount: course._count?.modules || 0,
           enrolledNum: course._count?.enrollments || course.enrolledNum || 0,
-          instructor: authInfo ? {
-            ...authInfo,
-            profile: course.profile,
-          } : null,
+          instructor: authInfo
+            ? {
+                ...authInfo,
+                profile: course.profile,
+              }
+            : null,
           // Remove the raw profile and _count property from the root level of the item
           profile: undefined,
           _count: undefined,
@@ -331,7 +361,7 @@ export class CoursesService {
 
   // REFACTORED: Use string ID and enrich data
   async findOne(id: number, user?: AuthenticatedUser) {
-    const course = await this.prisma.course.findUnique({ 
+    const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
         modules: {
@@ -341,27 +371,27 @@ export class CoursesService {
               orderBy: { order: 'asc' },
               include: {
                 contents: {
-                  orderBy: { createdAt: 'asc' }
+                  orderBy: { createdAt: 'asc' },
                 },
                 exercises: {
-                  orderBy: { order: 'asc' }
-                }
-              }
+                  orderBy: { order: 'asc' },
+                },
+              },
             },
             exercises: {
-              orderBy: { order: 'asc' }
-            }
-          }
+              orderBy: { order: 'asc' },
+            },
+          },
         },
         profile: {
           select: {
             bio: true,
             expertise: true,
             specialization: true,
-            role: true
-          }
-        }
-      }
+            role: true,
+          },
+        },
+      },
     });
     if (!course) throw new NotFoundException('Course not found');
 
@@ -370,7 +400,10 @@ export class CoursesService {
       let isAllowed = false;
       if (user) {
         const profile = await this.userService.getOrCreateProfile(user);
-        if (profile.role === AcademyRole.ADMIN || course.instructorId === user.firebaseId) {
+        if (
+          profile.role === AcademyRole.ADMIN ||
+          course.instructorId === user.firebaseId
+        ) {
           isAllowed = true;
         }
       }
@@ -392,7 +425,7 @@ export class CoursesService {
     return {
       ...course,
       enrolledNum: enrollmentCount, // Override the stored enrolledNum with actual count
-      instructor
+      instructor,
     };
   }
 
@@ -403,22 +436,38 @@ export class CoursesService {
     if (!course) throw new NotFoundException('Course not found');
 
     // OWNERSHIP CHECK: User must be an ADMIN or the original instructor
-    if (academyProfile.role !== AcademyRole.ADMIN && course.instructorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to edit this course');
+    if (
+      academyProfile.role !== AcademyRole.ADMIN &&
+      course.instructorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to edit this course',
+      );
     }
 
     // Only an admin can re-assign an instructor
     if (dto.instructorId && academyProfile.role !== AcademyRole.ADMIN) {
-      throw new ForbiddenException('Only an admin can change the course instructor');
+      throw new ForbiddenException(
+        'Only an admin can change the course instructor',
+      );
     }
 
     if (dto.instructorId) {
-      const newInstructorProfile = await this.userService.ensureProfileExists(dto.instructorId);
+      const newInstructorProfile = await this.userService.ensureProfileExists(
+        dto.instructorId,
+      );
       if (!newInstructorProfile) {
-        throw new BadRequestException('The assigned user does not exist in the Auth Service.');
+        throw new BadRequestException(
+          'The assigned user does not exist in the Auth Service.',
+        );
       }
-      if (newInstructorProfile.role !== AcademyRole.INSTRUCTOR && newInstructorProfile.role !== AcademyRole.ADMIN) {
-        throw new BadRequestException('The assigned user is not an instructor.');
+      if (
+        newInstructorProfile.role !== AcademyRole.INSTRUCTOR &&
+        newInstructorProfile.role !== AcademyRole.ADMIN
+      ) {
+        throw new BadRequestException(
+          'The assigned user is not an instructor.',
+        );
       }
     }
 
@@ -431,14 +480,23 @@ export class CoursesService {
     const course = await this.prisma.course.findUnique({ where: { id } });
     if (!course) throw new NotFoundException('Course not found');
 
-    if (academyProfile.role !== AcademyRole.ADMIN && course.instructorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to delete this course');
+    if (
+      academyProfile.role !== AcademyRole.ADMIN &&
+      course.instructorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this course',
+      );
     }
 
     return await this.prisma.course.delete({ where: { id } });
   }
 
-  async updateStatus(id: number, status: CourseStatus, user: AuthenticatedUser) {
+  async updateStatus(
+    id: number,
+    status: CourseStatus,
+    user: AuthenticatedUser,
+  ) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
     const course = await this.prisma.course.findUnique({ where: { id } });
     if (!course) {
@@ -446,12 +504,20 @@ export class CoursesService {
     }
 
     // AUTHORIZATION: User must be an ADMIN or the instructor who owns the course.
-    if (academyProfile.role !== AcademyRole.ADMIN && course.instructorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to change the status of this course');
+    if (
+      academyProfile.role !== AcademyRole.ADMIN &&
+      course.instructorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to change the status of this course',
+      );
     }
 
     // Your existing business logic is still valid
-    if (course.status === CourseStatus.ARCHIVED && status !== CourseStatus.ARCHIVED) {
+    if (
+      course.status === CourseStatus.ARCHIVED &&
+      status !== CourseStatus.ARCHIVED
+    ) {
       throw new BadRequestException('Archived courses cannot be re-published');
     }
 
@@ -462,12 +528,18 @@ export class CoursesService {
   }
 
   // REFACTORED: Now an admin-only action
-  async assignInstructor(id: number, newInstructorId: string, user: AuthenticatedUser) {
+  async assignInstructor(
+    id: number,
+    newInstructorId: string,
+    user: AuthenticatedUser,
+  ) {
     // AUTHORIZATION: In this business model, we'll say only an ADMIN can re-assign a course.
     // This prevents instructors from passing courses between themselves without oversight.
     const academyProfile = await this.userService.getOrCreateProfile(user);
     if (academyProfile.role !== AcademyRole.ADMIN) {
-      throw new ForbiddenException('Only an administrator can assign an instructor');
+      throw new ForbiddenException(
+        'Only an administrator can assign an instructor',
+      );
     }
 
     const course = await this.prisma.course.findUnique({ where: { id } });
@@ -476,12 +548,20 @@ export class CoursesService {
     }
 
     // Validate that the new instructor is a valid user with the correct role
-    const newInstructorProfile = await this.userService.ensureProfileExists(newInstructorId);
+    const newInstructorProfile =
+      await this.userService.ensureProfileExists(newInstructorId);
     if (!newInstructorProfile) {
-      throw new BadRequestException('The assigned user does not exist in the Auth Service.');
+      throw new BadRequestException(
+        'The assigned user does not exist in the Auth Service.',
+      );
     }
-    if (newInstructorProfile.role !== AcademyRole.INSTRUCTOR && newInstructorProfile.role !== AcademyRole.ADMIN) {
-      throw new BadRequestException('The assigned user is not a valid instructor.');
+    if (
+      newInstructorProfile.role !== AcademyRole.INSTRUCTOR &&
+      newInstructorProfile.role !== AcademyRole.ADMIN
+    ) {
+      throw new BadRequestException(
+        'The assigned user is not a valid instructor.',
+      );
     }
 
     return await this.prisma.course.update({
@@ -514,19 +594,18 @@ export class CoursesService {
     if (!course) throw new NotFoundException('Course not found');
 
     // Authorization check
-    if (
-      academyProfile.role === 'STUDENT' &&
-      course.status !== 'PUBLISHED'
-    ) {
+    if (academyProfile.role === 'STUDENT' && course.status !== 'PUBLISHED') {
       throw new ForbiddenException('You do not have access to this course.');
     }
 
     if (
-      academyProfile.role === AcademyRole.INSTRUCTOR as any &&
+      academyProfile.role === (AcademyRole.INSTRUCTOR as any) &&
       course.instructorId !== user.firebaseId &&
-      academyProfile.role !== AcademyRole.ADMIN as any
+      academyProfile.role !== (AcademyRole.ADMIN as any)
     ) {
-      throw new ForbiddenException('You do not have permission to view this course.');
+      throw new ForbiddenException(
+        'You do not have permission to view this course.',
+      );
     }
 
     return course;
@@ -535,8 +614,13 @@ export class CoursesService {
   // --- NEW: Get instructor's courses with stats ---
   async getInstructorCoursesWithStats(user: AuthenticatedUser) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    if (academyProfile.role !== AcademyRole.INSTRUCTOR && academyProfile.role !== AcademyRole.ADMIN) {
-      throw new ForbiddenException('You do not have permission to view courses.');
+    if (
+      academyProfile.role !== AcademyRole.INSTRUCTOR &&
+      academyProfile.role !== AcademyRole.ADMIN
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view courses.',
+      );
     }
 
     const courses = await this.prisma.course.findMany({
@@ -578,16 +662,16 @@ export class CoursesService {
         const modulesCount = course.modules.length;
         const lessonsCount = course.modules.reduce(
           (sum, module) => sum + module.lessons.length,
-          0
+          0,
         );
         const contentCount = course.modules.reduce(
           (sum, module) =>
             sum +
             module.lessons.reduce(
               (lessonSum, lesson) => lessonSum + lesson.contents.length,
-              0
+              0,
             ),
-          0
+          0,
         );
 
         return {
@@ -599,7 +683,7 @@ export class CoursesService {
             contentItems: contentCount,
           },
         };
-      })
+      }),
     );
 
     return coursesWithStats;
@@ -609,10 +693,17 @@ export class CoursesService {
     const course = await this.prisma.course.findUnique({ where: { id } });
     if (!course) throw new NotFoundException('Course not found');
     if (course.instructorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to submit this course for approval');
+      throw new ForbiddenException(
+        'You do not have permission to submit this course for approval',
+      );
     }
-    if (course.status !== CourseStatus.DRAFT && course.status !== CourseStatus.REJECTED) {
-      throw new BadRequestException('Only draft or rejected courses can be submitted for approval');
+    if (
+      course.status !== CourseStatus.DRAFT &&
+      course.status !== CourseStatus.REJECTED
+    ) {
+      throw new BadRequestException(
+        'Only draft or rejected courses can be submitted for approval',
+      );
     }
 
     return await this.prisma.course.update({

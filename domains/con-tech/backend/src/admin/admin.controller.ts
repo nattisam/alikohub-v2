@@ -21,8 +21,10 @@ export class AdminController {
   @UsePipes(new JoiValidationPipe(AdminDashboardSchema))
   async getDashboard(@Payload() payload: any) {
     const { user } = payload;
-    this.logger.log(`Fetching admin dashboard data (requested by: ${user.firebaseId})`);
-    
+    this.logger.log(
+      `Fetching admin dashboard data (requested by: ${user.firebaseId})`,
+    );
+
     try {
       const profile = await this.userService.getOrCreateProfile(user);
       if (profile.role !== 'ADMIN') {
@@ -30,7 +32,7 @@ export class AdminController {
       }
 
       const stats = await this.projectsService.getProjectStats(user);
-      
+
       const [totalClients, totalContractors] = await Promise.all([
         this.userService.countByRole(ContechRole.CLIENT),
         this.userService.countByRole(ContechRole.CONTRACTOR),
@@ -41,10 +43,13 @@ export class AdminController {
         users: {
           clients: totalClients,
           contractors: totalContractors,
-        }
+        },
       };
     } catch (error) {
-      this.logger.error(`Failed to fetch admin dashboard for user ${user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch admin dashboard for user ${user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -53,8 +58,10 @@ export class AdminController {
   @UsePipes(new JoiValidationPipe(ListProfilesSchema))
   async listUsers(@Payload() payload: any) {
     const { user, role, page, pageSize } = payload;
-    this.logger.log(`Listing users with role: ${role || 'all'} (requested by admin: ${user.firebaseId})`);
-    
+    this.logger.log(
+      `Listing users with role: ${role || 'all'} (requested by admin: ${user.firebaseId})`,
+    );
+
     try {
       const adminProfile = await this.userService.getOrCreateProfile(user);
       if (adminProfile.role !== 'ADMIN') {
@@ -63,7 +70,10 @@ export class AdminController {
 
       return await this.userService.findProfilesByRole(role, page, pageSize);
     } catch (error) {
-      this.logger.error(`Failed to list users for admin ${user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to list users for admin ${user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

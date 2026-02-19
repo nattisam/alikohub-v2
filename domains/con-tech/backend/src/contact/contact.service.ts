@@ -8,14 +8,23 @@ export class ContactService {
 
   constructor(@Inject('AUTH_SERVICE') private authClient: ClientProxy) {}
 
-  async sendContactEmail(dto: { name: string; email: string; phone: string; message: string }) {
-    this.logger.log(`Forwarding contact inquiry from ${dto.email} to Auth Service`);
+  async sendContactEmail(dto: {
+    name: string;
+    email: string;
+    phone: string;
+    message: string;
+  }) {
+    this.logger.log(
+      `Forwarding contact inquiry from ${dto.email} to Auth Service`,
+    );
     try {
       return await firstValueFrom(
         this.authClient.send({ cmd: 'send_contact_email' }, dto),
       );
     } catch (error) {
-      this.logger.error(`Failed to send contact email to Auth Service: ${error.message}`);
+      this.logger.error(
+        `Failed to send contact email to Auth Service: ${error.message}`,
+      );
       throw error;
     }
   }

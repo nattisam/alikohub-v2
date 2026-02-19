@@ -1,27 +1,33 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException, 
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateCohortDto } from './dto/create-cohort.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser, UserService } from 'src/user/user.service';
 
-
 @Injectable()
 export class CohortsService {
-  constructor(private prisma: PrismaService, private userService: UserService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService,
+  ) {}
 
-  
   async create(dto: CreateCohortDto, user: AuthenticatedUser) {
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const course = await this.prisma.course.findUnique({
       where: { id: dto.courseId },
     });
     if (!course) throw new NotFoundException('Course not found');
 
-    if (course.instructorId !== user.firebaseId && academyProfile.role !== 'ADMIN') {
-      throw new ForbiddenException('You do not have permission to create a cohort for this course.');
+    if (
+      course.instructorId !== user.firebaseId &&
+      academyProfile.role !== 'ADMIN'
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to create a cohort for this course.',
+      );
     }
 
     return await this.prisma.cohort.create({ data: dto });
@@ -41,9 +47,9 @@ export class CohortsService {
         skip,
         take: pageSize,
         include: { course: { select: { id: true, title: true } } },
-        orderBy: { startDate: 'desc' }
+        orderBy: { startDate: 'desc' },
       }),
-      this.prisma.cohort.count({ where })
+      this.prisma.cohort.count({ where }),
     ]);
 
     return {
@@ -51,13 +57,16 @@ export class CohortsService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
   async findByInstructor(user: AuthenticatedUser, query: any = {}) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+    if (
+      academyProfile.role !== 'INSTRUCTOR' &&
+      academyProfile.role !== 'ADMIN'
+    ) {
       throw new ForbiddenException('Instructor role required');
     }
 
@@ -67,8 +76,8 @@ export class CohortsService {
 
     const where: any = {
       course: {
-        instructorId: user.firebaseId
-      }
+        instructorId: user.firebaseId,
+      },
     };
 
     if (query.courseId) where.courseId = Number(query.courseId);
@@ -79,9 +88,9 @@ export class CohortsService {
         skip,
         take: pageSize,
         include: { course: { select: { id: true, title: true } } },
-        orderBy: { startDate: 'desc' }
+        orderBy: { startDate: 'desc' },
       }),
-      this.prisma.cohort.count({ where })
+      this.prisma.cohort.count({ where }),
     ]);
 
     return {
@@ -89,7 +98,7 @@ export class CohortsService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
@@ -99,9 +108,13 @@ export class CohortsService {
     return cohort;
   }
 
-  async update(id: number, dto: Partial<CreateCohortDto>, user: AuthenticatedUser) {
+  async update(
+    id: number,
+    dto: Partial<CreateCohortDto>,
+    user: AuthenticatedUser,
+  ) {
     // Find the cohort and its parent course for the ownership check
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const cohort = await this.prisma.cohort.findUnique({
       where: { id },
       include: { course: true },
@@ -109,15 +122,20 @@ export class CohortsService {
     if (!cohort) throw new NotFoundException('Cohort not found');
 
     // AUTHORIZATION: User must be the course instructor or an admin.
-    if (cohort.course.instructorId !== user.firebaseId && academyProfile.role !== 'ADMIN') {
-      throw new ForbiddenException('You do not have permission to update this cohort.');
+    if (
+      cohort.course.instructorId !== user.firebaseId &&
+      academyProfile.role !== 'ADMIN'
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to update this cohort.',
+      );
     }
 
     return await this.prisma.cohort.update({ where: { id }, data: dto });
   }
 
   async remove(id: number, user: AuthenticatedUser) {
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const cohort = await this.prisma.cohort.findUnique({
       where: { id },
       include: { course: true },
@@ -125,10 +143,15 @@ export class CohortsService {
     if (!cohort) throw new NotFoundException('Cohort not found');
 
     // AUTHORIZATION: User must be the course instructor or an admin.
-    if (cohort.course.instructorId !== user.firebaseId && academyProfile.role !== 'ADMIN') {
-      throw new ForbiddenException('You do not have permission to delete this cohort.');
+    if (
+      cohort.course.instructorId !== user.firebaseId &&
+      academyProfile.role !== 'ADMIN'
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this cohort.',
+      );
     }
-    
+
     return await this.prisma.cohort.delete({ where: { id } });
   }
 }

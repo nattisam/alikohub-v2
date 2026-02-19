@@ -3,7 +3,7 @@ import { ConTechProfileGuard } from './contech-profile.guard';
 
 @Global()
 @Module({
-    providers: [ConTechProfileGuard],
-    exports: [ConTechProfileGuard],
+  providers: [ConTechProfileGuard],
+  exports: [ConTechProfileGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

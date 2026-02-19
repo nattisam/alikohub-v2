@@ -1,9 +1,12 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProjectsService } from './projects.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserService } from '../user/user.service';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 
 const mockPrismaService = {
   project: {
@@ -66,7 +69,9 @@ describe('ProjectsService', () => {
       userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
       prisma.project.update.mockResolvedValue({ id: 1, progress: 50 });
 
-      const result = await service.updateProgress(1, 50, { firebaseId: 'uid' } as any);
+      const result = await service.updateProgress(1, 50, {
+        firebaseId: 'uid',
+      } as any);
       expect(prisma.project.update).toHaveBeenCalled();
       expect(result.progress).toBe(50);
     });
@@ -86,56 +91,69 @@ describe('ProjectsService', () => {
   });
 
   describe('createProjectUpdate (Weekly Updates)', () => {
-     it('should create an update if user is authorized', async () => {
-        prisma.project.findUnique.mockResolvedValue({
-            id: 1,
-            contractorId: 'uid',
-        });
-        userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
-        prisma.projectUpdate.create.mockResolvedValue({ id: 1, text: 'update' });
-
-        await service.createProjectUpdate(1, 'update', { firebaseId: 'uid' } as any);
-        expect(prisma.projectUpdate.create).toHaveBeenCalledWith(expect.objectContaining({
-            data: expect.objectContaining({
-                text: 'update',
-                isVisibleToClient: false // default check
-            })
-        }));
-     });
-
-     it('should set isVisibleToClient if provided', async () => {
-        prisma.project.findUnique.mockResolvedValue({
-             id: 1,
-             contractorId: 'uid',
-         });
-         userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
-         
-         await service.createProjectUpdate(1, 'update', { firebaseId: 'uid' } as any, true);
-         expect(prisma.projectUpdate.create).toHaveBeenCalledWith(expect.objectContaining({
-             data: expect.objectContaining({
-                 isVisibleToClient: true 
-             })
-         }));
+    it('should create an update if user is authorized', async () => {
+      prisma.project.findUnique.mockResolvedValue({
+        id: 1,
+        contractorId: 'uid',
       });
+      userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
+      prisma.projectUpdate.create.mockResolvedValue({ id: 1, text: 'update' });
+
+      await service.createProjectUpdate(1, 'update', {
+        firebaseId: 'uid',
+      } as any);
+      expect(prisma.projectUpdate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            text: 'update',
+            isVisibleToClient: false, // default check
+          }),
+        }),
+      );
+    });
+
+    it('should set isVisibleToClient if provided', async () => {
+      prisma.project.findUnique.mockResolvedValue({
+        id: 1,
+        contractorId: 'uid',
+      });
+      userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
+
+      await service.createProjectUpdate(
+        1,
+        'update',
+        { firebaseId: 'uid' } as any,
+        true,
+      );
+      expect(prisma.projectUpdate.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            isVisibleToClient: true,
+          }),
+        }),
+      );
+    });
   });
 
   describe('addDocument', () => {
-      it('should add a document with visibility flags', async () => {
-        prisma.project.findUnique.mockResolvedValue({
-            id: 1,
-            contractorId: 'uid',
-        });
-        userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
-
-        const dto = { title: 'doc', url: 'http://doc', isVisibleToClient: true };
-        await service.addDocument(1, dto, { firebaseId: 'uid' } as any);
-
-        expect(prisma.projectDocument.create).toHaveBeenCalledWith(expect.objectContaining({
-            data: expect.objectContaining({
-                title: 'doc',
-                isVisibleToClient: true
-            })
-        }));
+    it('should add a document with visibility flags', async () => {
+      prisma.project.findUnique.mockResolvedValue({
+        id: 1,
+        contractorId: 'uid',
       });
+      userService.getOrCreateProfile.mockResolvedValue({ role: 'CONTRACTOR' });
+
+      const dto = { title: 'doc', url: 'http://doc', isVisibleToClient: true };
+      await service.addDocument(1, dto, { firebaseId: 'uid' } as any);
+
+      expect(prisma.projectDocument.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: 'doc',
+            isVisibleToClient: true,
+          }),
+        }),
+      );
+    });
   });
 });

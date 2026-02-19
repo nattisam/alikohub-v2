@@ -6,27 +6,27 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Global()
 @Module({
-    imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    ClientsModule.registerAsync([
+      {
+        name: 'AUTH_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('AUTH_SERVICE_HOST') || 'localhost',
+            port: configService.get('AUTH_TCP_PORT') || 3011,
+          },
         }),
-        ClientsModule.registerAsync([
-            {
-                name: 'AUTH_SERVICE',
-                imports: [ConfigModule],
-                inject: [ConfigService],
-                useFactory: (configService: ConfigService) => ({
-                    transport: Transport.TCP,
-                    options: {
-                        host: configService.get('AUTH_SERVICE_HOST') || 'localhost',
-                        port: configService.get('AUTH_TCP_PORT') || 3011,
-                    },
-                }),
-            }
-        ]),
-    ],
-    controllers: [UserController],
-    providers: [UserService],
-    exports: [UserService]
+      },
+    ]),
+  ],
+  controllers: [UserController],
+  providers: [UserService],
+  exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

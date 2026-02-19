@@ -22,11 +22,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             port: parseInt(configService.get('AUTH_TCP_PORT')) || 3011,
           },
         }),
-      }
+      },
     ]),
   ],
   controllers: [UserController], // Add the controller
   providers: [UserService],
-  exports: [UserService]
+  exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

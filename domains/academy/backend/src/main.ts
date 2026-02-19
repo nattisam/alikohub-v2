@@ -17,9 +17,6 @@ async function bootstrap() {
     logger: winstonConfig,
   });
 
-  // Get ConfigService if needed
-  const configService = app.get(ConfigService);
-
   // Use PORT from env or default 3005
   const PORT = parseInt(process.env.PORT as string) || 3005;
 
@@ -44,7 +41,7 @@ async function bootstrap() {
           exchange: 'user_events',
           exchangeType: 'fanout',
           queueOptions: {
-            durable: false
+            durable: false,
           },
         },
       });
@@ -58,7 +55,7 @@ async function bootstrap() {
 
   // Centralized Global Error Handling
   app.useGlobalFilters(new RpcExceptionFilter());
-  
+
   // Centralized Validation Handling
   app.useGlobalPipes(
     new ValidationPipe({

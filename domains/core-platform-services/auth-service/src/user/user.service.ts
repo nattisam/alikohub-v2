@@ -20,6 +20,11 @@ export interface ApplicationData {
 	formData?: object;
 	resumeUrl?: string;
 	personalDetails?: any;
+	teachingCategories?: string[];
+	interviewResponses?: any;
+	documents?: any[];
+	status?: string;
+	submittedAt?: Date;
 }
 
 @Injectable()

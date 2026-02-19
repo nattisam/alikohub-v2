@@ -1,4 +1,12 @@
-import { IsEnum, IsInt, IsString, IsUrl, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsString,
+  IsUrl,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+} from 'class-validator';
 import { ContentType } from '../../generated/client';
 
 export class CreateContentDto {

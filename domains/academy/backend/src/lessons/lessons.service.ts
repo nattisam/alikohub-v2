@@ -8,14 +8,16 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { AuthenticatedUser, UserService } from 'src/user/user.service';
 
-
 @Injectable()
 export class LessonsService {
-  constructor(private prisma: PrismaService, private userService: UserService) { }
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService,
+  ) {}
 
   async create(dto: CreateLessonDto, user: AuthenticatedUser) {
     const { title, type, dueDate, maxScore, moduleId, contents } = dto;
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
 
     // Fetch the module and its parent course for the ownership check
     const module = await this.prisma.module.findUnique({
@@ -29,7 +31,9 @@ export class LessonsService {
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to add a lesson to this module.');
+      throw new ForbiddenException(
+        'You do not have permission to add a lesson to this module.',
+      );
     }
 
     return await this.prisma.lesson.create({
@@ -38,27 +42,33 @@ export class LessonsService {
         type,
         maxScore,
         order: dto.order || 0,
-        unlockRules: dto.unlockRules || {},
+        unlockRules: dto.unlockRules || ({} as object),
         dueDate: dueDate ? new Date(dueDate) : null,
         module: { connect: { id: moduleId } },
-        ...(contents && contents.length > 0 ? { 
-          contents: { 
-            create: contents.map(c => {
-              const { lessonId, ...rest } = c;
-              return rest;
-            }) 
-          } 
-        } : {}),
+        ...(contents && contents.length > 0
+          ? {
+              contents: {
+                create: contents.map((c) => {
+                  const { lessonId: _lessonId, ...rest } = c;
+                  return rest;
+                }),
+              },
+            }
+          : {}),
       },
     });
   }
 
-  async findByModule(moduleId: number, user: AuthenticatedUser, query: any = {}) {
+  async findByModule(
+    moduleId: number,
+    user: AuthenticatedUser,
+    query: Record<string, any> = {},
+  ) {
     console.log(`=== Authorization Check for Lessons ===`);
     console.log(`User ID: ${user.firebaseId}`);
     console.log(`Module ID: ${moduleId}`);
 
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const module = await this.prisma.module.findUnique({
       where: { id: moduleId },
       include: { course: true },
@@ -81,15 +91,17 @@ export class LessonsService {
           userId: user.firebaseId,
           OR: [
             { courseId: courseId, cohortId: null },
-            { cohort: { courseId: courseId } }
-          ]
+            { cohort: { courseId: courseId } },
+          ],
         },
       });
       isEnrolled = !!enrollment;
     }
 
     if (!isAdmin && !isInstructor && !isEnrolled) {
-      throw new ForbiddenException('You must be enrolled in this course to view its lessons.');
+      throw new ForbiddenException(
+        'You must be enrolled in this course to view its lessons.',
+      );
     }
 
     const page = Number(query.page) || 1;
@@ -104,7 +116,7 @@ export class LessonsService {
         orderBy: { order: 'asc' },
         include: { contents: true, exercises: true },
       }),
-      this.prisma.lesson.count({ where: { moduleId } })
+      this.prisma.lesson.count({ where: { moduleId } }),
     ]);
 
     return {
@@ -112,13 +124,19 @@ export class LessonsService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
-  async findByInstructor(user: AuthenticatedUser, query: any = {}) {
+  async findByInstructor(
+    user: AuthenticatedUser,
+    query: Record<string, any> = {},
+  ) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+    if (
+      academyProfile.role !== 'INSTRUCTOR' &&
+      academyProfile.role !== 'ADMIN'
+    ) {
       throw new ForbiddenException('Instructor role required');
     }
 
@@ -126,12 +144,12 @@ export class LessonsService {
     const pageSize = Number(query.pageSize) || 10;
     const skip = (page - 1) * pageSize;
 
-    const where: any = {
+    const where: Record<string, any> = {
       module: {
         course: {
-          instructorId: user.firebaseId
-        }
-      }
+          instructorId: user.firebaseId,
+        },
+      },
     };
 
     if (query.moduleId) where.moduleId = Number(query.moduleId);
@@ -143,17 +161,17 @@ export class LessonsService {
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
-        include: { 
-          module: { 
-            include: { 
-              course: { 
-                select: { id: true, title: true } 
-              } 
-            } 
-          } 
-        }
+        include: {
+          module: {
+            include: {
+              course: {
+                select: { id: true, title: true },
+              },
+            },
+          },
+        },
       }),
-      this.prisma.lesson.count({ where })
+      this.prisma.lesson.count({ where }),
     ]);
 
     return {
@@ -161,12 +179,12 @@ export class LessonsService {
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize)
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 
   async findOne(id: number, user: AuthenticatedUser) {
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const lesson = await this.prisma.lesson.findUnique({
       where: { id },
       include: { contents: true, module: { include: { course: true } } },
@@ -183,7 +201,7 @@ export class LessonsService {
         where: {
           userId: user.firebaseId,
           courseId: lesson.module.courseId,
-          cohortId: null // Direct enrollment without cohort
+          cohortId: null, // Direct enrollment without cohort
         },
       });
 
@@ -194,7 +212,7 @@ export class LessonsService {
         const cohortEnrollment = await this.prisma.enrollment.findFirst({
           where: {
             userId: user.firebaseId,
-            cohort: { courseId: lesson.module.courseId }
+            cohort: { courseId: lesson.module.courseId },
           },
         });
         isEnrolled = !!cohortEnrollment;
@@ -202,14 +220,15 @@ export class LessonsService {
     }
 
     if (!isInstructor && !isAdmin && !isEnrolled) {
-      throw new ForbiddenException('You must be enrolled in this course to view this lesson.');
+      throw new ForbiddenException(
+        'You must be enrolled in this course to view this lesson.',
+      );
     }
 
     // We don't need to return the nested module/course info to the client
-    const { module, ...lessonWithoutNesting } = lesson;
-    
+    const { module: _module, ...lessonWithoutNesting } = lesson;
+
     // Check if the lesson is locked for this user (if they are a student)
-    let isLocked = false;
     if (academyProfile.role === 'STUDENT' && lesson.unlockRules) {
       // Basic check: if unlockRules has prerequisites, we might need a separate service to check them.
       // For now, we'll just include the rules and let the client or a subsequent PR handle the complex logic.
@@ -218,12 +237,12 @@ export class LessonsService {
 
     return {
       ...lessonWithoutNesting,
-      isLocked,
+      isLocked: false,
     };
   }
 
   async update(id: number, dto: UpdateLessonDto, user: AuthenticatedUser) {
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const { dueDate, moduleId, contents, ...rest } = dto;
 
     const lesson = await this.prisma.lesson.findUnique({
@@ -237,7 +256,9 @@ export class LessonsService {
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to update this lesson.');
+      throw new ForbiddenException(
+        'You do not have permission to update this lesson.',
+      );
     }
 
     return await this.prisma.lesson.update({
@@ -245,24 +266,31 @@ export class LessonsService {
       data: {
         ...rest,
         order: dto.order !== undefined ? dto.order : lesson.order,
-        unlockRules: dto.unlockRules !== undefined ? dto.unlockRules : lesson.unlockRules,
-        ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
-        ...(moduleId !== undefined ? { module: { connect: { id: moduleId } } } : {}),
-        ...(contents && contents.length > 0 ? { 
-          contents: { 
-            deleteMany: {}, 
-            create: contents.map(c => {
-              const { lessonId, ...rest } = c;
-              return rest;
-            }) 
-          } 
-        } : {}),
+        unlockRules:
+          dto.unlockRules !== undefined ? dto.unlockRules : lesson.unlockRules,
+        ...(dueDate !== undefined
+          ? { dueDate: dueDate ? new Date(dueDate) : null }
+          : {}),
+        ...(moduleId !== undefined
+          ? { module: { connect: { id: moduleId } } }
+          : {}),
+        ...(contents && contents.length > 0
+          ? {
+              contents: {
+                deleteMany: {},
+                create: contents.map((c) => {
+                  const { lessonId: _lessonId, ...rest } = c;
+                  return rest;
+                }),
+              },
+            }
+          : {}),
       },
     });
   }
 
   async remove(id: number, user: AuthenticatedUser) {
-    const academyProfile = await this.userService.getOrCreateProfile(user)
+    const academyProfile = await this.userService.getOrCreateProfile(user);
     const lesson = await this.prisma.lesson.findUnique({
       where: { id },
       include: { module: { include: { course: true } } },
@@ -274,7 +302,9 @@ export class LessonsService {
     const isAdmin = academyProfile.role === 'ADMIN';
 
     if (!isInstructor && !isAdmin) {
-      throw new ForbiddenException('You do not have permission to delete this lesson.');
+      throw new ForbiddenException(
+        'You do not have permission to delete this lesson.',
+      );
     }
 
     return await this.prisma.lesson.delete({ where: { id } });

@@ -13,7 +13,7 @@ import {
   UpdateCohortSchema,
   CohortIdSchema,
   FindCohortsSchema,
-  InstructorOnlyEventsSchema
+  InstructorOnlyEventsSchema,
 } from './cohorts.validation';
 
 @Controller()
@@ -26,12 +26,19 @@ export class CohortsController {
   @UseGuards(RoleGuard)
   @Roles('INSTRUCTOR', 'ADMIN')
   @UsePipes(new JoiValidationPipe(CreateCohortSchema))
-  async create(@Payload() payload: { dto: CreateCohortDto; user: AuthenticatedUser }) {
-    this.logger.log(`Creating cohort "${payload.dto.name}" for course ${payload.dto.courseId} by user: ${payload.user.firebaseId}`);
+  async create(
+    @Payload() payload: { dto: CreateCohortDto; user: AuthenticatedUser },
+  ) {
+    this.logger.log(
+      `Creating cohort "${payload.dto.name}" for course ${payload.dto.courseId} by user: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.cohortsService.create(payload.dto, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to create cohort "${payload.dto.name}" for course ${payload.dto.courseId} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create cohort "${payload.dto.name}" for course ${payload.dto.courseId} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -39,11 +46,16 @@ export class CohortsController {
   @MessagePattern({ cmd: 'find_all_cohorts' })
   @UsePipes(new JoiValidationPipe(FindCohortsSchema))
   async findAll(@Payload() payload: { query?: any }) {
-    this.logger.log(`Fetching all cohorts with query: ${JSON.stringify(payload.query || {})}`);
+    this.logger.log(
+      `Fetching all cohorts with query: ${JSON.stringify(payload.query || {})}`,
+    );
     try {
       return await this.cohortsService.findAll(payload.query);
     } catch (error) {
-      this.logger.error(`Failed to fetch all cohorts with query ${JSON.stringify(payload.query || {})}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch all cohorts with query ${JSON.stringify(payload.query || {})}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -52,12 +64,22 @@ export class CohortsController {
   @UseGuards(RoleGuard)
   @Roles('INSTRUCTOR', 'ADMIN')
   @UsePipes(new JoiValidationPipe(InstructorOnlyEventsSchema))
-  async findInstructorCohorts(@Payload() payload: { user: AuthenticatedUser; query?: any }) {
-    this.logger.log(`Instructor ${payload.user.firebaseId} fetching their cohorts`);
+  async findInstructorCohorts(
+    @Payload() payload: { user: AuthenticatedUser; query?: any },
+  ) {
+    this.logger.log(
+      `Instructor ${payload.user.firebaseId} fetching their cohorts`,
+    );
     try {
-      return await this.cohortsService.findByInstructor(payload.user, payload.query);
+      return await this.cohortsService.findByInstructor(
+        payload.user,
+        payload.query,
+      );
     } catch (error) {
-      this.logger.error(`Instructor ${payload.user.firebaseId} failed to fetch their cohorts: ${error.message}`, error.stack);
+      this.logger.error(
+        `Instructor ${payload.user.firebaseId} failed to fetch their cohorts: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -69,7 +91,10 @@ export class CohortsController {
     try {
       return await this.cohortsService.findOne(payload.id);
     } catch (error) {
-      this.logger.error(`Failed to fetch details for cohort ID ${payload.id}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch details for cohort ID ${payload.id}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -78,12 +103,28 @@ export class CohortsController {
   @UseGuards(RoleGuard)
   @Roles('INSTRUCTOR', 'ADMIN')
   @UsePipes(new JoiValidationPipe(UpdateCohortSchema))
-  async update(@Payload() payload: { id: number; dto: UpdateCohortDto; user: AuthenticatedUser }) {
-    this.logger.log(`Updating cohort ID: ${payload.id} by user: ${payload.user.firebaseId}`);
+  async update(
+    @Payload()
+    payload: {
+      id: number;
+      dto: UpdateCohortDto;
+      user: AuthenticatedUser;
+    },
+  ) {
+    this.logger.log(
+      `Updating cohort ID: ${payload.id} by user: ${payload.user.firebaseId}`,
+    );
     try {
-      return await this.cohortsService.update(payload.id, payload.dto, payload.user);
+      return await this.cohortsService.update(
+        payload.id,
+        payload.dto,
+        payload.user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to update cohort ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update cohort ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -93,11 +134,16 @@ export class CohortsController {
   @Roles('INSTRUCTOR', 'ADMIN')
   @UsePipes(new JoiValidationPipe(CohortIdSchema))
   async remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    this.logger.log(`Removing cohort ID: ${payload.id} by user: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Removing cohort ID: ${payload.id} by user: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.cohortsService.remove(payload.id, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to remove cohort ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to remove cohort ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

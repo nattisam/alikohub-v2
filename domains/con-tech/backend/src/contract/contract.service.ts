@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Assuming you have this service
 import { v2 as cloudinary } from 'cloudinary';
@@ -12,12 +17,9 @@ export class ContractService {
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService, // Inject your Cloudinary service
     private userService: UserService,
-  ) { }
+  ) {}
 
-  async createContract(
-    projectId: number,
-    contractUrl: string,
-  ) {
+  async createContract(projectId: number, contractUrl: string) {
     // Validate URL
     try {
       new URL(contractUrl);
@@ -42,11 +44,18 @@ export class ContractService {
    */
   async uploadAndCreateContract(
     projectId: number,
-    file: { buffer: string; originalname: string; mimetype: string; size: number },
+    file: {
+      buffer: string;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
     user: AuthenticatedUser,
   ) {
     // Verify project exists
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) {
       throw new NotFoundException('Project not found');
     }
@@ -82,11 +91,13 @@ export class ContractService {
   async updateStatus(id: number, status: string, user: AuthenticatedUser) {
     const contract = await this.findContractById(id, user); // RBAC included
 
-    // Extra check: Only Pm/Admin/Client can update status. 
+    // Extra check: Only Pm/Admin/Client can update status.
     // Contractor probably shouldn't update contract status.
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CONTRACTOR') {
-      throw new ForbiddenException('Contractors cannot update contract status.');
+      throw new ForbiddenException(
+        'Contractors cannot update contract status.',
+      );
     }
 
     return this.prisma.contract.update({
@@ -95,30 +106,51 @@ export class ContractService {
     });
   }
 
-  async addChangeOrder(id: number, changeOrderDto: AddChangeOrderDto, user: AuthenticatedUser) {
+  async addChangeOrder(
+    id: number,
+    changeOrderDto: AddChangeOrderDto,
+    user: AuthenticatedUser,
+  ) {
     const contract = await this.findContractById(id, user);
 
     return this.prisma.contract.update({
       where: { id },
-      data: { changeOrders: [...(contract.changeOrders as any[] || []), { ...changeOrderDto, createdAt: new Date() }] },
+      data: {
+        changeOrders: [
+          ...((contract.changeOrders as any[]) || []),
+          { ...changeOrderDto, createdAt: new Date() },
+        ],
+      },
     });
   }
 
-  async generateSignedUrl(id: number, user: AuthenticatedUser): Promise<{ signedUrl: string }> {
+  async generateSignedUrl(
+    id: number,
+    user: AuthenticatedUser,
+  ): Promise<{ signedUrl: string }> {
     const contract = await this.findContractById(id, user);
     return { signedUrl: contract.contractFile };
   }
 
   async findByProjectId(projectId: number, user: AuthenticatedUser) {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) throw new NotFoundException('Project not found');
 
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view contracts for this project.');
+      throw new ForbiddenException(
+        'You do not have permission to view contracts for this project.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view contracts for this project.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view contracts for this project.',
+      );
     }
 
     return this.prisma.contract.findMany({
@@ -128,9 +160,9 @@ export class ContractService {
 
   // Helper to prevent code duplication
   private async findContractById(id: number, user: AuthenticatedUser) {
-    const contract = await this.prisma.contract.findUnique({ 
-        where: { id },
-        include: { Project: true }
+    const contract = await this.prisma.contract.findUnique({
+      where: { id },
+      include: { Project: true },
     });
     if (!contract) {
       throw new NotFoundException(`Contract with ID ${id} not found.`);
@@ -139,10 +171,17 @@ export class ContractService {
     const project = (contract as any).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-       throw new ForbiddenException('You do not have permission to access this contract.');
+      throw new ForbiddenException(
+        'You do not have permission to access this contract.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-       throw new ForbiddenException('You do not have permission to access this contract.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to access this contract.',
+      );
     }
 
     return contract;
