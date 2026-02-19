@@ -11,7 +11,7 @@ export class ConTechProfileGuard implements CanActivate {
   constructor(private userService: UserService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToRpc().getData();
+    const request = context.switchToRpc().getData() as Record<string, any>;
     const user = request.user;
 
     if (!user) {

@@ -1,4 +1,4 @@
-import { AcademyRole } from '../../generated/client';
+import { AcademyRole } from '../generated/client';
 
 export interface AuthenticatedUser {
   firebaseId: string;

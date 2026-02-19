@@ -38,11 +38,11 @@ async function bootstrap() {
           exchange: 'user_events',
           exchangeType: 'fanout',
           queueOptions: {
-            durable: false
+            durable: false,
           },
           socketOptions: {
-            noDelay: true
-          }
+            noDelay: true,
+          },
         },
       });
       console.log(`ConTech: RabbitMQ transport configured for ${rabbitmqUrl}`);
@@ -55,7 +55,7 @@ async function bootstrap() {
 
   // Centralized Global Error Handling
   app.useGlobalFilters(new RpcExceptionFilter());
-  
+
   // centralized Validation Handling
   app.useGlobalPipes(
     new ValidationPipe({

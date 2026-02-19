@@ -1,44 +1,49 @@
-import { IsString, IsNotEmpty, IsOptional, IsDateString, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsDateString,
+  IsNumber,
+} from 'class-validator';
 
 export class CreateProjectDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsString()
-    @IsOptional()
-    description?: string;
+  @IsString()
+  @IsOptional()
+  description?: string;
 
-    @IsString()
-    @IsOptional()
-    clientId?: string;
+  @IsString()
+  @IsOptional()
+  clientId?: string;
 
-    @IsString()
-    @IsOptional()
-    site?: string;    
+  @IsString()
+  @IsOptional()
+  site?: string;
 
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
 
-    @IsDateString()
-    @IsOptional()
-    startDate?: string;
+  @IsDateString()
+  @IsOptional()
+  endDate?: string;
 
-    @IsDateString()
-    @IsOptional()
-    endDate?: string;
+  @IsNumber()
+  @IsOptional()
+  budget?: number;
 
-    @IsNumber()
-    @IsOptional()
-    budget?: number;
+  @IsString()
+  @IsOptional()
+  location?: string;
 
-    @IsString()
-    @IsOptional()
-    location?: string;
+  @IsString()
+  @IsOptional()
+  contractorId?: string;
 
-    @IsString()
-    @IsOptional()
-    contractorId?: string;
-
-    @IsString()
-    @IsOptional()
-    inspectorId?: string;
+  @IsString()
+  @IsOptional()
+  inspectorId?: string;
 }

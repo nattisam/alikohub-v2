@@ -12,11 +12,9 @@ export const winstonLogger = winston.createLogger({
   format: combine(
     colorize(),
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    customFormat
+    customFormat,
   ),
-  transports: [
-    new winston.transports.Console(),
-  ],
+  transports: [new winston.transports.Console()],
 });
 
 export class AppLogger implements LoggerService {

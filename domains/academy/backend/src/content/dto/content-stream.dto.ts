@@ -1,5 +1,5 @@
-import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
-import { ContentType } from '../../generated/client';
+import { IsInt, IsOptional, IsString } from 'class-validator';
+// import { ContentType } from '../../generated/client';
 
 export class ContentStreamDto {
   @IsInt()

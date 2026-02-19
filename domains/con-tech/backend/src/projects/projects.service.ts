@@ -8,7 +8,7 @@ import { RpcException } from '@nestjs/microservices';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { ProjectStatus } from '../generated/client';
+import { ProjectStatus, Prisma } from '../generated/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 import { winstonLogger } from '../logger';
 
@@ -70,8 +70,11 @@ export class ProjectsService {
       winstonLogger.info(`Project created successfully: ${result.id}`);
       return result;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       winstonLogger.error(
-        `Failed to create project: ${error.message} - ${error.stack}`,
+        `Failed to create project: ${errorMessage} - ${errorStack}`,
       );
       throw error;
     }
@@ -500,10 +503,10 @@ export class ProjectsService {
 
     const skip = (page - 1) * pageSize;
 
-    const where: any = { projectId };
+    const where: Prisma.ProjectUpdateWhereInput = { projectId };
     // Clients only see what is visible to them
     if (isClient) {
-      where.isVisibleToClient = true;
+      where.isVisibleToClient = { equals: true };
     }
 
     const [updates, total] = await Promise.all([
@@ -616,10 +619,10 @@ export class ProjectsService {
 
     const skip = (page - 1) * pageSize;
 
-    const where: any = { projectId };
+    const where: Prisma.ProjectDocumentWhereInput = { projectId };
     // Clients only see what is visible to them
     if (isClient) {
-      where.isVisibleToClient = true;
+      where.isVisibleToClient = { equals: true };
     }
 
     const [documents, total] = await Promise.all([

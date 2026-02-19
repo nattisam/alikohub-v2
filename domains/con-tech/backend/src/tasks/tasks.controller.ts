@@ -40,9 +40,12 @@ export class TasksController {
     try {
       return await this.tasksService.create(payload.dto, payload.user);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to create task for project ID ${payload.dto.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to create task for project ID ${payload.dto.projectId} by user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -68,9 +71,12 @@ export class TasksController {
         payload.user,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to fetch tasks for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch tasks for project ID ${payload.projectId} by user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -85,9 +91,12 @@ export class TasksController {
     try {
       return await this.tasksService.findOne(payload.id, payload.user);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to fetch task details for ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch task details for ID ${payload.id} by user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -115,9 +124,12 @@ export class TasksController {
         payload.user,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to update task ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to update task ID ${payload.id} by user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -134,9 +146,12 @@ export class TasksController {
     try {
       return await this.tasksService.remove(payload.id, payload.user);
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to remove task ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to remove task ID ${payload.id} by user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -163,9 +178,12 @@ export class TasksController {
         payload.user,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to update progress for task ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to update progress for task ID ${payload.id} by user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -192,9 +210,12 @@ export class TasksController {
         payload.assignedTo,
       );
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to fetch task stats for user ${payload.user.firebaseId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch task stats for user ${payload.user.firebaseId}: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }

@@ -1,7 +1,12 @@
 // src/inspections/dto/create-inspection.dto.ts
 import { ChecklistItemStatus } from '../../generated/client';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class ChecklistItemDto {
   @IsString()

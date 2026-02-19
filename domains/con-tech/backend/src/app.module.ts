@@ -34,9 +34,9 @@ import { AppController } from './app.controller';
     ClientReportModule,
     ContractModule,
     MilestonesModule,
-    ContactModule
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [CloudinaryService],
 })
-export class AppModule { }
+export class AppModule {}

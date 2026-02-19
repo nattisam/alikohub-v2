@@ -1,4 +1,9 @@
-import { PipeTransform, Injectable, ArgumentMetadata, HttpStatus } from '@nestjs/common';
+import {
+  PipeTransform,
+  Injectable,
+  ArgumentMetadata,
+  HttpStatus,
+} from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import * as Joi from 'joi';
 
@@ -11,16 +16,16 @@ export class JoiValidationPipe implements PipeTransform {
       abortEarly: false,
       stripUnknown: true,
     });
-    
+
     if (error) {
-      const messages = error.details.map(d => d.message).join(', ');
+      const messages = error.details.map((d) => d.message).join(', ');
       throw new RpcException({
         statusCode: HttpStatus.BAD_REQUEST,
         message: `Validation failed: ${messages}`,
         error: 'Bad Request',
       });
     }
-    
+
     return validatedValue;
   }
 }

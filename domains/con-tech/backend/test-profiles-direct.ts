@@ -21,13 +21,13 @@ async function testService(name: string, port: number, cmd: string, user: any) {
 
 async function main() {
   const testUser = {
-    firebaseId: "AeeEagpkA8TV3pWdsb0BySb7V1t2",
-    email: "studen1222t@example.com",
-    firstname: "stu",
-    lastname: "Dose",
-    role: "USER",
-    status: "ACTIVE",
-    globalRole: "USER"
+    firebaseId: 'AeeEagpkA8TV3pWdsb0BySb7V1t2',
+    email: 'studen1222t@example.com',
+    firstname: 'stu',
+    lastname: 'Dose',
+    role: 'USER',
+    status: 'ACTIVE',
+    globalRole: 'USER',
   };
 
   await testService('Con-Tech', 3002, 'get_contech_profile', testUser);

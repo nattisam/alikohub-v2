@@ -1,4 +1,4 @@
-import { IsDateString, IsIn, IsInt, IsString } from 'class-validator';
+import { IsDateString, IsInt, IsString } from 'class-validator';
 
 export class CreateCohortDto {
   @IsString()

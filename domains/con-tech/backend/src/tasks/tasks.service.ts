@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { TaskStatus, TaskPriority } from '../generated/client';
+import { TaskStatus, TaskPriority, Prisma } from '../generated/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 
 type FindTasksQuery = {
@@ -99,7 +99,7 @@ export class TasksService {
     const pageSize = Math.min(query.pageSize || 20, 50);
     const skip = (page - 1) * pageSize;
 
-    const where: Record<string, any> = { projectId };
+    const where: Prisma.TaskWhereInput = { projectId };
     if (query.status) where.status = query.status;
     if (contechProfile.role === 'CLIENT') {
       where.isVisibleToClient = true;
@@ -147,7 +147,8 @@ export class TasksService {
     if (!task) throw new NotFoundException('Task not found');
 
     const contechProfile = await this.userService.getOrCreateProfile(user);
-    const project = (task as any).Project as Record<string, any>;
+    const project = (task as unknown as { Project: Record<string, any> })
+      .Project;
 
     // RBAC Check
     if (contechProfile.role === 'CLIENT') {
@@ -204,7 +205,7 @@ export class TasksService {
         throw new BadRequestException('Assigned user does not exist');
     }
 
-    const updateData: Record<string, any> = {
+    const updateData: Prisma.TaskUpdateInput = {
       description: dto.description,
       status: dto.status,
       assignedTo: dto.assignedTo,
@@ -274,7 +275,7 @@ export class TasksService {
     assignedTo?: string,
   ) {
     const contechProfile = await this.userService.getOrCreateProfile(user);
-    const where: Record<string, any> = {};
+    const where: Prisma.TaskWhereInput = {};
     if (projectId) where.projectId = projectId;
     if (assignedTo) where.assignedTo = assignedTo;
 

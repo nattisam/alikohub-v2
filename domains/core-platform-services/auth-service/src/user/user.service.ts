@@ -15,8 +15,8 @@ export interface UserData {
 
 export interface ApplicationData {
 	userId: string;
-	domain: string;
-	requestedRole: string;
+	domain?: string;
+	requestedRole?: string;
 	formData?: object;
 	resumeUrl?: string;
 	personalDetails?: any;

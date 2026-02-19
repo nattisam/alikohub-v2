@@ -29,9 +29,11 @@ export class RpcExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const response = exception.getResponse() as any;
-      
+
       if (typeof response === 'object') {
-        message = Array.isArray(response.message) ? response.message[0] : response.message || exception.message;
+        message = Array.isArray(response.message)
+          ? response.message[0]
+          : response.message || exception.message;
         error = response.error || 'Http Error';
         details = response.details || null;
       } else {
@@ -41,8 +43,10 @@ export class RpcExceptionFilter implements ExceptionFilter {
     }
     // 2. Handle Prisma Client Errors (Database)
     else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      this.logger.error(`Prisma Error [${exception.code}]: ${exception.message}`);
-      
+      this.logger.error(
+        `Prisma Error [${exception.code}]: ${exception.message}`,
+      );
+
       switch (exception.code) {
         case 'P2002': // Unique constraint violation
           status = HttpStatus.CONFLICT;
@@ -76,8 +80,7 @@ export class RpcExceptionFilter implements ExceptionFilter {
     else if (exception instanceof Error) {
       message = exception.message;
       this.logger.error(`Unhandled error: ${message}`, exception.stack);
-    } 
-    else {
+    } else {
       this.logger.error('Unknown error type caught in filter:', exception);
     }
 

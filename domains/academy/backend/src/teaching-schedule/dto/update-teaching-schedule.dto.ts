@@ -1,12 +1,5 @@
 import { ScheduleType } from '../../generated/client';
-import {
-  IsString,
-  IsOptional,
-  IsDate,
-  IsEnum,
-  IsNumber,
-  IsBoolean,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 
 export class UpdateTeachingScheduleDto {
   @IsOptional()

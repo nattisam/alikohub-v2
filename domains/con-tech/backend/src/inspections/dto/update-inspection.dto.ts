@@ -15,5 +15,4 @@ export class UpdateInspectionDto {
 
   @IsOptional()
   isVisibleToClient?: boolean;
-
 }

@@ -2,7 +2,6 @@ import { ScheduleType } from '../../generated/client';
 import {
   IsString,
   IsOptional,
-  IsDate,
   IsEnum,
   IsNumber,
   IsBoolean,

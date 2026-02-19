@@ -127,9 +127,9 @@ export class UserService {
         return;
       }
 
-      const authRecord = await firstValueFrom(
+      const authRecord = (await firstValueFrom(
         this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
-      );
+      )) as Record<string, any> | null;
 
       if (authRecord) {
         // Priority: 1. activeRole (if switched), 2. role (base role)
@@ -242,16 +242,20 @@ export class UserService {
           `Notified Auth service of role change for user ${userId}`,
         );
       } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         this.logger.error(
           `Failed to notify Auth service of role change for user ${userId}`,
-          error,
+          errorMessage,
         );
         // Don't fail the operation if Auth service notification fails
       }
 
       return updatedProfile;
     } catch (error) {
-      this.logger.error('Error in selectRole', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error('Error in selectRole', errorMessage);
       throw error;
     }
   }

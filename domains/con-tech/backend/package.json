@@ -71,7 +71,9 @@
     "typescript-eslint": "^8.20.0"
   },
   "jest": {
-    "modulePathIgnorePatterns": ["<rootDir>/dist/"],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist/"
+    ],
     "moduleFileExtensions": [
       "js",
       "json",

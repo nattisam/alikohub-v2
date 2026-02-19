@@ -2,8 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
-import { ConfigService } from '@nestjs/config';
-import { AcademyProfileGuard } from './auth';
 import { ValidationPipe } from '@nestjs/common';
 import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
