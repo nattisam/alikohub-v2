@@ -34,24 +34,26 @@ export class ContentDeliveryService {
     // Examples: AWS CloudFront, Cloudflare, Vimeo, etc.
 
     let streamingUrl = contentUrl;
+    const urlObj = new URL(contentUrl);
+
+    // Add format parameters - update extension
+    if (format === 'hls') {
+      urlObj.pathname = urlObj.pathname.replace(/\.[^/.]+$/, '.m3u8');
+    } else if (format === 'dash') {
+      urlObj.pathname = urlObj.pathname.replace(/\.[^/.]+$/, '.mpd');
+    }
 
     // Add quality parameters
     if (quality !== 'auto') {
-      streamingUrl += `?quality=${quality}`;
-    }
-
-    // Add format parameters
-    if (format === 'hls') {
-      streamingUrl = streamingUrl.replace(/\.[^/.]+$/, '.m3u8');
-    } else if (format === 'dash') {
-      streamingUrl = streamingUrl.replace(/\.[^/.]+$/, '.mpd');
+      urlObj.searchParams.set('quality', quality);
     }
 
     // Add bandwidth optimization
     if (bandwidth) {
-      const separator = streamingUrl.includes('?') ? '&' : '?';
-      streamingUrl += `${separator}bandwidth=${bandwidth}`;
+      urlObj.searchParams.set('bandwidth', bandwidth.toString());
     }
+
+    streamingUrl = urlObj.toString();
 
     this.logger.log(`Generated streaming URL: ${streamingUrl}`);
 
