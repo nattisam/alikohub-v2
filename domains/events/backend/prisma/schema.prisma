@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PostType {
+  EVENT
+  ANNOUNCEMENT
+  NEWS
+}
+
+enum PostStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PUBLISHED
+  REJECTED
+}
+
+enum EventsRole {
+  CONTENT_MANAGER
+  ADMIN
+}
+
+model Post {
+  id               String      @id @default(uuid())
+  type             PostType
+  status           PostStatus  @default(DRAFT)
+  title            String
+  excerpt          String?     // Short description
+  content          String      // Rich text full content
+  coverImage       String?
+  authorId         String
+  publishDate      DateTime?
+  
+  // Event specific fields
+  eventDate        DateTime?
+  startTime        String?
+  endTime          String?
+  location         String?     // Physical or Link
+  externalLink     String?
+  
+  // Feedback from admin when rejected
+  rejectionReason  String?
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([status])
+  @@index([type])
+}
+
+model PromotionRequest {
+  id               String   @id @default(uuid())
+  companyName      String
+  contactPerson    String
+  email            String
+  phoneNumber      String?
+  type             PostType @default(EVENT)
+  message          String   // Renamed from description
+  status           String   @default("PENDING") // PENDING, REVIEWED
+  createdAt        DateTime @default(now())
+}
+
+model EventsProfile {
+  id               String     @id // Firebase UID
+  role             EventsRole @default(CONTENT_MANAGER)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
