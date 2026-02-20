@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPublishedPostsByType } from "../services/post-service";
 import { PostType } from "../types/post";
@@ -9,8 +8,6 @@ import SearchBar from "../components/SearchBar";
 import ViewToggle from "../components/ViewToggle";
 
 export default function EventsPage() {
-  const navigate = useNavigate();
-
   const {
     data: events = [],
     isLoading,

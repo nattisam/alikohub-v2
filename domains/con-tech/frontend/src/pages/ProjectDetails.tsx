@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProject } from "../queries/projects";
 import { useUser } from "../hooks";
@@ -18,6 +18,9 @@ import {
   Image as ImageIcon,
   Clock,
   User,
+  Plus,
+  CheckCircle2,
+  ListTodo,
 } from "lucide-react";
 
 interface Milestone {
@@ -49,13 +52,18 @@ interface Comment {
   };
 }
 
-type TabType = "timeline" | "updates" | "files" | "messages";
+type TabType = "timeline" | "tasks" | "updates" | "files" | "messages";
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { currentUser } = useUser();
-  const { data: project, isLoading, error } = useProject(Number(projectId));
+  const {
+    data: project,
+    isLoading,
+    error,
+    refetch: refetchProject,
+  } = useProject(Number(projectId));
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("timeline");
@@ -65,6 +73,16 @@ const ProjectDetails = () => {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  // Tasks UI state
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [newTaskName, setNewTaskName] = useState("");
+  const [newTaskDesc, setNewTaskDesc] = useState("");
+
+  // Milestone state
+  const [showAddMilestone, setShowAddMilestone] = useState(false);
+  const [newMilestoneName, setNewMilestoneName] = useState("");
+  const [newMilestoneDate, setNewMilestoneDate] = useState("");
 
   const isAdmin =
     currentUser?.globalRole === "ADMIN" || currentUser?.role === "ADMIN";
@@ -78,32 +96,76 @@ const ProjectDetails = () => {
     }
   }, [currentUser, navigate]);
 
-  useEffect(() => {
-    const fetchMilestones = async () => {
-      if (!projectId) return;
+  const fetchMilestones = useCallback(async () => {
+    if (!projectId) return;
 
-      try {
-        setMilestonesLoading(true);
-        const data = await contechAPI.getMilestones(Number(projectId));
-        setMilestones(data || []);
-      } catch (err) {
-        console.error("Error fetching milestones:", err);
-        setMilestones([]);
-      } finally {
-        setMilestonesLoading(false);
-      }
-    };
-
-    fetchMilestones();
+    try {
+      setMilestonesLoading(true);
+      const data = await contechAPI.getMilestones(Number(projectId));
+      setMilestones(data || []);
+    } catch (err) {
+      console.error("Error fetching milestones:", err);
+      setMilestones([]);
+    } finally {
+      setMilestonesLoading(false);
+    }
   }, [projectId]);
 
   useEffect(() => {
-    if (activeTab === "messages" && projectId) {
-      fetchComments();
-    }
-  }, [activeTab, projectId]);
+    fetchMilestones();
+  }, [fetchMilestones]);
 
-  const fetchComments = async () => {
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskName.trim() || !projectId) return;
+
+    try {
+      await contechAPI.createTaskExact({
+        projectId: Number(projectId),
+        title: newTaskName.trim(),
+        description: newTaskDesc.trim(),
+        status: "PENDING",
+      });
+      setNewTaskName("");
+      setNewTaskDesc("");
+      setShowAddTask(false);
+      refetchProject();
+    } catch (err) {
+      console.error("Error creating task:", err);
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId: number, status: string) => {
+    try {
+      await contechAPI.updateTaskStatusExact(taskId, status);
+      refetchProject();
+    } catch (err) {
+      console.error("Error updating task status:", err);
+    }
+  };
+
+  const handleCreateMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMilestoneName.trim() || !projectId) return;
+
+    try {
+      await contechAPI.createMilestoneExact({
+        projectId: Number(projectId),
+        name: newMilestoneName.trim(),
+        date: newMilestoneDate || new Date().toISOString(),
+      });
+      setNewMilestoneName("");
+      setNewMilestoneDate("");
+      setShowAddMilestone(false);
+      // Refetch milestones
+      const data = await contechAPI.getMilestones(Number(projectId));
+      setMilestones(data || []);
+    } catch (err) {
+      console.error("Error creating milestone:", err);
+    }
+  };
+
+  const fetchComments = useCallback(async () => {
     if (!projectId) return;
     try {
       setCommentsLoading(true);
@@ -115,7 +177,13 @@ const ProjectDetails = () => {
     } finally {
       setCommentsLoading(false);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (activeTab === "messages" && projectId) {
+      fetchComments();
+    }
+  }, [activeTab, projectId, fetchComments]);
 
   const handleSubmitComment = async () => {
     if (!newComment.trim() || !projectId) return;
@@ -243,6 +311,7 @@ const ProjectDetails = () => {
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "timeline", label: "Timeline", icon: <Calendar size={14} /> },
+    { id: "tasks", label: "Tasks", icon: <ListTodo size={14} /> },
     { id: "updates", label: "Updates", icon: <FileText size={14} /> },
     { id: "files", label: "Files", icon: <ImageIcon size={14} /> },
     { id: "messages", label: "Messages", icon: <MessageSquare size={14} /> },
@@ -337,9 +406,69 @@ const ProjectDetails = () => {
           {/* TIMELINE TAB */}
           {activeTab === "timeline" && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                Project Milestones
-              </h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Project Milestones
+                </h2>
+                {(isContractor || isAdmin) && (
+                  <button
+                    onClick={() => setShowAddMilestone(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#3E92D1] hover:text-[#2E82C1] transition-colors bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"
+                  >
+                    <Plus size={14} />
+                    Add Milestone
+                  </button>
+                )}
+              </div>
+
+              {showAddMilestone && (
+                <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                  <form onSubmit={handleCreateMilestone} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          Milestone Name
+                        </label>
+                        <input
+                          type="text"
+                          value={newMilestoneName}
+                          onChange={(e) => setNewMilestoneName(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3E92D1]/20"
+                          placeholder="e.g. Foundation Completion"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          Target Date
+                        </label>
+                        <input
+                          type="date"
+                          value={newMilestoneDate}
+                          onChange={(e) => setNewMilestoneDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3E92D1]/20"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddMilestone(false)}
+                        className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-700"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 text-xs font-bold text-white bg-[#3E92D1] hover:bg-[#2E82C1] rounded-lg shadow-sm"
+                      >
+                        Create Milestone
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
               {milestonesLoading ? (
                 <div className="flex justify-center items-center py-12">
@@ -351,7 +480,10 @@ const ProjectDetails = () => {
                     <div key={milestone.id} className="relative pl-8">
                       {getMilestoneIcon(milestone.status, milestone.progress)}
                       <h3
-                        className={`font-medium ${getMilestoneTextColor(milestone.status, milestone.progress)}`}
+                        className={`font-medium ${getMilestoneTextColor(
+                          milestone.status,
+                          milestone.progress,
+                        )}`}
                       >
                         {milestone.title}
                       </h3>
@@ -380,6 +512,141 @@ const ProjectDetails = () => {
                   <Circle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p className="text-sm">
                     No milestones have been created for this project yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TASKS TAB */}
+          {activeTab === "tasks" && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Project Tasks
+                </h2>
+                {(isContractor || isAdmin) && (
+                  <button
+                    onClick={() => setShowAddTask(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#3E92D1] hover:text-[#2E82C1] transition-colors bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100"
+                  >
+                    <Plus size={14} />
+                    New Task
+                  </button>
+                )}
+              </div>
+
+              {showAddTask && (
+                <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                  <form onSubmit={handleCreateTask} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Task Name
+                      </label>
+                      <input
+                        type="text"
+                        value={newTaskName}
+                        onChange={(e) => setNewTaskName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3E92D1]/20"
+                        placeholder="e.g. Foundation Excavation"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={newTaskDesc}
+                        onChange={(e) => setNewTaskDesc(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3E92D1]/20 resize-none"
+                        rows={3}
+                        placeholder="Detailed task description..."
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddTask(false)}
+                        className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-700"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 text-xs font-bold text-white bg-[#3E92D1] hover:bg-[#2E82C1] rounded-lg shadow-sm"
+                      >
+                        Create Task
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {(project.tasks || []).length > 0 ? (
+                <div className="space-y-4">
+                  {(project.tasks || []).map((task: any) => (
+                    <div
+                      key={task.id}
+                      className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-sm font-bold text-gray-900 truncate">
+                            {task.name || task.title}
+                          </h3>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              task.status === "COMPLETED"
+                                ? "bg-green-50 text-green-700 border border-green-100"
+                                : task.status === "IN_PROGRESS"
+                                  ? "bg-blue-50 text-blue-700 border border-blue-100"
+                                  : "bg-amber-50 text-amber-700 border border-amber-100"
+                            }`}
+                          >
+                            {task.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-1 italic">
+                          {task.description}
+                        </p>
+                      </div>
+
+                      {(isContractor || isAdmin) &&
+                        task.status !== "COMPLETED" && (
+                          <div className="flex gap-2">
+                            {task.status === "PENDING" && (
+                              <button
+                                onClick={() =>
+                                  handleUpdateTaskStatus(task.id, "IN_PROGRESS")
+                                }
+                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#3E92D1] hover:bg-blue-50 rounded-lg flex items-center gap-1.5 transition-colors"
+                              >
+                                Start Task
+                              </button>
+                            )}
+                            {task.status === "IN_PROGRESS" && (
+                              <button
+                                onClick={() =>
+                                  handleUpdateTaskStatus(task.id, "COMPLETED")
+                                }
+                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-green-600 hover:bg-green-50 rounded-lg flex items-center gap-1.5 transition-colors"
+                              >
+                                <CheckCircle2 size={12} />
+                                Complete
+                              </button>
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <ListTodo className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm">
+                    No tasks have been assigned for this project yet.
                   </p>
                 </div>
               )}

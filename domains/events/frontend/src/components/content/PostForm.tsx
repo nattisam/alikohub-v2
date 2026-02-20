@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PostType } from "../../types/post";
 import type { CreatePostDto, Post } from "../../types/post";
 
@@ -18,28 +18,34 @@ export default function PostForm({
   const [formData, setFormData] = useState<CreatePostDto>({
     title: "",
     type: PostType.NEWS,
-    shortDescription: "",
+    excerpt: "",
     content: "",
     coverImage: "",
     eventDate: "",
-    eventTime: "",
+    startTime: "",
     location: "",
     externalLink: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         title: initialData.title || "",
         type: initialData.type || PostType.NEWS,
-        shortDescription: initialData.shortDescription || "",
+        excerpt: initialData.excerpt || "",
         content: initialData.content || "",
         coverImage: initialData.coverImage || "",
         eventDate: initialData.eventDate || "",
-        eventTime: initialData.eventTime || "",
+        startTime: initialData.startTime || "",
         location: initialData.location || "",
         externalLink: initialData.externalLink || "",
       });
+      if (typeof initialData.coverImage === "string") {
+        setImagePreview(initialData.coverImage);
+      }
     }
   }, [initialData]);
 
@@ -52,9 +58,28 @@ export default function PostForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+
+    // We'll pass the file along with the form data
+    const submissionData: CreatePostDto = {
+      ...formData,
+      coverImage: imageFile || formData.coverImage,
+    };
+
+    await onSubmit(submissionData);
   };
 
   return (
@@ -107,17 +132,17 @@ export default function PostForm({
 
             <div>
               <label
-                htmlFor="shortDescription"
+                htmlFor="excerpt"
                 className="block text-sm font-semibold text-gray-700 mb-1"
               >
                 Short Description (Excerpt)
               </label>
               <textarea
-                id="shortDescription"
-                name="shortDescription"
+                id="excerpt"
+                name="excerpt"
                 required
                 rows={3}
-                value={formData.shortDescription}
+                value={formData.excerpt}
                 onChange={handleChange}
                 placeholder="A brief summary that appears on cards..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none"
@@ -156,26 +181,64 @@ export default function PostForm({
                 htmlFor="coverImage"
                 className="block text-sm font-semibold text-gray-700 mb-1"
               >
-                Cover Image URL
+                Cover Image
               </label>
-              <input
-                type="url"
-                id="coverImage"
-                name="coverImage"
-                value={formData.coverImage}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"
-              />
-              {formData.coverImage && (
-                <div className="mt-4 rounded-xl overflow-hidden aspect-video border border-gray-100">
-                  <img
-                    src={formData.coverImage}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:border-blue-400 transition-colors"
+              >
+                <div className="space-y-1 text-center">
+                  {imagePreview ? (
+                    <div className="relative group">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-h-48 rounded-lg mx-auto"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
+                        <span className="text-white text-xs font-bold">
+                          Change Image
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex text-sm text-gray-600">
+                        <span className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                          Upload a file
+                        </span>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF up to 10MB
+                      </p>
+                    </>
+                  )}
+                  <input
+                    id="coverImage"
+                    name="coverImage"
+                    type="file"
+                    ref={fileInputRef}
+                    className="sr-only"
+                    accept="image/*"
+                    onChange={handleFileChange}
                   />
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -207,7 +270,7 @@ export default function PostForm({
                 </div>
                 <div>
                   <label
-                    htmlFor="eventTime"
+                    htmlFor="startTime"
                     className="block text-sm font-semibold text-blue-800 mb-1"
                   >
                     {" "}
@@ -215,10 +278,10 @@ export default function PostForm({
                   </label>
                   <input
                     type="time"
-                    id="eventTime"
-                    name="eventTime"
+                    id="startTime"
+                    name="startTime"
                     required={formData.type === PostType.EVENT}
-                    value={formData.eventTime}
+                    value={formData.startTime}
                     onChange={handleChange}
                     className="w-full px-4 py-2 bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"
                   />

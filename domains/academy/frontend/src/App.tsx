@@ -42,6 +42,7 @@ const CoursesManagementPage = lazy(
   () => import("./admin/CoursesManagementPage"),
 );
 
+import RequireAuthWithRedirect from "./components/auth/RequireAuthWithRedirect";
 import RedirectIfAuthenticated from "./components/auth/RedirectIfAuthenticated";
 import AcademyHeader from "./components/layout/AcademyHeader";
 import RoleSelectionModal from "./components/auth/RoleSelectionModal";
@@ -190,9 +191,9 @@ function App() {
               <Route
                 path="/courses/:courseId"
                 element={
-                  <PublicRoute>
+                  <RequireAuthWithRedirect message="Please log in or sign up to view this course.">
                     <CourseDetailsPage />
-                  </PublicRoute>
+                  </RequireAuthWithRedirect>
                 }
               />
               <Route

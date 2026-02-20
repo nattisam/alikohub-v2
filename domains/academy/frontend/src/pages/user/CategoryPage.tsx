@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import AuthPromptModal from "../../components/auth/AuthPromptModal";
 import {
   Search,
   Filter,
@@ -57,7 +59,20 @@ const CategoryPage = () => {
     rating: 0,
   });
 
+  const { user: currentUser } = useAuth();
+  const [selectedCourse, setSelectedCourse] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
+
   const category = categoryName && CATEGORY_INFO[categoryName];
+
+  const handleCourseClick = (e: React.MouseEvent, course: any) => {
+    if (!currentUser) {
+      e.preventDefault();
+      setSelectedCourse({ id: course.id, title: course.title });
+    }
+  };
 
   if (!category) {
     return <div>Category not found</div>;
@@ -244,6 +259,7 @@ const CategoryPage = () => {
                   <Link
                     key={course.id}
                     to={`/courses/${course.id}`}
+                    onClick={(e) => handleCourseClick(e, course)}
                     className="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300"
                   >
                     <div className="h-40 bg-gray-100 overflow-hidden">
@@ -316,6 +332,13 @@ const CategoryPage = () => {
           </div>
         </div>
       </div>
+
+      <AuthPromptModal
+        isOpen={!!selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+        courseTitle={selectedCourse?.title}
+        courseId={selectedCourse?.id}
+      />
     </div>
   );
 };

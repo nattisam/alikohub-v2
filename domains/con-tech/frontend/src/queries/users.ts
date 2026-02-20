@@ -38,6 +38,9 @@ export const useCreateUser = () => {
 
   return useMutation({
     mutationFn: (data: any) => {
+      if (data.role === "CONTENT_MANAGER") {
+        return contechAPI.createEventsUser(data);
+      }
       return contechAPI.createUser(data);
     },
     onSuccess: () => {

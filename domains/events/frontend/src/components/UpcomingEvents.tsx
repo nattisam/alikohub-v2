@@ -20,7 +20,7 @@ export default function UpcomingEvents() {
     date: post.eventDate || post.createdAt,
     manager: post.createdByName || "Admin",
     status: "UPCOMING" as const,
-    description: post.shortDescription,
+    description: post.excerpt,
     image: post.coverImage || "/images/event-placeholder.jpg",
   }));
 

@@ -54,10 +54,35 @@ export class TasksService {
     return response.data;
   }
 
+  async updateStatus(id: number, status: string): Promise<Task> {
+    const response = await contechApi.patch<Task>(
+      `/tasks/${id}`,
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      },
+    );
+    return response.data;
+  }
+
   async remove(id: number): Promise<void> {
     await contechApi.delete(`/tasks/${id}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
     });
+  }
+
+  async createTask(dto: {
+    projectId: number;
+    name: string;
+    description: string;
+    status: string;
+  }): Promise<Task> {
+    const response = await contechApi.post<Task>("/tasks", dto, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    });
+    return response.data;
   }
 
   async updateTaskProgress(id: number, progress: number): Promise<Task> {

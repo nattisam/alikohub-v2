@@ -30,7 +30,6 @@ type HeaderProps = {
   navBarClassName?: string;
   navLinksClassName?: string;
   logoClassName?: string;
-  mobileButtonClassName?: string;
   navLinksContainerClassName?: string;
 };
 
@@ -55,7 +54,6 @@ const Header = ({
   navBarClassName = "flex md:hidden",
   logoClassName = "",
   navLinksClassName = "",
-  mobileButtonClassName = "",
   navLinksContainerClassName = "gap-x-8",
 }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);

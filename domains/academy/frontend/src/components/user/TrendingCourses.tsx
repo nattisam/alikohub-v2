@@ -5,11 +5,17 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import AuthPromptModal from "../auth/AuthPromptModal";
 
 const TrendingCourses = ({ courses }: { courses: Course[] }) => {
   const enrollCourseMutation = useEnrollCourse();
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
+  const [selectedCourse, setSelectedCourse] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
 
   // Fetch user's enrolled courses
   const { data: enrolledCourses = [] } = useQuery({
@@ -50,7 +56,19 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
         );
       }
     } else {
-      navigate("/auth/login");
+      setSelectedCourse({
+        id: courseId,
+        title:
+          validCourses.find((c) => c.id === courseId)?.title || "this course",
+      });
+    }
+  };
+
+  const handleViewDetails = (courseId: number, title: string) => {
+    if (currentUser) {
+      navigate(`/courses/${courseId}`);
+    } else {
+      setSelectedCourse({ id: courseId, title });
     }
   };
 
@@ -75,6 +93,9 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
                   course={course}
                   isEnrolled={isUserEnrolled(course.id)}
                   onEnroll={() => handleEnroll(course.id)}
+                  onViewDetails={() =>
+                    handleViewDetails(course.id, course.title)
+                  }
                 />
               ))
             ) : (
@@ -85,6 +106,13 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
           </div>
         </div>
       </div>
+
+      <AuthPromptModal
+        isOpen={!!selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+        courseTitle={selectedCourse?.title}
+        courseId={selectedCourse?.id}
+      />
     </section>
   );
 };

@@ -14,7 +14,6 @@ import ContactUsPage from "./pages/ContactUsPage";
 import { useUser } from "./hooks";
 import LoginForm from "./components/LoginForm";
 import CSignupForm from "./components/SignupForm";
-// import RoleSelectionModal from "./components/RoleSelectionModal";
 import ProjectsPage from "./pages/ProjectsPage";
 import ReportsPage from "./pages/ReportsPage";
 import UserManagementPage from "./pages/UserManagementPage";
@@ -28,6 +27,9 @@ import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
 import ClientContactPage from "./pages/ClientContactPage";
+import TasksPage from "./pages/TasksPage";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import NotFoundState from "./components/common/NotFoundState";
 
 function DefaultLayout() {
   const { pathname } = useLocation();
@@ -97,7 +99,10 @@ export default function App() {
         { path: "projects/:projectId", element: <ProjectDetails /> },
         { path: "users", element: <UserManagementPage /> },
         { path: "reports", element: <ReportsPage /> },
+        { path: "tasks", element: <TasksPage /> },
+        { path: "tasks/:projectId", element: <TasksPage /> },
         { path: "profile", element: <ProfilePage /> },
+        { path: "*", element: <NotFoundState /> },
       ],
     },
     // Contractor Dashboard Routes
@@ -112,7 +117,10 @@ export default function App() {
         { index: true, element: <ContractorDashboard /> },
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
+        { path: "tasks", element: <TasksPage /> },
+        { path: "tasks/:projectId", element: <TasksPage /> },
         { path: "profile", element: <ProfilePage /> },
+        { path: "*", element: <NotFoundState /> },
       ],
     },
     // Client Dashboard Routes
@@ -129,6 +137,7 @@ export default function App() {
         { path: "projects/:projectId", element: <ProjectDetails /> },
         { path: "profile", element: <ProfilePage /> },
         { path: "contact-guidance", element: <ClientContactPage /> },
+        { path: "*", element: <NotFoundState /> },
       ],
     },
     // Legacy Dashboard Redirect (for backward compatibility during migration)
@@ -140,7 +149,21 @@ export default function App() {
       path: "/profile",
       element: <Navigate to="/" replace />,
     },
+    // Catch-all 404
+    {
+      path: "*",
+      element: (
+        <NotFoundState
+          title="Page Not Found"
+          message="The page you are looking for does not exist."
+        />
+      ),
+    },
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }

@@ -120,7 +120,7 @@ export default function NewsPage() {
                   </h2>
 
                   <p className="text-gray-300 text-lg mb-6 leading-relaxed line-clamp-3">
-                    {post.shortDescription}
+                    {post.excerpt}
                   </p>
 
                   {/* Expanded content */}

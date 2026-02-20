@@ -19,9 +19,9 @@ const UserManagementPage = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"contractors" | "clients">(
-    "contractors",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "contractors" | "clients" | "content_managers"
+  >("contractors");
 
   // Queries using TanStack Query
   const {
@@ -37,6 +37,13 @@ const UserManagementPage = () => {
     isError: errorClients,
     refetch: refetchClients,
   } = useUsersByRole("CLIENT");
+
+  const {
+    data: contentManagers = [],
+    isLoading: loadingContentManagers,
+    isError: errorContentManagers,
+    refetch: refetchContentManagers,
+  } = useUsersByRole("CONTENT_MANAGER");
 
   // Create User Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,9 +108,15 @@ const UserManagementPage = () => {
     );
   };
 
-  const loading = loadingContractors || loadingClients;
-  const isError = errorContractors || errorClients;
-  const currentUsers = activeTab === "contractors" ? contractors : clients;
+  const loading =
+    loadingContractors || loadingClients || loadingContentManagers;
+  const isError = errorContractors || errorClients || errorContentManagers;
+  const currentUsers =
+    activeTab === "contractors"
+      ? contractors
+      : activeTab === "clients"
+        ? clients
+        : contentManagers;
 
   const filteredUsers = currentUsers.filter(
     (user: any) =>
@@ -132,6 +145,7 @@ const UserManagementPage = () => {
         onRetry={() => {
           refetchContractors();
           refetchClients();
+          refetchContentManagers();
         }}
       />
     );
@@ -274,6 +288,31 @@ const UserManagementPage = () => {
                       </span>
                     </div>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, role: "CONTENT_MANAGER" })
+                    }
+                    className={`p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden ${
+                      formData.role === "CONTENT_MANAGER"
+                        ? "border-purple-500 bg-purple-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-2 relative z-10">
+                      <div
+                        className={`p-2 rounded-lg ${formData.role === "CONTENT_MANAGER" ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-500"}`}
+                      >
+                        <Users className="w-4 h-4" />
+                      </div>
+                      <span
+                        className={`font-bold ${formData.role === "CONTENT_MANAGER" ? "text-purple-900" : "text-gray-700"}`}
+                      >
+                        Manager
+                      </span>
+                    </div>
+                  </button>
                 </div>
               </div>
 
@@ -350,6 +389,19 @@ const UserManagementPage = () => {
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               Clients ({clients.length})
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab("content_managers")}
+            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "content_managers"
+                ? "border-[#3E92D1] text-[#3E92D1]"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Managers ({contentManagers.length})
             </div>
           </button>
         </nav>

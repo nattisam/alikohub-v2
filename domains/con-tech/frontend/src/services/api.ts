@@ -86,6 +86,11 @@ export const contechAPI = {
     return response.data;
   },
 
+  createEventsUser: async (data: any) => {
+    const response = await apiClient.post("/auth/events/user", data);
+    return response.data;
+  },
+
   getUsersByRole: async (
     role: string,
     page: number = 1,
@@ -164,6 +169,21 @@ export const contechAPI = {
 
   deleteTask: async (id: number) => {
     const response = await apiClient.delete(`/contech/tasks/${id}`);
+    return response.data;
+  },
+
+  createTaskExact: async (data: {
+    projectId: number;
+    title: string;
+    description: string;
+    status: string;
+  }) => {
+    const response = await apiClient.post("/tasks", data);
+    return response.data;
+  },
+
+  updateTaskStatusExact: async (taskId: number, status: string) => {
+    const response = await apiClient.patch(`/tasks/${taskId}`, { status });
     return response.data;
   },
 
@@ -311,11 +331,10 @@ export const contechAPI = {
     return response.data;
   },
 
-  createMilestone: async (data: {
+  createMilestoneExact: async (data: {
     projectId: number;
     name: string;
-    date?: string;
-    description?: string;
+    date: string;
   }) => {
     const response = await apiClient.post("/milestones", data);
     return response.data;

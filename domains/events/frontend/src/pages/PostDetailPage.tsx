@@ -159,7 +159,7 @@ export default function PostDetailPage() {
             <div className="flex-1">
               {/* Excerpt/Short Description */}
               <div className="text-xl md:text-2xl text-gray-600 font-medium leading-relaxed mb-12 italic border-l-4 border-blue-500 pl-6">
-                {post.shortDescription}
+                {post.excerpt}
               </div>
 
               {/* Main Rich Text Content */}
@@ -228,7 +228,7 @@ export default function PostDetailPage() {
                           Time
                         </p>
                         <p className="text-gray-900 font-semibold">
-                          {post.eventTime}
+                          {post.startTime}
                         </p>
                       </div>
                     </div>

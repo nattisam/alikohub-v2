@@ -1,15 +1,15 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import AuthLayout from '../../../../../libraries/ui-libraries/components/auth/AuthLayout';
-import AuthHeader from '../../../../../libraries/ui-libraries/components/auth/AuthHeader';
-import ErrorModal from '../../../../../libraries/ui-libraries/components/auth/ErrorModal';
-import type { SignupFormData } from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
-import { useAuth } from '../contexts/AuthContext';
-import SignupForm from '../../../../../libraries/ui-libraries/components/auth/SignupForm';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import AuthLayout from "../../../../../libraries/ui-libraries/components/auth/AuthLayout";
+import AuthHeader from "../../../../../libraries/ui-libraries/components/auth/AuthHeader";
+import ErrorModal from "../../../../../libraries/ui-libraries/components/auth/ErrorModal";
+import type { SignupFormData } from "../../../../../libraries/ui-libraries/components/auth/SignupForm";
+import { useAuth } from "../contexts/AuthContext";
+import SignupForm from "../../../../../libraries/ui-libraries/components/auth/SignupForm";
 
 const GeneralSignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const { signup, isLoading: signupLoading, loginError: signupError, logout } = useAuth();
+  const { signup, isLoading: signupLoading, logout } = useAuth();
 
   const handleSignup = async (data: SignupFormData) => {
     try {
@@ -21,9 +21,9 @@ const GeneralSignupPage: React.FC = () => {
         captchaToken: data.captchaToken,
       });
       // Redirect back to the home page after signup
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
       // Error handling is managed by the context (signupError state)
     }
   };
@@ -33,7 +33,7 @@ const GeneralSignupPage: React.FC = () => {
   };
 
   const handleSwitchToLogin = () => {
-    navigate('/auth/login');
+    navigate("/auth/login");
   };
 
   return (
@@ -49,13 +49,13 @@ const GeneralSignupPage: React.FC = () => {
           />
         </div>
       </AuthLayout>
-      
+
       {/* Error Modal */}
       <ErrorModal
-        isOpen={!!signupError}
+        isOpen={false}
         onClose={handleCloseErrorModal}
         title="Registration Failed"
-        message={signupError || undefined}
+        message={undefined}
       />
     </>
   );

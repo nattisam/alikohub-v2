@@ -30,7 +30,7 @@ export function PostCard({ post }: { post: Post }) {
       <div className="p-6 flex flex-col flex-1">
         <h3 className="text-xl font-semibold text-white mb-2">{post.title}</h3>
         <p className="text-gray-300 text-sm mb-4 line-clamp-3">
-          {post.shortDescription || post.content}
+          {post.excerpt || post.content}
         </p>
 
         {/* Author & Date */}

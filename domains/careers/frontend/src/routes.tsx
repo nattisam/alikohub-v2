@@ -9,6 +9,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import { JobsHomePage } from "./pages/JobsHomePage";
 import { ApplicantList } from "./components/recruiter/applicant-list";
+import NotFoundState from "./components/common/NotFoundState";
 
 export const router = createBrowserRouter([
   {
@@ -59,8 +60,6 @@ export const router = createBrowserRouter([
         path: "applications/:jobId",
         element: (
           <RequireAuth roles={["RECRUITER"]}>
-            {/* This route might not be strictly needed if RecruiterDashboard handles it inline, 
-                 but good to have if we want to link directly to a job's applicants */}
             <ApplicantList />
           </RequireAuth>
         ),
@@ -73,6 +72,19 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      {
+        path: "*",
+        element: <NotFoundState />,
+      },
     ],
+  },
+  {
+    path: "*",
+    element: (
+      <NotFoundState
+        title="Page Not Found"
+        message="The page you are looking for does not exist."
+      />
+    ),
   },
 ]);

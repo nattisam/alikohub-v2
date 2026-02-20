@@ -19,6 +19,16 @@ const RoleSelection: React.FC = () => {
     refreshProfile();
   }, []); // Only run once on mount
 
+  // Debug logs to help diagnose backend response
+  useEffect(() => {
+    if (user) {
+      console.log("Current User in RoleSelection:", user);
+      console.log("Role Status:", user.roleStatus);
+      // Check for snake_case variant just in case
+      console.log("Role Status (snake_case):", (user as any)?.role_status);
+    }
+  }, [user]);
+
   // Only show this section if user is authenticated
   if (!user) {
     return null;
@@ -74,16 +84,6 @@ const RoleSelection: React.FC = () => {
     // Force another refresh to be sure
     refreshProfile();
   };
-
-  // Debug logs to help diagnose backend response
-  useEffect(() => {
-    if (user) {
-      console.log("Current User in RoleSelection:", user);
-      console.log("Role Status:", user.roleStatus);
-      // Check for snake_case variant just in case
-      console.log("Role Status (snake_case):", (user as any)?.role_status);
-    }
-  }, [user]);
 
   // Check if instructor application is pending
   // We check roleStatus from backend as source of truth.

@@ -53,8 +53,36 @@ export const getPublishedPostsByType = async (
 // Internal Management API - Requires authentication
 export const createDraft = async (postData: CreatePostDto): Promise<Post> => {
   try {
-    const response = await api.post("/manage/events", postData);
-    return response.data;
+    // Check if there's a File object for coverImage
+    const hasFile = postData.coverImage instanceof File;
+
+    if (hasFile) {
+      // Use FormData only when uploading a file
+      const formData = new FormData();
+      Object.keys(postData).forEach((key) => {
+        const value = (postData as any)[key];
+        if (value !== undefined && value !== null && value !== "") {
+          formData.append(key, value);
+        }
+      });
+      const response = await api.post("/manage/events", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } else {
+      // Send as JSON (matches Postman behavior), strip empty values
+      const cleanData: Record<string, any> = {};
+      Object.keys(postData).forEach((key) => {
+        const value = (postData as any)[key];
+        if (value !== undefined && value !== null && value !== "") {
+          cleanData[key] = value;
+        }
+      });
+      const response = await api.post("/manage/events", cleanData);
+      return response.data;
+    }
   } catch (error) {
     console.error("Error creating draft:", error);
     throw error;
@@ -66,9 +94,33 @@ export const updateDraft = async (
   postData: UpdatePostDto,
 ): Promise<Post> => {
   try {
-    // API Gateway uses PATCH for updates
-    const response = await api.patch(`/manage/events/${postId}`, postData);
-    return response.data;
+    const hasFile = postData.coverImage instanceof File;
+
+    if (hasFile) {
+      const formData = new FormData();
+      Object.keys(postData).forEach((key) => {
+        const value = (postData as any)[key];
+        if (value !== undefined && value !== null && value !== "") {
+          formData.append(key, value);
+        }
+      });
+      const response = await api.patch(`/manage/events/${postId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } else {
+      const cleanData: Record<string, any> = {};
+      Object.keys(postData).forEach((key) => {
+        const value = (postData as any)[key];
+        if (value !== undefined && value !== null && value !== "") {
+          cleanData[key] = value;
+        }
+      });
+      const response = await api.patch(`/manage/events/${postId}`, cleanData);
+      return response.data;
+    }
   } catch (error) {
     console.error(`Error updating draft with ID ${postId}:`, error);
     throw error;
@@ -85,10 +137,10 @@ export const submitForReview = async (postId: string): Promise<Post> => {
   }
 };
 
-export const getMyPosts = async (): Promise<Post[]> => {
+export const getMyPosts = async (status?: string): Promise<Post[]> => {
   try {
-    // findAllPosts with user context on gateway
-    const response = await api.get("/manage/events");
+    const url = status ? `/manage/events?status=${status}` : "/manage/events";
+    const response = await api.get(url);
     return extractPosts(response.data);
   } catch (error) {
     console.error("Error fetching my posts:", error);
