@@ -74,7 +74,6 @@ export class AuthService {
       email: email,
       password: password,
     });
-    console.log("response :", response);
     if (response.status === 200) {
       if (response.data?.token && response.data?.user) {
         const token = response.data?.token;
@@ -112,7 +111,7 @@ export class AuthService {
           user: response.data.user,
           expiresIn: response.data.expiresIn,
         };
-      } else console.log("response.data :", response.data);
+      }
     } else if (response.status >= 400 && response.status < 500) {
       throw new Error(response.data.message);
     } else if (response.status >= 500)
@@ -132,7 +131,6 @@ export class AuthService {
       });
     else response = await authApi.post("verify");
     if (response.status === 201) {
-      console.log("response :", response);
       return { user: response.data.user, verified: true };
     }
 

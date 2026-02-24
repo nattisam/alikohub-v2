@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 
 // Base API client for academy services
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3006";
+  import.meta.env.VITE_API_BASE_URL || "https://api.consultancy.alikohub.com";
 
 // Retry configuration
 const MAX_RETRIES = 3;

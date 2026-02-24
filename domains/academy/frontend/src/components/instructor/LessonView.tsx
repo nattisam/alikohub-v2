@@ -123,21 +123,28 @@ const LessonView: React.FC<LessonViewProps> = ({
     e.preventDefault();
 
     try {
-      const contentData = {
-        title: newContent.title,
+      // Only send body OR url, not both
+      const contentData: any = {
+        title: newContent.title.trim(),
         type: newContent.type,
-        url: newContent.url,
         lessonId: lessonId,
+        order: 99,
       };
+
+      // For VIDEO/PDF types, send url. For TEXT types, we would send body
+      if (newContent.type === "VIDEO" || newContent.type === "PDF") {
+        contentData.url = newContent.url.trim() || undefined;
+      }
 
       const response = await courseApi.createContent(contentData);
 
       setContents((prev) => [...prev, response.data]);
       setNewContent({ title: "", type: "VIDEO", url: "" });
       setShowAddContentForm(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding content:", error);
-      alert("Failed to add content");
+      const errorMessage = error.response?.data?.message || error.message || "Failed to add content";
+      alert(`Error: ${errorMessage}`);
     }
   };
 

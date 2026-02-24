@@ -29,8 +29,9 @@ const AddContentForm: React.FC<AddContentFormProps> = ({
       return;
     }
 
-    if (!contentData.url.trim()) {
-      setError("Content URL is required");
+    // For VIDEO/PDF types, URL is required. For other types, content is required
+    if ((contentData.type === "VIDEO" || contentData.type === "PDF") && !contentData.url.trim()) {
+      setError("Content URL is required for video and PDF types");
       return;
     }
 
@@ -38,17 +39,27 @@ const AddContentForm: React.FC<AddContentFormProps> = ({
     setError("");
 
     try {
-      const newContent = await courseApi.createContent({
-        ...contentData,
-        url: contentData.url.trim() || undefined,
+      // Only send body OR url, not both
+      const requestData: any = {
+        title: contentData.title.trim(),
+        type: contentData.type,
         lessonId,
-      });
+        order: 99,
+      };
+
+      // For VIDEO/PDF types, send url. For TEXT types, we would send body
+      if (contentData.type === "VIDEO" || contentData.type === "PDF") {
+        requestData.url = contentData.url.trim() || undefined;
+      }
+
+      const newContent = await courseApi.createContent(requestData);
 
       onContentAdded(newContent.data);
       setContentData({ title: "", type: "VIDEO", url: "" });
     } catch (err: any) {
       console.error("Error creating content:", err);
-      setError(err.response?.data?.message || "Failed to create content");
+      const errorMessage = err.response?.data?.message || err.message || "Failed to create content";
+      setError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

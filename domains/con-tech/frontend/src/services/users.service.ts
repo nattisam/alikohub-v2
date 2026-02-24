@@ -68,7 +68,7 @@ export class UsersService {
    */
   async updateUserRole(
     userId: string,
-    role: string
+    role: string,
   ): Promise<CurrentUser | null> {
     const authToken = AuthService.getAuthToken();
     const ROLES = ["CLIENT", "CONTRACTOR", "ADMIN"];
@@ -81,9 +81,8 @@ export class UsersService {
             headers: {
               Authorization: `Bearer ${authToken}`,
             },
-          }
+          },
         );
-        console.log(response);
         if (response.status === 201) {
           return response.data;
         } else return null;

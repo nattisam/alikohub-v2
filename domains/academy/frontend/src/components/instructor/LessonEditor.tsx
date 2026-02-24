@@ -591,14 +591,22 @@ const ContentBuilderForm: React.FC<{
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await courseApi.createContent({
+      // Only send body OR url, not both
+      const contentData: any = {
         lessonId,
         title: title || `${type} Block`,
         type,
-        body: content,
-        url: url,
         order: 99,
-      });
+      };
+
+      // For VIDEO type, send url. For TEXT type, send body
+      if (type === "VIDEO" || type === "PDF") {
+        contentData.url = url.trim() || undefined;
+      } else {
+        contentData.body = content.trim() || undefined;
+      }
+
+      const res = await courseApi.createContent(contentData);
       onSuccess({
         id: res.data.id.toString(),
         type,
@@ -606,9 +614,10 @@ const ContentBuilderForm: React.FC<{
         url,
         title: title || `${type} Block`,
       });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save content block");
+    } catch (err: any) {
+      console.error("Content creation error:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to save content block";
+      alert(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

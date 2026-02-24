@@ -86,11 +86,6 @@ export const contechAPI = {
     return response.data;
   },
 
-  createEventsUser: async (data: any) => {
-    const response = await apiClient.post("/auth/events/user", data);
-    return response.data;
-  },
-
   getUsersByRole: async (
     role: string,
     page: number = 1,

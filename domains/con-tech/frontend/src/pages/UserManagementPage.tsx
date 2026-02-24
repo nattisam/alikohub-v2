@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../hooks";
+import useUser from "../hooks/useUser"; // Adjusted to match your hook export
 import {
   Search,
   Users,
@@ -19,9 +19,9 @@ const UserManagementPage = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<
-    "contractors" | "clients" | "content_managers"
-  >("contractors");
+  const [activeTab, setActiveTab] = useState<"contractors" | "clients">(
+    "contractors",
+  );
 
   // Queries using TanStack Query
   const {
@@ -38,13 +38,6 @@ const UserManagementPage = () => {
     refetch: refetchClients,
   } = useUsersByRole("CLIENT");
 
-  const {
-    data: contentManagers = [],
-    isLoading: loadingContentManagers,
-    isError: errorContentManagers,
-    refetch: refetchContentManagers,
-  } = useUsersByRole("CONTENT_MANAGER");
-
   // Create User Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,8 +45,9 @@ const UserManagementPage = () => {
     lastName: "",
     email: "",
     password: "",
-    role: "CONTRACTOR",
+    role: "CONTRACTOR", // Default
   });
+
   const createUserMutation = useCreateUser();
   const [error, setError] = useState<string | null>(null);
 
@@ -66,16 +60,18 @@ const UserManagementPage = () => {
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    // This ensures we send exactly what your working Postman request expects
     createUserMutation.mutate(
       {
         email: formData.email,
@@ -87,7 +83,6 @@ const UserManagementPage = () => {
       {
         onSuccess: () => {
           setIsModalOpen(false);
-          // Reset form
           setFormData({
             firstName: "",
             lastName: "",
@@ -95,10 +90,10 @@ const UserManagementPage = () => {
             password: "",
             role: "CONTRACTOR",
           });
-          alert(`User ${formData.firstName} created successfully!`);
+          // Note: In production, consider using a Toast instead of alert
+          alert(`User created successfully!`);
         },
         onError: (err: any) => {
-          console.error("Failed to create user:", err);
           setError(
             err.response?.data?.message ||
               "Failed to create user. Please try again.",
@@ -108,22 +103,15 @@ const UserManagementPage = () => {
     );
   };
 
-  const loading =
-    loadingContractors || loadingClients || loadingContentManagers;
-  const isError = errorContractors || errorClients || errorContentManagers;
-  const currentUsers =
-    activeTab === "contractors"
-      ? contractors
-      : activeTab === "clients"
-        ? clients
-        : contentManagers;
+  const loading = loadingContractors || loadingClients;
+  const isError = errorContractors || errorClients;
+  const currentUsers = activeTab === "contractors" ? contractors : clients;
 
   const filteredUsers = currentUsers.filter(
     (user: any) =>
       user.firstname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role?.toLowerCase().includes(searchTerm.toLowerCase()),
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
@@ -145,7 +133,6 @@ const UserManagementPage = () => {
         onRetry={() => {
           refetchContractors();
           refetchClients();
-          refetchContentManagers();
         }}
       />
     );
@@ -153,7 +140,6 @@ const UserManagementPage = () => {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700 relative">
-      {/* Create User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
@@ -163,7 +149,7 @@ const UserManagementPage = () => {
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-all"
+                className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -179,27 +165,27 @@ const UserManagementPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 uppercase">
                     First Name
                   </label>
                   <input
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#3E92D1] focus:ring-4 focus:ring-[#3E92D1]/10 transition-all font-medium"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#3E92D1] focus:ring-4 focus:ring-[#3E92D1]/10"
                     placeholder="John"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 uppercase">
                     Last Name
                   </label>
                   <input
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#3E92D1] focus:ring-4 focus:ring-[#3E92D1]/10"
                     placeholder="Doe"
                     required
                   />
@@ -207,7 +193,7 @@ const UserManagementPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase">
                   Email Address
                 </label>
                 <input
@@ -215,14 +201,14 @@ const UserManagementPage = () => {
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#3E92D1] focus:ring-4 focus:ring-[#3E92D1]/10"
                   placeholder="name@company.com"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase">
                   Password
                 </label>
                 <input
@@ -230,29 +216,29 @@ const UserManagementPage = () => {
                   type="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#3E92D1] focus:ring-4 focus:ring-[#3E92D1]/10"
                   placeholder="••••••••"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 uppercase">
                   Account Role
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() =>
-                      setFormData({ ...formData, role: "CONTRACTOR" })
+                      setFormData((prev) => ({ ...prev, role: "CONTRACTOR" }))
                     }
-                    className={`p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden ${
+                    className={`p-4 rounded-xl border-2 text-left transition-all relative ${
                       formData.role === "CONTRACTOR"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-[#3E92D1] bg-blue-50"
+                        : "border-gray-200"
                     }`}
                   >
-                    <div className="flex items-center gap-3 mb-2 relative z-10">
+                    <div className="flex items-center gap-3">
                       <div
                         className={`p-2 rounded-lg ${formData.role === "CONTRACTOR" ? "bg-[#3E92D1] text-white" : "bg-gray-100 text-gray-500"}`}
                       >
@@ -268,14 +254,16 @@ const UserManagementPage = () => {
 
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, role: "CLIENT" })}
-                    className={`p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden ${
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, role: "CLIENT" }))
+                    }
+                    className={`p-4 rounded-xl border-2 text-left transition-all relative ${
                       formData.role === "CLIENT"
                         ? "border-emerald-500 bg-emerald-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-200"
                     }`}
                   >
-                    <div className="flex items-center gap-3 mb-2 relative z-10">
+                    <div className="flex items-center gap-3">
                       <div
                         className={`p-2 rounded-lg ${formData.role === "CLIENT" ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500"}`}
                       >
@@ -288,31 +276,6 @@ const UserManagementPage = () => {
                       </span>
                     </div>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, role: "CONTENT_MANAGER" })
-                    }
-                    className={`p-4 rounded-xl border-2 text-left transition-all group relative overflow-hidden ${
-                      formData.role === "CONTENT_MANAGER"
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2 relative z-10">
-                      <div
-                        className={`p-2 rounded-lg ${formData.role === "CONTENT_MANAGER" ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-500"}`}
-                      >
-                        <Users className="w-4 h-4" />
-                      </div>
-                      <span
-                        className={`font-bold ${formData.role === "CONTENT_MANAGER" ? "text-purple-900" : "text-gray-700"}`}
-                      >
-                        Manager
-                      </span>
-                    </div>
-                  </button>
                 </div>
               </div>
 
@@ -320,20 +283,17 @@ const UserManagementPage = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3.5 text-gray-500 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                  className="flex-1 py-3.5 text-gray-500 font-bold hover:bg-gray-50 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createUserMutation.isPending}
-                  className="flex-[2] bg-gray-900 text-white font-bold rounded-xl py-3.5 shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-[2] bg-gray-900 text-white font-bold rounded-xl py-3.5 flex items-center justify-center gap-2"
                 >
                   {createUserMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Creating...
-                    </>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     "Create Account"
                   )}
@@ -344,6 +304,7 @@ const UserManagementPage = () => {
         </div>
       )}
 
+      {/* Header, Tabs, Search & Grid remain same as your original UI logic */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
@@ -355,22 +316,21 @@ const UserManagementPage = () => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-gray-800 active:scale-[0.98]"
+          className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-gray-800"
         >
           <UserPlus className="h-4 w-4" />
           Create New Account
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="mb-6 border-b border-gray-200">
         <nav className="flex space-x-8">
           <button
             onClick={() => setActiveTab("contractors")}
-            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === "contractors"
                 ? "border-[#3E92D1] text-[#3E92D1]"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                : "border-transparent text-gray-500"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -380,10 +340,10 @@ const UserManagementPage = () => {
           </button>
           <button
             onClick={() => setActiveTab("clients")}
-            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === "clients"
                 ? "border-[#3E92D1] text-[#3E92D1]"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                : "border-transparent text-gray-500"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -391,37 +351,22 @@ const UserManagementPage = () => {
               Clients ({clients.length})
             </div>
           </button>
-          <button
-            onClick={() => setActiveTab("content_managers")}
-            className={`py-3 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "content_managers"
-                ? "border-[#3E92D1] text-[#3E92D1]"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Managers ({contentManagers.length})
-            </div>
-          </button>
         </nav>
       </div>
 
-      {/* Search Bar */}
       <div className="mb-6">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by name, email, or role..."
+            placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm text-gray-900 shadow-sm outline-none transition-all placeholder:text-gray-400 focus:border-[#3E92D1] focus:ring-2 focus:ring-[#3E92D1]/20"
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm focus:border-[#3E92D1] focus:ring-2 focus:ring-[#3E92D1]/20 outline-none transition-all"
           />
         </div>
       </div>
 
-      {/* Users Grid */}
       {filteredUsers.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm text-gray-500">
@@ -443,10 +388,10 @@ const UserManagementPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                        className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white ${
                           user.role === "CONTRACTOR"
-                            ? "bg-gradient-to-br from-[#3E92D1] to-[#2E82C1]"
-                            : "bg-gradient-to-br from-emerald-500 to-emerald-600"
+                            ? "bg-[#3E92D1]"
+                            : "bg-emerald-500"
                         }`}
                       >
                         {user.firstname?.[0]}
@@ -457,12 +402,7 @@ const UserManagementPage = () => {
                       </span>
                     </div>
                   </td>
-                  <td
-                    className="px-6 py-4 max-w-[200px] truncate"
-                    title={user.email}
-                  >
-                    {user.email}
-                  </td>
+                  <td className="px-6 py-4">{user.email}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -501,9 +441,7 @@ const UserManagementPage = () => {
           <h3 className="mt-4 text-lg font-semibold text-gray-900">
             Empty Directory
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            No users matching your search were found.
-          </p>
+          <p className="mt-1 text-sm text-gray-500">No users found.</p>
         </div>
       )}
     </div>

@@ -11,7 +11,6 @@ import Footer from "./components/Footer";
 import ConTechHomePage from "./pages/ConTechHomePage";
 import ConTechAboutUsPage from "./pages/ConTechAboutUsPage";
 import ContactUsPage from "./pages/ContactUsPage";
-import { useUser } from "./hooks";
 import LoginForm from "./components/LoginForm";
 import CSignupForm from "./components/SignupForm";
 import ProjectsPage from "./pages/ProjectsPage";
@@ -59,9 +58,6 @@ function LoginLayout() {
 }
 
 export default function App() {
-  const { currentUser } = useUser();
-  console.log(currentUser); // Keep this to avoid unused variable
-
   const router = createBrowserRouter([
     {
       path: "/",

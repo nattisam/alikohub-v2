@@ -121,6 +121,8 @@ export const courseApi = {
   createExercise: (data: unknown) =>
     academyApi.post("/academy/exercises", data),
   deleteExercise: (id: number) => academyApi.delete(`/academy/exercises/${id}`),
+  submitExercise: (id: number, answer: any) =>
+    academyApi.post(`/academy/exercises/${id}/submit`, { answer }),
 };
 
 // Export enrollmentApi as well

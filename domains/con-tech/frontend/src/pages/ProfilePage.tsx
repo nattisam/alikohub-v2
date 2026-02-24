@@ -66,7 +66,7 @@ const ProfilePage = () => {
       </div>
     );
   }
-  console.log(profile);
+
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
       <main className="bg-white p-8 rounded-lg shadow-sm border border-slate-100">

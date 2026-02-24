@@ -20,14 +20,10 @@ export const useUpdateUserProfile = () => {
 
   return useMutation({
     mutationFn: (_data: Partial<User>) => {
-      // Update profile functionality would need to be added to the API
       throw new Error("Update profile not implemented in API");
-      // return authAPI.updateProfile(data);
     },
     onSuccess: (updatedUser) => {
-      // Update the user profile in the cache
       queryClient.setQueryData(["userProfile"], updatedUser);
-      // Invalidate other related queries if needed
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
   });
@@ -38,13 +34,10 @@ export const useCreateUser = () => {
 
   return useMutation({
     mutationFn: (data: any) => {
-      if (data.role === "CONTENT_MANAGER") {
-        return contechAPI.createEventsUser(data);
-      }
       return contechAPI.createUser(data);
     },
     onSuccess: () => {
-      // Invalidate all user lists to ensure the directory updates
+      // FIX: Invalidate the root "users" key to catch all sub-queries like ["users", "CONTRACTOR"]
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
@@ -55,13 +48,10 @@ export const useCreateUserProfile = () => {
 
   return useMutation({
     mutationFn: (_data: Partial<User>) => {
-      // Create profile functionality would need to be added to the API
       throw new Error("Create profile not implemented in API");
     },
     onSuccess: (newUser) => {
-      // Update the user profile in the cache
       queryClient.setQueryData(["userProfile"], newUser);
-      // Invalidate other related queries if needed
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
   });
@@ -69,16 +59,13 @@ export const useCreateUserProfile = () => {
 
 export const useUsersByRole = (role: string) => {
   return useQuery({
+    // Nested query key: ["users", "CONTRACTOR"]
     queryKey: ["users", role],
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: (failureCount, error: Error | unknown) => {
-      // Don't retry on 429 - let axios handle it
-      const err = error as { response?: { status?: number } };
-      if (err?.response?.status === 429) {
-        return false;
-      }
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status === 429) return false;
       return failureCount < 1;
     },
     queryFn: async () => {

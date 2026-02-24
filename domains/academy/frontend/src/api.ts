@@ -17,13 +17,13 @@ const PORT = import.meta.env.VITE_API_PORT || 3006;
 // Choose academy base URL depending on environment
 const ACADEMY_BASE_URL =
   env === "development"
-    ? `http://localhost:${PORT}` // your local dev server
-    : "http://localhost:3006/api/academy"; // production server
+    ? `https://api.consultancy.alikohub.com/api/academy` // your local dev server
+    : "https://api.consultancy.alikohub.com/api/academy"; // production server
 
 // Auth service URL
 const AUTH_BASE_URL =
   env === "development"
-    ? `http://localhost:${PORT}/auth`
+    ? `https://api.consultancy.alikohub.com/api/auth`
     : "https://api.consultancy.alikohub.com/api/auth";
 
 // Retry configuration - reduced retries to prevent cascading

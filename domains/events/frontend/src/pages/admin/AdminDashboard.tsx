@@ -20,6 +20,8 @@ export default function AdminDashboard() {
   const [selectedPromo, setSelectedPromo] = useState<PromotionRequest | null>(
     null,
   );
+  const [selectedPostForRejection, setSelectedPostForRejection] = useState<{ id: string; title: string } | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const {
     data: pendingPostsData = [],
@@ -79,6 +81,8 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["pending-posts"] });
       queryClient.invalidateQueries({ queryKey: ["all-posts"] });
       alert("Post rejected.");
+      setSelectedPostForRejection(null);
+      setRejectionReason("");
     },
     onError: (err: any) => {
       console.error("Failed to reject post:", err);
@@ -246,72 +250,91 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">
             Pending Approvals
           </h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50/50">
+              <h3 className="text-md leading-6 font-medium text-gray-900">
+                Pending Posts for Review
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                {pendingPosts.length} pending post(s) awaiting approval
+              </p>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr className="text-gray-500 text-[11px] font-bold uppercase tracking-wider">
-                    <th className="px-5 py-3">Title</th>
-                    <th className="px-5 py-3">Author</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Title
+                    </th>
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Author
+                    </th>
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {pendingPosts.length === 0 ? (
                     <tr>
                       <td
                         colSpan={3}
-                        className="px-5 py-10 text-center text-gray-400 text-sm font-medium italic"
+                        className="px-6 py-12 text-center text-gray-500"
                       >
                         All caught up! No pending submissions.
                       </td>
                     </tr>
                   ) : (
                     pendingPosts.map((post) => (
-                      <tr
-                        key={post.id}
-                        className="hover:bg-gray-50/50 transition-colors group"
-                      >
-                        <td className="px-5 py-3.5">
-                          <p className="font-semibold text-gray-900 group-hover:text-[#0a66c2] transition text-sm">
+                      <tr key={post.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
                             {post.title}
-                          </p>
-                          <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">
-                            {post.type}
-                          </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {post.type}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-5 py-3.5 text-sm text-gray-500 font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {post.createdByName || "Unknown"}
                         </td>
-                        <td className="px-5 py-3.5 text-right flex justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm("Approve and publish this post?")
-                              ) {
-                                approveMutation.mutate(post.id);
-                              }
-                            }}
-                            disabled={approveMutation.isPending}
-                            className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-700 transition shadow-sm disabled:opacity-50"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => {
-                              const reason = window.prompt(
-                                "Reason for rejection:",
-                                "Please include a clearer speaker list.",
-                              );
-                              if (reason !== null) {
-                                rejectMutation.mutate({ id: post.id, reason });
-                              }
-                            }}
-                            disabled={rejectMutation.isPending}
-                            className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-100 transition border border-red-100 disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                if (
+                                  window.confirm("Approve and publish this post?")
+                                ) {
+                                  approveMutation.mutate(post.id);
+                                }
+                              }}
+                              disabled={approveMutation.isPending}
+                              className="bg-emerald-600 text-white px-4 py-1.5 rounded-md text-xs font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedPostForRejection({ id: post.id, title: post.title });
+                                setRejectionReason("Please include a clearer speaker list.");
+                              }}
+                              disabled={rejectMutation.isPending}
+                              className="bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-medium hover:bg-red-200 transition disabled:opacity-50 border border-red-200"
+                            >
+                              Reject
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -327,23 +350,46 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">
             Promotion Requests
           </h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50/50">
+              <h3 className="text-md leading-6 font-medium text-gray-900">
+                Promotion Requests Awaiting Review
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                {promoRequests.filter((r) => r.status !== "REVIEWED").length} promotion request(s) pending
+              </p>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr className="text-gray-500 text-[11px] font-bold uppercase tracking-wider">
-                    <th className="px-5 py-3">Company</th>
-                    <th className="px-5 py-3">Type</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Company
+                    </th>
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Type
+                    </th>
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {promoRequests.filter((r) => r.status !== "REVIEWED")
                     .length === 0 ? (
                     <tr>
                       <td
                         colSpan={3}
-                        className="px-5 py-10 text-center text-gray-400 text-sm font-medium italic"
+                        className="px-6 py-12 text-center text-gray-500"
                       >
                         No new promotion requests
                       </td>
@@ -352,22 +398,21 @@ export default function AdminDashboard() {
                     promoRequests
                       .filter((r) => r.status !== "REVIEWED")
                       .map((req) => (
-                        <tr
-                          key={req.id}
-                          className="hover:bg-gray-50/50 transition-colors group"
-                        >
-                          <td className="px-5 py-3.5 font-semibold text-gray-900 group-hover:text-purple-600 transition text-sm">
-                            {req.companyName}
+                        <tr key={req.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {req.companyName}
+                            </div>
                           </td>
-                          <td className="px-5 py-3.5">
-                            <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               {req.type}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5 text-right">
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
                               onClick={() => setSelectedPromo(req)}
-                              className="bg-purple-50 text-purple-700 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-100 transition border border-purple-100"
+                              className="text-purple-600 hover:text-purple-900 px-4 py-1.5 text-xs font-medium rounded-md transition-colors border border-purple-200 hover:bg-purple-50"
                             >
                               Details
                             </button>
@@ -387,47 +432,74 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           Published Content
         </h2>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50/50">
+            <h3 className="text-md leading-6 font-medium text-gray-900">
+              Published Posts
+            </h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              {publishedPosts.length} published post(s) currently active
+            </p>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr className="text-gray-500 text-[11px] font-bold uppercase tracking-wider">
-                  <th className="px-5 py-3">Title</th>
-                  <th className="px-5 py-3">Type</th>
-                  <th className="px-5 py-3">Published On</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Title
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Type
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Published On
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {publishedPosts.length === 0 ? (
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-5 py-10 text-center text-gray-400 text-sm font-medium italic"
+                      className="px-6 py-12 text-center text-gray-500"
                     >
                       No published content found
                     </td>
                   </tr>
                 ) : (
                   publishedPosts.map((post) => (
-                    <tr
-                      key={post.id}
-                      className="hover:bg-gray-50/50 transition-colors group"
-                    >
-                      <td className="px-5 py-3.5 font-semibold text-gray-900 group-hover:text-[#0a66c2] transition text-sm">
-                        {post.title}
+                    <tr key={post.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {post.title}
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           {post.type}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-500 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {post.publishDate
                           ? new Date(post.publishDate).toLocaleDateString()
                           : "Unknown"}
                       </td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => {
                             if (
@@ -438,7 +510,7 @@ export default function AdminDashboard() {
                               unpublishMutation.mutate(post.id);
                             }
                           }}
-                          className="text-red-600 hover:text-red-800 text-xs font-bold uppercase tracking-wider transition hover:bg-red-50 px-3 py-1 rounded-lg"
+                          className="text-red-600 hover:text-red-800 px-3 py-1.5 text-xs font-medium rounded-md transition-colors hover:bg-red-50"
                         >
                           Unpublish
                         </button>
@@ -459,6 +531,7 @@ export default function AdminDashboard() {
             <button
               onClick={() => setSelectedPromo(null)}
               className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              title="Close"
             >
               <svg
                 className="w-5 h-5"
@@ -545,6 +618,76 @@ export default function AdminDashboard() {
                 {reviewPromoMutation.isPending
                   ? "Processing..."
                   : "Mark as Reviewed"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Reason Modal */}
+      {selectedPostForRejection && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl relative">
+            <button
+              onClick={() => {
+                setSelectedPostForRejection(null);
+                setRejectionReason("");
+              }}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              title="Close"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              Reject Post
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Are you sure you want to reject <span className="font-semibold">{selectedPostForRejection.title}</span>?<br />
+              Please provide a reason for rejection (optional):
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Rejection Reason
+              </label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition text-sm min-h-[120px]"
+                placeholder="Enter reason for rejection..."
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setSelectedPostForRejection(null);
+                  setRejectionReason("");
+                }}
+                className="flex-1 py-3 bg-gray-200 text-gray-800 rounded-xl font-bold hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  rejectMutation.mutate({ id: selectedPostForRejection.id, reason: rejectionReason });
+                }}
+                disabled={rejectMutation.isPending}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-md disabled:bg-gray-400"
+              >
+                {rejectMutation.isPending ? "Processing..." : "Confirm Rejection"}
               </button>
             </div>
           </div>

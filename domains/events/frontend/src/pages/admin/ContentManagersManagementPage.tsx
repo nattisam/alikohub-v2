@@ -129,23 +129,51 @@ export default function ContentManagersManagementPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50/50">
+          <h3 className="text-md leading-6 font-medium text-gray-900">
+            Content Manager Accounts
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+            {managers.length} staff account(s) currently managed
+          </p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-[11px] font-bold uppercase tracking-wider">
-                <th className="px-6 py-3.5">Staff Member</th>
-                <th className="px-6 py-3.5">Email</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Staff Member
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Email
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Status
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="bg-white divide-y divide-gray-200">
               {managers.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
-                    className="px-6 py-16 text-center text-gray-400 text-sm font-medium italic"
+                    className="px-6 py-12 text-center text-gray-500"
                   >
                     No staff accounts found
                   </td>
@@ -154,57 +182,62 @@ export default function ContentManagersManagementPage() {
                 managers.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-gray-50/50 transition-colors group"
+                    className="hover:bg-gray-50"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#0a66c2] font-bold text-xs mr-3 border border-blue-100">
-                          {user.name.charAt(0).toUpperCase()}
+                          {(user.name || user.email || "U")
+                            .toString()
+                            .charAt(0)
+                            .toUpperCase()}
                         </div>
                         <p className="font-semibold text-gray-900 group-hover:text-[#0a66c2] transition text-sm">
-                          {user.name}
+                          {user.name || user.email || "Unknown User"}
                         </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                      {user.email}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.email || "No email"}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
-                          user.status === "ACTIVE"
-                            ? "bg-green-50 text-green-700 border-green-100"
-                            : "bg-red-50 text-red-700 border-red-100"
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border ${
+                          (user.status || "UNKNOWN") === "ACTIVE"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : "bg-red-100 text-red-800 border-red-200"
                         }`}
                       >
-                        {user.status}
+                        {user.status || "UNKNOWN"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button
-                        onClick={() =>
-                          toggleStatusMutation.mutate({
-                            id: user.id,
-                            status:
-                              user.status === "ACTIVE" ? "DISABLED" : "ACTIVE",
-                          })
-                        }
-                        className="text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-[#0a66c2] hover:bg-blue-50 px-3 py-1 rounded-lg transition"
-                      >
-                        {user.status === "ACTIVE" ? "Disable" : "Enable"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (
-                            window.confirm(`Permanently remove ${user.name}?`)
-                          ) {
-                            deleteMutation.mutate(user.id);
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() =>
+                            toggleStatusMutation.mutate({
+                              id: user.id,
+                              status:
+                                (user.status || "UNKNOWN") === "ACTIVE" ? "DISABLED" : "ACTIVE",
+                            })
                           }
-                        }}
-                        className="text-xs font-bold uppercase tracking-wider text-red-500 hover:text-red-600 hover:bg-red-50 px-3 py-1 rounded-lg transition"
-                      >
-                        Delete
-                      </button>
+                          className="text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-[#0a66c2] hover:bg-blue-50 px-3 py-1 rounded-lg transition border border-gray-200"
+                        >
+                          {(user.status || "UNKNOWN") === "ACTIVE" ? "Disable" : "Enable"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (
+                              window.confirm(`Permanently remove ${user.name || user.email || 'this user'}?`)
+                            ) {
+                              deleteMutation.mutate(user.id);
+                            }
+                          }}
+                          className="text-xs font-bold uppercase tracking-wider text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-lg transition border border-red-200"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
