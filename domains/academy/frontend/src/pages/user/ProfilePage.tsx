@@ -157,7 +157,11 @@ const ProfilePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !currentUser.firebaseId) {
-      alert("User not found. Please log in again.");
+      Swal.fire({
+        icon: "error",
+        title: "User not found",
+        text: "Please log in again.",
+      });
       return;
     }
 

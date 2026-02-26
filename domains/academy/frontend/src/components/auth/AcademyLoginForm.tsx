@@ -109,8 +109,8 @@ const AcademyLoginForm: React.FC<AcademyLoginFormProps> = ({
       : undefined)) as string | undefined;
 
   return (
-    <div className="w-full">
-      <div className="mb-8">
+    <div className="w-full mt-24">
+      <div className="mb-16">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
         <p className="text-gray-600">
           Don't have an account?{" "}

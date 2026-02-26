@@ -19,16 +19,6 @@ const RoleSelection: React.FC = () => {
     refreshProfile();
   }, []); // Only run once on mount
 
-  // Debug logs to help diagnose backend response
-  useEffect(() => {
-    if (user) {
-      console.log("Current User in RoleSelection:", user);
-      console.log("Role Status:", user.roleStatus);
-      // Check for snake_case variant just in case
-      console.log("Role Status (snake_case):", (user as any)?.role_status);
-    }
-  }, [user]);
-
   // Only show this section if user is authenticated
   if (!user) {
     return null;
@@ -49,8 +39,6 @@ const RoleSelection: React.FC = () => {
       }
       // Navigate to student dashboard
       navigate("/student-dashboard");
-    } catch (error) {
-      console.error("Error selecting student role:", error);
     } finally {
       setProcessingRole(null);
     }
@@ -63,9 +51,6 @@ const RoleSelection: React.FC = () => {
       switchRole("INSTRUCTOR")
         .then(() => {
           navigate("/instructor");
-        })
-        .catch((error) => {
-          console.error("Error switching to instructor role:", error);
         })
         .finally(() => {
           setProcessingRole(null);

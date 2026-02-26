@@ -91,13 +91,13 @@ export const progressApi = {
   // Get detailed student progress for a course
   getDetailedStudentProgress: (courseId: number, studentId: string) =>
     academyApi.get<ProgressModule[]>(
-      `/academy/progress/course/${courseId}/user/${studentId}`
+      `/academy/progress/course/${courseId}/user/${studentId}`,
     ),
 
   // Get all students progress for a course (instructor view)
   getCourseStudentsProgress: (courseId: number) =>
     academyApi.get<StudentProgress[]>(
-      `/academy/progress/course/${courseId}/students`
+      `/academy/progress/course/${courseId}/students`,
     ),
 
   // Update content progress
@@ -107,10 +107,16 @@ export const progressApi = {
     lessonId: number,
     contentId: number,
     status: string,
-    score?: number
+    score?: number,
   ) =>
     academyApi.post(
       `/academy/progress/course/${courseId}/module/${moduleId}/lesson/${lessonId}/content/${contentId}`,
-      { status, score }
+      { status, score },
+    ),
+
+  // Mark a lesson as complete
+  completeLesson: (courseId: number, lessonId: number) =>
+    academyApi.post(
+      `/academy/progress/course/${courseId}/lesson/${lessonId}/complete`,
     ),
 };

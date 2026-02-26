@@ -19,8 +19,14 @@ const AcademyAboutPage = lazy(() => import("./pages/user/AcademyAboutPage"));
 const AcademyContactUsPage = lazy(
   () => import("./pages/user/AcademyContactUsPage"),
 );
+const AcademyPartnershipPage = lazy(
+  () => import("./pages/user/AcademyPartnershipPage"),
+);
 const CourseDetailsPage = lazy(() => import("./pages/user/CourseDetailsPage"));
 const CategoryPage = lazy(() => import("./pages/user/CategoryPage"));
+const CategoryCoursesPage = lazy(
+  () => import("./pages/user/CategoryCoursesPage"),
+);
 const ProfilePage = lazy(() => import("./pages/user/ProfilePage"));
 const NotFoundState = lazy(() => import("./components/states/NotFoundState"));
 
@@ -50,6 +56,7 @@ import AppRoute from "./components/common/AppRoute";
 import AdminRoute from "./components/common/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 import PublicRoute from "./components/common/PublicRoute";
+import AcademyFooter from "./components/layout/AcademyFooter";
 
 // -------------------- Layouts --------------------
 
@@ -93,6 +100,7 @@ const PublicLayout = () => {
         onLogoutComplete={handleLogoutComplete}
       />
       <Outlet />
+      <AcademyFooter />
     </>
   );
 };
@@ -161,7 +169,7 @@ function App() {
         <RoleModalContainer />
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Public routes - with admin redirection */}
+            {/* Public routes */}
             <Route element={<PublicLayout />}>
               <Route
                 path="/"
@@ -176,6 +184,14 @@ function App() {
                 element={
                   <PublicRoute>
                     <AcademyAboutPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/partnership"
+                element={
+                  <PublicRoute>
+                    <AcademyPartnershipPage />
                   </PublicRoute>
                 }
               />
@@ -197,14 +213,6 @@ function App() {
                 }
               />
               <Route
-                path="/category/:categoryName"
-                element={
-                  <PublicRoute>
-                    <CategoryPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
                 path="/auth/login"
                 element={
                   <RedirectIfAuthenticated redirectPath="/">
@@ -223,7 +231,25 @@ function App() {
               />
             </Route>
 
-            {/* Smart dashboard router */}
+            <Route
+              path="/category/:categoryName"
+              element={
+                <PublicRoute>
+                  <CategoryPage />
+                </PublicRoute>
+              }
+            />
+
+            <Route
+              path="/category/:categoryName/courses"
+              element={
+                <PublicRoute>
+                  <CategoryCoursesPage />
+                </PublicRoute>
+              }
+            />
+
+            {/* dashboard router */}
             <Route path="/dashboard" element={<DashboardRouter />} />
 
             {/* Student dashboard tree */}
@@ -250,7 +276,6 @@ function App() {
               />
             </Route>
 
-            {/* Profile & settings - only accessible by non-admin users */}
             <Route element={<DashboardLayout />}>
               <Route
                 path="/profile"
@@ -262,7 +287,7 @@ function App() {
               />
             </Route>
 
-            {/* Admin routes - completely separate tree */}
+            {/* Admin routes */}
             <Route
               path="/admin"
               element={

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { TrendingCourseCardProps } from "../common/types.d";
-import { FaStar, FaRegStar, FaStarHalfAlt, FaSpinner } from "react-icons/fa";
+import { FaStar, FaRegStar, FaStarHalfAlt } from "react-icons/fa";
 import { getCourseImageUrlWithFallback } from "../../utils/imageUtils";
 
 const TrendingCourseCard = ({
@@ -72,26 +72,15 @@ const TrendingCourseCard = ({
 
         {/* Buttons */}
         <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-          <button
-            onClick={handleEnroll}
-            disabled={isEnrolling}
-            className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
-              isEnrolled
-                ? "bg-green-600 text-white"
-                : "bg-[#F0802D] hover:bg-[#d97328] text-white shadow-lg shadow-[#F0802D]/20"
-            }`}
-          >
-            {isEnrolling ? (
-              <div className="flex items-center justify-center gap-2">
-                <FaSpinner className="animate-spin" />
-                Wait...
-              </div>
-            ) : isEnrolled ? (
-              "Dashboard"
-            ) : (
-              "Enroll Now"
-            )}
-          </button>
+          {isEnrolled ? (
+            <button
+              onClick={handleEnroll}
+              disabled={isEnrolling}
+              className="flex-1 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-green-600 text-white"
+            >
+              Dashboard
+            </button>
+          ) : null}
 
           <button
             onClick={(e) => {

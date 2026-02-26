@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   X,
   Shield,
@@ -11,6 +12,7 @@ import {
 interface StripeCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  courseId: number;
   courseTitle: string;
   price: number;
   onSuccess: () => void;
@@ -19,10 +21,12 @@ interface StripeCheckoutModalProps {
 const StripeCheckoutModal: React.FC<StripeCheckoutModalProps> = ({
   isOpen,
   onClose,
+  courseId,
   courseTitle,
   price,
   onSuccess,
 }) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<
     "checkout" | "processing" | "success" | "failure"
   >("checkout");
@@ -53,6 +57,7 @@ const StripeCheckoutModal: React.FC<StripeCheckoutModalProps> = ({
         setTimeout(() => {
           onSuccess();
           onClose();
+          navigate(`/student-dashboard/checkout/success?courseId=${courseId}`);
         }, 2000);
       } else {
         setStep("failure");

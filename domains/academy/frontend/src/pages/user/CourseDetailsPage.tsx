@@ -21,7 +21,9 @@ import {
   HelpCircle,
   Lock,
 } from "lucide-react";
-import StripeCheckoutModal from "../../components/course/StripeCheckoutModal";
+
+import { fixBackendUrl } from "../../utils/imageUtils";
+import FeedbackModal from "../../components/common/FeedbackModal";
 
 const CourseDetailsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -63,7 +65,18 @@ const CourseDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "curriculum" | "reviews" | "instructor"
   >("curriculum");
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error" | "info";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -109,11 +122,48 @@ const CourseDetailsPage: React.FC = () => {
       return;
     }
     if (!isStudent) {
-      alert("Only students can enroll.");
+      setFeedback({
+        isOpen: true,
+        title: "Role Required",
+        message:
+          "Only students can enroll in courses. Please switch to student role.",
+        type: "info",
+      });
       return;
     }
+
     if (course && course.price && course.price > 0) {
-      setIsCheckoutOpen(true);
+      // Paid course: initiate enrollment via backend and redirect to Stripe checkout
+      try {
+        setEnrolling(true);
+        const resp = await enrollmentApi.createEnrollment({
+          courseId: parseInt(courseId || "0", 10),
+          paymentGateway: "CHAPA",
+        });
+        const checkoutUrl = resp?.data?.checkoutUrl;
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+        } else {
+          setFeedback({
+            isOpen: true,
+            title: "Enrollment Error",
+            message: "Failed to obtain checkout URL.",
+            type: "error",
+          });
+        }
+      } catch (err: any) {
+        console.error(err);
+        setFeedback({
+          isOpen: true,
+          title: "Enrollment Failed",
+          message:
+            err?.response?.data?.message ||
+            "Unable to enroll. Please try again.",
+          type: "error",
+        });
+      } finally {
+        setEnrolling(false);
+      }
       return;
     }
     performEnrollment();
@@ -131,9 +181,23 @@ const CourseDetailsPage: React.FC = () => {
         if (course) {
           setUserEnrollments((prev) => [...prev, course]);
         }
+        setFeedback({
+          isOpen: true,
+          title: "Successfully Enrolled!",
+          message: "You have been enrolled in the course. Happy learning!",
+          type: "success",
+        });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setFeedback({
+        isOpen: true,
+        title: "Enrollment Failed",
+        message:
+          err?.response?.data?.message ||
+          "There was an issue enrolling you in this course. Please try again.",
+        type: "error",
+      });
     } finally {
       setEnrolling(false);
     }
@@ -202,7 +266,6 @@ const CourseDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] w-full pb-20">
-      {/* Header / Breadcrumbs */}
       <div className="max-w-7xl mx-auto px-6 pt-8">
         <nav className="flex items-center gap-2 text-[13px] text-gray-500 mb-8 font-medium">
           <span
@@ -403,7 +466,7 @@ const CourseDetailsPage: React.FC = () => {
                         <div className="absolute -inset-1 bg-gradient-to-r from-[#17469E] to-blue-400 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
                         <img
                           src={
-                            course.instructor?.profilePicture ||
+                            fixBackendUrl(course.instructor?.profilePicture) ||
                             `https://ui-avatars.com/api/?name=${course.instructor?.firstname}+${course.instructor?.lastname}&background=17469E&color=fff`
                           }
                           alt={course.instructor?.firstname}
@@ -582,12 +645,12 @@ const CourseDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      <StripeCheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        courseTitle={course.title || "Course"}
-        price={course.price || 1999}
-        onSuccess={performEnrollment}
+      <FeedbackModal
+        isOpen={feedback.isOpen}
+        onClose={() => setFeedback({ ...feedback, isOpen: false })}
+        title={feedback.title}
+        message={feedback.message}
+        type={feedback.type}
       />
     </div>
   );

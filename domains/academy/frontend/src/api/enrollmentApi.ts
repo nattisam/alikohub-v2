@@ -12,6 +12,7 @@ export interface Enrollment {
   enrollmentType: string;
   paymentStatus: string;
   status: string;
+  checkoutUrl?: string; // URL for Stripe checkout redirect
   cohort?: any;
   user?: {
     id: number;
@@ -38,6 +39,7 @@ export interface CreateEnrollmentDto {
   userId?: string;
   cohortId?: number;
   courseId: number;
+  paymentGateway?: string; // optional payment gateway identifier
 }
 
 export interface EnrollmentWithCourse {
@@ -64,21 +66,19 @@ export interface EnrollmentWithCourse {
 export const enrollmentApi = {
   // Create a new enrollment
   createEnrollment: (data: CreateEnrollmentDto) => {
-    console.log("Enrollment API - Sending data:", data);
     return academyApi.post<Enrollment>("/academy/enrollment", data);
   },
 
   // Get all enrollments for the current user
   getMyEnrollments: () =>
-    academyApi.get<EnrollmentWithCourse[]>('/academy/enrollment/me'),
+    academyApi.get<EnrollmentWithCourse[]>("/academy/enrollment/me"),
 
   // Get all enrolled courses for the current user (simplified)
   getMyCourses: () =>
-    academyApi.get<Course[]>('/academy/enrollment/my-courses'),
+    academyApi.get<Course[]>("/academy/enrollment/my-courses"),
 
   // Get all enrollments (admin only)
-  getAllEnrollments: () =>
-    academyApi.get<Enrollment[]>("/academy/enrollment"),
+  getAllEnrollments: () => academyApi.get<Enrollment[]>("/academy/enrollment"),
 
   // Get enrollments by cohort
   getEnrollmentsByCohort: (cohortId: number) =>
@@ -86,7 +86,9 @@ export const enrollmentApi = {
 
   // Get enrollments by user ID
   getEnrollmentsByUserId: (userId: string) =>
-    academyApi.get<EnrollmentWithCourse[]>(`/academy/enrollment/user/${userId}`),
+    academyApi.get<EnrollmentWithCourse[]>(
+      `/academy/enrollment/user/${userId}`,
+    ),
 
   // Delete an enrollment
   deleteEnrollment: (id: number) =>

@@ -1,66 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
+html,
+body {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
 :root {
-  font-family: "Roboto", sans-serif;
+  --font-montserrat: "Montserrat", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
 }
 
 body {
-  font-family: "Roboto", sans-serif;
-  background-color: #f8fafc;
-}
-::-webkit-scrollbar {
-  background-color: var(--scrollbar-bg, #fff);
-  width: 5px;
-  height: 5px;
-}
-:hover::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-bg, #727272);
-  border-radius: 20px;
-}
-
-@layer components {
-  .admin-link {
-    @apply block px-4 py-2 rounded-md text-slate-600 hover:bg-blue-50 hover:text-blue-600;
-  }
-
-  .status-pill {
-    @apply px-3 py-1 rounded-full text-xs font-semibold;
-  }
-  .status-pill.pending {
-    @apply bg-yellow-100 text-yellow-700;
-  }
-  .status-pill.approved {
-    @apply bg-green-100 text-green-700;
-  }
-  .status-pill.rejected {
-    @apply bg-red-100 text-red-700;
-  }
-
-  .btn-approve {
-    @apply bg-green-600 text-white w-8 h-8 rounded-md hover:bg-green-700;
-  }
-
-  .btn-reject {
-    @apply bg-red-600 text-white w-8 h-8 rounded-md hover:bg-red-700;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
-  }
+  font-family: var(--font-roboto);
 }

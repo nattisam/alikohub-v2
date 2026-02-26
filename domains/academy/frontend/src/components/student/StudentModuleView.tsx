@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { academyApi } from "../../api";
 import type { CourseModule } from "../common/types.d.tsx";
@@ -9,13 +9,20 @@ interface StudentModuleViewProps {
   onClose: () => void;
 }
 
-const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose }) => {
+const StudentModuleView: React.FC<StudentModuleViewProps> = ({
+  courseId,
+  onClose,
+}) => {
   const [modules, setModules] = useState<CourseModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
+  const [expandedModules, setExpandedModules] = useState<
+    Record<number, boolean>
+  >({});
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
-  const [moduleIdForLesson, setModuleIdForLesson] = useState<number | null>(null);
+  const [moduleIdForLesson, setModuleIdForLesson] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     fetchCourseStructure();
@@ -24,28 +31,31 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
   const fetchCourseStructure = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch modules for this course
-      console.log(`Fetching modules for course ${courseId}`);
-      const modulesResponse = await academyApi.get(`/modules/course/${courseId}`);
-      console.log("Modules response:", modulesResponse);
+      const modulesResponse = await academyApi.get(
+        `/academy/modules/course/${courseId}`,
+      );
       const modulesData: CourseModule[] = modulesResponse.data;
-      
+
       // Fetch lessons for each module
       const modulesWithLessons = await Promise.all(
         modulesData.map(async (module) => {
           try {
-            console.log(`Fetching lessons for module ${module.id}`);
-            const lessonsResponse = await academyApi.get(`/lessons/module/${module.id}`);
-            console.log(`Lessons response for module ${module.id}:`, lessonsResponse);
+            const lessonsResponse = await academyApi.get(
+              `/academy/lessons/module/${module.id}`,
+            );
             return { ...module, lessons: lessonsResponse.data };
           } catch (lessonError) {
-            console.error(`Error fetching lessons for module ${module.id}:`, lessonError);
+            console.error(
+              `Error fetching lessons for module ${module.id}:`,
+              lessonError,
+            );
             return { ...module, lessons: [] };
           }
-        })
+        }),
       );
-      
+
       setModules(modulesWithLessons);
     } catch (err: any) {
       console.error("Error loading course structure:", err);
@@ -57,9 +67,9 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
   };
 
   const toggleModule = (moduleId: number) => {
-    setExpandedModules(prev => ({
+    setExpandedModules((prev) => ({
       ...prev,
-      [moduleId]: !prev[moduleId]
+      [moduleId]: !prev[moduleId],
     }));
   };
 
@@ -109,12 +119,12 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
               Close
             </button>
           </div>
-          
+
           {modules.length > 0 ? (
             <div className="space-y-4">
               {modules.map((module) => (
                 <div key={module.id} className="border rounded-lg">
-                  <div 
+                  <div
                     className="flex justify-between items-center p-4 bg-gray-50 cursor-pointer"
                     onClick={() => toggleModule(module.id)}
                   >
@@ -123,13 +133,14 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
                       <span className="text-sm text-gray-500 mr-2">
                         {module.lessons?.length || 0} lessons
                       </span>
-                      {expandedModules[module.id] ? 
-                        <FaChevronDown className="text-gray-500" /> : 
+                      {expandedModules[module.id] ? (
+                        <FaChevronDown className="text-gray-500" />
+                      ) : (
                         <FaChevronRight className="text-gray-500" />
-                      }
+                      )}
                     </div>
                   </div>
-                  
+
                   {expandedModules[module.id] && module.lessons && (
                     <div className="p-4 border-t">
                       {module.lessons.length > 0 ? (
@@ -137,9 +148,11 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
                           {module.lessons.map((lesson) => (
                             <div key={lesson.id} className="border rounded p-3">
                               <div className="flex justify-between items-center">
-                                <h4 
+                                <h4
                                   className="font-medium cursor-pointer text-blue-600 hover:text-blue-800"
-                                  onClick={() => handleViewLesson(lesson.id, module.id)}
+                                  onClick={() =>
+                                    handleViewLesson(lesson.id, module.id)
+                                  }
                                 >
                                   {lesson.title}
                                 </h4>
@@ -147,15 +160,20 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
                                   {lesson.type}
                                 </span>
                               </div>
-                              
+
                               {lesson.dueDate && (
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Due: {new Date(lesson.dueDate).toLocaleDateString()}
+                                  Due:{" "}
+                                  {new Date(
+                                    lesson.dueDate,
+                                  ).toLocaleDateString()}
                                 </p>
                               )}
-                              
+
                               <button
-                                onClick={() => handleViewLesson(lesson.id, module.id)}
+                                onClick={() =>
+                                  handleViewLesson(lesson.id, module.id)
+                                }
                                 className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
                               >
                                 View Lesson
@@ -164,7 +182,9 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
                           ))}
                         </div>
                       ) : (
-                        <p className="text-gray-500 text-center py-4">No lessons in this module</p>
+                        <p className="text-gray-500 text-center py-4">
+                          No lessons in this module
+                        </p>
                       )}
                     </div>
                   )}
@@ -178,7 +198,7 @@ const StudentModuleView: React.FC<StudentModuleViewProps> = ({ courseId, onClose
           )}
         </div>
       </div>
-      
+
       {/* Lesson View Modal */}
       {selectedLessonId && moduleIdForLesson && (
         <LessonView

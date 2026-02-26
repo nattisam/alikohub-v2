@@ -9,6 +9,13 @@ import ModulePage from "../../pages/student/ModulePage";
 
 import NotFoundState from "../states/NotFoundState";
 
+const CheckoutSuccessPage = React.lazy(
+  () => import("../../pages/student/CheckoutSuccessPage"),
+);
+const CheckoutCancelPage = React.lazy(
+  () => import("../../pages/student/CheckoutCancelPage"),
+);
+
 const StudentDashboardRouter: React.FC = () => {
   const { user: currentUser, setRoleModalOpen } = useAuth();
   const navigate = useNavigate();
@@ -58,6 +65,8 @@ const StudentDashboardRouter: React.FC = () => {
         path="course/:courseId/lesson/:lessonId"
         element={<ModulePage />}
       />
+      <Route path="checkout/success" element={<CheckoutSuccessPage />} />
+      <Route path="checkout/cancel" element={<CheckoutCancelPage />} />
       <Route
         path="*"
         element={

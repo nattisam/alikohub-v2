@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  startTransition,
   type ReactNode,
 } from "react";
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
@@ -283,8 +284,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
-    localStorage.clear();
-    setUser(null);
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("firebaseCustomToken");
+
+    startTransition(() => {
+      setUser(null);
+    });
 
     // Dispatch a custom event to notify other tabs about logout
     window.dispatchEvent(new CustomEvent("userLoggedOut"));

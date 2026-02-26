@@ -7,15 +7,47 @@ import { enrollmentApi } from "../../api/enrollmentApi";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import AuthPromptModal from "../auth/AuthPromptModal";
+import FeedbackModal from "../common/FeedbackModal";
 
 const TrendingCourses = ({ courses }: { courses: Course[] }) => {
   const enrollCourseMutation = useEnrollCourse();
+
+  const handleEnrollSuccess = () => {
+    setFeedback({
+      isOpen: true,
+      title: "Successfully Enrolled!",
+      message: "You have been enrolled in the course. Happy learning!",
+      type: "success",
+    });
+  };
+
+  const handleEnrollError = (error: any) => {
+    setFeedback({
+      isOpen: true,
+      title: "Enrollment Failed",
+      message:
+        error?.response?.data?.message ||
+        "There was an issue enrolling you in this course. Please try again.",
+      type: "error",
+    });
+  };
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const [selectedCourse, setSelectedCourse] = useState<{
     id: number;
     title: string;
   } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error" | "info";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   // Fetch user's enrolled courses
   const { data: enrolledCourses = [] } = useQuery({
@@ -49,11 +81,18 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
           navigate("/dashboard");
           return;
         }
-        enrollCourseMutation.mutate(courseId);
+        enrollCourseMutation.mutate(courseId, {
+          onSuccess: handleEnrollSuccess,
+          onError: handleEnrollError,
+        });
       } else {
-        alert(
-          "Only students can enroll in courses. Please switch to student role.",
-        );
+        setFeedback({
+          isOpen: true,
+          title: "Role Required",
+          message:
+            "Only students can enroll in courses. Please switch to student role.",
+          type: "info",
+        });
       }
     } else {
       setSelectedCourse({
@@ -112,6 +151,13 @@ const TrendingCourses = ({ courses }: { courses: Course[] }) => {
         onClose={() => setSelectedCourse(null)}
         courseTitle={selectedCourse?.title}
         courseId={selectedCourse?.id}
+      />
+      <FeedbackModal
+        isOpen={feedback.isOpen}
+        onClose={() => setFeedback({ ...feedback, isOpen: false })}
+        title={feedback.title}
+        message={feedback.message}
+        type={feedback.type}
       />
     </section>
   );

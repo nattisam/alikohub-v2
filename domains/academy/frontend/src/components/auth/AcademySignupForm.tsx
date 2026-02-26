@@ -211,7 +211,7 @@ const AcademySignupForm: React.FC<AcademySignupFormProps> = ({
       : undefined)) as string | undefined;
 
   return (
-    <div className="w-full">
+    <div className="w-full mt-24">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Create an account

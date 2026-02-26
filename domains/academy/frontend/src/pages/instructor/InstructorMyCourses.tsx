@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { getCourseImageUrl } from "../../utils/imageUtils";
 
 const InstructorMyCourses: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -127,7 +128,7 @@ const InstructorMyCourses: React.FC = () => {
                 <div className="h-40 bg-gray-200 relative">
                   {course.thumbnail && (
                     <img
-                      src={course.thumbnail}
+                      src={getCourseImageUrl(course.thumbnail)}
                       alt={course.title}
                       className="w-full h-full object-cover"
                     />

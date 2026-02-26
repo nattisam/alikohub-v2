@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { courseApi } from "../api/courseApi";
 import { FaCheck, FaBan, FaBook } from "react-icons/fa";
+import { getCourseImageUrl } from "../utils/imageUtils";
 
 interface Course {
   id: number;
@@ -411,7 +412,7 @@ const CoursesManagementPage = () => {
                       <div className="flex-shrink-0 h-10 w-10">
                         <img
                           className="h-10 w-10 rounded-md"
-                          src={course.thumbnail}
+                          src={getCourseImageUrl(course.thumbnail)}
                           alt="Thumbnail"
                         />
                       </div>
