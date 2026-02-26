@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
           <div className="grid grid-cols-3 gap-8 w-full md:w-2/3">
             {/* About */}
             <div>
-              <h3 className="font-semibold mb-3 text-white">About</h3>
+              <h3 className="font-semibold mb-3  text-white">About</h3>
               <ul className="space-y-2 text-white text-sm">
                 <li className="text-white">How it works</li>
                 <li className="text-white">Featured</li>

@@ -2,44 +2,56 @@ import phone from "../assets/phone-call.png";
 import onMapLocation from "../assets/location_on_map.png";
 import openMail from "../assets/email_open.png";
 import sectionBg from "../assets/bg2.png";
+
 const Contacts = () => {
   return (
     <section
-      className="flex flex-col md:flex-row items-center justify-around p-10 bg-cover bg-center"
+      className="flex flex-col md:flex-row items-stretch md:items-center justify-around gap-6 md:gap-0 p-6 md:p-10 bg-cover bg-center"
       style={{ backgroundImage: `url(${sectionBg})` }}
     >
-      <div className="flex flex-col items-center justify-center md:justify-around w-1/4 h-full px-4 py-2 md:pr-[10%] border-l-1 border-b-1 border-amber-600">
+      {/* Location */}
+      <div className="flex flex-col items-center justify-center md:justify-around w-full md:w-1/4 px-4 py-6 md:py-2
+                      border-b md:border-b-0 md:border-l border-amber-600 text-center">
         <img
           src={onMapLocation}
-          aria-label="Location"
           alt="Location pin"
-          className="w-[6rem] mb-5 p-2 bg-gray-300/30 backdrop-blur-md"
+          className="w-20 md:w-[6rem] mb-4 p-2 bg-gray-300/30 backdrop-blur-md rounded-lg"
         />
-        <p>Bole Dembel, Tigis building 12th floor| Addis Ababa | Ethiopia</p>
+        <p className="text-sm leading-relaxed">
+          Bole Dembel, Tigis building 12th floor <br />
+          Addis Ababa, Ethiopia
+        </p>
       </div>
-      <div className="flex flex-col items-center justify-center md:justify-around w-1/4 h-[12rem]  px-4 md:pr-[10%] border-l-1 border-b-1 border-amber-600">
+
+      {/* Phone */}
+      <div className="flex flex-col items-center justify-center md:justify-around w-full md:w-1/4 px-4 py-6 md:py-2
+                      border-b md:border-b-0 md:border-l border-amber-600 text-center">
         <img
           src={phone}
           alt="Phone call"
-          aria-label="Phone Numbers"
-          className="w-[4rem] mb-5 p-2 bg-gray-300/30 backdrop-blur-md"
+          className="w-16 md:w-[4rem] mb-4 p-2 bg-gray-300/30 backdrop-blur-md rounded-lg"
         />
-        <p>
+        <p className="text-sm leading-relaxed">
+          +2519845976 <br />
+          +2519845976 <br />
           +2519845976
-          <br /> +2519845976
-          <br /> +2519845976
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center md:justify-around w-1/4 h-[12rem] px-4 md:pr-[10%] border-l-1 border-b-1 border-amber-600">
+
+      {/* Email */}
+      <div className="flex flex-col items-center justify-center md:justify-around w-full md:w-1/4 px-4 py-6 md:py-2
+                      md:border-l border-amber-600 text-center">
         <img
           src={openMail}
-          aria-label={"Email address"}
           alt="email icon"
-          className="w-[4rem] mb-5 p-2 bg-gray-300/30 backdrop-blur-md"
+          className="w-16 md:w-[4rem] mb-4 p-2 bg-gray-300/30 backdrop-blur-md rounded-lg"
         />
-        <p>alikohub@gmail.com</p>
+        <p className="text-sm break-words">
+          alikohub@gmail.com
+        </p>
       </div>
     </section>
   );
 };
+
 export default Contacts;
