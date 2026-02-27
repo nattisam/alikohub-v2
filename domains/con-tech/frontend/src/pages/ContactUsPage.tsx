@@ -13,12 +13,17 @@ const ContactUsPage = () => {
             Contact Us
           </h1>
         </div>
-      </Hero>
-      <Contacts />
-      <section className="bg-cover bg-center  pt-10 pl-14 pb-16" style={{ backgroundImage:`url(${bg})` }}>
-        <p className="text-3xl text-white font-bold mb-15 mx-5">Or Fill out the Form Below</p>
-        <ContactForm />
-      </section>
+      </Hero><Contacts />
+
+<section
+  className="bg-cover bg-center pt-10 pb-16"
+  style={{ backgroundImage: `url(${bg})` }}
+><p className="text-3xl font-bold text-white mb-10 mx-5 drop-shadow-[0_3px_4px_rgba(0,0,0,0.9)]">
+  If you want to contact us, fill out the form below
+</p>
+  <ContactForm />
+</section>
+      
     </main>
   );
 };

@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
         <div className="hidden text-white md:flex flex-row justify-between items-start gap-10 md:text-gray-800">
           <div className="max-w-sm">
             <img
-              src="/AlikoLogo.svg"
+              src="./assets/AlikoLogo.svg"
               alt="AlikoHub Logo"
               className=" mb-4"
             />

@@ -15,91 +15,118 @@ const ContactForm = () => {
     request: "",
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { id, value } = e.target;
-    setForm(prev => ({ ...prev, [id]: value }));
+    setForm((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Form submitted:", form);
-    // Add your submission logic here (e.g., API call)
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-4 md:p-10 pb-0 border-[0.1px] border-white backdrop-blur-md md:w-2/5 text-white"
-    >
-      <div className="flex justify-between my-2">
-        <div className="flex flex-col w-5/12">
-          <label htmlFor="firstName">
-            First Name<span className="text-red-500">*</span>
-          </label>
-          <input
-            id="firstName"
-            type="text"
-            placeholder="First Name"
-            value={form.firstName}
-            onChange={handleChange}
-            className="bg-white/50 rounded-sm w-full px-2 py-1"
-            required
-          />
-        </div>
-        <div className="flex flex-col w-5/12">
-          <label htmlFor="lastName">
-            Last Name<span className="text-red-500">*</span>
-          </label>
-          <input
-            id="lastName"
-            type="text"
-            placeholder="Last Name"
-            value={form.lastName}
-            onChange={handleChange}
-            className="bg-white/50 rounded-sm md:w-full px-2 py-1"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col my-2">
-        <label htmlFor="email">
-          Email<span className="text-red-500">*</span>
-        </label>
-        <input
-          id="email"
-          type="email"
-          placeholder="Your Email"
-          value={form.email}
-          onChange={handleChange}
-          className="bg-white/50 rounded-sm w-[65%] px-2 py-1"
-          required
-        />
-      </div>
-
-      <div className="flex flex-col my-2">
-        <label htmlFor="request">
-          How can we help you?<span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="request"
-          placeholder="Your Request Here"
-          rows={2}
-          value={form.request}
-          onChange={handleChange}
-          className="bg-white/50 rounded-sm w-[70%] px-2 py-1.5"
-          required
-        />
-      </div>
-
-      <button
-        type="submit"
-        className="bg-[#FFC107]/70 text-black py-2 px-6 rounded-md my-2 hover:bg-[#FFC107]/90 transition duration-300"
+    /* CENTERING WRAPPER */
+    <div className="min-h-screen flex justify-center items-center p-10">
+      {/* FORM CONTAINER */}
+      <form
+        onSubmit={handleSubmit}
+        className="
+          w-full
+          max-w-lg
+          p-6 md:p-10
+          border border-white/20
+          backdrop-blur-md
+          text-white
+          rounded-lg
+        "
       >
-        Submit
-      </button>
-    </form>
+        {/* NAME ROW */}
+        <div className="flex gap-4 my-2">
+          <div className="flex flex-col w-1/2">
+            <label htmlFor="firstName">
+              First Name<span className="text-red-500">*</span>
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              placeholder="First Name"
+              value={form.firstName}
+              onChange={handleChange}
+              className="bg-white/50 text-black rounded-sm px-2 py-1"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col w-1/2">
+            <label htmlFor="lastName">
+              Last Name<span className="text-red-500">*</span>
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              placeholder="Last Name"
+              value={form.lastName}
+              onChange={handleChange}
+              className="bg-white/50 text-black rounded-sm px-2 py-1"
+              required
+            />
+          </div>
+        </div>
+
+        {/* EMAIL */}
+        <div className="flex flex-col my-2">
+          <label htmlFor="email">
+            Email<span className="text-red-500">*</span>
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="Your Email"
+            value={form.email}
+            onChange={handleChange}
+            className="bg-white/50 text-black rounded-sm px-2 py-1"
+            required
+          />
+        </div>
+
+        {/* MESSAGE */}
+        <div className="flex flex-col my-2">
+          <label htmlFor="request">
+            How can we help you?<span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="request"
+            placeholder="Your Request Here"
+            rows={3}
+            value={form.request}
+            onChange={handleChange}
+            className="bg-white/50 text-black rounded-sm px-2 py-1.5"
+            required
+          />
+        </div>
+
+        {/* BUTTON */}
+        <button
+          type="submit"
+          className="
+            bg-[#FFC107]/70
+            text-black
+            py-2
+            px-6
+            rounded-md
+            mt-4
+            hover:bg-[#FFC107]/90
+            transition
+          "
+        >
+          Submit
+        </button>
+      </form>
+    </div>
   );
 };
-
+``
 export default ContactForm;

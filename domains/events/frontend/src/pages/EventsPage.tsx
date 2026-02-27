@@ -149,11 +149,6 @@ export default function EventsPage() {
                   Manage and discover all AlikoHub platform events in one place.
                 </p>
               </div>
-
-              <button className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium shadow hover:bg-blue-700 transition">
-                <Plus className="w-4 h-4" />
-                Create Event
-              </button>
             </div>
 
             {/* Search + View Controls */}
