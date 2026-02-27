@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
 import { EmailService } from './email.service';
 import { AcademyRole, ContechRole, EventsRole, GlobalRole, CareersRole } from '@prisma/client';
+import { RabbitMQService } from '../rabbitmq.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
 		@Inject('ACADEMY_SERVICE') private readonly academyClient: ClientProxy,
 		@Inject('CONTECH_SERVICE') private readonly contechClient: ClientProxy,
 		@Inject('EVENTS_SERVICE') private readonly eventsClient: ClientProxy,
+		private readonly rabbitMQService: RabbitMQService,
 	) {}
 
 	async register(dto: any) {
@@ -82,7 +84,7 @@ export class AuthService {
             await this.prisma.contechUser.create({
                 data: {
                     userId: userRecord.uid,
-                    role: ContechRole.USER,
+                    role: ContechRole.CLIENT,
                     status: 'ACTIVE',
                 }
             });
@@ -99,15 +101,17 @@ export class AuthService {
 			user = await this.userService.findByFirebaseId(userRecord.uid);
 			this.logger.log(`User created in database: ${user.id}`);
 			
-			// Emit user_created event to all services
-			const eventPayload = {
-				userId: user.firebaseId,
-				email: user.email,
-				role: 'USER'
-			};
-			this.academyClient.emit('user_created', eventPayload);
-			this.contechClient.emit('user_created', eventPayload);
-			this.eventsClient.emit('user_created', eventPayload);
+			// Broadcast event to all microservices via RabbitMQ
+			await this.rabbitMQService.publishToExchange('user_events', {
+				pattern: 'user_created',
+				data: {
+					userId: user.firebaseId,
+					email: user.email,
+					firstname: user.firstname,
+					lastname: user.lastname,
+					role: user.globalRole,
+				}
+			});
 		}
 
 		// Issue Firebase custom token
@@ -217,7 +221,7 @@ export class AuthService {
 					data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
 				});
 				await tx.contechUser.create({
-					data: { userId: userRecord.uid, role: ContechRole.USER, status: 'ACTIVE' }
+					data: { userId: userRecord.uid, role: ContechRole.CLIENT, status: 'ACTIVE' }
 				});
 				await tx.eventsUser.create({
 					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
@@ -243,6 +247,174 @@ export class AuthService {
 			throw new RpcException({
 				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
 				message: 'Failed to initialize recruiter profile. Please try again.',
+				error: 'Internal Server Error',
+			});
+		}
+	}
+
+	async createContechUser(dto: any) {
+		this.logger.log(`Admin creating ConTech user: ${dto.email} with role ${dto.role}`);
+		
+		const existingUser = await this.userService.findByEmail(dto.email);
+		if (existingUser) {
+			throw new RpcException({
+				statusCode: HttpStatus.CONFLICT,
+				message: 'User with this email already exists',
+				error: 'Conflict',
+			});
+		}
+
+		const firebase = this.firebaseService.getAuth();
+		let userRecord;
+
+		try {
+			userRecord = await firebase.createUser({
+				email: dto.email,
+				password: dto.password,
+				displayName: dto.firstname + (dto.lastname ? ' ' + dto.lastname : ''),
+			});
+			this.logger.log(`Firebase user created for ConTech: ${userRecord.uid}`);
+		} catch (e: any) {
+			this.logger.error(`Failed to create Firebase user: ${e.message}`, e);
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: e.message || 'Failed to create external user account',
+				error: 'Internal Server Error',
+			});
+		}
+
+		const hashedPassword = dto.password ? await this.argon2Service.hash(dto.password) : undefined;
+
+		try {
+			return await this.prisma.$transaction(async (tx) => {
+				const newUser = await tx.user.create({
+					data: {
+						firebaseId: userRecord.uid,
+						email: userRecord.email,
+						firstname: dto.firstname,
+						lastname: dto.lastname,
+						password: hashedPassword,
+						globalRole: GlobalRole.USER,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create ContechUser record with specified role
+				await tx.contechUser.create({
+					data: {
+						userId: userRecord.uid,
+						role: dto.role as ContechRole,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create other domain records with default roles
+				await tx.academyUser.create({
+					data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
+				});
+				await tx.eventsUser.create({
+					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
+				});
+
+				this.logger.log(`ConTech user successfully created in database with ID: ${newUser.id}`);
+				
+				return {
+					user: this.toPlain(newUser),
+					message: 'ConTech user created successfully',
+				};
+			});
+		} catch (error: any) {
+			this.logger.error(`Failed to create ConTech user records in database for user ${userRecord.uid}:`, error);
+			try {
+				await firebase.deleteUser(userRecord.uid);
+			} catch (cleanupError) {}
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: 'Failed to initialize ConTech profile',
+				error: 'Internal Server Error',
+			});
+		}
+	}
+
+	async createEventsUser(dto: any) {
+		this.logger.log(`Admin creating Events user: ${dto.email} with role ${dto.role}`);
+		
+		const existingUser = await this.userService.findByEmail(dto.email);
+		if (existingUser) {
+			throw new RpcException({
+				statusCode: HttpStatus.CONFLICT,
+				message: 'User with this email already exists',
+				error: 'Conflict',
+			});
+		}
+
+		const firebase = this.firebaseService.getAuth();
+		let userRecord;
+
+		try {
+			userRecord = await firebase.createUser({
+				email: dto.email,
+				password: dto.password,
+				displayName: dto.firstname + (dto.lastname ? ' ' + dto.lastname : ''),
+			});
+			this.logger.log(`Firebase user created for Events: ${userRecord.uid}`);
+		} catch (e: any) {
+			this.logger.error(`Failed to create Firebase user: ${e.message}`, e);
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: e.message || 'Failed to create external user account',
+				error: 'Internal Server Error',
+			});
+		}
+
+		const hashedPassword = dto.password ? await this.argon2Service.hash(dto.password) : undefined;
+
+		try {
+			return await this.prisma.$transaction(async (tx) => {
+				const newUser = await tx.user.create({
+					data: {
+						firebaseId: userRecord.uid,
+						email: userRecord.email,
+						firstname: dto.firstname,
+						lastname: dto.lastname,
+						password: hashedPassword,
+						globalRole: GlobalRole.USER,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create EventsUser record with specified role
+				await tx.eventsUser.create({
+					data: {
+						userId: userRecord.uid,
+						role: dto.role as EventsRole,
+						status: 'ACTIVE',
+					}
+				});
+
+				// Create other domain records with default roles
+				await tx.academyUser.create({
+					data: { userId: userRecord.uid, role: AcademyRole.USER, status: 'ACTIVE' }
+				});
+				await tx.contechUser.create({
+					data: { userId: userRecord.uid, role: ContechRole.CLIENT, status: 'ACTIVE' }
+				});
+
+				this.logger.log(`Events user successfully created in database with ID: ${newUser.id}`);
+				
+				return {
+					user: this.toPlain(newUser),
+					message: 'Events user created successfully',
+				};
+			});
+		} catch (error: any) {
+			this.logger.error(`Failed to create Events user records in database for user ${userRecord.uid}:`, error);
+			try {
+				await firebase.deleteUser(userRecord.uid);
+			} catch (cleanupError) {}
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: 'Failed to initialize Events profile',
 				error: 'Internal Server Error',
 			});
 		}
@@ -407,7 +579,7 @@ export class AuthService {
             await this.prisma.contechUser.create({
                 data: {
                     userId: decoded.uid,
-                    role: ContechRole.USER,
+                    role: ContechRole.CLIENT,
                     status: 'ACTIVE',
                 }
             });
@@ -481,9 +653,11 @@ export class AuthService {
 		}
 
 		const firebaseId = decoded.uid || decoded.sub;
+		this.logger.log(`[verifyAuth] Verifying user with firebaseId: ${firebaseId} (type: ${type})`);
 		const user = await this.userService.findByFirebaseId(firebaseId);
 		
 		if (!user) {
+			this.logger.warn(`[verifyAuth] User NOT FOUND in database for firebaseId: ${firebaseId}`);
 			throw new RpcException({
 				statusCode: HttpStatus.UNAUTHORIZED,
 				message: 'User not found',
@@ -491,6 +665,7 @@ export class AuthService {
 			});
 		}
 
+		this.logger.log(`[verifyAuth] SUCCESS for user: ${user.email} (id: ${user.id})`);
 		return { user: this.toPlain(user), decodedToken: decoded };
 	}
 
@@ -505,7 +680,16 @@ export class AuthService {
 			});
 		}
 
-		if (role === 'student' || role === 'STUDENT') {
+		const targetRole = role.toUpperCase();
+		if (targetRole === 'ADMIN' || targetRole === 'ACADEMY_ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Cannot select ADMIN role via public selection endpoint',
+				error: 'Forbidden',
+			});
+		}
+
+		if (targetRole === 'STUDENT') {
 			// Student role is assigned immediately
 			await this.userService.updateAcademyRole(user.firebaseId, 'STUDENT', 'ACTIVE');
 			
@@ -522,7 +706,7 @@ export class AuthService {
 				user: this.toPlain(updatedUser),
 				...tokens,
 			};
-		} else if (role === 'teacher' || role === 'TEACHER' || role === 'instructor' || role === 'INSTRUCTOR') {
+		} else if (targetRole === 'TEACHER' || targetRole === 'INSTRUCTOR') {
 			// Check if user already has approved instructor role
 			if (user.academyUser && user.academyUser.role === 'INSTRUCTOR' && user.academyUser.status === 'ACTIVE') {
 				// User already has approved instructor role
@@ -589,6 +773,39 @@ export class AuthService {
 		return this.userService.getTeacherApplications();
 	}
 
+	async getInstructorById(id: string) {
+		// id could be firebaseId or numeric email? Actually it should be what we expect from admin dashboard
+		// Let's assume id is firebaseId or numeric database ID
+		let user = await this.userService.findByFirebaseId(id);
+		if (!user) {
+			user = await this.userService.findById(id);
+		}
+
+		if (!user) {
+			throw new RpcException({
+				statusCode: HttpStatus.NOT_FOUND,
+				message: 'User not found',
+				error: 'Not Found',
+			});
+		}
+
+		// Find application if any
+		const application = await this.prisma.application.findUnique({
+			where: {
+				userId_domain: {
+					userId: user.firebaseId,
+					domain: 'academy'
+				}
+			}
+		});
+
+		return {
+			user: this.toPlain(user),
+			application,
+			academyStatus: user.academyUser,
+		};
+	}
+
 	async approveTeacherApplication(applicationId: string, requestingUserRole?: string, reviewerId?: string, reviewNotes?: string) {
 		if (requestingUserRole !== 'ADMIN') {
 			throw new RpcException({
@@ -626,7 +843,16 @@ export class AuthService {
 		const userId = application.userId;
 
 		// Update application status with reviewer info
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
+		try {
+			await this.userService.updateTeacherApplicationStatus(applicationId, 'APPROVED', reviewerId, reviewNotes);
+		} catch (error: any) {
+			this.logger.error(`Failed to approve teacher application: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to update application status',
+				error: 'Bad Request',
+			});
+		}
 
 		// Assign instructor role to user
 		await this.userService.updateAcademyRole(userId, 'INSTRUCTOR', 'ACTIVE');
@@ -674,7 +900,16 @@ export class AuthService {
 		}
 
 		// Update application status with reviewer info
-		await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
+		try {
+			await this.userService.updateTeacherApplicationStatus(applicationId, 'REJECTED', reviewerId, reviewNotes);
+		} catch (error: any) {
+			this.logger.error(`Failed to reject teacher application: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to update application status',
+				error: 'Bad Request',
+			});
+		}
 
 		return {
 			message: 'Teacher application rejected',
@@ -704,9 +939,17 @@ export class AuthService {
 			'USER': 0
 		};
 
-		// Check if user has the requested role (or a higher one)
-		const userRole = user.academyUser?.role?.toUpperCase();
 		const targetRole = newRole.toUpperCase();
+
+		// Prevent switching to ADMIN roles unless you are ALREADY a global ADMIN
+		if ((targetRole === 'ADMIN' || targetRole === 'ACADEMY_ADMIN') && user.globalRole !== 'ADMIN') {
+			throw new RpcException({
+				statusCode: HttpStatus.FORBIDDEN,
+				message: 'Only global administrators can switch to ADMIN roles',
+				error: 'Forbidden',
+			});
+		}
+		const userRole = user.academyUser?.role?.toUpperCase();
 		
 		if (!user.academyUser) {
 			throw new RpcException({
@@ -797,15 +1040,24 @@ export class AuthService {
 			where: { userId: user.firebaseId },
 		});
 
+		const isAdmin = user.globalRole === GlobalRole.ADMIN;
+		const targetRole = isAdmin ? ContechRole.ADMIN : (contechUser?.role || ContechRole.CLIENT);
+
 		if (!contechUser) {
 			contechUser = await this.prisma.contechUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: ContechRole.USER,
+					role: targetRole,
 					status: 'ACTIVE',
 				}
 			});
-			this.logger.log(`Created missing ContechUser record for user: ${user.firebaseId}`);
+			this.logger.log(`Created ContechUser record for user: ${user.firebaseId} with role: ${targetRole}`);
+		} else if (isAdmin && contechUser.role !== ContechRole.ADMIN) {
+			contechUser = await this.prisma.contechUser.update({
+				where: { userId: user.firebaseId },
+				data: { role: ContechRole.ADMIN }
+			});
+			this.logger.log(`Automatically promoted ConTech user ${user.firebaseId} to ADMIN because of global role`);
 		}
 
 		return contechUser;
@@ -825,15 +1077,24 @@ export class AuthService {
 			where: { userId: user.firebaseId },
 		});
 
+		const isAdmin = user.globalRole === GlobalRole.ADMIN;
+		const targetRole = isAdmin ? EventsRole.ADMIN : (eventsUser?.role || EventsRole.USER);
+
 		if (!eventsUser) {
 			eventsUser = await this.prisma.eventsUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: EventsRole.USER,
+					role: targetRole,
 					status: 'ACTIVE',
 				}
 			});
-			this.logger.log(`Created missing EventsUser record for user: ${user.firebaseId}`);
+			this.logger.log(`Created EventsUser record for user: ${user.firebaseId} with role: ${targetRole}`);
+		} else if (isAdmin && eventsUser.role !== EventsRole.ADMIN) {
+			eventsUser = await this.prisma.eventsUser.update({
+				where: { userId: user.firebaseId },
+				data: { role: EventsRole.ADMIN }
+			});
+			this.logger.log(`Automatically promoted Events user ${user.firebaseId} to ADMIN because of global role`);
 		}
 
 		return eventsUser;
@@ -853,20 +1114,56 @@ export class AuthService {
 			where: { userId: user.firebaseId },
 		});
 
+		const isAdmin = user.globalRole === GlobalRole.ADMIN;
+		const targetRole = isAdmin ? AcademyRole.ADMIN : (academyUser?.role || AcademyRole.USER);
+
 		if (!academyUser) {
 			academyUser = await this.prisma.academyUser.create({
 				data: {
 					userId: user.firebaseId,
-					role: AcademyRole.USER,
+					role: targetRole,
 					status: 'ACTIVE',
 				}
 			});
-			this.logger.log(`Created missing AcademyUser record for user: ${user.firebaseId}`);
+			this.logger.log(`Created AcademyUser record for user: ${user.firebaseId} with role: ${targetRole}`);
+		} else if (isAdmin && academyUser.role !== AcademyRole.ADMIN) {
+			academyUser = await this.prisma.academyUser.update({
+				where: { userId: user.firebaseId },
+				data: { role: AcademyRole.ADMIN }
+			});
+			this.logger.log(`Automatically promoted Academy user ${user.firebaseId} to ADMIN because of global role`);
 		}
 
 		return {
 			...academyUser,
 			globalRole: user.globalRole,
 		};
+	}
+
+	async sendContactEmail(dto: any) {
+		return this.emailService.sendContactEmail(dto);
+	}
+
+	async updateStatus(firebaseId: string, status: string) {
+		const user = await this.userService.updateStatus(firebaseId, status);
+		return { message: 'User status updated successfully', user: this.toPlain(user) };
+	}
+
+	async deleteUser(firebaseId: string) {
+		// 1. Delete from Firebase
+		const firebase = this.firebaseService.getAuth();
+		try {
+			await firebase.deleteUser(firebaseId);
+			this.logger.log(`Firebase user deleted: ${firebaseId}`);
+		} catch (e: any) {
+			this.logger.error(`Firebase deleteUser error for ${firebaseId}: ${e.message}`);
+			// Continue even if firebase delete fails (maybe already deleted)
+		}
+
+		// 2. Delete from Prisma (Cascading will handle relations)
+		await this.userService.deleteProfile(firebaseId);
+		this.logger.log(`User deleted from database: ${firebaseId}`);
+
+		return { message: 'User deleted successfully' };
 	}
 }

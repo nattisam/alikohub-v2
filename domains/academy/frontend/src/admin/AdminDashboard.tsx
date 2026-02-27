@@ -91,11 +91,9 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Welcome Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="mt-2 text-gray-500">Welcome back, {user?.firstname}. Here's what's happening today.</p>
+          <h1 className="text-xl text-gray-900">Welcome back, {user?.firstname}. Here's what's happening today.</h1>
         </div>
         <div className="flex gap-3">
           <Button 

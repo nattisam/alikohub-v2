@@ -38,15 +38,23 @@ export const useEnrolledCourses = (userId?: string) => {
         return [];
       }
       const requestData = await enrollmentService.getEnrollmentsByUserId(userId);
+      
+      if (!Array.isArray(requestData)) {
+        return [];
+      }
+
       // Extract course data from the enrollment response
       const coursesData = requestData.map((enrollment: EnrollmentWithCourse) => {
+        if (!enrollment?.course) return null;
+        
         // Ensure thumbnail is a string or provide a default
         const courseData = {
           ...enrollment.course,
           thumbnail: enrollment.course.thumbnail || ""
         };
         return convertEnrollmentCourseToCourse(courseData);
-      });
+      }).filter(Boolean) as Course[];
+      
       return coursesData;
     },
     enabled: !!userId,

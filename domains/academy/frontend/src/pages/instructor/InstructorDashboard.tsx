@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useInstructorStats } from "../../queries/instructorStats";
-import { useInstructorCourses } from "../../queries/instructorCourses";
 import { FaChalkboardTeacher, FaBook, FaUsers, FaStar } from "react-icons/fa";
 import ErrorState from "../../components/states/ErrorState";
 import EmptyState from "../../components/states/EmptyState";
@@ -10,19 +9,13 @@ import AccessDenied from "../../components/states/AccessDenied";
 const InstructorDashboardMain: React.FC = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
-  
-  const instructorId = currentUser?.firebaseId;
-  useInstructorCourses(instructorId);
+
   const {
     data: instructorStats,
     isLoading,
     isError,
-    error
+    error,
   } = useInstructorStats();
-
-
-
-
 
   // Check if user has instructor role
   const activeRole =
@@ -31,8 +24,7 @@ const InstructorDashboardMain: React.FC = () => {
 
   // Check if user has access to instructor dashboard
   const hasInstructorAccess =
-    activeRole === "INSTRUCTOR" ||
-    mainRole === "INSTRUCTOR";
+    activeRole === "INSTRUCTOR" || mainRole === "INSTRUCTOR";
 
   if (!hasInstructorAccess) {
     return (

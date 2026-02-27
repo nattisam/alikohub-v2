@@ -1,21 +1,30 @@
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
-import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext"; // Restore useAuth
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
-import type { Course } from "../../components/common/types.d.tsx"; // Ensure this matches usage or update usage
+import type { Course } from "../../components/common/types.d.tsx";
+import {
+  BarChart2,
+  CheckCircle,
+  Layout,
+  X,
+  Play,
+  Info,
+  Clock,
+  Trophy,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
-import { useNavigate } from "react-router-dom";
+import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import ErrorState from "../../components/states/ErrorState";
-import EmptyState from "../../components/states/EmptyState";
 
 const AcademyStudentDashboard = () => {
-  const { user: currentUser, isLoading } = useAuth();
+  const { user: currentUser, isLoading, setRoleModalOpen } = useAuth();
   const navigate = useNavigate();
 
-  // State definitions (Moved to top to avoid conditional hook errors)
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,49 +32,42 @@ const AcademyStudentDashboard = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Auth and Role check effect
   useEffect(() => {
     if (isLoading) return;
-    
     if (!currentUser) {
-      navigate('/auth/login');
+      navigate("/auth/login");
       return;
     }
 
-    // Check if user has selected a role and it's appropriate for student dashboard
-    const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-    
-    // Check if user wants to apply as instructor
+    const activeRole =
+      currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
     const pendingRole = currentUser.pendingRole;
     const instructorStatus = currentUser.roleStatus?.instructor;
 
-    // If user has active STUDENT role, allow access to student dashboard
-    if (activeRole === "STUDENT") {
-      return; // allowed
-    }
-    
-    // If user wants to apply as instructor, allow access to see the application modal, but only if not already a student
-    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
-      return; // allowed to see application modal
-    }
+    if (activeRole === "STUDENT") return;
+    if (
+      (pendingRole === "INSTRUCTOR" ||
+        instructorStatus === "pending" ||
+        instructorStatus === "not_applied") &&
+      activeRole !== "STUDENT"
+    )
+      return;
 
-    // Redirect to role selection if user hasn't selected a role yet
-    navigate("/role"); // Redirect to role selection page
-  }, [currentUser, isLoading, navigate]);
+    // Trigger global role selection modal and redirect to home if no role
+    setRoleModalOpen(true);
+    navigate("/");
+  }, [currentUser, isLoading, navigate, setRoleModalOpen]);
 
   const fetchDashboardData = async () => {
     const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
       let retries = 0;
-
       while (retries <= maxRetries) {
         try {
-          // Fetch enrolled courses
           const coursesResponse = await enrollmentApi.getMyCourses();
-          const rawItems = Array.isArray(coursesResponse.data)
-            ? coursesResponse.data
-            : Array.isArray((coursesResponse.data as any)?.items)
-              ? (coursesResponse.data as any).items
-              : [];
+          const responseData = coursesResponse?.data;
+          const rawItems = Array.isArray(responseData)
+            ? responseData
+            : (responseData as any)?.items || [];
 
           const detectedEnrollments: EnrollmentWithCourse[] = [];
           const detectedCourses: Course[] = [];
@@ -90,20 +92,24 @@ const AcademyStudentDashboard = () => {
 
           setEnrollments(detectedEnrollments);
           setCourses(detectedCourses);
-          setError(null); // Clear any previous error
-          return; // Success, exit the retry loop
+          setError(null);
+          return;
         } catch (error: any) {
-
-          // Check if it's a 429 error (Too Many Requests)
-          if (error.response?.status === 429 && retries < maxRetries) {
-            // Exponential backoff: wait longer after each retry
+          const status = error.response?.status;
+          if (status === 401 || status === 404) {
+            setEnrollments([]);
+            setCourses([]);
+            setError(null);
+            return;
+          }
+          if (status === 429 && retries < maxRetries) {
             await new Promise((resolve) =>
-              setTimeout(resolve, delay * Math.pow(2, retries))
+              setTimeout(resolve, delay * Math.pow(2, retries)),
             );
             retries++;
           } else {
             setError(error as Error);
-            break; // Stop retrying on other errors or max retries reached
+            break;
           }
         }
       }
@@ -125,52 +131,40 @@ const AcademyStudentDashboard = () => {
     }
   }, [refreshKey, currentUser]);
 
-  // If user is loading, show loading indicator
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
       </div>
     );
   }
 
-  // If user is not logged in, return null (redirection handled in effect)
-  if (!currentUser) {
+  if (!currentUser) return null;
+
+  const activeRole =
+    currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+  const hasSelectedRole =
+    currentUser?.hasSelectedRole &&
+    (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
+  const pendingRole = currentUser?.pendingRole;
+  const instructorStatus = currentUser?.roleStatus?.instructor;
+
+  // Role selection handled by useEffect and global modal
+  if (
+    !hasSelectedRole ||
+    (activeRole !== "STUDENT" && activeRole !== "INSTRUCTOR")
+  ) {
     return null;
   }
 
-  // Logic to determine what to show
-  const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = (currentUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
-  
-  const pendingRole = currentUser?.pendingRole;
-  const instructorStatus = currentUser?.roleStatus?.instructor;
-  
-  // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
-  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
-    // Show role selection modal
+  if (
+    (pendingRole === "INSTRUCTOR" ||
+      instructorStatus === "pending" ||
+      instructorStatus === "not_applied") &&
+    activeRole !== "STUDENT"
+  ) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
-            <p className="text-gray-600 mb-6">
-              To access the student dashboard, please select the Student role.
-            </p>
-            <RoleSelectionModal onClose={() => navigate('/role')} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Only show the instructor application modal if the user is not already a student
-  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="min-h-screen bg-[#09090b] pt-24">
         <TeacherApplicationModal standalone={true} />
       </div>
     );
@@ -178,10 +172,10 @@ const AcademyStudentDashboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <ErrorState 
-          message="Failed to load dashboard data"
-          onRetry={() => setRefreshKey(prev => prev + 1)}
+      <div className="min-h-screen bg-[#09090b] pt-24">
+        <ErrorState
+          message="Failed to load dashboard"
+          onRetry={() => setRefreshKey((prev) => prev + 1)}
         />
       </div>
     );
@@ -189,100 +183,276 @@ const AcademyStudentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin h-10 w-10 text-blue-600 mb-4" />
+        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+          Loading Dashboard...
+        </p>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 pt-16">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Welcome, {(currentUser?.firstName as string) || currentUser?.email}</span>
-          </div>
-        </div>
-      </header>
+  const mostRecentCourse =
+    courses.find((c) => (c.progress || 0) > 0 && (c.progress || 0) < 100) ||
+    courses[0];
+  const otherCourses = courses.filter((c) => c.id !== mostRecentCourse?.id);
 
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        {enrollments.length === 0 ? (
-          <EmptyState 
-            title="No Enrollments Found"
-            message="You haven't enrolled in any courses yet."
-            actionText="Browse Courses"
-            onAction={() => navigate('/courses')}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-6">
-                  <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
-                  <p className="text-gray-500 mt-1">{course.shortDescription}</p>
-                  <div className="mt-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-blue-600 h-2.5 rounded-full" 
-                        style={{ width: `${course.progress || 0}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">{course.progress || 0}% complete</p>
+  return (
+    <div className="min-h-screen bg-[#09090b] text-slate-200 font-sans selection:bg-blue-500/30">
+      {/* Dynamic Hero Section - Cinematic Featured Style */}
+      {mostRecentCourse && (
+        <section className="relative h-[60vh] min-h-[500px] w-full overflow-hidden border-b border-white/[0.05]">
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/90 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-transparent to-transparent z-10" />
+
+          {/* Abstract Pulse Background (Simulating Video Preview) */}
+          <div className="absolute inset-0 bg-blue-900/10 animate-pulse">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-[#09090b] to-[#09090b]"></div>
+          </div>
+
+          <div className="relative z-20 max-w-7xl mx-auto px-8 h-full flex flex-col justify-center">
+            <div className="max-w-3xl space-y-8 animate-in fade-in slide-in-from-left-10 duration-700">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30">
+                  <Play size={14} className="text-white fill-current ml-0.5" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
+                  Resume Learning
+                </span>
+              </div>
+
+              <div>
+                <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white leading-[0.9] mb-4">
+                  {mostRecentCourse.title}
+                </h1>
+                <p className="text-lg text-slate-400 line-clamp-2 max-w-xl font-medium leading-relaxed">
+                  {mostRecentCourse.shortDescription}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  <span>Progress</span>
+                  <div className="flex-1 max-w-[200px] h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      style={{ width: `${mostRecentCourse.progress || 0}%` }}
+                      className="h-full bg-blue-600 rounded-full"
+                    />
                   </div>
-                  <div className="mt-4 flex space-x-3">
-                    <button 
-                      onClick={() => setSelectedCourse(course)}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      View Progress
-                    </button>
-                    <button 
-                      onClick={() => navigate(`/student-dashboard/mycourses/${course.id}/modules`)}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    >
-                      Continue
-                    </button>
-                  </div>
+                  <span className="text-white">
+                    {mostRecentCourse.progress || 0}%
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <button
+                    onClick={() =>
+                      navigate(
+                        `/student-dashboard/course/${mostRecentCourse.id}`,
+                      )
+                    }
+                    className="bg-white text-black px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all flex items-center gap-3 hover:scale-105 active:scale-95 shadow-xl shadow-white/5"
+                  >
+                    <Play size={16} fill="currentColor" />
+                    Continue Watching
+                  </button>
+                  <button
+                    onClick={() => setSelectedCourse(mostRecentCourse)}
+                    className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-3"
+                  >
+                    <Info size={16} />
+                    Details
+                  </button>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
+        </section>
+      )}
+
+      <main className="max-w-7xl mx-auto px-8 py-16 space-y-20">
+        {/* Stats Section with 'Glass' Cards */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            {
+              label: "Overall Progress",
+              value: `${courses.length > 0 ? Math.round(courses.reduce((acc, c) => acc + (c.progress || 0), 0) / courses.length) : 0}%`,
+              icon: BarChart2,
+              color: "text-blue-500",
+            },
+            {
+              label: "Completed",
+              value: courses.filter((c) => (c.progress || 0) >= 100).length,
+              icon: CheckCircle,
+              color: "text-emerald-500",
+            },
+            {
+              label: "Hours Learned",
+              value: "12.5h",
+              icon: Clock,
+              color: "text-purple-500",
+            },
+            {
+              label: "Certificates",
+              value: "2",
+              icon: Trophy,
+              color: "text-orange-500",
+            },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl hover:bg-white/[0.04] transition-colors"
+            >
+              <div className={`mb-4 ${stat.color}`}>
+                <stat.icon size={24} />
+              </div>
+              <div className="text-3xl font-black text-white mb-1">
+                {stat.value}
+              </div>
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* My Courses Section - 'Playlist' Grid */}
+        <section>
+          <div className="flex items-center justify-between mb-8 border-b border-white/[0.05] pb-4">
+            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
+              <Layout size={20} className="text-blue-500" />
+              My Library
+            </h2>
+            <Link
+              to="/"
+              className="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2 group"
+            >
+              Browse Catalog{" "}
+              <ArrowRight
+                size={14}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            </Link>
+          </div>
+
+          {enrollments.length === 0 ? (
+            <div className="bg-white/[0.02] rounded-3xl p-16 text-center border border-dashed border-white/5 flex flex-col items-center">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 text-slate-600">
+                <Layout size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">
+                Library Empty
+              </h3>
+              <p className="text-slate-500 max-w-sm mx-auto mb-8 text-sm">
+                Enroll in a course to start building your personal curriculum.
+              </p>
+              <button
+                onClick={() => navigate("/")}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20"
+              >
+                Browse Courses
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherCourses.map((course) => (
+                <div
+                  key={course.id}
+                  className="group bg-[#0c0c0e] rounded-2xl border border-white/5 overflow-hidden hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300 flex flex-col"
+                >
+                  <div className="p-8 flex-1 flex flex-col relative">
+                    {/* Hover Glow Effect */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -translate-y-10 translate-x-10 group-hover:bg-blue-500/10 transition-colors" />
+
+                    <div className="relative z-10">
+                      <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight mb-3">
+                        {course.title}
+                      </h3>
+                      <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed mb-6">
+                        {course.shortDescription}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto relative z-10">
+                      <div className="mb-6">
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                            Completed
+                          </span>
+                          <span className="text-[10px] font-black text-blue-500">
+                            {course.progress || 0}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                          <div
+                            className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out"
+                            style={{ width: `${course.progress || 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setSelectedCourse(course)}
+                          className="p-3 bg-white/[0.03] text-slate-400 hover:text-white rounded-xl hover:bg-white/[0.05] transition-all border border-white/5"
+                        >
+                          <BarChart2 size={16} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(`/student-dashboard/course/${course.id}`)
+                          }
+                          className="flex-1 px-4 py-3 bg-white/[0.03] hover:bg-blue-600 hover:text-white text-slate-300 border border-white/5 hover:border-blue-500/30 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 group/btn"
+                        >
+                          Resume
+                          <Play size={10} fill="currentColor" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Progress Detail Modal */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800">{selectedCourse.title} Progress</h2>
-                <button 
-                  onClick={() => setSelectedCourse(null)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0c0c0e] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-white/10">
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#09090b]">
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  {selectedCourse.title}
+                </h2>
+                <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">
+                  Performance Analytics
+                </p>
               </div>
+              <button
+                onClick={() => setSelectedCourse(null)}
+                className="text-slate-500 hover:text-white p-2 hover:bg-white/5 rounded-full transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
+            <div className="p-8 overflow-y-auto">
               <StudentProgressTracker
                 course={selectedCourse}
                 userId={currentUser.firebaseId}
               />
+            </div>
 
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={() => setSelectedCourse(null)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                >
-                  Close
-                </button>
-              </div>
+            <div className="p-6 border-t border-white/10 bg-[#09090b] flex justify-end">
+              <button
+                onClick={() => setSelectedCourse(null)}
+                className="px-6 py-3 bg-white/5 text-slate-300 hover:text-white rounded-xl hover:bg-white/10 font-bold text-xs uppercase tracking-widest transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

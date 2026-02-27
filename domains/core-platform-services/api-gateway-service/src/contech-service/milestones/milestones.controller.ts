@@ -10,12 +10,14 @@ import {
   Inject,
   Request,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { CreateMilestoneDto } from './dto/create-milestone.dto';
 import { UpdateMilestoneDto } from './dto/update-milestone.dto';
 import { CreateMilestoneReviewDto } from './dto/create-milestone-review.dto';
+import { FindAllMilestonesDto } from './dto/find-all-milestones.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiParam } from '@nestjs/swagger';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
@@ -36,11 +38,23 @@ export class MilestonesController {
     );
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get milestones with filters and pagination' })
+  findAllFiltered(
+    @Request() req: RequestWithUser,
+    @Query() findAllMilestonesDto: FindAllMilestonesDto,
+  ) {
+    const payload = { user: req.user, findAllMilestonesDto };
+    return lastValueFrom(
+      this.contechClient.send({ cmd: 'findAll_milestones' }, payload),
+    );
+  }
+
   @Get('project/:projectId')
   @ApiOperation({ summary: 'Get all milestones for a project' })
   @ApiParam({ name: 'projectId', type: Number })
   findAll(@Request() req: RequestWithUser, @Param('projectId', ParseIntPipe) projectId: number) {
-    const payload = { user: req.user, projectId };
+    const payload = { user: req.user, findAllMilestonesDto: { projectId } };
     return lastValueFrom(
       this.contechClient.send({ cmd: 'findAll_milestones' }, payload),
     );
@@ -100,22 +114,9 @@ export class MilestonesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() createMilestoneReviewDto: CreateMilestoneReviewDto,
   ) {
-    const payload = { user: req.user, createMilestoneReviewDto };
+    const payload = { user: req.user, id, createMilestoneReviewDto };
     return lastValueFrom(
-      this.contechClient.send({ cmd: 'createReview' }, payload),
-    );
-  }
-
-  @Get(':id/reviews')
-  @ApiOperation({ summary: 'Get all reviews for a milestone' })
-  @ApiParam({ name: 'id', type: Number })
-  getReviewsForMilestone(
-    @Request() req: RequestWithUser,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    const payload = { user: req.user, id };
-    return lastValueFrom(
-      this.contechClient.send({ cmd: 'getReviewsForMilestone' }, payload),
+      this.contechClient.send({ cmd: 'create_milestone_review' }, payload),
     );
   }
 }

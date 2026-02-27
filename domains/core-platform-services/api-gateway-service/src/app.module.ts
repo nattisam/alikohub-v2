@@ -1,40 +1,29 @@
 import { Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { RpcExceptionFilter } from './common/filters';
 import { CaptchaModule } from './common/captcha/captcha.module';
 import { UserModule } from './auth-service/user/user.module';
 import { AcademyServiceModule } from './academy-service';
-
 import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
 import { CareersServiceModule } from './careers-service/careers.module';
 import { FileUploadModule } from './file-upload-service/file-upload.module';
-
+import { HealthModule } from './health/health.module';
+import { HttpModule, HttpService } from '@nestjs/axios';
+import { HttpClientProxy } from './common/clients/http-client.proxy';
 
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    HttpModule,
     ThrottlerModule.forRoot([{
-      ttl: 60000, // 60 seconds in milliseconds
-      limit: 10, // 10 requests per ttl
+      ttl: 60000, 
+      limit: 10, 
     }]),
     ClientsModule.registerAsync([
-      {
-        name: 'AUTH_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: configService.get('AUTH_SERVICE_HOST') || 'localhost',
-            port: configService.get('AUTH_SERVICE_PORT') || 3001,
-          },
-        }),
-      },
       {
         name: 'ACADEMY_SERVICE',
         imports: [ConfigModule],
@@ -88,19 +77,26 @@ import { FileUploadModule } from './file-upload-service/file-upload.module';
     UserModule,
     AcademyServiceModule,
     ConTechServiceModule,
-    ConTechServiceModule,
     EventsServiceModule,
     CareersServiceModule,
     FileUploadModule,
+    HealthModule,
   ],
   providers: [
-    // Global rate limiter guard
+    {
+      provide: 'AUTH_SERVICE',
+      useFactory: (httpService: HttpService, configService: ConfigService) => {
+        const host = configService.get('AUTH_SERVICE_HOST') || 'localhost';
+        const port = configService.get('AUTH_SERVICE_PORT') || 3001;
+        return new HttpClientProxy(httpService, `http://${host}:${port}`);
+      },
+      inject: [HttpService, ConfigService],
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
   ],
-  exports: [ClientsModule],
+  exports: [ClientsModule, 'AUTH_SERVICE'],
 })
 export class AppModule { }
-

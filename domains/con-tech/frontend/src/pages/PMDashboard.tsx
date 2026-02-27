@@ -1,178 +1,319 @@
 import { useUser } from "../hooks";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardGrid } from "../components/DashboardGrid";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { useProjectManagerDashboardData } from "../queries/dashboard";
+import ServerError from "../components/common/ServerError";
 import BarChart from "../components/charts/BarChart";
-import PieChart from "../components/charts/PieChart";
+import {
+  Briefcase,
+  HardHat,
+  Users,
+  Building2,
+  ArrowUpRight,
+  ChevronRight,
+  Activity,
+  ClipboardList,
+  BarChart3,
+  Loader2,
+} from "lucide-react";
 
 const PMDashboard = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
-  
-  const isAdmin = currentUser?.globalRole === 'ADMIN' || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN";
-  
+
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useProjectManagerDashboardData();
+
+  const isAdmin =
+    currentUser?.globalRole === "ADMIN" || currentUser?.role === "ADMIN";
+
   useEffect(() => {
-    // Redirect users who don't have Admin permissions away from this page
     if (currentUser && !isAdmin) {
       navigate("/");
     }
   }, [currentUser, navigate, isAdmin]);
-  
+
   if (!currentUser || !isAdmin) {
-    // Don't render if user doesn't have Admin permissions
     return null;
   }
-  
-  const { data: dashboardData, isLoading, isError } = useProjectManagerDashboardData();
-  
-  if (isLoading) {
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-10 w-10 animate-spin text-[#3E92D1]" />
+        <p className="mt-4 text-sm font-medium text-gray-500">
+          Loading Analytics...
+        </p>
       </div>
     );
   }
-  
-  if (isError) {
-    return (
-      <div className="text-center py-10">
-        <h3 className="text-lg font-medium text-red-600">Error loading dashboard data</h3>
-        <p className="text-gray-500">Please try again later</p>
-      </div>
-    );
+
+  if (error || !dashboardData) {
+    return <ServerError onRetry={() => refetch()} />;
   }
-  
-  // Use mock data if no actual data is available
-  const pmData = dashboardData || {
-    activeProjects: 12,
-    activeProjectsChange: 2,
-    contractStatus: {
-      pending: 3,
-      active: 8,
-      completed: 1,
+
+  const metrics = [
+    {
+      label: "Total Projects",
+      value: dashboardData.projectStats.total,
+      icon: Briefcase,
+      color: "bg-blue-100",
+      iconColor: "text-[#3E92D1]",
+      description: "System-wide construction",
     },
-    rfis: {
-      pending: 5,
-      approved: 3,
-      rejected: 1,
+    {
+      label: "Active Projects",
+      value: dashboardData.projectStats.active,
+      icon: HardHat,
+      color: "bg-orange-100",
+      iconColor: "text-orange-600",
+      description: "Currently in progress",
     },
-    qualityIssues: {
-      total: 7,
-      critical: 2,
-      minor: 5,
+    {
+      label: "Contractors",
+      value: dashboardData.users.contractors,
+      icon: Users,
+      color: "bg-amber-100",
+      iconColor: "text-amber-600",
+      description: "Active team members",
     },
-  };
-  
+    {
+      label: "Clients",
+      value: dashboardData.users.clients,
+      icon: Building2,
+      color: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+      description: "Registered partners",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-gray-800">Project Manager Dashboard</h2>
-        <div className="text-sm text-gray-600">Welcome, {currentUser?.firstname}</div>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl text-gray-900 font-medium">
+            Welcome back, {currentUser?.firstName}. Here's the construction
+            platform status.
+          </h1>
+        </div>
+        <div className="flex gap-3">
+          <button
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-[#3E92D1] hover:bg-[#2E82C1] gap-2 text-white shadow-sm"
+            onClick={() => navigate("/admin/projects")}
+          >
+            Manage Projects
+            <ArrowUpRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
-      
-      <DashboardGrid>
-        {/* Active projects */}
-        <Card>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+          return (
+            <Card
+              key={metric.label}
+              className="border-none shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <CardHeader className="pb-3 px-6 pt-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-500">
+                    {metric.label}
+                  </CardTitle>
+                  <div className={`p-2 rounded-lg ${metric.color}`}>
+                    <Icon className={`w-4 h-4 ${metric.iconColor}`} />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-6 pb-6">
+                <div className="text-3xl font-bold text-gray-900">
+                  {metric.value}
+                </div>
+                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                  {metric.description}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Project Status Activity */}
+        <Card className="lg:col-span-2 border-none shadow-sm h-full">
           <CardHeader>
-            <CardTitle>Active Projects</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-900">
+              Project Portfolio Breakdown
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{pmData.activeProjects}</div>
-            <p className="text-sm text-gray-500">+{pmData.activeProjectsChange} from last week</p>
-          </CardContent>
-        </Card>
-        
-        {/* Gantt chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Gantt Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <BarChart 
-                data={[{ month: 'Jan', progress: 20 }, { month: 'Feb', progress: 30 }, { month: 'Mar', progress: 45 }]}
-                xKey="month"
-                yKey="progress"
-                title="Project Progress Over Time"
-              />
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Contract status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Contract Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <PieChart 
-                data={[
-                  { name: 'Pending', value: pmData.contractStatus.pending },
-                  { name: 'Active', value: pmData.contractStatus.active },
-                  { name: 'Completed', value: pmData.contractStatus.completed },
-                ]}
-                dataKey="value"
-                nameKey="name"
-                title="Contract Status Distribution"
-              />
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* RFIs & change orders */}
-        <Card>
-          <CardHeader>
-            <CardTitle>RFIs & Change Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Pending</span>
-                <span className="font-medium">{pmData.rfis.pending}</span>
+            <div className="space-y-4">
+              <div
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
+                onClick={() => navigate("/admin/projects")}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-sm">
+                    {dashboardData.projectStats.active}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Active Projects in Progress
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {dashboardData.projectStats.total > 0
+                        ? Math.round(
+                            (dashboardData.projectStats.active /
+                              dashboardData.projectStats.total) *
+                              100,
+                          )
+                        : 0}
+                      % of your current pipeline
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
               </div>
-              <div className="flex justify-between">
-                <span>Approved</span>
-                <span className="font-medium">{pmData.rfis.approved}</span>
+
+              <div
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
+                onClick={() => navigate("/admin/projects")}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-sm">
+                    {dashboardData.projectStats.planned}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Planned & Starting Initiatives
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Awaiting initialization or starting soon
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
               </div>
-              <div className="flex justify-between">
-                <span>Rejected</span>
-                <span className="font-medium">{pmData.rfis.rejected}</span>
+
+              <div
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all cursor-pointer group border border-transparent hover:border-gray-100"
+                onClick={() => navigate("/admin/projects")}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#3E92D1] font-bold text-sm">
+                    {dashboardData.projectStats.completed}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Successfully Completed Projects
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Finalized and archived deliverables
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-900 transition-colors" />
               </div>
             </div>
           </CardContent>
         </Card>
-        
-        {/* Quality issues */}
-        <Card>
+
+        {/* Quick Tasks */}
+        <Card className="border-none shadow-sm h-full">
           <CardHeader>
-            <CardTitle>Quality Issues</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-900">
+              Quick Actions
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{pmData.qualityIssues.total}</div>
-            <p className="text-sm text-gray-500">{pmData.qualityIssues.critical} critical, {pmData.qualityIssues.minor} minor</p>
-          </CardContent>
-        </Card>
-        
-        {/* Team productivity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Productivity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <BarChart 
-                data={[{ team: 'Design', productivity: 85 }, { team: 'Construction', productivity: 78 }, { team: 'QA', productivity: 92 }]}
-                xKey="team"
-                yKey="productivity"
-                title="Team Productivity Metrics"
-              />
+          <CardContent className="space-y-3">
+            <button
+              className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+              onClick={() => navigate("/admin/projects/new")}
+            >
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Create New Project
+            </button>
+            <button
+              className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+              onClick={() => navigate("/admin/users")}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Manage System Users
+            </button>
+            <button
+              className="w-full inline-flex items-center justify-start rounded-md text-sm font-medium transition-colors border border-gray-200 hover:border-[#3E92D1] hover:text-[#3E92D1] bg-white h-10 px-4 py-2"
+              onClick={() => navigate("/admin/reports")}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Generate System Reports
+            </button>
+            <div className="pt-4 mt-4 border-t border-gray-100">
+              <div className="bg-blue-50/50 rounded-lg p-4">
+                <p className="text-[10px] font-bold text-[#3E92D1] uppercase tracking-wider mb-1">
+                  System Health
+                </p>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-2 h-2 rounded-full ${error ? "bg-red-500" : "bg-emerald-500"}`}
+                  ></div>
+                  <span className="text-xs font-medium text-gray-600">
+                    {error ? "Limited Connectivity" : "Systems Operational"}
+                  </span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      </DashboardGrid>
+      </div>
+
+      {/* Monitoring Chart */}
+      <Card className="border-none shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-lg font-bold text-gray-900">
+              Project Status Breakdown
+            </CardTitle>
+            <p className="text-xs text-gray-500 mt-1">
+              Distribution of projects by current status
+            </p>
+          </div>
+          <Activity className="w-5 h-5 text-gray-300" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-72">
+            <BarChart
+              data={[
+                { status: "Active", count: dashboardData.projectStats.active },
+                {
+                  status: "Planned",
+                  count: dashboardData.projectStats.planned,
+                },
+                {
+                  status: "Completed",
+                  count: dashboardData.projectStats.completed,
+                },
+                { status: "Total", count: dashboardData.projectStats.total },
+              ]}
+              xKey="status"
+              yKey="count"
+              title=""
+              color="#3E92D1"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

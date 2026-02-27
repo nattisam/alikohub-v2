@@ -27,10 +27,70 @@ export class CohortsService {
     return await this.prisma.cohort.create({ data: dto });
   }
 
-  async findAll(courseId?: number) {
+  async findAll(query: any = {}) {
     const where: any = {};
-    if (courseId) where.courseId = courseId;
-    return await this.prisma.cohort.findMany({ where });
+    if (query.courseId) where.courseId = Number(query.courseId);
+
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const [items, total] = await Promise.all([
+      this.prisma.cohort.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: { course: { select: { id: true, title: true } } },
+        orderBy: { startDate: 'desc' }
+      }),
+      this.prisma.cohort.count({ where })
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
+
+  async findByInstructor(user: AuthenticatedUser, query: any = {}) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+      throw new ForbiddenException('Instructor role required');
+    }
+
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const where: any = {
+      course: {
+        instructorId: user.firebaseId
+      }
+    };
+
+    if (query.courseId) where.courseId = Number(query.courseId);
+
+    const [items, total] = await Promise.all([
+      this.prisma.cohort.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: { course: { select: { id: true, title: true } } },
+        orderBy: { startDate: 'desc' }
+      }),
+      this.prisma.cohort.count({ where })
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 
   async findOne(id: number) {

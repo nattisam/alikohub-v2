@@ -1,153 +1,120 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useParams } from "react-router-dom"
-import { useQuery, useMutation } from "@tanstack/react-query"
-import { api, publicApi } from "../lib/api"
-import { ApplicationForm } from "../components/application/application-form"
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { api, publicApi } from "../lib/api";
+import { ApplicationForm } from "../components/application/application-form";
+import ErrorState from "../components/common/ErrorState";
+import EmptyState from "../components/common/EmptyState";
+import Loading from "../components/common/Loading";
+import ServerError from "../components/common/ServerError";
 
 interface JobDetail {
-  id: string
-  title: string
-  description: string
-  requirements?: string
-  salaryRange?: string
-  location?: string
-  status?: string
-  type?: string
-  company?: string
+  id: string;
+  title: string;
+  description: string;
+  requirements?: string;
+  salaryRange?: string;
+  location?: string;
+  status?: string;
+  type?: string;
+  company?: string;
 }
 
 async function fetchJobById(id: string): Promise<JobDetail> {
-  const res = await publicApi.get(`/careers/jobs/${id}`)
-  return res.data
+  const res = await publicApi.get(`/careers/jobs/${id}`);
+  return res.data;
 }
 
 export function JobPage() {
-  const { id } = useParams<{ id: string }>()
-  const [showForm, setShowForm] = useState(false)
+  const { id } = useParams<{ id: string }>();
+  const [showForm, setShowForm] = useState(false);
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["job", id],
     queryFn: () => fetchJobById(id as string),
     enabled: !!id,
     retry: (failureCount, error: any) => {
-      // Retry on 429 errors
-      if (error?.response?.status === 429) {
-        return failureCount < 3;
-      }
-      // Don't retry on 404 or other client errors
-      if (error?.response?.status >= 400 && error?.response?.status < 500) {
+      if (error?.response?.status === 429) return failureCount < 3;
+      if (error?.response?.status >= 400 && error?.response?.status < 500)
         return false;
-      }
       return failureCount < 3;
     },
-    retryDelay: (attemptIndex, error: any) => {
-      if (error?.response?.status === 429) {
-        const baseDelay = 1000;
-        const maxDelay = 10000;
-        return Math.min(baseDelay * Math.pow(2, attemptIndex), maxDelay) + Math.random() * 1000;
-      }
-      return Math.min(1000 * Math.pow(2, attemptIndex), 30000);
-    },
-  })
+  });
 
-  const job = data
+  const job = data;
 
   const submitApplicationMutation = useMutation({
-    mutationFn: async (applicationData: { coverLetter: string; resumeUrl: string }) => {
+    mutationFn: async (formData: FormData) => {
       if (!id) {
-        throw new Error('Job ID is required');
+        throw new Error("Job ID is required");
       }
-      
-      // Validate URL format before sending
-      try {
-        new URL(applicationData.resumeUrl);
-      } catch (urlError) {
-        throw new Error('Invalid resume URL format. Please enter a valid URL starting with http:// or https://');
-      }
-      
-      const response = await api.post(`/careers/jobs/${id}/apply`, applicationData);
+
+      const response = await api.post(`/careers/jobs/${id}/apply`, formData);
       return response.data;
     },
     onSuccess: () => {
-      alert('Application submitted successfully!');
+      alert("Application submitted successfully!");
       setShowForm(false);
     },
     onError: (error: any) => {
-      console.error('Error submitting application:', error);
-      alert(error.message || 'Failed to submit application. Please try again.');
+      console.error("Error submitting application:", error);
+      alert(error.message || "Failed to submit application. Please try again.");
     },
   });
-  
+
   const handleSubmitApplication = (formData: any) => {
     submitApplicationMutation.mutate(formData);
-  }
+  };
 
   const handleCancelApplication = () => {
-    setShowForm(false)
-  }
+    setShowForm(false);
+  };
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-stone-50">
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="flex justify-center items-center py-20">
-            <p className="text-sm text-gray-500">Loading job details...</p>
-          </div>
-        </div>
+      <div className="w-full min-h-screen bg-stone-50 pt-20">
+        <Loading message="Loading Position..." />
       </div>
-    )
+    );
   }
 
-  if (isError || !job) {
+  if (isError) {
     const errorStatus = (error as any)?.response?.status;
-    const isRateLimited = errorStatus === 429;
-    
+
+    if (errorStatus === 500) {
+      return <ServerError onRetry={() => refetch()} />;
+    }
+
+    if (errorStatus === 404) {
+      return (
+        <div className="w-full min-h-screen bg-stone-50 pt-20">
+          <EmptyState
+            title="Position Not Found"
+            message="We couldn't find this specific opening. It may have been recently filled or closed."
+            actionText="Browse jobs"
+            onAction={() => window.history.back()}
+          />
+        </div>
+      );
+    }
+
     return (
-      <div className="w-full min-h-screen bg-stone-50">
-        {/* Decorative background elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="rounded-2xl bg-white border border-gray-200 p-12 text-center shadow-sm">
-            {isRateLimited ? (
-              <>
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-100 mb-6">
-                  <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Too Many Requests</h2>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  The server is currently handling too many requests. Please wait a moment and try again.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 hover:shadow-md transition-all duration-300"
-                >
-                  Retry
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-100 mb-6">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47.881-6.08 2.324M12 4.014a7.963 7.963 0 00-6.08 2.325m12.16 0A7.963 7.963 0 0112 4.014" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Job not found</h2>
-                <p className="text-gray-500 max-w-sm mx-auto">We couldn&apos;t find this job. It may have been removed.</p>
-              </>
-            )}
-          </div>
-        </div>
+      <div className="w-full min-h-screen bg-stone-50 pt-20">
+        <ErrorState
+          message={
+            errorStatus === 429
+              ? "The server is currently handling too many requests. Please wait a moment."
+              : "Failed to load job details."
+          }
+          onRetry={() => refetch()}
+        />
       </div>
-    )
+    );
   }
+
+  if (!job) return null;
 
   if (showForm) {
     return (
@@ -160,7 +127,7 @@ export function JobPage() {
         onSubmit={handleSubmitApplication}
         onCancel={handleCancelApplication}
       />
-    )
+    );
   }
 
   return (
@@ -170,7 +137,7 @@ export function JobPage() {
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl" />
         <div className="absolute top-1/2 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
       </div>
-      
+
       <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <div className="mb-8">
           <button
@@ -178,8 +145,18 @@ export function JobPage() {
             onClick={() => window.history.back()}
             className="inline-flex items-center gap-2.5 rounded-full bg-white border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all duration-300 shadow-sm hover:shadow-md"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back to all roles
           </button>
@@ -194,7 +171,9 @@ export function JobPage() {
                   {job.title}
                 </h1>
                 <p className="text-lg text-gray-600">
-                  <span className="font-semibold text-indigo-600">{job.company ?? "AlikoHub"}</span>
+                  <span className="font-semibold text-indigo-600">
+                    {job.company ?? "AlikoHub"}
+                  </span>
                   {job.location ? ` • ${job.location}` : ""}
                 </p>
                 <div className="flex flex-wrap gap-3 pt-2">
@@ -216,8 +195,9 @@ export function JobPage() {
                 </div>
               </div>
               <p className="text-base text-gray-500 leading-relaxed max-w-3xl">
-                We&apos;re looking for someone who cares about thoughtful work, clear communication, and
-                building with focus. Below is the full context for this role.
+                We&apos;re looking for someone who cares about thoughtful work,
+                clear communication, and building with focus. Below is the full
+                context for this role.
               </p>
             </div>
 
@@ -244,7 +224,7 @@ export function JobPage() {
                 </div>
               </div>
             )}
-        </div>
+          </div>
 
           {/* Sidebar */}
           <aside className="space-y-6 lg:sticky lg:top-8">
@@ -256,19 +236,25 @@ export function JobPage() {
                 {job.location && (
                   <div className="flex justify-between gap-4 pb-3 border-b border-gray-100 last:border-0">
                     <span className="text-gray-500">Location</span>
-                    <span className="font-medium text-gray-900 text-right">{job.location}</span>
+                    <span className="font-medium text-gray-900 text-right">
+                      {job.location}
+                    </span>
                   </div>
                 )}
                 {job.type && (
                   <div className="flex justify-between gap-4 pb-3 border-b border-gray-100 last:border-0">
                     <span className="text-gray-500">Type</span>
-                    <span className="font-medium text-gray-900 text-right">{job.type}</span>
+                    <span className="font-medium text-gray-900 text-right">
+                      {job.type}
+                    </span>
                   </div>
                 )}
                 {job.salaryRange && (
                   <div className="flex justify-between gap-4 pb-3 border-b border-gray-100 last:border-0">
                     <span className="text-gray-500">Compensation</span>
-                    <span className="font-medium text-gray-900 text-right">{job.salaryRange}</span>
+                    <span className="font-medium text-gray-900 text-right">
+                      {job.salaryRange}
+                    </span>
                   </div>
                 )}
               </div>
@@ -276,8 +262,8 @@ export function JobPage() {
 
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-300 space-y-5">
               <p className="text-gray-600 leading-relaxed">
-                Ready to move forward? Share a bit about what you&apos;ve built and why this role feels
-                like the right next step.
+                Ready to move forward? Share a bit about what you&apos;ve built
+                and why this role feels like the right next step.
               </p>
               <button
                 onClick={() => setShowForm(true)}
@@ -290,7 +276,5 @@ export function JobPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Card from "../../../../../../libraries/ui-libraries/components/Card";
+import { getCourseImageUrl } from "../../utils/imageUtils";
 
 type Host = {
   id: string;
@@ -16,7 +17,7 @@ type Webinar = {
   description: string;
   webinarlink: string;
   startTime?: string; // Add startTime property
-  endTime?: string;   // Add endTime property
+  endTime?: string; // Add endTime property
 };
 
 const WebinarsCard = ({
@@ -26,10 +27,10 @@ const WebinarsCard = ({
   description,
   webinarlink,
   startTime,
-  endTime
+  endTime,
 }: Webinar) => {
   const [host, setHost] = useState<Host | null>(null);
-  
+
   useEffect(() => {
     const fetchHostDetail = async (id: string | number) => {
       // TODO: implement fetchHostDetail
@@ -43,7 +44,7 @@ const WebinarsCard = ({
     };
     fetchHostDetail(hostId);
   }, [hostId]);
-  
+
   // Format the time for display
   const formatTime = (timeString?: string) => {
     if (!timeString) return "Time not specified";
@@ -61,7 +62,7 @@ const WebinarsCard = ({
 
   return (
     <Card
-      img={thumbnail}
+      img={getCourseImageUrl(thumbnail)}
       title={title}
       content={description}
       actions={[
@@ -76,22 +77,36 @@ const WebinarsCard = ({
         },
       ]}
       className="max-w-full max-h-[60vh] md:grid md:grid-cols-12 grid-cols-1 grid-rows-6 gap-4 py-5"
-      imgClassName={"hidden md:col-start-1 md:row-start-1 md:col-span-6 md:row-span-6"}
-      titleClassName={"md:col-span-6 md:row-span-1 md:col-start-6 row-start-1 font-extrabold text-lg"}
+      imgClassName={
+        "hidden md:col-start-1 md:row-start-1 md:col-span-6 md:row-span-6"
+      }
+      titleClassName={
+        "md:col-span-6 md:row-span-1 md:col-start-6 row-start-1 font-extrabold text-lg"
+      }
       contentClassName={"md:col-span-7 md:col-start-6 row-start-3 text-base"}
     >
       <div className="row-span-1 col-span-4 col-start-7 row-start-2 flex flex-row">
-        <img className="rounded-full max-w-[3rem] max-h-[3rem]" src={host?.avatar} alt="Host Instructor" />
+        <img
+          className="rounded-full max-w-[3rem] max-h-[3rem]"
+          src={host?.avatar}
+          alt="Host Instructor"
+        />
         <div>
           <p className="font-semibold text-sm">Instructor: {host?.name}</p>
           <p className="text-[#6B7280] text-sm">{host?.qualification}</p>
         </div>
       </div>
-      
+
       {/* Display event time information */}
       <div className="row-span-1 col-span-6 col-start-6 row-start-5 flex flex-col">
-        <p className="font-semibold text-sm">Start Time: {formatTime(startTime)}</p>
-        {endTime && <p className="font-semibold text-sm">End Time: {formatTime(endTime)}</p>}
+        <p className="font-semibold text-sm">
+          Start Time: {formatTime(startTime)}
+        </p>
+        {endTime && (
+          <p className="font-semibold text-sm">
+            End Time: {formatTime(endTime)}
+          </p>
+        )}
       </div>
     </Card>
   );

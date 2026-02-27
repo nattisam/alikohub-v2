@@ -73,4 +73,11 @@ export class CreateTaskDto {
   @IsArray()
   @IsOptional()
   dependencies?: number[];
+
+  @ApiPropertyOptional({
+    description: 'Whether this task is visible to the client',
+    example: false,
+  })
+  @IsOptional()
+  isVisibleToClient?: boolean;
 }

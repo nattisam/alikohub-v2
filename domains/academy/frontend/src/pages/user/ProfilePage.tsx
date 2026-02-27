@@ -1,16 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import apiClient from "../../lib/api";
-import {
-  FaUser,
-  FaCamera,
-  FaSave,
-  FaEdit,
-  FaExchangeAlt,
-  FaUserPlus,
-} from "react-icons/fa";
+import { FaUser, FaSave, FaEdit, FaExchangeAlt } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 const ProfilePage = () => {
   const {
@@ -19,12 +11,25 @@ const ProfilePage = () => {
     isLoading,
     switchRoleMutation,
   } = useAuth();
-  
-  const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside handler for role dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        roleDropdownRef.current &&
+        !roleDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleRoleChange = async (role: "STUDENT" | "INSTRUCTOR") => {
     if (currentUser) {
@@ -32,22 +37,73 @@ const ProfilePage = () => {
         // Use the mutation directly to get access to its state
         await switchRoleMutation.mutateAsync(role);
 
-        // Close the dropdown after role switch
-        setIsRoleDropdownOpen(false);
+        // Show success modal
+        Swal.fire({
+          showConfirmButton: false,
+          background: "transparent",
+          backdrop: "rgba(0,0,0,0.3)",
+          timer: 2500,
+          html: `
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-[360px] text-center">
+              <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
 
-      } catch (error) {
+              <h2 class="text-lg font-semibold text-gray-900">
+                Role Switched Successfully
+              </h2>
+
+              <p class="text-sm text-gray-500 mt-2">
+                You are now using the ${role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()} role.
+              </p>
+            </div>
+          `,
+        });
+      } catch (error: any) {
         console.error("Failed to switch role:", error);
 
-        // Close the dropdown even if there's an error
+        // Extract error message
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Your instructor application is pending approval.";
+
+        // Show failure modal
+        Swal.fire({
+          showConfirmButton: false,
+          background: "transparent",
+          backdrop: "rgba(0,0,0,0.3)",
+          timer: 3000,
+          html: `
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-[360px] text-center">
+              <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-lg font-semibold text-gray-900">
+                Failed to Switch Role
+              </h2>
+
+              <p class="text-sm text-gray-500 mt-2">
+                ${errorMessage}
+              </p>
+            </div>
+          `,
+        });
+      } finally {
+        // Close the dropdown after role switch attempt
         setIsRoleDropdownOpen(false);
       }
     }
   };
-  
-  const handleChooseRole = () => {
-    navigate('/role');
-  };
-  
 
   // If user is loading, show loading indicator
   if (isLoading) {
@@ -63,55 +119,33 @@ const ProfilePage = () => {
 
   // If user is not logged in, redirect to login
   if (!currentUser) {
-    window.location.href = "/auth/login";
+    // Check if we are in a browser environment
+    if (typeof window !== "undefined") {
+      window.location.href = "/auth/login";
+    }
     return null;
   }
 
-  // Allow users with globalRole USER to access their profile
-  // If user hasn't selected a role yet and doesn't have globalRole USER, show role selection modal
-
-  if (!currentUser.academyRole && currentUser.globalRole !== "USER") {
-    // We need to show the role selection modal
-    // For now, we'll just show a message directing them to select a role
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Select Your Role
-            </h2>
-            <p className="text-gray-600 mb-6">
-              To access your profile, please select a role.
-            </p>
-            <RoleSelectionModal onClose={() => (window.location.href = "/")} />
-          </div>
-        </div>
-      </div>
-    );
-  }
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     email: "",
     bio: "",
-    title: "", // For instructors
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (currentUser) {
       setFormData({
-        firstname: currentUser.firstname || "",
-        lastname: currentUser.lastname || "",
-        email: currentUser.email || "",
-        bio: currentUser.bio || "",
-        title: (currentUser as any).title || "", // For instructors
+        firstname: currentUser?.firstname || "",
+        lastname: currentUser?.lastname || "",
+        email: currentUser?.email || "",
+        bio: currentUser?.bio || "",
       });
     }
   }, [currentUser]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -120,56 +154,16 @@ const ProfilePage = () => {
     }));
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && currentUser) {
-      const file = e.target.files[0];
-
-      // Create FormData object to send the file
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        setUploading(true);
-
-        // Upload the file to our file upload service through the API gateway
-        // Use axios instead of fetch for consistency
-        const response = await apiClient.post("/upload/image", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        if (response.data) {
-          const result = response.data;
-
-          const updateResponse = await apiClient.patch(
-            `/users/${currentUser.firebaseId}`,
-            {
-              profilePicture: result.url,
-            }
-          );
-
-          if (updateResponse.data) {
-            // Update the current user context
-            updateUser({
-              ...currentUser,
-              profilePicture: result.url,
-            });
-          }
-        } else {
-          console.error("File upload failed");
-        }
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      } finally {
-        setUploading(false);
-      }
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.firebaseId) {
+      Swal.fire({
+        icon: "error",
+        title: "User not found",
+        text: "Please log in again.",
+      });
+      return;
+    }
 
     try {
       setLoading(true);
@@ -181,19 +175,12 @@ const ProfilePage = () => {
         bio: formData.bio,
       };
 
-      // Include title for instructors
-      if (
-        currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-        currentUser.academyRole === "INSTRUCTOR"
-      ) {
-        updateData.title = formData.title;
-      }
       const response = await apiClient.patch(
         `/users/${currentUser.firebaseId}`,
-        updateData
+        updateData,
       );
 
-      if (response.data) {
+      if (response?.data) {
         // Update the current user context
         updateUser({
           ...currentUser,
@@ -201,17 +188,45 @@ const ProfilePage = () => {
         });
 
         setIsEditing(false);
+        Swal.fire({
+          showConfirmButton: false,
+          background: "transparent",
+          backdrop: "rgba(0,0,0,0.3)",
+          timer: 2500,
+          html: `
+            <div class="bg-white rounded-2xl shadow-xl p-8 w-[360px] text-center">
+              <div class="flex justify-center mb-4">
+                <div class="w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-lg font-semibold text-gray-900">
+                Profile Update Successful
+              </h2>
+
+              <p class="text-sm text-gray-500 mt-2">
+                Your profile has been updated successfully.
+              </p>
+            </div>
+          `,
+          didOpen: () => {
+            const btn = document.getElementById("lms-success-btn");
+            if (btn) btn.onclick = () => Swal.close();
+          },
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error updating profile",
+        text: error?.response?.data?.message || "Please try again.",
+      });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
     }
   };
 
@@ -245,12 +260,13 @@ const ProfilePage = () => {
               </p>
             </div>
             {/* Role Switching Dropdown - Show if user has any available roles */}
-            {currentUser?.availableRoles && currentUser.availableRoles.length > 0 && (
-                <div className="relative">
+            {currentUser?.availableRoles &&
+              currentUser.availableRoles.length > 0 && (
+                <div className="relative" ref={roleDropdownRef}>
                   <button
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                     disabled={switchRoleMutation.isPending}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-[#0D72BA] bg-[#0D72BA]/10 hover:bg-[#0D72BA]/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0D72BA] disabled:opacity-50"
                   >
                     <FaExchangeAlt className="mr-2 h-4 w-4" />
                     Switch Role
@@ -264,14 +280,14 @@ const ProfilePage = () => {
                       <div className="py-1" role="menu">
                         {currentUser.availableRoles
                           .filter((role) =>
-                            ["STUDENT", "INSTRUCTOR"].includes(role)
+                            ["STUDENT", "INSTRUCTOR"].includes(role),
                           ) // Only show valid academy roles
                           .map((role) => (
                             <button
                               key={role}
                               onClick={() =>
                                 handleRoleChange(
-                                  role as "STUDENT" | "INSTRUCTOR"
+                                  role as "STUDENT" | "INSTRUCTOR",
                                 )
                               }
                               className={`block px-4 py-2 text-sm w-full text-left ${
@@ -290,14 +306,6 @@ const ProfilePage = () => {
                   )}
                 </div>
               )}
-              {/* Button to navigate to role selection page to choose additional roles */}
-              <button
-                onClick={handleChooseRole}
-                className="ml-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <FaUserPlus className="mr-2 h-4 w-4" />
-                Choose Role
-              </button>
           </div>
 
           <div className="border-t border-gray-200">
@@ -316,34 +324,10 @@ const ProfilePage = () => {
                       <FaUser className="h-12 w-12 text-gray-400" />
                     </div>
                   )}
-                  <button
-                    onClick={triggerFileInput}
-                    disabled={uploading}
-                    className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    {uploading ? (
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <FaCamera className="h-4 w-4 text-white" />
-                    )}
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
                 </div>
                 <h2 className="mt-4 text-xl font-bold text-gray-900">
                   {currentUser.firstname} {currentUser.lastname}
                 </h2>
-                {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-                  currentUser.academyRole === "INSTRUCTOR") && (
-                  <p className="text-gray-600">
-                    {(currentUser as any).title || "Instructor"}
-                  </p>
-                )}
               </div>
 
               {/* Profile Information */}
@@ -401,25 +385,6 @@ const ProfilePage = () => {
                       />
                     </div>
 
-                    {currentUser.academyRole === "INSTRUCTOR" && (
-                      <div className="sm:col-span-6">
-                        <label
-                          htmlFor="title"
-                          className="block text-sm font-medium text-gray-700"
-                        >
-                          Title
-                        </label>
-                        <input
-                          type="text"
-                          name="title"
-                          id="title"
-                          value={formData.title}
-                          onChange={handleInputChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        />
-                      </div>
-                    )}
-
                     <div className="sm:col-span-6">
                       <label
                         htmlFor="bio"
@@ -442,27 +407,42 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="bg-white py-2.5 px-6 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-all duration-200"
                     >
                       Cancel
                     </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <FaSave className="mr-2 h-4 w-4" />
-                          Save
-                        </>
-                      )}
-                    </button>
+                    {(() => {
+                      const hasChanges =
+                        currentUser &&
+                        (formData.firstname !== (currentUser.firstname || "") ||
+                          formData.lastname !== (currentUser.lastname || "") ||
+                          formData.bio !== (currentUser.bio || ""));
+
+                      return (
+                        <button
+                          type="submit"
+                          disabled={loading || !hasChanges}
+                          className={`inline-flex justify-center items-center py-2.5 px-8 border text-sm font-semibold rounded-full transition-all duration-200 
+                            ${
+                              loading || !hasChanges
+                                ? "bg-[#0D72BA]/5 text-[#0D72BA]/30 border-[#0D72BA]/10 cursor-not-allowed"
+                                : "bg-[#0D72BA] text-white border-transparent hover:bg-[#0b619e] hover:shadow-lg active:scale-95 shadow-md shadow-[#0D72BA]/20"
+                            }`}
+                        >
+                          {loading ? (
+                            <>
+                              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <FaSave className="mr-2 h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </form>
               ) : (
@@ -484,17 +464,6 @@ const ProfilePage = () => {
                         {currentUser.email}
                       </dd>
                     </div>
-                    {(currentUser.academyUser?.activeRole === "INSTRUCTOR" ||
-                      currentUser.academyRole === "INSTRUCTOR") && (
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">
-                          Title
-                        </dt>
-                        <dd className="mt-1 text-sm text-gray-900">
-                          {(currentUser as any).title || "Not provided"}
-                        </dd>
-                      </div>
-                    )}
                     <div className="sm:col-span-2">
                       <dt className="text-sm font-medium text-gray-500">Bio</dt>
                       <dd className="mt-1 text-sm text-gray-900">
@@ -507,7 +476,7 @@ const ProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-full text-[#0D72BA] bg-[#0D72BA]/10 hover:bg-[#0D72BA]/20 hover:shadow-md transition-all duration-200 active:scale-95"
                     >
                       <FaEdit className="mr-2 h-4 w-4" />
                       Edit Profile

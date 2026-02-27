@@ -23,6 +23,9 @@ export class CreateInspectionDto {
     @Type(() => ChecklistItemDto)
     checklist: ChecklistItemDto[];
 
+    @IsOptional()
+    isVisibleToClient?: boolean;
+
     // @IsArray()
     // @IsOptional()
     // @Type(()=> String)

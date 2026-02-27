@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaCalendar } from "react-icons/fa";
 import boyWithVRGlass from "../assets/young-woman-man-with-vr-glasses.png";
 import { FaLocationDot } from "react-icons/fa6";
-import EventsApiService from '../services/eventsApi';
-import { handleApiError } from '../services/apiClient';
-import type { Event } from '../types/api';
+import { getPublishedPostsByType } from "../services/post-service";
+import { type Post, PostType } from "../types/post";
 
 interface FeaturedEventProps {
-  featuredEvent?: Event;
+  featuredEvent?: Post;
 }
 
-const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent }) => {
-  const [featuredEvent, setFeaturedEvent] = useState<Event | null>(null);
+const FeaturedEvent: React.FC<FeaturedEventProps> = ({
+  featuredEvent: propEvent,
+}) => {
+  const [featuredEvent, setFeaturedEvent] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -26,16 +27,14 @@ const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent 
         if (propEvent) {
           setFeaturedEvent(propEvent);
         } else {
-          const response = await EventsApiService.getFeaturedEvent();
-          if (!response.success) {
-            throw new Error(response.error?.error || 'Failed to fetch featured event');
-          }
-          setFeaturedEvent(response.data || null);
+          const events = await getPublishedPostsByType(PostType.EVENT);
+          setFeaturedEvent(events[0] || null);
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+        const errorMessage =
+          err instanceof Error ? err.message : "An error occurred";
         setError(errorMessage);
-        console.error('Error fetching featured event:', err);
+        console.error("Error fetching featured event:", err);
       } finally {
         setLoading(false);
       }
@@ -44,9 +43,11 @@ const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent 
     fetchFeaturedEvent();
   }, [propEvent]);
 
-  const calculateDaysRemaining = (date: string, time: string): number => {
+  const calculateDaysRemaining = (date?: string, time?: string): number => {
+    if (!date) return 0;
     try {
-      const eventDate = new Date(`${date}T${time}`);
+      const dateStr = time ? `${date}T${time}` : date;
+      const eventDate = new Date(dateStr);
       const now = new Date();
       const diffInMs = eventDate.getTime() - now.getTime();
       const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
@@ -56,22 +57,23 @@ const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent 
     }
   };
 
-  const formatEventDate = (date: string, time: string): string => {
+  const formatEventDate = (date?: string, time?: string): string => {
+    if (!date) return "TBA";
     try {
-      const eventDate = new Date(`${date}T${time}`);
-      return eventDate.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
+      const dateStr = time ? `${date}T${time}` : date;
+      const eventDate = new Date(dateStr);
+      return eventDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
       });
     } catch {
-      return `${date} at ${time}`;
+      return time ? `${date} at ${time}` : date;
     }
   };
 
   const handleRegisterClick = () => {
     if (featuredEvent) {
-      // Use react-router navigation instead of window.location
       navigate(`/events/${featuredEvent.id}`);
     }
   };
@@ -82,7 +84,9 @@ const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent 
         <div className="relative md:-top-[45vh] -top-[25vh] py-8 md:px-8 px-4 bg-center bg-cover bg-gray-800 rounded-lg">
           <div className="flex items-center justify-center h-48">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            <span className="ml-3 text-gray-300">Loading featured event...</span>
+            <span className="ml-3 text-gray-300">
+              Loading featured event...
+            </span>
           </div>
         </div>
       </section>
@@ -95,16 +99,25 @@ const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent 
         <div className="relative md:-top-[45vh] -top-[25vh] py-8 md:px-8 px-4 bg-center bg-cover bg-gray-800 rounded-lg">
           <div className="text-center text-gray-400 py-8">
             <h2 className="text-3xl font-bold mb-4">Featured Event</h2>
-            <p>{error || 'No featured event available at the moment.'}</p>
-            <p className="text-sm mt-2">Check back later for exciting events!</p>
+            <p>{error || "No featured event available at the moment."}</p>
+            <p className="text-sm mt-2">
+              Check back later for exciting events!
+            </p>
           </div>
         </div>
       </section>
     );
   }
 
-  const daysRemaining = calculateDaysRemaining(featuredEvent.date, featuredEvent.time);
-  const formattedDate = formatEventDate(featuredEvent.date, featuredEvent.time);
+  const daysRemaining = calculateDaysRemaining(
+    featuredEvent.eventDate,
+    featuredEvent.startTime,
+  );
+  const formattedDate = formatEventDate(
+    featuredEvent.eventDate,
+    featuredEvent.startTime,
+  );
+
   return (
     <section className="relative not-md:-top-16 ml-4 md:absolute md:right-10 w-[95%] md:w-1/2">
       <div
@@ -118,19 +131,25 @@ const FeaturedEvent: React.FC<FeaturedEventProps> = ({ featuredEvent: propEvent 
             <FaCalendar size={20} color="white" /> {formattedDate}
           </span>
           <span className="flex gap-2 my-2">
-            <FaLocationDot size={20} color="white" /> {featuredEvent.location}
+            <FaLocationDot size={20} color="white" />{" "}
+            {featuredEvent.location || "TBA"}
           </span>
         </div>
-        <p>{featuredEvent.description}</p>
+        <p className="line-clamp-3">
+          {featuredEvent.excerpt || featuredEvent.content}
+        </p>
         <div className="flex flex-row justify-between items-center md:pr-15">
-          <button 
+          <button
             onClick={handleRegisterClick}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-400 transition mt-4"
           >
             Register Now
           </button>
           <p className="mt-2 text-white text-sm md:text-lg">
-            <span className="text-xl md:text-3xl font-bold">{daysRemaining}</span> Days Remaining
+            <span className="text-xl md:text-3xl font-bold">
+              {daysRemaining}
+            </span>{" "}
+            Days Remaining
           </p>
         </div>
       </div>

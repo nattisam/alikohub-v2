@@ -12,19 +12,17 @@ import { enrollmentApi } from "./api/enrollmentApi";
 
 const env = import.meta.env.MODE as "development" | "production" | "test";
 
-const PORT = import.meta.env.VITE_API_PORT || 3006;
-
 // Choose academy base URL depending on environment
 const ACADEMY_BASE_URL =
   env === "development"
-    ? `http://localhost:${PORT}` // your local dev server
-    : "https://alikohub.com/api/academy"; // production server
+    ? `https://api.consultancy.alikohub.com/api` // your local dev server
+    : "https://api.consultancy.alikohub.com/api"; // production server
 
 // Auth service URL
 const AUTH_BASE_URL =
   env === "development"
-    ? `http://localhost:${PORT}/auth`
-    : "https://alikohub.com/api/auth";
+    ? `https://api.consultancy.alikohub.com/api/auth`
+    : "https://api.consultancy.alikohub.com/api/auth";
 
 // Retry configuration - reduced retries to prevent cascading
 const MAX_RETRIES = 1; // Only retry once to avoid cascading with React Query
@@ -33,42 +31,49 @@ const MAX_RETRY_DELAY = 5000; // Maximum delay in ms
 
 // Helper function to calculate exponential backoff delay
 const getRetryDelay = (retryCount: number): number => {
-  const delay = Math.min(RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+  const delay = Math.min(
+    RETRY_DELAY * Math.pow(2, retryCount),
+    MAX_RETRY_DELAY,
+  );
   // Add jitter to prevent thundering herd
   return delay + Math.random() * 1000;
 };
 
 // Helper function to add retry config to request
-const addRetryConfig = (config: any & { __retryCount?: number }, retryCount: number = 0) => {
-  config.__retryCount = retryCount;
+const addRetryConfig = (config: any, retryCount: number = 0) => {
+  if (config) {
+    config.__retryCount = retryCount;
+  }
   return config;
 };
 
 // Response interceptor for handling 429 errors with retry logic
-const createRetryInterceptor = (instance: typeof academyApi | typeof authApi) => {
+const createRetryInterceptor = (
+  instance: typeof academyApi | typeof authApi,
+) => {
   instance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
       const config = error.config as AxiosRequestConfigWithRetry | undefined;
-      
+
       // Only retry on 429 errors
       if (error.response?.status === 429 && config) {
         const retryCount = config.__retryCount || 0;
-        
+
         if (retryCount < MAX_RETRIES) {
           const delay = getRetryDelay(retryCount);
-          
+
           // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, delay));
-          
+          await new Promise((resolve) => setTimeout(resolve, delay));
+
           // Update retry count and retry the request
           const newConfig = addRetryConfig({ ...config }, retryCount + 1);
           return instance.request(newConfig);
         }
       }
-      
+
       return Promise.reject(error);
-    }
+    },
   );
 };
 
@@ -76,7 +81,7 @@ const createRetryInterceptor = (instance: typeof academyApi | typeof authApi) =>
 export const academyApi = axios.create({
   baseURL: ACADEMY_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 10000,
 });

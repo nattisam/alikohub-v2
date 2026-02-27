@@ -56,7 +56,7 @@ export class UserService {
       profile = await this.prisma.contechProfile.create({
         data: {
           userId: user.firebaseId,
-          role: ContechRole.USER,
+          role: ContechRole.CLIENT,
           hasSelectedRole: false,
         },
       });
@@ -83,7 +83,7 @@ export class UserService {
       update: {},
       create: {
         userId,
-        role: ContechRole.USER,
+        role: ContechRole.CLIENT,
         hasSelectedRole: false,
       },
     });
@@ -95,6 +95,27 @@ export class UserService {
       const existingProfile = await this.prisma.contechProfile.findUnique({
         where: { userId },
       });
+
+      // Fetch the user's full profile from Auth Service to get globalRole
+      const authUser: any = await this.getUserById(userId);
+      
+      // If the user has globalRole = ADMIN in Auth Service, sync as ADMIN in ConTech
+      if (authUser?.globalRole === 'ADMIN') {
+        await this.prisma.contechProfile.upsert({
+          where: { userId },
+          create: {
+            userId,
+            role: ContechRole.ADMIN,
+            hasSelectedRole: true, // Mark as selected to prevent overwrite
+          },
+          update: {
+            role: ContechRole.ADMIN,
+            hasSelectedRole: true,
+          },
+        });
+        this.logger.log(`User ${userId} is a Global ADMIN. Synced as ConTech ADMIN.`);
+        return;
+      }
 
       // If user has selected a role locally, don't overwrite it with Auth service data
       if (existingProfile?.hasSelectedRole) {
@@ -109,6 +130,7 @@ export class UserService {
       if (authRecord) {
         // Priority: 1. activeRole (if switched), 2. role (base role)
         const effectiveRole = authRecord.activeRole || authRecord.role;
+
 
         if (effectiveRole) {
           await this.prisma.contechProfile.upsert({
@@ -207,5 +229,46 @@ export class UserService {
       this.logger.error('Error in selectRole', error);
       throw error;
     }
+  }
+
+  async countByRole(role: ContechRole) {
+    return this.prisma.contechProfile.count({
+      where: { role },
+    });
+  }
+
+  async findProfilesByRole(role: ContechRole, page = 1, pageSize = 20) {
+    const skip = (page - 1) * pageSize;
+    
+    const [profiles, total] = await Promise.all([
+      this.prisma.contechProfile.findMany({
+        where: { role },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.contechProfile.count({ where: { role } }),
+    ]);
+
+    const userIds = profiles.map(p => p.userId);
+    const authUsers = await this.getUsersByIds(userIds);
+
+    const enrichedProfiles = profiles.map(profile => {
+      const authUser = authUsers.find(au => au.firebaseId === profile.userId);
+      return {
+        ...profile,
+        email: authUser?.email,
+        firstname: authUser?.firstname,
+        lastname: authUser?.lastname,
+        status: authUser?.status,
+      };
+    });
+
+    return {
+      items: enrichedProfiles,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 }

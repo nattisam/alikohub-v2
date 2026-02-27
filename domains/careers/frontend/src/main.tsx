@@ -1,10 +1,11 @@
-import { StrictMode } from "react"
-import { createRoot } from "react-dom/client"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { RouterProvider } from "react-router-dom"
-import "./index.css"
-import { router } from "./routes.tsx"
-import { AuthProvider } from "./context/auth-context"
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "react-router-dom";
+import "./index.css";
+import { router } from "./routes.tsx";
+import { AuthProvider } from "./context/auth-context";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +23,10 @@ const queryClient = new QueryClient({
         if (error?.response?.status === 429) {
           const baseDelay = 1000;
           const maxDelay = 10000;
-          const delay = Math.min(baseDelay * Math.pow(2, attemptIndex), maxDelay);
+          const delay = Math.min(
+            baseDelay * Math.pow(2, attemptIndex),
+            maxDelay,
+          );
           // Add jitter
           return delay + Math.random() * 1000;
         }
@@ -33,14 +37,16 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-})
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
-)
+);

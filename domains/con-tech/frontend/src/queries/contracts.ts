@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
+import { ContractStatus } from "../components/types";
 
 export const useContracts = (projectId?: number) => {
   return useQuery({
@@ -36,7 +37,9 @@ export const useUploadContract = () => {
     onSuccess: (newContract) => {
       // Invalidate contracts for the specific project
       if (newContract.projectId) {
-        queryClient.invalidateQueries({ queryKey: ["contracts", newContract.projectId] });
+        queryClient.invalidateQueries({
+          queryKey: ["contracts", newContract.projectId],
+        });
       }
       // Invalidate all contracts
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
@@ -55,10 +58,15 @@ export const useUpdateContractStatus = () => {
     },
     onSuccess: (updatedContract) => {
       // Update the specific contract in the cache
-      queryClient.setQueryData(["contract", updatedContract.id], updatedContract);
+      queryClient.setQueryData(
+        ["contract", updatedContract.id],
+        updatedContract,
+      );
       // Invalidate contracts for the specific project
       if (updatedContract.projectId) {
-        queryClient.invalidateQueries({ queryKey: ["contracts", updatedContract.projectId] });
+        queryClient.invalidateQueries({
+          queryKey: ["contracts", updatedContract.projectId],
+        });
       }
       // Invalidate all contracts
       queryClient.invalidateQueries({ queryKey: ["contracts"] });

@@ -1,17 +1,14 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect, startTransition } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
-  FaUser,
-  FaSignOutAlt,
-  FaBars,
-  FaTimes,
-  FaBook,
-  FaCaretDown,
-  FaCog,
-  FaTachometerAlt,
-  FaGraduationCap,
-} from "react-icons/fa";
+  User,
+  LogOut,
+  LayoutDashboard,
+  ChevronDown,
+  Menu,
+  X,
+} from "lucide-react";
 import logo from "../../assets/logo.svg";
 
 interface AcademyHeaderProps {
@@ -20,6 +17,7 @@ interface AcademyHeaderProps {
   onSignUpClick?: () => void;
   onLogout?: () => void;
   onLogoutComplete?: () => void;
+  customLinks?: { to: string; label: string }[];
 }
 
 const AcademyHeader: React.FC<AcademyHeaderProps> = ({
@@ -28,11 +26,13 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   onSignUpClick,
   onLogout,
   onLogoutComplete,
+  customLinks,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
 
   useEffect(() => {
@@ -49,225 +49,224 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   }, []);
 
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    } else {
-      logout();
-    }
-
-    if (onLogoutComplete) {
-      onLogoutComplete();
-    } else {
-      navigate("/");
-    }
+    startTransition(() => {
+      if (onLogout) onLogout();
+      else logout();
+      if (onLogoutComplete) onLogoutComplete();
+      else navigate("/");
+    });
   };
 
+  // Logic: Role-based Dashboard Path
+  const academyRole =
+    currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+  const dashboardPath =
+    currentUser?.globalRole === "ADMIN"
+      ? "/admin"
+      : academyRole === "INSTRUCTOR"
+        ? "/instructor"
+        : "/student-dashboard";
+
+  const navItems = customLinks || [
+    { to: "/", label: "Home" },
+    { to: "/partnership", label: "Partnership" },
+    { to: "/about", label: "About" },
+    { to: "/contact", label: "Contact" },
+  ];
+
+  // Logic to determine logo based on category route
+  const getLogo = () => {
+    const path = location.pathname;
+    if (path.includes("/category/STEM")) return "/stemLogo.jpg";
+    if (path.includes("/category/Technology")) return "/techLogo.jpg";
+    if (path.includes("/category/Health")) return "/healthLogo.jpg";
+    return logo;
+  };
+
+  const currentLogo = getLogo();
+
   return (
-    <>
-      {/* ===== Academic Animated Background ===== */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-
-        {/* Left Floating Book */}
-        <div
-          className="absolute left-10 top-32 opacity-10 text-blue-600"
-          style={{
-            animation: "floatAnimation 10s ease-in-out infinite",
-          }}
-        >
-          <FaBook size={120} />
-        </div>
-
-        {/* Right Floating Graduation Cap */}
-        <div
-          className="absolute right-16 bottom-32 opacity-10 text-purple-600"
-          style={{
-            animation: "floatAnimation 12s ease-in-out infinite",
-          }}
-        >
-          <FaGraduationCap size={140} />
-        </div>
-
-        {/* Soft Blur Left */}
-        <div
-          className="absolute -left-32 top-40 w-96 h-96 bg-blue-200 rounded-full blur-3xl opacity-20"
-          style={{
-            animation: "pulseAnimation 8s ease-in-out infinite",
-          }}
-        />
-
-        {/* Soft Blur Right */}
-        <div
-          className="absolute -right-32 bottom-40 w-96 h-96 bg-purple-200 rounded-full blur-3xl opacity-20"
-          style={{
-            animation: "pulseAnimation 10s ease-in-out infinite",
-          }}
-        />
-
-        {/* Keyframes */}
-        <style>
-          {`
-            @keyframes floatAnimation {
-              0% { transform: translateY(0px); }
-              50% { transform: translateY(-20px); }
-              100% { transform: translateY(0px); }
-            }
-
-            @keyframes pulseAnimation {
-              0% { opacity: 0.2; }
-              50% { opacity: 0.35; }
-              100% { opacity: 0.2; }
-            }
-          `}
-        </style>
+    <header className="fixed top-0 w-full z-50 bg-white shadow-sm font-sans transition-all duration-300">
+      {/* --- Top Banner --- */}
+      <div className="bg-[#17469E] py-2.5 text-center">
+        <p className="text-white text-xs md:text-[13px] font-normal tracking-wide">
+          Are you Ready to Partner??{" "}
+          <Link
+            to="/partnership"
+            className="underline font-bold hover:text-blue-100 transition"
+          >
+            Become a Partner
+          </Link>
+        </p>
       </div>
 
-      {/* ===== Original Header ===== */}
-      <header className="bg-white shadow-md fixed w-full top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              className="h-12 w-auto transition-all duration-500 hover:scale-105"
+              src={currentLogo}
+              alt="AlikoHub Academy"
+              style={{ filter: "none" }}
+            />
+          </Link>
 
-            {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <img className="h-8 w-auto" src={logo} alt="AlikoHub Academy" />
-            </Link>
-
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex space-x-8">
-              {[
-                { to: "/", label: "Home" },
-                { to: "/about", label: "About" },
-                { to: "/courses", label: "Courses" },
-                { to: "/contact", label: "Contact" },
-              ].map((item) => (
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-10">
+            {navItems.map((item) => {
+              const isActive =
+                currentTab === item.to ||
+                (item.to !== "/" && currentTab.startsWith(item.to));
+              return (
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`${
-                    currentTab === item.to
-                      ? "text-blue-600"
-                      : "text-gray-700 hover:text-blue-600"
-                  } px-3 py-2 rounded-md text-sm font-medium`}
+                  className={`text-[16px] font-semibold transition-colors uppercase tracking-tight ${
+                    isActive
+                      ? "text-[#F0802D]"
+                      : "text-slate-600 hover:text-[#17469E]"
+                  }`}
                 >
                   {item.label}
                 </Link>
-              ))}
-            </nav>
+              );
+            })}
+          </nav>
 
-            {/* Right Section */}
-            <div className="flex items-center">
-              {currentUser ? (
-                <>
-                  {currentUser.globalRole === "ADMIN" && (
-                    <Link
-                      to="/admin"
-                      className="mr-4 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-md"
-                    >
-                      Admin Panel
-                    </Link>
-                  )}
-
-                  {!currentUser.hasSelectedRole &&
-                    currentUser.globalRole !== "ADMIN" && (
-                      <Link
-                        to="/role"
-                        className="mr-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md"
-                      >
-                        Choose Role
-                      </Link>
-                    )}
-
-                  {/* Avatar */}
-                  <div className="relative" ref={profileDropdownRef}>
-                    <button
-                      onClick={() =>
-                        setIsProfileDropdownOpen(!isProfileDropdownOpen)
-                      }
-                      className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-2 py-1"
-                    >
-                      {currentUser.profilePicture ? (
-                        <img
-                          src={currentUser.profilePicture}
-                          className="h-8 w-8 rounded-full"
-                          alt="Profile"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                          <FaUser className="text-gray-600" />
-                        </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-700">
-                        {currentUser.firstname}
-                      </span>
-                      <FaCaretDown />
-                    </button>
-
-                    {isProfileDropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50">
-                        <Link
-                          to="/dashboard"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                          className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <FaTachometerAlt className="mr-2" /> Dashboard
-                        </Link>
-
-                        <Link
-                          to="/profile"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                          className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <FaUser className="mr-2" /> Profile
-                        </Link>
-
-                        <Link
-                          to="/settings"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                          className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <FaCog className="mr-2" /> Settings
-                        </Link>
-
-                        <hr />
-
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                        >
-                          <FaSignOutAlt className="mr-2" /> Sign out
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="flex space-x-4">
+          {/* Right Section: Auth & Actions */}
+          <div className="flex items-center gap-6">
+            {currentUser ? (
+              <div className="flex items-center gap-4">
+                {/* Admin Panel Logic */}
+                {currentUser.globalRole === "ADMIN" && (
                   <Link
-                    to="/auth/login"
-                    className="text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-md"
+                    to="/admin"
+                    className="hidden lg:flex text-sm font-bold text-white bg-[#17469E] hover:bg-blue-800 px-6 py-2.5 rounded-full transition shadow-md"
                   >
-                    Login
+                    Admin Panel
                   </Link>
-                  <button
-                    onClick={onSignUpClick}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm"
-                  >
-                    Sign Up
-                  </button>
-                </div>
-              )}
+                )}
 
-              {/* Mobile Toggle */}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden ml-4"
-              >
-                {isMenuOpen ? <FaTimes /> : <FaBars />}
-              </button>
-            </div>
+                {/* Profile Dropdown */}
+                <div className="relative" ref={profileDropdownRef}>
+                  <button
+                    onClick={() =>
+                      setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                    }
+                    className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 hover:bg-slate-100 transition shadow-sm"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-[#17469E] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                      {currentUser.firstname?.[0] || "A"}
+                      {currentUser.lastname?.[0] || "U"}
+                    </div>
+                    <span className="hidden sm:inline text-sm font-semibold text-slate-700">
+                      {currentUser.firstname}
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-400 transition-transform ${isProfileDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 shadow-2xl rounded-xl overflow-hidden py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                          Signed in as
+                        </p>
+                        <p className="text-sm text-[#17469E] font-bold truncate">
+                          {currentUser.email}
+                        </p>
+                      </div>
+
+                      {/* Dashboard Logic */}
+                      {(currentUser.hasSelectedRole ||
+                        currentUser.globalRole === "ADMIN") && (
+                        <Link
+                          to={dashboardPath}
+                          className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition"
+                        >
+                          <LayoutDashboard
+                            size={16}
+                            className="text-[#17469E]"
+                          />{" "}
+                          Dashboard
+                        </Link>
+                      )}
+
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition"
+                      >
+                        <User size={16} className="text-[#17469E]" /> Profile
+                      </Link>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition border-t border-slate-50 font-bold"
+                      >
+                        <LogOut size={16} /> Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Logged Out: Login and Sign Up Flow */
+              <div className="flex items-center gap-8">
+                <Link
+                  to="/auth/login"
+                  className="text-base font-bold text-slate-600 hover:text-[#17469E] transition"
+                >
+                  Login
+                </Link>
+
+                <button
+                  onClick={onSignUpClick}
+                  className="relative group transition-transform active:scale-95"
+                >
+                  <div className="absolute inset-0 bg-black rounded-full translate-y-1.5 translate-x-0.5 opacity-90" />
+                  <div className="relative bg-[#F0802D] text-white px-8 py-2.5 rounded-full font-bold text-sm tracking-wide shadow-inner">
+                    Sign Up
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Toggle */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 text-slate-600"
+            >
+              {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
           </div>
         </div>
-      </header>
-    </>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-t border-slate-100 px-6 py-6 space-y-4 shadow-xl">
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setIsMenuOpen(false)}
+              className="block text-xl font-bold text-slate-800 border-b border-slate-50 pb-2"
+            >
+              {item.label}
+            </Link>
+          ))}
+          {!currentUser && (
+            <Link
+              to="/auth/login"
+              className="block text-xl font-bold text-[#F0802D]"
+            >
+              Login
+            </Link>
+          )}
+        </div>
+      )}
+    </header>
   );
 };
 

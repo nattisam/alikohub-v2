@@ -4,6 +4,8 @@ import { Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { AcademyProfileGuard } from './auth';
+import { ValidationPipe } from '@nestjs/common';
+import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
 dotenv.config(); // Load .env variables first
 
@@ -30,22 +32,41 @@ async function bootstrap() {
     },
   });
 
-  // (Optional) RabbitMQ connection example
-  // const rmqUrl = configService.get<string>('RABBITMQ_URL');
-  // if (rmqUrl) {
-  //   app.connectMicroservice({
-  //     transport: Transport.RMQ,
-  //     options: {
-  //       urls: [rmqUrl],
-  //       queue: 'application_queue',
-  //       noAck: true,
-  //     },
-  //   });
-  //   console.log(`Academy microservice connecting to RabbitMQ at ${rmqUrl}`);
-  // } else {
-  //   console.warn('RABBITMQ_URL not found in environment, skipping RabbitMQ connection');
-  // }
+  // Add RabbitMQ transport for async events (optional - only if available)
+  const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost';
+  if (process.env.RABBITMQ_ENABLED !== 'false') {
+    try {
+      app.connectMicroservice({
+        transport: Transport.RMQ,
+        options: {
+          urls: [rabbitmqUrl],
+          queue: 'academy_user_events',
+          exchange: 'user_events',
+          exchangeType: 'fanout',
+          queueOptions: {
+            durable: false
+          },
+        },
+      });
+      console.log(`Academy: RabbitMQ transport configured for ${rabbitmqUrl}`);
+    } catch (e) {
+      console.warn(`Academy: RabbitMQ transport not available: ${e.message}`);
+    }
+  } else {
+    console.log('Academy: RabbitMQ disabled via RABBITMQ_ENABLED=false');
+  }
+
+  // Centralized Global Error Handling
+  app.useGlobalFilters(new RpcExceptionFilter());
   
+  // Centralized Validation Handling
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // Apply global guard
   app.useGlobalGuards(app.get(AcademyProfileGuard));
@@ -53,9 +74,6 @@ async function bootstrap() {
   // Start microservice listeners
   await app.startAllMicroservices();
 
-  console.log(
-    `Academy microservice listening on TCP port ${PORT}` +
-      ` and connected to RabbitMQ if configured`,
-  );
+  console.log(`Academy microservice listening on TCP port ${PORT}`);
 }
 bootstrap();

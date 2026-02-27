@@ -1,11 +1,9 @@
 import { useProjects } from '../queries/projects';
-import { useTasks } from '../queries/tasks';
-import { useInspections } from '../queries/inspections';
 import { useComments } from '../queries/comments';
 import { useCreateTask, useUpdateTask } from '../queries/tasks';
 import useUser from './useUser';
 import { useState } from 'react';
-import type { Project, Task, Inspection, Comment, Notification } from '../components/types';
+import type { Project, Comment, Notification } from '../components/types';
 
 interface DashboardHookValue {
   // Project related
@@ -35,15 +33,14 @@ const useDashboard = (): DashboardHookValue => {
   const { data: projects = [], isLoading: loadingProjects, error: errorProjects } = useProjects();
   const { mutateAsync: createTaskMutate } = useCreateTask();
   const { mutateAsync: updateTaskMutate } = useUpdateTask();
-  const { data: inspections = [] } = useInspections();
   const { data: commentsData = [] } = useComments();
 
   const { currentUser } = useUser();
   
   const [notifications, setNotifications] = useState<Notification[]>([]);
   
-  const canCreateTask = currentUser?.role === 'PROJECT_MANAGER' || currentUser?.globalRole === 'ADMIN';
-  const canInspect = currentUser?.role === 'PROJECT_MANAGER' || currentUser?.role === 'CONTRACTOR' || currentUser?.globalRole === 'ADMIN';
+  const canCreateTask = currentUser?.role === 'ADMIN' || currentUser?.globalRole === 'ADMIN';
+  const canInspect = currentUser?.role === 'ADMIN' || currentUser?.role === 'CONTRACTOR' || currentUser?.globalRole === 'ADMIN';
   
   const loadProjects = () => {
     // Projects are loaded via the useProjects hook
@@ -60,7 +57,7 @@ const useDashboard = (): DashboardHookValue => {
     // Task related
     canCreateTask,
     createTask: createTaskMutate,
-    updateTask: updateTaskMutate,
+    updateTask: (taskId: string, taskData: any) => updateTaskMutate({ id: parseInt(taskId), data: taskData }),
     
     // Inspection related
     canInspect,

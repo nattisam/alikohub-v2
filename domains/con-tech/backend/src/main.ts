@@ -4,6 +4,8 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { ConTechProfileGuard } from './auth';
+import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 dotenv.config();
 
@@ -13,7 +15,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,
   });
-  const PORT = process.env.PORT || 3002;
+  const PORT = parseInt(process.env.PORT || '3002', 10);
   const configService = app.get(ConfigService);
 
   const microservice = app.connectMicroservice({
@@ -24,21 +26,51 @@ async function bootstrap() {
     },
   });
 
-  // app.connectMicroservice({
-  //   transport: Transport.RMQ,
-  //   options: {
-  //     urls: [configService.get<string>("RABBITMQ_URL")],
-  //     queue: 'application_queue',
-  //     noAck: true,
-  //   }
-  // });
+  // Add RabbitMQ transport for async events (optional - only if available)
+  const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost';
+  if (process.env.RABBITMQ_ENABLED !== 'false') {
+    try {
+      app.connectMicroservice({
+        transport: Transport.RMQ,
+        options: {
+          urls: [rabbitmqUrl],
+          queue: 'contech_user_events',
+          exchange: 'user_events',
+          exchangeType: 'fanout',
+          queueOptions: {
+            durable: false
+          },
+          socketOptions: {
+            noDelay: true
+          }
+        },
+      });
+      console.log(`ConTech: RabbitMQ transport configured for ${rabbitmqUrl}`);
+    } catch (e) {
+      console.warn(`ConTech: RabbitMQ transport not available: ${e.message}`);
+    }
+  } else {
+    console.log('ConTech: RabbitMQ disabled via RABBITMQ_ENABLED=false');
+  }
+
+  // Centralized Global Error Handling
+  app.useGlobalFilters(new RpcExceptionFilter());
+  
+  // centralized Validation Handling
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   app.useGlobalGuards(app.get(ConTechProfileGuard));
 
   await app.startAllMicroservices();
 
   console.log(
-    `ConTech microservice listening on TCP running on PORT:${PORT} and connected to both TCP and RabbitMQ`,
+    `ConTech microservice listening on TCP running on PORT:${PORT}`,
   );
 }
 bootstrap();

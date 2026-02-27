@@ -4,8 +4,8 @@ export interface PromotionRequest {
   companyName: string;
   contactPerson: string;
   email: string;
-  phone?: string;
-  promotionType: "EVENT" | "ANNOUNCEMENT" | "NEWS";
+  phoneNumber?: string;
+  type: "EVENT" | "ANNOUNCEMENT" | "NEWS";
   message: string;
   status: "PENDING" | "REVIEWED";
   createdAt: string;
@@ -17,7 +17,7 @@ export interface CreatePromotionRequestDto {
   companyName: string;
   contactPerson: string;
   email: string;
-  phone?: string;
-  promotionType: "EVENT" | "ANNOUNCEMENT" | "NEWS";
+  phoneNumber?: string;
+  type: "EVENT" | "ANNOUNCEMENT" | "NEWS";
   message: string;
 }

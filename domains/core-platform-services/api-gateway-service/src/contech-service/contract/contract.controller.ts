@@ -26,6 +26,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 
 @ApiTags('Contracts')
@@ -37,6 +38,7 @@ export class ContractController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('contractFile'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload a contract file for a project' })
   @ApiBody({
     schema: {
@@ -53,10 +55,18 @@ export class ContractController {
     @UploadedFile() file: Express.Multer.File,
     @Body('projectId', ParseIntPipe) projectId: number,
   ) {
+    // Serialize file as base64 for microservice transport
+    const serializedFile = {
+      buffer: file.buffer.toString('base64'),
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    };
+
     const payload = {
       user: req.user,
       projectId,
-      file,
+      file: serializedFile,
     };
     return lastValueFrom(
       this.contechClient.send({ cmd: 'uploadContract' }, payload),

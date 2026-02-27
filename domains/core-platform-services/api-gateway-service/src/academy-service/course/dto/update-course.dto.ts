@@ -17,10 +17,9 @@ export class UpdateCourseDto {
   @IsOptional()
   longDescription?: string;
 
-  @ApiPropertyOptional({ example: 'http://example.com/new.png' })
-  @IsString()
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Course thumbnail image' })
   @IsOptional()
-  thumbnail?: string;
+  thumbnail?: any;
 
   @ApiPropertyOptional({ example: 'Backend' })
   @IsString()

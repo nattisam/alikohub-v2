@@ -1,19 +1,35 @@
 @import "tailwindcss";
 
 @keyframes move-in-from-left {
-  0%   { transform: translateX(-900px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(-900px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 @keyframes move-in-from-right {
-    0% {transform: translateX(900px);}
-    100% {transform: translateX(0);}
+  0% {
+    transform: translateX(900px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .move-in-from-left {
-    animation: move-in-from-left 1s ease-out 1;
+  animation: move-in-from-left 1s ease-out 1;
 }
 
 .move-in-from-right {
-    animation: move-in-from-right 1s ease-out 1;
+  animation: move-in-from-right 1s ease-out 1;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

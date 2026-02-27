@@ -153,33 +153,95 @@ export class EnrollmentsService {
     }
   }
 
-  async findAll(user: AuthenticatedUser) {
+  async findAll(user: AuthenticatedUser, query: any = {}) {
     const academyProfile = await this.userService.getOrCreateProfile(user)
     if (academyProfile.role !== 'ADMIN') {
       throw new ForbiddenException('You do not have permission to view all enrollments.');
     }
 
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
     // 1. Fetch the raw enrollment data
-    const enrollments = await this.prisma.enrollment.findMany({
-      include: { cohort: true }, // We can still include cohort
-    });
+    const [enrollments, total] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        skip,
+        take: pageSize,
+        include: { cohort: true, course: true },
+        orderBy: { enrolledAt: 'desc' }
+      }),
+      this.prisma.enrollment.count()
+    ]);
 
     // --- DATA ENRICHMENT ---
     // 2. Collect all unique user IDs from the enrollments
     const userIds = [...new Set(enrollments.map((e) => e.userId))];
-    if (userIds.length === 0) return [];
+    if (userIds.length === 0) return { items: [], total: 0, page, pageSize, totalPages: 0 };
 
     // 3. Fetch all required user data in a single batch call from the auth-service
     const users = await this.userService.getUsersByIds(userIds);
 
     // 4. Map the user data back to the enrollments
-    return enrollments.map((enrollment) => ({
-      ...enrollment,
-      user: users.find((u) => u.firebaseId === enrollment.userId) || null,
-    }));
+    return {
+      items: enrollments.map((enrollment) => ({
+        ...enrollment,
+        user: users.find((u) => u.firebaseId === enrollment.userId) || null,
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 
-  async findByCohort(cohortId: number, user: AuthenticatedUser) {
+  async findByInstructor(user: AuthenticatedUser, query: any = {}) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+      throw new ForbiddenException('Instructor role required');
+    }
+
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const where: any = {
+      course: {
+        instructorId: user.firebaseId
+      }
+    };
+
+    if (query.courseId) where.courseId = Number(query.courseId);
+    if (query.cohortId) where.cohortId = Number(query.cohortId);
+
+    const [enrollments, total] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: { cohort: true, course: true },
+        orderBy: { enrolledAt: 'desc' }
+      }),
+      this.prisma.enrollment.count({ where })
+    ]);
+
+    const userIds = [...new Set(enrollments.map((e) => e.userId))];
+    if (userIds.length === 0) return { items: [], total: 0, page, pageSize, totalPages: 0 };
+    const users = await this.userService.getUsersByIds(userIds);
+
+    return {
+      items: enrollments.map((enrollment) => ({
+        ...enrollment,
+        user: users.find((u) => u.firebaseId === enrollment.userId) || null,
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
+
+  async findByCohort(cohortId: number, user: AuthenticatedUser, query: any = {}) {
     // AUTHORIZATION: User must be an ADMIN or the INSTRUCTOR of the course
     const academyProfile = await this.userService.getOrCreateProfile(user)
     const cohort = await this.prisma.cohort.findUnique({
@@ -197,17 +259,34 @@ export class EnrollmentsService {
       throw new ForbiddenException('You do not have permission to view enrollments for this cohort.');
     }
 
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
     // Same enrichment pattern as findAll()
-    const enrollments = await this.prisma.enrollment.findMany({
-      where: { cohortId },
-    });
+    const [enrollments, total] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where: { cohortId },
+        skip,
+        take: pageSize,
+        orderBy: { enrolledAt: 'desc' }
+      }),
+      this.prisma.enrollment.count({ where: { cohortId } })
+    ]);
+
     const userIds = [...new Set(enrollments.map((e) => e.userId))];
-    if (userIds.length === 0) return [];
+    if (userIds.length === 0) return { items: [], total: 0, page, pageSize, totalPages: 0 };
     const users = await this.userService.getUsersByIds(userIds);
-    return enrollments.map((enrollment) => ({
-      ...enrollment,
-      user: users.find((u) => u.firebaseId === enrollment.userId) || null,
-    }));
+    return {
+      items: enrollments.map((enrollment) => ({
+        ...enrollment,
+        user: users.find((u) => u.firebaseId === enrollment.userId) || null,
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 
   async remove(id: number, user: AuthenticatedUser) {
@@ -296,7 +375,7 @@ export class EnrollmentsService {
     });
   }
 
-  async findByCourse(courseId: number, user: AuthenticatedUser) {
+  async findByCourse(courseId: number, user: AuthenticatedUser, query: any = {}) {
     const academyProfile = await this.userService.getOrCreateProfile(user);
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
@@ -310,15 +389,32 @@ export class EnrollmentsService {
       throw new ForbiddenException('You do not have permission to view enrollments for this course.');
     }
 
-    const enrollments = await this.prisma.enrollment.findMany({
-      where: { courseId },
-    });
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const [enrollments, total] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where: { courseId },
+        skip,
+        take: pageSize,
+        orderBy: { enrolledAt: 'desc' }
+      }),
+      this.prisma.enrollment.count({ where: { courseId } })
+    ]);
+
     const userIds = [...new Set(enrollments.map((e) => e.userId))];
-    if (userIds.length === 0) return [];
+    if (userIds.length === 0) return { items: [], total: 0, page, pageSize, totalPages: 0 };
     const users = await this.userService.getUsersByIds(userIds);
-    return enrollments.map((enrollment) => ({
-      ...enrollment,
-      user: users.find((u) => u.firebaseId === enrollment.userId) || null,
-    }));
+    return {
+      items: enrollments.map((enrollment) => ({
+        ...enrollment,
+        user: users.find((u) => u.firebaseId === enrollment.userId) || null,
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 }

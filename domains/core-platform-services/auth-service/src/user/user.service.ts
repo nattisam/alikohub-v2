@@ -103,9 +103,12 @@ export class UserService {
 		// Validate resumeUrl if present
 		if (applicationData.resumeUrl) {
 			try {
-				new URL(applicationData.resumeUrl);
+				const url = new URL(applicationData.resumeUrl);
+				if (!['http:', 'https:'].includes(url.protocol)) {
+					throw new Error('Invalid protocol');
+				}
 			} catch (e) {
-				throw new Error('Invalid resume URL provided');
+				throw new Error('Invalid resume URL provided. Must be a valid HTTP/HTTPS URL.');
 			}
 		}
 
@@ -186,6 +189,22 @@ export class UserService {
 
 	async updateTeacherApplicationStatus(applicationId: string, status: string, reviewedBy?: string, reviewNotes?: string) {
 		if (applicationId.startsWith('mock-id')) return { id: applicationId, status };
+
+		// Enforce review details for final states
+		if ((status === 'APPROVED' || status === 'REJECTED') && !reviewedBy) {
+			throw new Error('ReviewedBy is required when approving or rejecting an application');
+		}
+
+		if (status === 'REJECTED' && !reviewNotes) {
+			throw new Error('Review notes are required when rejecting an application');
+		}
+
+		if (status === 'APPROVED') {
+			const app = await this.prisma.application.findUnique({ where: { id: parseInt(applicationId) } });
+			const formData: any = app?.formData;
+			
+			if (!formData?.resumeUrl) throw new Error('Cannot approve application without a resume');
+		}
 
 		return this.prisma.application.update({
 			where: { id: parseInt(applicationId) },
@@ -284,5 +303,21 @@ export class UserService {
 
 		this.logger.log(`ConTech role updated successfully for user ${userId}`);
 		return user;
+	}
+
+	async updateUserGlobalRole(firebaseId: string, role: string) {
+		this.logger.log(`Updating global role for user ${firebaseId} to ${role}`);
+		return this.prisma.user.update({
+			where: { firebaseId },
+			data: { globalRole: role as any },
+		});
+	}
+
+	async updateStatus(firebaseId: string, status: string) {
+		this.logger.log(`Updating status for user ${firebaseId} to ${status}`);
+		return this.prisma.user.update({
+			where: { firebaseId },
+			data: { status: status as any },
+		});
 	}
 }

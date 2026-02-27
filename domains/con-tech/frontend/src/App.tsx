@@ -4,7 +4,6 @@ import {
   Outlet,
   useLocation,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 
 import Header from "./components/Header";
@@ -12,31 +11,24 @@ import Footer from "./components/Footer";
 import ConTechHomePage from "./pages/ConTechHomePage";
 import ConTechAboutUsPage from "./pages/ConTechAboutUsPage";
 import ContactUsPage from "./pages/ContactUsPage";
-import { useUser } from "./hooks";
 import LoginForm from "./components/LoginForm";
 import CSignupForm from "./components/SignupForm";
-import RoleSelectionModal from "./components/RoleSelectionModal";
 import ProjectsPage from "./pages/ProjectsPage";
-import TasksPage from "./pages/TasksPage";
-import InspectionsPage from "./pages/InspectionsPage";
 import ReportsPage from "./pages/ReportsPage";
-import UserApplicationsPage from "./pages/UserApplicationsPage";
+import UserManagementPage from "./pages/UserManagementPage";
 import ProfilePage from "./pages/ProfilePage";
-// import Dashboard from "./pages/Dashboard";
-import FinancialTracking from "./pages/FinancialTracking";
-import ClientApproval from "./pages/ClientApprovals";
 import CreateProjectForm from "./components/CreateProjectForm";
 import ConTechServicesPage from "./pages/ConTechServicesPage";
-import ContractsPage from "./pages/ContractsPage";
 import ClientDashboard from "./pages/ClientDashboard";
 import ContractorDashboard from "./pages/ContractorDashboard";
 import PMDashboard from "./pages/PMDashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProjectDetails from "./pages/ProjectDetails";
-// import DashboardHome from "./pages/DashboardHome";
-
-
+import ClientContactPage from "./pages/ClientContactPage";
+import TasksPage from "./pages/TasksPage";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import NotFoundState from "./components/common/NotFoundState";
 
 function DefaultLayout() {
   const { pathname } = useLocation();
@@ -57,43 +49,6 @@ function DefaultLayout() {
   );
 }
 
-
-function RoleSelectionWrapper() {
-  const { currentUser } = useUser();
-  const navigate = useNavigate();
-  
-  const handleCloseModal = () => {
-    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
-    // Close modal and redirect to appropriate dashboard based on role
-    if (isGlobalAdmin || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN") {
-      navigate("/admin");
-    } else if (currentUser?.role === "CONTRACTOR") {
-      navigate("/contractor");
-    } else if (currentUser?.role === "CLIENT") {
-      navigate("/client");
-    } else {
-      navigate("/");
-    }
-  };
-  
-  // If user has selected a role, redirect away from role selection
-  if (currentUser?.hasSelectedRole || currentUser?.globalRole === 'ADMIN') {
-    const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
-    const destination = isGlobalAdmin || currentUser?.role === "PROJECT_MANAGER" || currentUser?.role === "ADMIN" 
-      ? "/admin" 
-      : currentUser?.role === "CONTRACTOR" 
-        ? "/contractor" 
-        : currentUser?.role === "CLIENT" 
-          ? "/client" 
-          : "/";
-          
-    return <Navigate to={destination} replace />;
-  }
-  
-  // If user hasn't selected a role, show the role selection modal
-  return <RoleSelectionModal onClose={handleCloseModal} />;
-}
-
 function LoginLayout() {
   return (
     <div>
@@ -103,9 +58,6 @@ function LoginLayout() {
 }
 
 export default function App() {
-  const { currentUser } = useUser();
-  console.log(currentUser); // Keep this to avoid unused variable
-
   const router = createBrowserRouter([
     {
       path: "/",
@@ -114,7 +66,7 @@ export default function App() {
         { index: true, element: <ConTechHomePage /> },
         { path: "about", element: <ConTechAboutUsPage /> },
         { path: "contact", element: <ContactUsPage /> },
-        { path: "services", element: <ConTechServicesPage /> }
+        { path: "services", element: <ConTechServicesPage /> },
       ],
     },
     {
@@ -127,15 +79,12 @@ export default function App() {
       element: <LoginLayout />,
       children: [{ index: true, element: <CSignupForm /> }],
     },
-    {
-      path: "/role-selection",
-      element: <RoleSelectionWrapper />,
-    },
+
     // Admin Dashboard Routes
     {
       path: "/admin",
       element: (
-        <ProtectedRoute requiredRole="PROJECT_MANAGER">
+        <ProtectedRoute requiredRole="ADMIN">
           <DashboardLayout />
         </ProtectedRoute>
       ),
@@ -144,11 +93,13 @@ export default function App() {
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/new", element: <CreateProjectForm /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
-        { path: "contractors", element: <UserApplicationsPage /> }, // Assuming this manages contractors
-        { path: "clients", element: <UserApplicationsPage /> }, // Assuming this manages clients
+        { path: "users", element: <UserManagementPage /> },
         { path: "reports", element: <ReportsPage /> },
+        { path: "tasks", element: <TasksPage /> },
+        { path: "tasks/:projectId", element: <TasksPage /> },
         { path: "profile", element: <ProfilePage /> },
-      ]
+        { path: "*", element: <NotFoundState /> },
+      ],
     },
     // Contractor Dashboard Routes
     {
@@ -163,10 +114,10 @@ export default function App() {
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
         { path: "tasks", element: <TasksPage /> },
-        { path: "inspections", element: <InspectionsPage /> },
-        { path: "contracts", element: <ContractsPage /> },
+        { path: "tasks/:projectId", element: <TasksPage /> },
         { path: "profile", element: <ProfilePage /> },
-      ]
+        { path: "*", element: <NotFoundState /> },
+      ],
     },
     // Client Dashboard Routes
     {
@@ -180,21 +131,35 @@ export default function App() {
         { index: true, element: <ClientDashboard /> },
         { path: "projects", element: <ProjectsPage /> },
         { path: "projects/:projectId", element: <ProjectDetails /> },
-        { path: "approvals", element: <ClientApproval /> },
-        { path: "financials", element: <FinancialTracking /> },
         { path: "profile", element: <ProfilePage /> },
-      ]
+        { path: "contact-guidance", element: <ClientContactPage /> },
+        { path: "*", element: <NotFoundState /> },
+      ],
     },
     // Legacy Dashboard Redirect (for backward compatibility during migration)
     {
       path: "/dashboard/*",
-      element: <Navigate to="/role-selection" replace />,
+      element: <Navigate to="/" replace />,
     },
     {
       path: "/profile",
-      element: <Navigate to="/role-selection" replace />,
-    }
+      element: <Navigate to="/" replace />,
+    },
+    // Catch-all 404
+    {
+      path: "*",
+      element: (
+        <NotFoundState
+          title="Page Not Found"
+          message="The page you are looking for does not exist."
+        />
+      ),
+    },
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }

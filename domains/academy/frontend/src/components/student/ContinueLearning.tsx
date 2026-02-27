@@ -1,6 +1,7 @@
 import type { Course } from "../common/types.d.tsx";
 import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
 import { FaChartLine } from "react-icons/fa";
+import { getCourseImageUrl } from "../../utils/imageUtils";
 interface ContinueLearningProps {
   courses: Array<Course | EnrollmentWithCourse>;
   isLoading?: boolean;
@@ -10,7 +11,7 @@ interface ContinueLearningProps {
 }
 
 const isEnrollmentWithCourse = (
-  item: Course | EnrollmentWithCourse
+  item: Course | EnrollmentWithCourse,
 ): item is EnrollmentWithCourse => {
   return (item as EnrollmentWithCourse).course !== undefined;
 };
@@ -30,9 +31,7 @@ export default function ContinueLearning({
             <h2 className="text-lg md:text-2xl font-semibold">
               Continue Learning
             </h2>
-            <span className="text-gray-500 text-sm md:text-md">
-              Loading...
-            </span>
+            <span className="text-gray-500 text-sm md:text-md">Loading...</span>
           </div>
           <p>Loading courses...</p>
         </div>
@@ -48,9 +47,7 @@ export default function ContinueLearning({
             <h2 className="text-lg md:text-2xl font-semibold">
               Continue Learning
             </h2>
-            <span className="text-gray-500 text-sm md:text-md">
-              Error
-            </span>
+            <span className="text-gray-500 text-sm md:text-md">Error</span>
           </div>
           <p className="text-red-500">{errorMessage}</p>
         </div>
@@ -78,7 +75,6 @@ export default function ContinueLearning({
     };
   });
 
-
   return (
     <div className="w-full mt-6">
       <div className="max-w-[1200px] mx-auto bg-white border border-[#E7E7E7] rounded-lg p-6">
@@ -93,7 +89,8 @@ export default function ContinueLearning({
 
         {coursesWithDetails.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
-            You are not enrolled in any courses yet. Check out the courses available below!
+            You are not enrolled in any courses yet. Check out the courses
+            available below!
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -104,7 +101,7 @@ export default function ContinueLearning({
               >
                 {course.thumbnail ? (
                   <img
-                    src={course.thumbnail} // Use real thumbnail from server database
+                    src={getCourseImageUrl(course.thumbnail)} // Use real thumbnail from server database
                     alt={course.title}
                     className="w-full h-32 object-cover rounded"
                   />

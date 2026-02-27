@@ -1,17 +1,29 @@
 import React from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 interface NotFoundStateProps {
   title?: string;
   message?: string;
+  buttonText?: string;
   onGoHome?: () => void;
 }
 
 const NotFoundState: React.FC<NotFoundStateProps> = ({
   title = 'Page Not Found',
-  message = 'The page you are looking for does not exist in the student dashboard.',
+  message = 'The page you are looking for does not exist.',
+  buttonText = 'Go to Home',
   onGoHome
 }) => {
+  const navigate = useNavigate();
+
+  const handleGoHome = () => {
+    if (onGoHome) {
+      onGoHome();
+    } else {
+      navigate('/');
+    }
+  };
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 min-h-[60vh]">
       <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md w-full text-center shadow-sm">
@@ -25,10 +37,10 @@ const NotFoundState: React.FC<NotFoundStateProps> = ({
         <p className="text-gray-600 mb-6">{message}</p>
         
         <button
-          onClick={onGoHome}
+          onClick={handleGoHome}
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
         >
-          Go to Dashboard
+          {buttonText}
         </button>
       </div>
     </div>

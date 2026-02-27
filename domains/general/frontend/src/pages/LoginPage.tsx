@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import type { LoginCredentials } from "../types";
 
 const GeneralLoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +8,6 @@ const GeneralLoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { login: authLogin } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,7 +22,11 @@ const GeneralLoginPage: React.FC = () => {
       navigate("/");
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.response?.data?.message || err.message || "Invalid email or password");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Invalid email or password",
+      );
     } finally {
       setLoading(false);
     }

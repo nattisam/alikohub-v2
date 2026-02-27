@@ -2,19 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { contechAPI } from "../services/api";
 import type { CreateReportDto } from "../components/types";
 
-
 export const useReports = (projectId?: number) => {
   return useQuery({
-    queryKey: ["reports", projectId],
+    queryKey: ["reports", projectId ?? "all"],
     queryFn: async () => {
       if (projectId) {
         const response = await contechAPI.getReports(projectId);
-        return response;
+        return Array.isArray(response) ? response : response?.data || [];
       }
-      // If no project ID, return empty array
-      return [];
+      // Fetch all reports across all projects
+      const response = await contechAPI.getAllReports();
+      return Array.isArray(response) ? response : response?.data || [];
     },
-    enabled: !!projectId, // Only enable if projectId is provided
+    staleTime: 2 * 60 * 1000,
   });
 };
 
@@ -39,7 +39,9 @@ export const useCreateReport = () => {
     onSuccess: (newReport) => {
       // Invalidate reports for the specific project
       if (newReport.projectId) {
-        queryClient.invalidateQueries({ queryKey: ["reports", newReport.projectId] });
+        queryClient.invalidateQueries({
+          queryKey: ["reports", newReport.projectId],
+        });
       }
       // Invalidate all reports
       queryClient.invalidateQueries({ queryKey: ["reports"] });

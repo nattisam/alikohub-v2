@@ -1,37 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "../context/auth-context"
-import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/auth-context";
+import { Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export function LoginPage() {
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     try {
       await login({ email: formData.email, password: formData.password });
       // After successful login, redirect based on role
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      if (user.globalRole === 'ADMIN') {
-        navigate('/admin', { replace: true })
-      } else if (user.globalRole === 'RECRUITER') {
-        navigate('/recruiter', { replace: true })
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (user.globalRole === "ADMIN") {
+        navigate("/admin", { replace: true });
+      } else if (user.globalRole === "RECRUITER") {
+        navigate("/recruiter", { replace: true });
       } else {
-        navigate('/', { replace: true })
+        navigate("/", { replace: true });
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Login failed. Please try again.');
+      setError(
+        err?.response?.data?.message || "Login failed. Please try again.",
+      );
     }
   };
 
@@ -43,13 +45,16 @@ export function LoginPage() {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-         
+          <img
+            src="/AlikoLogo.svg"
+            alt="AlikoLogo"
+            className="h-16 mx-auto mb-6"
+          />
           <h2 className="text-3xl font-bold text-navy-900">Welcome Back</h2>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-8">
-          
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
@@ -93,7 +98,11 @@ export function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
               </button>
             </div>
 
@@ -118,13 +127,17 @@ export function LoginPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-600">
-              Need an account? <a href="/register" className="text-blue-600 hover:text-blue-700 font-medium">Sign up</a>
+              Need an account?{" "}
+              <a
+                href="/register"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Sign up
+              </a>
             </span>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-

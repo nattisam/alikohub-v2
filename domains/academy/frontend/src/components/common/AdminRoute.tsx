@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import AccessDenied from '../states/AccessDenied';
 
@@ -9,7 +9,6 @@ interface AdminRouteProps {
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { user: currentUser, isLoading, isAuthenticated } = useAuth();
-  const location = useLocation();
 
   // If we're still loading, show a loading indicator
   if (isLoading) {
@@ -25,7 +24,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
 
   // If user is not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+    return <Navigate to="/auth/login" replace />;
   }
 
   // Check if user has admin role (global role)

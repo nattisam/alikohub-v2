@@ -4,43 +4,46 @@ import {
   IsOptional,
   IsEnum,
   IsInt,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateCourseDto {
-  @ApiProperty({ example: 'Intro to NestJS' })
+  @ApiProperty({ example: "Intro to NestJS" })
   @IsString()
   @IsNotEmpty()
   title!: string;
 
-  @ApiPropertyOptional({ example: 'Learn NestJS basics' })
+  @ApiPropertyOptional({ example: "Learn NestJS basics" })
   @IsString()
   @IsOptional()
   shortDescription?: string;
 
-  @ApiPropertyOptional({ example: 'Full NestJS course' })
+  @ApiPropertyOptional({ example: "Full NestJS course" })
   @IsString()
   @IsOptional()
   longDescription?: string;
 
-  @ApiPropertyOptional({ example: 'https://img.png' })
-  @IsString()
+  @ApiPropertyOptional({
+    type: "string",
+    format: "binary",
+    description: "Course thumbnail image",
+  })
   @IsOptional()
-  thumbnail?: string;
+  thumbnail?: any;
 
-  @ApiPropertyOptional({ example: 'Backend' })
+  @ApiPropertyOptional({ example: "Backend" })
   @IsString()
   @IsOptional()
   category?: string;
 
   @ApiProperty({
-    enum: ['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED', 'REJECTED', 'ARCHIVED'],
-    example: 'DRAFT',
+    enum: ["DRAFT", "PENDING_APPROVAL", "PUBLISHED", "REJECTED", "ARCHIVED"],
+    example: "DRAFT",
   })
-  @IsEnum(['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED', 'REJECTED', 'ARCHIVED'])
+  @IsEnum(["DRAFT", "PENDING_APPROVAL", "PUBLISHED", "REJECTED", "ARCHIVED"])
   status!: string;
 
-  @ApiPropertyOptional({ example: ['Master NestJS', 'Build APIs'] })
+  @ApiPropertyOptional({ example: ["Master NestJS", "Build APIs"] })
   @IsOptional()
   outcomes?: string[];
 

@@ -1,1 +1,16 @@
-export type { Course, CourseModule, CourseLesson, ITeachingSchedule, User, Enrollment, Cohort, LessonContent, Lesson, TrendingCourseCardProps, TestimonyCardProps } from "./types.d.tsx";
+export type {
+  Course,
+  CourseModule,
+  CourseLesson,
+  ITeachingSchedule,
+  User,
+  Enrollment,
+  Cohort,
+  LessonContent,
+  Lesson,
+  TrendingCourseCardProps,
+  TestimonyCardProps,
+  LessonType,
+  ContentType,
+  Exercise,
+} from "./types.d.tsx";

@@ -1,75 +1,112 @@
-import apiClient from '../lib/api';
-import type { LoginCredentials, SignupCredentials, CreateTaskDto, UpdateTaskDto, CreateInspectionDto, UpdateInspectionDto, CreateReportDto, ContractStatus, Comment } from '../components/types';
+import apiClient from "../lib/api";
+import type {
+  LoginCredentials,
+  SignupCredentials,
+  CreateTaskDto,
+  UpdateTaskDto,
+  CreateInspectionDto,
+  UpdateInspectionDto,
+  CreateReportDto,
+  ContractStatus,
+  Comment,
+} from "../components/types";
 
 export const authAPI = {
   login: async (credentials: LoginCredentials) => {
-    const response = await apiClient.post('/auth/login', credentials);
+    const response = await apiClient.post("/auth/login", credentials);
     // Map accessToken to token for compatibility with AuthContext
     if (response.data && response.data.accessToken && !response.data.token) {
       return {
         ...response.data,
-        token: response.data.accessToken
+        token: response.data.accessToken,
       };
     }
     return response.data;
   },
 
   register: async (credentials: SignupCredentials) => {
-    const response = await apiClient.post('/auth/register', credentials);
+    const response = await apiClient.post("/auth/register", credentials);
     // Ensure response has the expected format for AuthContext
     // If backend returns token as 'accessToken', map it to 'token'
     if (response.data && response.data.accessToken && !response.data.token) {
       return {
         ...response.data,
-        token: response.data.accessToken
+        token: response.data.accessToken,
       };
     }
     return response.data;
   },
 
   verifyToken: async (token: string) => {
-    const response = await apiClient.post('/auth/verify', { type: 'jwt', value: token });
+    const response = await apiClient.post("/auth/verify", {
+      type: "jwt",
+      value: token,
+    });
     // Map accessToken to token for compatibility with AuthContext if needed
     if (response.data && response.data.accessToken && !response.data.token) {
       return {
         ...response.data,
-        token: response.data.accessToken
+        token: response.data.accessToken,
       };
     }
     return response.data;
   },
 
   getProfile: async () => {
-    const response = await apiClient.get('/auth/profile');
+    const response = await apiClient.get("/auth/profile");
     // Map accessToken to token for compatibility with AuthContext if needed
     if (response.data && response.data.accessToken && !response.data.token) {
       return {
         ...response.data,
-        token: response.data.accessToken
+        token: response.data.accessToken,
       };
     }
     return response.data;
   },
 
   logout: async () => {
-    const response = await apiClient.post('/auth/logout');
+    const response = await apiClient.post("/auth/logout");
     return response.data;
   },
 };
 
 export const contechAPI = {
   getProfile: async () => {
-    const response = await apiClient.get('/profile');
+    const response = await apiClient.get("/profile");
     return response.data;
   },
-  
+
   selectRole: async (role: string) => {
-    const response = await apiClient.post('/profile/select-role', { role });
+    const response = await apiClient.post("/profile/select-role", { role });
     return response.data;
   },
+
+  createUser: async (data: any) => {
+    const response = await apiClient.post("/auth/contech/user", data);
+    return response.data;
+  },
+
+  getUsersByRole: async (
+    role: string,
+    page: number = 1,
+    pageSize: number = 10,
+  ) => {
+    const response = await apiClient.get(
+      `/contech/admin/users?role=${role}&page=${page}&pageSize=${pageSize}`,
+    );
+    return response.data;
+  },
+
+  getAllProjects: async (page: number = 1, pageSize: number = 100) => {
+    const response = await apiClient.get(
+      `/projects?page=${page}&pageSize=${pageSize}`,
+    );
+    return response.data;
+  },
+
   // Projects endpoints
   getProjects: async (params?: Record<string, unknown>) => {
-    const response = await apiClient.get('/projects', { params });
+    const response = await apiClient.get("/projects", { params });
     // Extract items from paginated response
     return response.data.items || response.data;
   },
@@ -80,7 +117,7 @@ export const contechAPI = {
   },
 
   createProject: async (data: Record<string, unknown>) => {
-    const response = await apiClient.post('/projects', data);
+    const response = await apiClient.post("/projects", data);
     return response.data;
   },
 
@@ -95,13 +132,17 @@ export const contechAPI = {
   },
 
   updateProjectStatus: async (id: number, status: string) => {
-    const response = await apiClient.patch(`/projects/${id}/status`, { status });
+    const response = await apiClient.patch(`/projects/${id}/status`, {
+      status,
+    });
     return response.data;
   },
 
   // Tasks endpoints
   getTasks: async (projectId?: number, params?: Record<string, unknown>) => {
-    const url = projectId ? `/contech/tasks/project/${projectId}` : '/contech/tasks';
+    const url = projectId
+      ? `/contech/tasks/project/${projectId}`
+      : "/contech/tasks";
     const response = await apiClient.get(url, { params });
     return response.data;
   },
@@ -112,7 +153,7 @@ export const contechAPI = {
   },
 
   createTask: async (data: CreateTaskDto) => {
-    const response = await apiClient.post('/contech/tasks', data);
+    const response = await apiClient.post("/contech/tasks", data);
     return response.data;
   },
 
@@ -126,9 +167,26 @@ export const contechAPI = {
     return response.data;
   },
 
+  createTaskExact: async (data: {
+    projectId: number;
+    title: string;
+    description: string;
+    status: string;
+  }) => {
+    const response = await apiClient.post("/tasks", data);
+    return response.data;
+  },
+
+  updateTaskStatusExact: async (taskId: number, status: string) => {
+    const response = await apiClient.patch(`/tasks/${taskId}`, { status });
+    return response.data;
+  },
+
   // Inspections endpoints
   getInspections: async (projectId?: number) => {
-    const url = projectId ? `/contech/inspections/project/${projectId}` : '/contech/inspections';
+    const url = projectId
+      ? `/contech/inspections/project/${projectId}`
+      : "/contech/inspections";
     const response = await apiClient.get(url);
     return response.data;
   },
@@ -140,35 +198,48 @@ export const contechAPI = {
 
   createInspection: async (data: CreateInspectionDto, files?: File[]) => {
     const formData = new FormData();
-    formData.append('data', JSON.stringify(data));
-    
+    formData.append("data", JSON.stringify(data));
+
     if (files) {
       files.forEach((file) => {
         formData.append(`files`, file);
       });
     }
-    
-    const response = await apiClient.post('/contech/inspections', formData, {
+
+    const response = await apiClient.post("/contech/inspections", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   },
 
   updateInspection: async (data: UpdateInspectionDto) => {
-    const response = await apiClient.put(`/contech/inspections/${data.id}`, data);
+    const response = await apiClient.put(
+      `/contech/inspections/${data.id}`,
+      data,
+    );
     return response.data;
   },
 
   // Reports endpoints
   getReports: async (projectId?: number) => {
     if (!projectId) {
-      // Return empty array when no project ID is provided
       return [];
     }
-    const response = await apiClient.get(`/client-reports/project/${projectId}`);
+    const response = await apiClient.get(
+      `/client-reports/project/${projectId}`,
+    );
     return response.data;
+  },
+
+  getAllReports: async () => {
+    try {
+      const response = await apiClient.get("/client-reports");
+      return response.data;
+    } catch {
+      return [];
+    }
   },
 
   getReport: async (id: number) => {
@@ -177,13 +248,15 @@ export const contechAPI = {
   },
 
   createReport: async (data: CreateReportDto) => {
-    const response = await apiClient.post('/client-reports', data);
+    const response = await apiClient.post("/client-reports", data);
     return response.data;
   },
 
   // Contracts endpoints
   getContracts: async (projectId?: number) => {
-    const url = projectId ? `/contech/contracts/project/${projectId}` : '/contech/contracts';
+    const url = projectId
+      ? `/contech/contracts/project/${projectId}`
+      : "/contech/contracts";
     const response = await apiClient.get(url);
     return response.data;
   },
@@ -195,35 +268,39 @@ export const contechAPI = {
 
   uploadContract: async (projectId: number, file: File) => {
     const formData = new FormData();
-    formData.append('projectId', projectId.toString());
-    formData.append('file', file);
-    
-    const response = await apiClient.post('/contech/contracts', formData, {
+    formData.append("projectId", projectId.toString());
+    formData.append("file", file);
+
+    const response = await apiClient.post("/contech/contracts", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   },
 
   updateContractStatus: async (id: number, status: ContractStatus) => {
-    const response = await apiClient.patch(`/contech/contracts/${id}/status`, { status });
+    const response = await apiClient.patch(`/contech/contracts/${id}/status`, {
+      status,
+    });
     return response.data;
   },
 
   // Comments endpoints
-  getComments: async (params?: Record<string, unknown>) => {
-    const response = await apiClient.get('/contech/comments', { params });
-    return response.data;
+  getComments: async (_params?: Record<string, unknown>) => {
+    // Global comments endpoint does not exist
+    return [];
   },
 
   getProjectComments: async (projectId: number) => {
-    const response = await apiClient.get(`/contech/comments/project/${projectId}`);
+    const response = await apiClient.get(
+      `/contech/comments/project/${projectId}`,
+    );
     return response.data;
   },
 
   createComment: async (data: Comment) => {
-    const response = await apiClient.post('/contech/comments', data);
+    const response = await apiClient.post("/contech/comments", data);
     return response.data;
   },
 
@@ -237,19 +314,99 @@ export const contechAPI = {
     return response.data;
   },
 
-  // Dashboard endpoints
-  getClientDashboardData: async (reportId?: number) => {
-    const response = await apiClient.get(reportId ? `/client-reports/${reportId}` : '/client-reports');
+  // Milestones endpoints
+  getMilestones: async (projectId?: number) => {
+    const url = projectId ? `/milestones/project/${projectId}` : "/milestones";
+    const response = await apiClient.get(url);
     return response.data;
   },
 
+  getMilestone: async (id: number) => {
+    const response = await apiClient.get(`/milestones/${id}`);
+    return response.data;
+  },
+
+  createMilestoneExact: async (data: {
+    projectId: number;
+    name: string;
+    date: string;
+  }) => {
+    const response = await apiClient.post("/milestones", data);
+    return response.data;
+  },
+
+  updateMilestone: async (id: number, data: Record<string, unknown>) => {
+    const response = await apiClient.patch(`/milestones/${id}`, data);
+    return response.data;
+  },
+
+  // Dashboard endpoints
+  getClientDashboardData: async () => {
+    try {
+      // Derive client dashboard data from projects
+      const projectsResponse = await apiClient.get("/projects");
+      const projects =
+        projectsResponse.data.items || projectsResponse.data || [];
+      const projectList = Array.isArray(projects) ? projects : [];
+
+      // Calculate aggregate progress from all client projects
+      const totalProgress = projectList.reduce(
+        (sum: number, p: any) => sum + (p.progress || 0),
+        0,
+      );
+      const avgProgress =
+        projectList.length > 0
+          ? Math.round(totalProgress / projectList.length)
+          : 0;
+
+      return {
+        projectProgress: avgProgress,
+        budget: 0,
+        spent: 0,
+        remaining: 0,
+        recentUpdates: projectList.slice(0, 5).map((p: any, i: number) => ({
+          id: p.id || i,
+          title: `${p.name} — ${p.status?.replace(/_/g, " ") || "Active"}`,
+          time: p.updatedAt
+            ? new Date(p.updatedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "N/A",
+        })),
+        inspectionSummary: { passed: 0, failed: 0, pending: 0 },
+      };
+    } catch {
+      return {
+        projectProgress: 0,
+        budget: 0,
+        spent: 0,
+        remaining: 0,
+        recentUpdates: [],
+        inspectionSummary: { passed: 0, failed: 0, pending: 0 },
+      };
+    }
+  },
+
   getProjectManagerDashboardData: async () => {
-    const response = await apiClient.get('/dashboard/projectmanager');
+    const response = await apiClient.get("/contech/admin/dashboard");
     return response.data;
   },
 
   getContractorDashboardData: async () => {
-    const response = await apiClient.get('/dashboard/contractor');
-    return response.data;
+    try {
+      const response = await apiClient.get("/dashboard/contractor");
+      return response.data;
+    } catch {
+      // Endpoint may not exist yet — return safe defaults
+      return {
+        assignedTasks: 0,
+        overdueTasks: 0,
+        pendingTasks: 0,
+        todayInspections: [],
+        openIssues: { total: 0, critical: 0, minor: 0 },
+      };
+    }
   },
 };

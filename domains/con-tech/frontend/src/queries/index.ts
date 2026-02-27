@@ -1,7 +1,8 @@
-export { useProjects } from './projects';
-export { useTasks } from './tasks';
-export { useInspections } from './inspections';
-export { useReports } from './reports';
-export { useContracts } from './contracts';
-export { useUsers } from './users';
-export { useComments } from './comments';
+export * from "./projects";
+export * from "./tasks";
+export * from "./inspections";
+export * from "./reports";
+export * from "./contracts";
+export * from "./users";
+export * from "./comments";
+export * from "./dashboard";

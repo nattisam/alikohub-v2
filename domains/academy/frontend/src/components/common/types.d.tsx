@@ -106,7 +106,13 @@ export interface CourseModule {
 
 export type LessonType = "QUIZ" | "VIDEO" | "WEBINAR" | "ASSIGNMENT";
 
-export type ContentType = "VIDEO" | "PDF" | "QUIZ" | "ASSIGNMENT" | "TEXT";
+export type ContentType =
+  | "VIDEO"
+  | "PDF"
+  | "QUIZ"
+  | "ASSIGNMENT"
+  | "TEXT"
+  | "IMAGE";
 
 export interface CourseLesson {
   id: number;
@@ -118,6 +124,7 @@ export interface CourseLesson {
   maxScore?: number;
   passingScore?: number;
   isCompleted?: boolean;
+  duration?: number;
   createdAt: string;
   updatedAt: string;
   dueDate?: string;
@@ -133,6 +140,7 @@ export interface Lesson {
   maxScore?: number;
   passingScore?: number;
   isCompleted?: boolean;
+  duration?: number;
   createdAt: string;
   updatedAt: string;
   dueDate?: string;
@@ -144,10 +152,25 @@ export interface LessonContent {
   title: string;
   type: ContentType;
   content?: string;
+  body?: string;
   contentUrl?: string;
   url: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Exercise {
+  id: number;
+  moduleId: number;
+  title: string;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE";
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  points: number;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TrendingCourseCardProps {

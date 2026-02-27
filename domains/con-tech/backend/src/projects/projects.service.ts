@@ -33,13 +33,10 @@ export class ProjectsService {
       const contechProfile = await this.userService.getOrCreateProfile(user);
       winstonLogger.info(`User profile role: ${contechProfile.role}`);
 
-      // Only PROJECT_MANAGER and ADMIN can create projects
-      if (
-        contechProfile.role !== 'PROJECT_MANAGER' &&
-        contechProfile.role !== 'ADMIN'
-      ) {
+      // Only ADMIN can create projects
+      if (contechProfile.role !== 'ADMIN') {
         winstonLogger.warn(`User ${user.firebaseId} with role ${contechProfile.role} tried to create a project`);
-        throw new RpcException('You do not have permission to create projects.');
+        throw new RpcException('Only Admins can create projects.');
       }
 
       // Ensure client exists if provided
@@ -57,10 +54,9 @@ export class ProjectsService {
           // Reverting to safe logic: usage of spread ...dto takes precedence if verified, but let's be careful.
           // The creation logic seemed to force contractorId = user.firebaseId. I should fix this.
           contractorId: dto.contractorId, 
-          inspectorId: dto.inspectorId,
-          endDate: dto.endDate ? new Date(dto.endDate) : new Date(), // Fallback
-          startDate: new Date(dto.startDate),
-          status: 'PLANNED',
+          endDate: dto.endDate ? new Date(dto.endDate) : null,
+          startDate: dto.startDate ? new Date(dto.startDate) : null,
+          status: 'ACTIVE',
           createdBy: user.firebaseId,
           updatedBy: user.firebaseId,
         },
@@ -82,7 +78,7 @@ export class ProjectsService {
 
   async getInspectors(){
     return this.prisma.contechProfile.findMany({
-      where: {role: 'PROJECT_MANAGER'},
+      where: {role: 'ADMIN'},
       select: {userId: true}
     })
   }
@@ -103,7 +99,7 @@ export class ProjectsService {
     } else if (profile.role === 'CLIENT') {
       where.clientId = user.firebaseId;
     }
-    // ADMIN and PROJECT_MANAGER see all (or use query filters)
+    // ADMIN see all (or use query filters)
 
     if (query.status) where.status = query.status;
     if (query.manager) where.manager = query.manager;
@@ -132,19 +128,20 @@ export class ProjectsService {
       this.prisma.project.count({ where }),
     ]);
 
-    // Enrich with manager data
-        const managerIds = [
-          ...new Set(
-            projects
-              .map((p) => p.manager)
-              .filter((id): id is string => id != null),
-          ),
-        ];
-        const managers = await this.userService.getUsersByIds(managerIds);
+    // Enrich with manager, client, and contractor data
+    const userIds = [...new Set([
+      ...projects.map(p => p.manager),
+      ...projects.map(p => p.clientId).filter(id => id != null),
+      ...projects.map(p => p.contractorId).filter(id => id != null),
+    ])] as string[];
+    
+    const users = await this.userService.getUsersByIds(userIds);
 
     const enrichedProjects = projects.map((project) => ({
       ...project,
-      manager: managers.find((m) => m.firebaseId === project.manager) || null,
+      manager: users.find((u) => u.firebaseId === project.manager) || null,
+      client: project.clientId ? users.find((u) => u.firebaseId === project.clientId) || null : null,
+      contractor: project.contractorId ? users.find((u) => u.firebaseId === project.contractorId) || null : null,
       taskStats: {
         total: project.tasks.length,
         completed: project.tasks.filter((t) => t.status === 'COMPLETED').length,
@@ -184,12 +181,18 @@ export class ProjectsService {
        throw new ForbiddenException('You do not have permission to view this project.');
     }
 
-    // Enrich with manager data
-    const manager = await this.userService.getUserById(project.manager);
+    // Enrich with manager, client and contractor data
+    const [manager, client, contractor] = await Promise.all([
+      this.userService.getUserById(project.manager),
+      project.clientId ? this.userService.getUserById(project.clientId) : Promise.resolve(null),
+      project.contractorId ? this.userService.getUserById(project.contractorId) : Promise.resolve(null),
+    ]);
 
     return {
       ...project,
       manager,
+      client,
+      contractor,
     };
   }
 
@@ -201,11 +204,8 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
-    // Check permissions: ADMIN can update any project, PROJECT_MANAGER can only update their own
-    if (
-      contechProfile.role !== 'ADMIN' &&
-      project.manager !== user.firebaseId
-    ) {
+    // Check permissions: ADMIN can update any project
+    if (contechProfile.role !== 'ADMIN') {
       throw new ForbiddenException(
         'You do not have permission to update this project',
       );
@@ -236,10 +236,7 @@ export class ProjectsService {
     }
 
     // Check permissions
-    if (
-      contechProfile.role !== 'ADMIN' &&
-      project.manager !== user.firebaseId
-    ) {
+    if (contechProfile.role !== 'ADMIN') {
       throw new ForbiddenException(
         'You do not have permission to delete this project',
       );
@@ -311,8 +308,16 @@ export class ProjectsService {
     });
   }
 
-  async getProjectStats(manager?: string) {
-    const where = manager ? { manager } : {};
+  async getProjectStats(user: AuthenticatedUser, manager?: string) {
+    const profile = await this.userService.getOrCreateProfile(user);
+    const where: any = manager ? { manager } : {};
+
+    // Filter by role if not Admin
+    if (profile.role === 'CONTRACTOR') {
+      where.contractorId = user.firebaseId;
+    } else if (profile.role === 'CLIENT') {
+      where.clientId = user.firebaseId;
+    }
 
     const [totalProjects, activeProjects, completedProjects, plannedProjects] =
       await Promise.all([
@@ -327,6 +332,293 @@ export class ProjectsService {
       active: activeProjects,
       completed: completedProjects,
       planned: plannedProjects,
+    };
+  }
+
+  // TEST-03: Project Progress API for contractors
+  async updateProgress(
+    projectId: number,
+    progress: number,
+    user: AuthenticatedUser,
+    notes?: string,
+  ) {
+    if (progress < 0 || progress > 100) {
+      throw new BadRequestException('Progress must be between 0 and 100');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const contechProfile = await this.userService.getOrCreateProfile(user);
+
+    const isAssignedContractor =
+      contechProfile.role === 'CONTRACTOR' &&
+      project.contractorId === user.firebaseId;
+    const isAdmin = contechProfile.role === 'ADMIN';
+
+    if (!isAssignedContractor && !isAdmin) {
+      throw new ForbiddenException(
+        'You do not have permission to update progress for this project',
+      );
+    }
+
+    winstonLogger.info(
+      `Updating progress for project ${projectId} to ${progress}% by user ${user.firebaseId}`,
+    );
+
+    const updatedProject = await this.prisma.project.update({
+      where: { id: projectId },
+      data: {
+        progress,
+        updatedBy: user.firebaseId,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Optionally create a project update log if notes are provided
+    if (notes) {
+      await this.prisma.projectUpdate.create({
+        data: {
+          projectId,
+          authorId: user.firebaseId,
+          text: `Progress updated to ${progress}%: ${notes}`,
+        },
+      });
+    }
+
+    return updatedProject;
+  }
+
+  // TEST-04: Weekly/Textual Updates - Create
+  async createProjectUpdate(
+    projectId: number,
+    text: string,
+    user: AuthenticatedUser,
+    isVisibleToClient: boolean = false,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const contechProfile = await this.userService.getOrCreateProfile(user);
+
+    const isAssignedContractor =
+      contechProfile.role === 'CONTRACTOR' &&
+      project.contractorId === user.firebaseId;
+    const isAdmin = contechProfile.role === 'ADMIN';
+
+    if (!isAssignedContractor && !isAdmin) {
+      throw new ForbiddenException(
+        'You do not have permission to add updates to this project',
+      );
+    }
+
+    winstonLogger.info(
+      `Creating project update for project ${projectId} by user ${user.firebaseId}`,
+    );
+
+    return await this.prisma.projectUpdate.create({
+      data: {
+        projectId,
+        authorId: user.firebaseId,
+        text,
+        isVisibleToClient,
+      },
+    });
+  }
+
+  // TEST-04: Weekly/Textual Updates - List
+  async getProjectUpdates(
+    projectId: number,
+    user: AuthenticatedUser,
+    page = 1,
+    pageSize = 10,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const contechProfile = await this.userService.getOrCreateProfile(user);
+    const isClient = contechProfile.role === 'CLIENT';
+
+    // Check if user can view updates (same access as viewing project)
+    if (
+      isClient &&
+      project.clientId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view updates for this project',
+      );
+    }
+    if (
+      contechProfile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view updates for this project',
+      );
+    }
+
+    const skip = (page - 1) * pageSize;
+    
+    const where: any = { projectId };
+    // Clients only see what is visible to them
+    if (isClient) {
+      where.isVisibleToClient = true;
+    }
+
+    const [updates, total] = await Promise.all([
+      this.prisma.projectUpdate.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.projectUpdate.count({ where }),
+    ]);
+
+    // Enrich with author data
+    const authorIds: string[] = [...new Set(updates.map((u) => u.authorId))];
+    const authors = await this.userService.getUsersByIds(authorIds);
+
+    const enrichedUpdates = updates.map((update) => ({
+      ...update,
+      author: authors.find((a) => a.firebaseId === update.authorId) || null,
+    }));
+
+    return {
+      items: enrichedUpdates,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  // Document Management
+  async addDocument(
+    projectId: number,
+    dto: { title: string; url: string; fileType?: string; isVisibleToClient?: boolean },
+    user: AuthenticatedUser,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const contechProfile = await this.userService.getOrCreateProfile(user);
+
+    const isAssignedContractor =
+      contechProfile.role === 'CONTRACTOR' &&
+      project.contractorId === user.firebaseId;
+    const isAdmin = contechProfile.role === 'ADMIN';
+
+    if (!isAssignedContractor && !isAdmin) {
+      throw new ForbiddenException(
+        'You do not have permission to add documents to this project',
+      );
+    }
+
+    winstonLogger.info(
+      `Adding document to project ${projectId} by user ${user.firebaseId}`,
+    );
+
+    return await this.prisma.projectDocument.create({
+      data: {
+        projectId,
+        title: dto.title,
+        url: dto.url,
+        fileType: dto.fileType,
+        isVisibleToClient: dto.isVisibleToClient ?? false,
+        uploadedBy: user.firebaseId,
+      },
+    });
+  }
+
+  async getDocuments(
+    projectId: number,
+    user: AuthenticatedUser,
+    page = 1,
+    pageSize = 20,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const contechProfile = await this.userService.getOrCreateProfile(user);
+    const isClient = contechProfile.role === 'CLIENT';
+
+    // Access check
+    if (
+      isClient &&
+      project.clientId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view documents for this project',
+      );
+    }
+    if (
+      contechProfile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view documents for this project',
+      );
+    }
+
+    const skip = (page - 1) * pageSize;
+    
+    const where: any = { projectId };
+    // Clients only see what is visible to them
+    if (isClient) {
+      where.isVisibleToClient = true;
+    }
+
+    const [documents, total] = await Promise.all([
+      this.prisma.projectDocument.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.projectDocument.count({ where }),
+    ]);
+
+    // Enrich with uploader info
+    const uploaderIds: string[] = [...new Set(documents.map((d) => d.uploadedBy))];
+    const uploaders = await this.userService.getUsersByIds(uploaderIds);
+
+    const enrichedDocuments = documents.map((doc) => ({
+      ...doc,
+      uploader: uploaders.find((u) => u.firebaseId === doc.uploadedBy) || null,
+    }));
+
+    return {
+      items: enrichedDocuments,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 }

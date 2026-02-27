@@ -7,8 +7,7 @@ import {
   BookOpen, 
   Menu,
   X,
-  LogOut,
-  Settings
+  LogOut
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
@@ -58,10 +57,6 @@ const AdminLayout = () => {
     { path: "/admin/courses", label: "Manage Courses", icon: <BookOpen className="w-5 h-5" /> },
   ];
 
-  const settingsNavItems = [
-    { label: 'Settings', path: '/admin/settings', icon: <Settings className="w-5 h-5" /> },
-  ];
-
   const NavLink = ({ item }: { item: typeof menuItems[0] }) => {
     const active = isActive(item.path);
     return (
@@ -97,7 +92,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-screen w-64 bg-[#0D72BA] border-r border-sidebar-border',
+          'fixed left-0 top-0 h-screen w-64 bg-[#2e3b4d] border-r border-sidebar-border',
           'flex flex-col gap-6 p-6 overflow-y-auto',
           'transition-all duration-300 z-30',
           'lg:sticky lg:translate-x-0 lg:top-0',
@@ -116,15 +111,6 @@ const AdminLayout = () => {
         <nav className="flex-1">
           <div className="space-y-2">
             {menuItems.map((item) => (
-              <NavLink key={item.path} item={item} />
-            ))}
-          </div>
-        </nav>
-
-        {/* Settings Navigation */}
-        <nav className="pt-4 border-t border-white/10">
-          <div className="space-y-2">
-            {settingsNavItems.map((item) => (
               <NavLink key={item.path} item={item} />
             ))}
           </div>
@@ -150,11 +136,7 @@ const AdminLayout = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-20 border-b border-gray-300 bg-[#FFFFFF] px-4 md:px-8 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {menuItems.find(item => isActive(item.path))?.label || "Dashboard"}
-          </h1>
-
+        <header className="sticky top-0 z-20 border-b border-gray-300 bg-[#FFFFFF] px-4 md:px-8 py-4 flex items-center justify-end">
           <div className="flex items-center gap-4">
             <Button 
               variant="outline" 

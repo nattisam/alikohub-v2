@@ -62,16 +62,16 @@ export class UsersService {
    * to update the user's role in the system.
    *
    * @param {string} userId - The ID of the user whose role is to be updated
-   * @param {string} role - The new role to assign to the user. Must be one of: "CLIENT", "CONTRACTOR", "PROJECT_MANAGER"
+   * @param {string} role - The new role to assign to the user. Must be one of: "CLIENT", "CONTRACTOR", "ADMIN"
    * @returns {Promise<void>} A promise that resolves when the role update is successful
    * @throws {Error} Throws an error if the role is not valid or if the API request fails
    */
   async updateUserRole(
     userId: string,
-    role: string
+    role: string,
   ): Promise<CurrentUser | null> {
     const authToken = AuthService.getAuthToken();
-    const ROLES = ["CLIENT", "CONTRACTOR", "PROJECT_MANAGER", "ADMIN"];
+    const ROLES = ["CLIENT", "CONTRACTOR", "ADMIN"];
     try {
       if (ROLES.includes(role)) {
         const response = await contechApi.post(
@@ -81,9 +81,8 @@ export class UsersService {
             headers: {
               Authorization: `Bearer ${authToken}`,
             },
-          }
+          },
         );
-        console.log(response);
         if (response.status === 201) {
           return response.data;
         } else return null;

@@ -26,20 +26,33 @@ const DashboardRouter: React.FC = () => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // If user hasn't selected a role yet (using hasSelectedRole as the primary indicator), redirect to role selection page
-  // According to the experience lesson, always check hasSelectedRole instead of academyRole
-  const hasSelectedRole = currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
-  
+  // If user is an admin, always allow them to go to the admin dashboard
+  if (currentUser?.globalRole === "ADMIN") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  const hasSelectedRole =
+    currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
+
+  const { setRoleModalOpen } = useAuth();
+
+  React.useEffect(() => {
+    if (!hasSelectedRole && !isLoading && currentUser) {
+      setRoleModalOpen(true);
+    }
+  }, [hasSelectedRole, isLoading, currentUser, setRoleModalOpen]);
+
   if (!hasSelectedRole) {
-    return <Navigate to="/role" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Get the user's active role (the role they're currently using)
-  const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-  
+  const activeRole =
+    currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
+
   // Check if user wants to apply as instructor
   const pendingRole = currentUser.pendingRole;
-  
+
   // Check instructor status
   const instructorStatus = currentUser.roleStatus?.instructor;
 
@@ -54,7 +67,11 @@ const DashboardRouter: React.FC = () => {
     case "STUDENT":
     default:
       // Check if user wants to apply as instructor
-      if (pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') {
+      if (
+        pendingRole === "INSTRUCTOR" ||
+        instructorStatus === "pending" ||
+        instructorStatus === "not_applied"
+      ) {
         // If user has pending instructor application, redirect to the student dashboard
         // The student dashboard will show the instructor application modal
         return <Navigate to="/student-dashboard" replace />;

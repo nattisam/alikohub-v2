@@ -40,19 +40,22 @@ export class ExercisesService {
     });
   }
 
-  async findAllByModule(moduleId: number, user: AuthenticatedUser) {
-    // Authorization check is similar to Lessons - must be enrolled, instructor, or admin
-    // For now, we'll rely on the fact that if they can see the module (CourseModulesService), they can see the exercise metadata.
-    // However, we should probably hide `correctAnswer` for students.
-    
-    // Simplification: Re-using the logic from CourseModulesService implicitly if we were to call this from there.
-    // But since this is a standalone endpoint likely, we need to verify access.
+  async findAllByModule(moduleId: number, user: AuthenticatedUser, query: any = {}) {
     await this.verifyModuleAccess(moduleId, user);
 
-    const exercises = await this.prisma.exercise.findMany({
-      where: { moduleId },
-      orderBy: { order: 'asc' },
-    });
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const [exercises, total] = await Promise.all([
+      this.prisma.exercise.findMany({
+        where: { moduleId },
+        skip,
+        take: pageSize,
+        orderBy: { order: 'asc' },
+      }),
+      this.prisma.exercise.count({ where: { moduleId } })
+    ]);
 
     // Strip correct answers for students
     const academyProfile = await this.userService.getOrCreateProfile(user);
@@ -62,14 +65,70 @@ export class ExercisesService {
     const isInstructor = module.course.instructorId === user.firebaseId;
     const isAdmin = academyProfile.role === 'ADMIN';
 
+    let items = exercises;
     if (!isInstructor && !isAdmin) {
-      return exercises.map(ex => {
+      items = exercises.map(ex => {
         const { correctAnswer, ...rest } = ex;
         return rest;
-      });
+      }) as any;
     }
 
-    return exercises;
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
+  }
+
+  async findByInstructor(user: AuthenticatedUser, query: any = {}) {
+    const academyProfile = await this.userService.getOrCreateProfile(user);
+    if (academyProfile.role !== 'INSTRUCTOR' && academyProfile.role !== 'ADMIN') {
+      throw new ForbiddenException('Instructor role required');
+    }
+
+    const page = Number(query.page) || 1;
+    const pageSize = Number(query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+
+    const where: any = {
+      module: {
+        course: {
+          instructorId: user.firebaseId
+        }
+      }
+    };
+
+    if (query.moduleId) where.moduleId = Number(query.moduleId);
+    if (query.type) where.type = query.type;
+
+    const [exercises, total] = await Promise.all([
+      this.prisma.exercise.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+        include: { 
+          module: { 
+            include: { 
+              course: { 
+                select: { id: true, title: true } 
+              } 
+            } 
+          } 
+        }
+      }),
+      this.prisma.exercise.count({ where })
+    ]);
+
+    return {
+      items: exercises,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    };
   }
 
   async findOne(id: number, user: AuthenticatedUser) {

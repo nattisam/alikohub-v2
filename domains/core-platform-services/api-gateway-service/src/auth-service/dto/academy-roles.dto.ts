@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray, ValidateNested, IsEmail } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -34,10 +34,9 @@ export class TeacherApplicationDto {
   @IsString({ each: true })
   teachingCategories!: string[];
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Teacher resume file' })
   @IsOptional()
-  resumeUrl?: string;
+  resumeUrl?: any;
 
   @ApiProperty()
   @IsArray()
@@ -53,6 +52,42 @@ export class TeacherApplicationDto {
     name: string;
     url: string;
   }[];
+}
+
+export class InstructorApplicationDto {
+  @ApiProperty({ example: 'John' })
+  @IsString()
+  @IsNotEmpty()
+  firstname!: string;
+
+  @ApiProperty({ example: 'Doe' })
+  @IsString()
+  @IsNotEmpty()
+  lastname!: string;
+
+  @ApiProperty({ example: 'john.doe@example.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email!: string;
+
+  @ApiPropertyOptional({ example: '+123456789' })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiProperty({ example: 'Web Development, AI', description: 'Comma-separated categories' })
+  @IsString()
+  @IsNotEmpty()
+  teachingCategories!: string;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Teacher resume file (PDF/DOCX)' })
+  @IsOptional()
+  resume?: any;
+
+  @ApiPropertyOptional({ example: '[{"question":"Why?","answer":"Because"}]', description: 'JSON string of interview responses' })
+  @IsString()
+  @IsOptional()
+  interviewResponses?: string;
 }
 
 export class SwitchRoleDto {

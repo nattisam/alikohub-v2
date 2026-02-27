@@ -7,12 +7,14 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   Request,
   ParseIntPipe,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
+import { AcademyRolesGuard, Roles, AcademyRole } from '../../common/guards/academy-roles.guard';
 import { AuthGuard } from '../../common/guard/firebase_auth.guard';
 import { CreateCourseModuleDto } from './dto/create-course-module.dto';
 import { UpdateCourseModuleDto } from './dto/update-course-module.dto';
@@ -32,6 +34,8 @@ export class CourseModuleController {
 
   // Create module (Instructor only – documented)
   @Post()
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
   @ApiOperation({
     summary: 'Create course module',
     description: '🔒 Instructor only',
@@ -47,6 +51,18 @@ export class CourseModuleController {
     return this.academyClient.send({ cmd: 'create_course_module' }, payload);
   }
 
+  // Get all modules
+  @Get()
+  @ApiOperation({ summary: 'Get all course modules' })
+  @ApiResponse({ status: 200, description: 'Return all modules (paginated)' })
+  findAllModules(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = {
+      user: req.user,
+      query,
+    };
+    return this.academyClient.send({ cmd: 'find_all_modules' }, payload);
+  }
+
   // Get modules by course
   @Get('course/:courseId')
   @ApiOperation({ summary: 'Get modules by course ID' })
@@ -58,10 +74,12 @@ export class CourseModuleController {
   findAllModulesByCourse(
     @Request() req: RequestWithUser,
     @Param('courseId', ParseIntPipe) courseId: number,
+    @Query() query: any,
   ) {
     const payload = {
       courseId,
       user: req.user,
+      query,
     };
     return this.academyClient.send({ cmd: 'find_modules_by_course' }, payload);
   }
@@ -78,8 +96,23 @@ export class CourseModuleController {
     return this.academyClient.send({ cmd: 'find_module_by_id' }, payload);
   }
 
+  @Get('instructor/:id')
+  @ApiOperation({ summary: 'Get module by ID for instructor (full details)' })
+  @ApiParam({ name: 'id', type: Number })
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
+  findInstructorModuleById(@Request() req: RequestWithUser, @Param('id', ParseIntPipe) id: number) {
+    const payload = {
+      id,
+      user: req.user,
+    };
+    return this.academyClient.send({ cmd: 'get_instructor_module' }, payload);
+  }
+
   // Update module
   @Put(':id')
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
   @ApiOperation({
     summary: 'Update course module',
     description: '🔒 Instructor only',
@@ -101,6 +134,8 @@ export class CourseModuleController {
 
   // Delete module
   @Delete(':id')
+  @UseGuards(AuthGuard, AcademyRolesGuard)
+  @Roles(AcademyRole.INSTRUCTOR, AcademyRole.ADMIN)
   @ApiOperation({
     summary: 'Delete course module',
     description: '🔒 Instructor only',

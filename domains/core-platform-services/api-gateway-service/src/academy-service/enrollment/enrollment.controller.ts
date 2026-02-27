@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   Logger,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { RequestWithUser } from '../../common/types/request-with-user.interface';
@@ -89,9 +90,18 @@ export class EnrollmentController {
     summary: 'Get all enrollments',
     description: '🔒 Admin / Instructor',
   })
-  findAllEnrollments(@Request() req: RequestWithUser) {
-    const payload = { user: req.user };
+  findAllEnrollments(@Request() req: RequestWithUser, @Query() query: any) {
+    const payload = { user: req.user, query };
     return this.academyClient.send({ cmd: 'find_all_enrollments' }, payload);
+  }
+
+  @Get('instructor/my')
+  @ApiOperation({
+    summary: 'Get enrollments for current instructor courses',
+    description: '🔒 Instructor only',
+  })
+  getMyInstructorEnrollments(@Request() req: RequestWithUser, @Query() query: any) {
+    return this.academyClient.send({ cmd: 'find_instructor_enrollments' }, { user: req.user, query });
   }
 
   // Student
@@ -120,8 +130,9 @@ export class EnrollmentController {
   findEnrollmentsByCohort(
     @Request() req: RequestWithUser,
     @Param('cohortId', ParseIntPipe) cohortId: number,
+    @Query() query: any,
   ) {
-    const payload = { cohortId, user: req.user };
+    const payload = { cohortId, user: req.user, query };
     return this.academyClient.send(
       { cmd: 'find_enrollments_by_cohort' },
       payload,
@@ -163,8 +174,9 @@ export class EnrollmentController {
   getEnrollmentsByCourse(
     @Request() req: RequestWithUser,
     @Param('courseId', ParseIntPipe) courseId: number,
+    @Query() query: any,
   ) {
-    const payload = { courseId, user: req.user };
+    const payload = { courseId, user: req.user, query };
     // Assuming backend will support this or redirecting to general find
     return this.academyClient.send({ cmd: 'find_enrollments_by_course' }, payload);
   }

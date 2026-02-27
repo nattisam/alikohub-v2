@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes } from '@nestjs/common';
+import { Controller, Post, Get, Inject, Body, HttpCode, HttpStatus, Param, HttpException, Logger, Res, UseGuards, Request, ForbiddenException, BadRequestException, UsePipes, Patch, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Response } from 'express';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
@@ -8,12 +8,14 @@ import { Roles } from '../common/roles/roles.decorator';
 import { CaptchaService } from '../common/captcha/captcha.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto } from './dto/academy-roles.dto';
+import { SelectRoleDto, TeacherApplicationDto, SwitchRoleDto, InstructorApplicationDto } from './dto/academy-roles.dto';
 import { catchError, timeout } from 'rxjs/operators';
 import { throwError, TimeoutError, firstValueFrom } from 'rxjs';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import * as Joi from 'joi';
 import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileUploadService } from '../file-upload-service/file-upload.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -23,6 +25,7 @@ export class AuthController {
   constructor(
     @Inject('AUTH_SERVICE') private authClient: ClientProxy,
     private readonly captchaService: CaptchaService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   private handleError(error: any, operation: string) {
@@ -119,6 +122,11 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Select academy role' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    role: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+      'any.only': 'Role must be one of: student, teacher, instructor'
+    })
+  })))
   async selectAcademyRole(@Request() req: any, @Body() selectRoleDto: SelectRoleDto) {
     // Inject userId from authenticated user
     const payload = { 
@@ -139,9 +147,20 @@ export class AuthController {
 
   @Post('academy/apply-teacher')
   @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('resume'))
+  @ApiConsumes('multipart/form-data')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Apply for teacher role' })
-  async applyTeacher(@Request() req: any, @Body() applicationDto: TeacherApplicationDto) {
+  async applyTeacher(
+    @Request() req: any, 
+    @Body() applicationDto: TeacherApplicationDto,
+    @UploadedFile() resume?: Express.Multer.File,
+  ) {
+    if (resume) {
+      const uploadResult = await this.fileUploadService.uploadFile(resume, 'document');
+      applicationDto.resumeUrl = uploadResult.url;
+    }
+
     const payload = {
       ...applicationDto,
       userId: req.user.firebaseId
@@ -152,6 +171,76 @@ export class AuthController {
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Apply Teacher');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('academy/apply-instructor')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('resume'))
+  @ApiConsumes('multipart/form-data')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Apply for instructor role (FormData friendly)' })
+  async applyInstructor(
+    @Request() req: any,
+    @Body() dto: InstructorApplicationDto,
+    @UploadedFile() resume?: Express.Multer.File,
+  ) {
+    let resumeUrl = null;
+    if (resume) {
+      const uploadResult = await this.fileUploadService.uploadFile(resume, 'document');
+      resumeUrl = uploadResult.url;
+    }
+
+    // Parse categories from string to array
+    const teachingCategories = dto.teachingCategories.split(',').map(c => c.trim());
+    
+    // Parse interview responses if provided as JSON string
+    let interviewResponses = [];
+    if (dto.interviewResponses) {
+      try {
+        interviewResponses = JSON.parse(dto.interviewResponses);
+      } catch (e) {
+        throw new BadRequestException('Invalid format for interviewResponses. Must be a JSON string.');
+      }
+    }
+
+    const payload = {
+      userId: req.user.firebaseId,
+      personalDetails: {
+        firstname: dto.firstname,
+        lastname: dto.lastname,
+        email: dto.email,
+        phone: dto.phone,
+      },
+      teachingCategories,
+      resumeUrl,
+      interviewResponses,
+    };
+
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'apply_teacher_role' }, payload).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Apply Instructor');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Get('academy/instructor/:id')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @ApiOperation({ summary: 'Get instructor/applicant details by ID (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Instructor details' })
+  async getInstructorById(@Param('id') id: string) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'get_instructor_by_id' }, { id }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Get Instructor By ID');
           return throwError(() => error);
         }),
       )
@@ -177,6 +266,12 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve teacher application (Admin only)' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    reviewNotes: Joi.string().required().min(5).messages({
+      'string.empty': 'Review notes are required for approval',
+      'string.min': 'Review notes must be at least 5 characters long'
+    })
+  })))
   async approveTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'approve_teacher_application' }, { 
@@ -198,6 +293,12 @@ export class AuthController {
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject teacher application (Admin only)' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    reviewNotes: Joi.string().required().min(5).messages({
+      'string.empty': 'Review notes are required for rejection',
+      'string.min': 'Review notes must be at least 5 characters long'
+    })
+  })))
   async rejectTeacher(@Request() req: any, @Param('applicationId') applicationId: string, @Body() body: { reviewNotes?: string }) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'reject_teacher_application' }, { 
@@ -219,6 +320,12 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Switch user role' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    newRole: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+      'any.only': 'newRole must be one of: student, teacher, instructor'
+    }),
+    userId: Joi.string().optional()
+  })))
   async switchRole(@Request() req: any, @Body() switchRoleDto: SwitchRoleDto) {
     const payload = {
       ...switchRoleDto,
@@ -322,6 +429,72 @@ export class AuthController {
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Verify Auth');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('contech/user')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a ConTech user (Admin only)' })
+  @ApiResponse({ status: 201, description: 'ConTech user created successfully' })
+  async createContechUser(@Body() dto: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'create_contech_user' }, dto).pipe(
+        timeout(30000),
+        catchError(error => {
+          this.handleError(error, 'Create ConTech User');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('events/user')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create an Events user/content manager (Admin only)' })
+  @ApiResponse({ status: 201, description: 'Events user created successfully' })
+  async createEventsUser(@Body() dto: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'create_events_user' }, dto).pipe(
+        timeout(30000),
+        catchError(error => {
+          this.handleError(error, 'Create Events User');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Patch('user/:id/status')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user status (Admin only)' })
+  async updateStatus(@Param('id') firebaseId: string, @Body('status') status: string) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'update_status' }, { firebaseId, status }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Update Status');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Delete('user/:id')
+  @UseGuards(AuthGuard, AdminAccessGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete user account (Admin only)' })
+  async deleteUser(@Param('id') firebaseId: string) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'delete_user' }, { firebaseId }).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Delete User');
           return throwError(() => error);
         }),
       )

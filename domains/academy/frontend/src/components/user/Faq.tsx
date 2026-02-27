@@ -1,60 +1,91 @@
+import { useState } from "react";
+import { FiPlus, FiMinus } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+
 const Faq = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const navigate = useNavigate();
+
+  const faqs = [
+    {
+      question: "Is there a free trial available?",
+      answer:
+        "Yes, you can try us for free for 30 days. We’ll also provide a free, personalized 30-minute onboarding call to get you started quickly.",
+    },
+    {
+      question: "Can I change my plan later?",
+      answer:
+        "Absolutely! You can upgrade or downgrade your plan at any time directly from your account settings.",
+    },
+    {
+      question: "What is your cancellation policy?",
+      answer:
+        "You can cancel your subscription anytime. No hidden fees, and access will remain until the end of your billing period.",
+    },
+    {
+      question: "Can other info be added to an invoice?",
+      answer:
+        "Yes, you can include company details, purchase order numbers, or any custom notes when generating invoices.",
+    },
+    {
+      question: "How does billing work?",
+      answer:
+        "Billing is automated monthly or yearly depending on your subscription. You can view and download receipts anytime.",
+    },
+    {
+      question: "How do I change my account email?",
+      answer:
+        "You can update your email from your profile settings. A confirmation link will be sent to verify the change.",
+    },
+  ];
+
+  const toggleFaq = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
   return (
-    <main className="bg-[#F8F6CC] min-h-screen flex flex-col items-center py-10 px-4 lg:ml-15 lg:mr-15">
-      <section className="w-full max-w-2xl">
-        <h1 className="text-2xl md:text-3xl font-bold text-center mb-8">
-          Frequently asked questions
+    <main className="bg-gradient-to-b from-gray-100 via-gray-200 to-gray-300 min-h-screen flex flex-col items-center py-10 px-4 lg:px-20">
+      <section className="w-full max-w-3xl">
+        <h1 className="text-3xl md:text-4xl font-bold text-center mb-10 text-[#17469E]">
+          Frequently Asked Questions
         </h1>
 
-        <div className="border border-[#667085] p-4 mb-4 rounded flex justify-between items-center">
-          <h2 className="text-lg md:text-xl font-semibold text-[#101828]">
-            Is there a free trial available?
-          </h2>
-          <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-blue-600 text-blue-600 text-lg font-bold">
-            −
-          </div>
-        </div>
+        {faqs.map((item, index) => {
+          const isOpen = openIndex === index;
+          return (
+            <div
+              key={index}
+              className="border border-gray-200 rounded-xl mb-4 overflow-hidden shadow-sm"
+            >
+              <button
+                onClick={() => toggleFaq(index)}
+                className="w-full flex justify-between items-center p-4 bg-white hover:bg-gray-50 transition"
+              >
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800 text-left">
+                  {item.question}
+                </h2>
+                <span className="text-gray-500 text-2xl flex items-center">
+                  {isOpen ? <FiMinus /> : <FiPlus />}
+                </span>
+              </button>
 
-        <div className="border border-[#667085] p-4 mb-4 rounded">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg md:text-xl font-semibold text-[#101828]">
-              Can I change my plan later?
-            </h2>
-            <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-blue-600 text-blue-600 text-lg font-bold">
-              +
+              {isOpen && (
+                <div className="p-4 bg-gray-50 text-gray-600 text-base md:text-base">
+                  {item.answer}
+                </div>
+              )}
             </div>
-          </div>
-          <h2 className="text-[#667085] text-base font-normal mt-2">
-            Yes, you can try us for free for 30 days. If you want, we’ll provide
-            you with a free, personalized 30-minute onboarding call to get you
-            up and running as soon as possible.
-          </h2>
-        </div>
+          );
+        })}
 
-        {[
-          "What is your cancellation policy?",
-          "Can other info be added to an invoice?",
-          "How does billing work?",
-          "How do I change my account email?",
-        ].map((question, index) => (
-          <div
-            key={index}
-            className="border border-[#667085] p-4 mb-4 rounded flex justify-between items-center"
-          >
-            <h2 className="text-lg md:text-xl font-semibold text-[#101828]">
-              {question}
-            </h2>
-            <div className="w-5 h-5 flex items-center justify-center rounded-full border-2 border-blue-600 text-blue-600 text-lg font-bold">
-              +
-            </div>
-          </div>
-        ))}
-
-        <div className="text-center mt-10">
-          <h2 className="text-lg md:text-xl font-semibold text-[#101828] mb-4">
+        <div className="text-center mt-12">
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4">
             Still have questions?
           </h2>
-          <button className="bg-gradient-to-r from-[#E6D600] to-[#F2F296] text-black px-6 py-2 rounded-full hover:bg-[#E6D600] transition">
+          <button
+            onClick={() => navigate("/contact")}
+            className="px-8 py-3 bg-[#0095DA] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+          >
             Get in touch
           </button>
         </div>

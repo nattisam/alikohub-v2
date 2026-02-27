@@ -1,14 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
-  FaFolder,
   FaProjectDiagram,
   FaFileAlt,
-  FaClipboardList,
-  FaDollarSign,
   FaHome,
-  FaBars,
-  FaTimes,
   FaUserFriends,
+  FaInfoCircle,
+  FaUserCircle,
 } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "../hooks";
@@ -20,34 +17,34 @@ interface SidebarItem {
   path: string;
 }
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const { currentUser } = useUser();
-  const [isOpen, setIsOpen] = useState(true);
 
-  const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
+  const isGlobalAdmin = currentUser?.globalRole === "ADMIN";
   const userRole = currentUser?.role;
-  const isAdmin = isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN';
-  const isContractor = userRole === 'CONTRACTOR';
-  const isClient = userRole === 'CLIENT';
+  const isAdmin = isGlobalAdmin || userRole === "ADMIN";
+  const isContractor = userRole === "CONTRACTOR";
+  const isClient = userRole === "CLIENT";
 
-  // Toggle sidebar visibility
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
 
-  // Close sidebar when clicking outside (for mobile)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById("sidebar");
-      const toggleButton = document.getElementById("sidebar-toggle");
 
       if (
         isOpen &&
+        window.innerWidth < 768 &&
         sidebar &&
-        !sidebar.contains(event.target as Node) &&
-        toggleButton &&
-        !toggleButton.contains(event.target as Node)
+        !sidebar.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -57,11 +54,17 @@ const Sidebar: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   const sidebarItems = useMemo(() => {
     const items: SidebarItem[] = [];
-    const prefix = isAdmin ? "/admin" : isContractor ? "/contractor" : isClient ? "/client" : "";
+    const prefix = isAdmin
+      ? "/admin"
+      : isContractor
+        ? "/contractor"
+        : isClient
+          ? "/client"
+          : "";
 
     if (!prefix) return items;
 
@@ -81,16 +84,10 @@ const Sidebar: React.FC = () => {
 
     if (isAdmin) {
       items.push({
-        id: "Contractors",
-        label: "Contractors",
+        id: "Users",
+        label: "Users",
         icon: <FaUserFriends />,
-        path: "/admin/contractors",
-      });
-      items.push({
-        id: "Clients",
-        label: "Clients",
-        icon: <FaUserFriends />,
-        path: "/admin/clients",
+        path: "/admin/users",
       });
       items.push({
         id: "Reports",
@@ -101,93 +98,97 @@ const Sidebar: React.FC = () => {
     }
 
     if (isContractor) {
-      items.push({
-        id: "Tasks",
-        label: "My Tasks",
-        icon: <FaClipboardList />,
-        path: "/contractor/tasks",
-      });
-      items.push({
-        id: "Inspections",
-        label: "Inspections",
-        icon: <FaFileAlt />,
-        path: "/contractor/inspections",
-      });
-      items.push({
-        id: "Contracts",
-        label: "Contracts",
-        icon: <FaFolder />,
-        path: "/contractor/contracts",
-      });
+      // Contractors mainly interact through projects in this simplified version
     }
 
     if (isClient) {
+      // Clients mainly interact through projects in this simplified version
       items.push({
-        id: "Approvals",
-        label: "Approvals",
-        icon: <FaClipboardList />,
-        path: "/client/approvals",
-      });
-      items.push({
-        id: "Financials",
-        label: "Financial Tracking",
-        icon: <FaDollarSign />,
-        path: "/client/financials",
+        id: "ContactGuidance",
+        label: "Contact & Guidance",
+        icon: <FaInfoCircle />,
+        path: "/client/contact-guidance",
       });
     }
+
+    // Profile link for all roles
+    items.push({
+      id: "Profile",
+      label: "My Profile",
+      icon: <FaUserCircle />,
+      path: `${prefix}/profile`,
+    });
 
     return items;
   }, [isAdmin, isContractor, isClient]);
 
   return (
     <>
-      {/* Toggle button - visible on mobile and when sidebar is closed */}
-      <button
-        id="sidebar-toggle"
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-md"
-        onClick={toggleSidebar}
-      >
-        {isOpen ? <FaTimes /> : <FaBars />}
-      </button>
-
-      {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed not-md:top-14 md:relative z-40 h-full overflow-auto bg-white shadow-md p-4 transition-all duration-300 ease-in-out ${
-          isOpen
-            ? "not-md:w-64 translate-x-0"
-            : "not-md:opacity-0 -translate-x-full md:translate-x-0 md:w-64"
-        } md:block`}
+        className={`fixed md:sticky top-0 left-0 z-40 h-screen w-64 overflow-y-auto bg-[#2e3b4d] border-r border-white/10 transition-all duration-300 ease-in-out
+          ${
+            isOpen
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden"
+          }
+        `}
       >
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Menu</h2>
-        <ul className="space-y-2">
-          {sidebarItems.map((item) => (
-            <li
-              key={item.id}
-              className={`flex items-center space-x-2 p-2 rounded cursor-pointer ${
-                location.pathname === item.path
-                  ? "bg-blue-100 text-blue-700"
-                  : "hover:bg-gray-100 text-gray-600"
-              }`}
-            >
-              <Link
-                to={item.path}
-                className="flex items-center space-x-2 w-full"
-              >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* Header - Matching Academy AdminLayout Logo Style */}
+        <div className="sticky top-0 px-6 py-6 bg-[#2e3b4d] border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-[#3E92D1] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">CT</span>
+            </div>
+            <span className="font-bold text-white text-lg">Con-Tech</span>
+          </div>
+          <p className="text-xs text-white/50 mt-2 uppercase tracking-wider font-semibold">
+            Navigation
+          </p>
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="px-3 py-6">
+          <ul className="space-y-2">
+            {sidebarItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <li key={item.id}>
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 group
+                      ${
+                        isActive
+                          ? "bg-[#3E92D1] text-white shadow-md"
+                          : "text-white/70 hover:bg-white/10 hover:text-white"
+                      }
+                    `}
+                  >
+                    <span
+                      className={`text-base transition-colors ${
+                        isActive
+                          ? "text-white"
+                          : "text-white/40 group-hover:text-white/80"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </aside>
 
-      {/* Overlay for mobile when sidebar is open */}
+      {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 backdrop-blur-md bg-opacity-50 z-30"
+          className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30 transition-opacity duration-300"
           onClick={toggleSidebar}
-        ></div>
+          aria-hidden="true"
+        />
       )}
     </>
   );

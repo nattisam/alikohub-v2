@@ -2,6 +2,7 @@
 // GENERAL INTERFACES
 // =========================
 export interface Notification {
+  id: number | string;
   title: string;
   description: string;
   priority?: "High" | "Medium" | "Completed";
@@ -18,14 +19,14 @@ export interface Activity {
 
 export interface User {
   firebaseId: string | number;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   profilePicture?: string;
 }
 
 export interface CurrentUser extends User {
   email: string;
-  role: "ADMIN" | "CLIENT" | "CONTRACTOR" | "PROJECT_MANAGER" | "USER";
+  role: "ADMIN" | "CLIENT" | "CONTRACTOR" | "USER";
   globalRole: string;
   contechRole?: string;
   bio?: string | null;
@@ -49,8 +50,8 @@ export interface Document {
 }
 
 export interface SignupCredentials {
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   captchaToken?: string;
@@ -69,7 +70,14 @@ export interface FileWithMetadata {
 // =========================
 // ENUMS / LITERAL TYPES
 // =========================
-export type ProjectStatus = "DRAFT" | "PLANNED" | "ACTIVE" | "ON_HOLD" | "DELAYED" | "COMPLETED" | "CANCELLED";
+export type ProjectStatus =
+  | "DRAFT"
+  | "PLANNED"
+  | "ACTIVE"
+  | "ON_HOLD"
+  | "DELAYED"
+  | "COMPLETED"
+  | "CANCELLED";
 export const ProjectStatus = {
   DRAFT: "DRAFT" as const,
   PLANNED: "PLANNED" as const,
@@ -80,7 +88,15 @@ export const ProjectStatus = {
   CANCELLED: "CANCELLED" as const,
 };
 
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEWED" | "COMPLETED" | "BLOCKED" | "CANCELLED" | "PENDING" | "ON_HOLD";
+export type TaskStatus =
+  | "TODO"
+  | "IN_PROGRESS"
+  | "REVIEWED"
+  | "COMPLETED"
+  | "BLOCKED"
+  | "CANCELLED"
+  | "PENDING"
+  | "ON_HOLD";
 export const TaskStatus = {
   TODO: "TODO" as const,
   IN_PROGRESS: "IN_PROGRESS" as const,
@@ -101,7 +117,12 @@ export const TaskPriority = {
   URGENT: "URGENT" as const,
 };
 
-export type ContractStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | "AMENDED";
+export type ContractStatus =
+  | "DRAFT"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "REJECTED"
+  | "AMENDED";
 export const ContractStatus = {
   DRAFT: "DRAFT" as const,
   PENDING_APPROVAL: "PENDING_APPROVAL" as const,
@@ -110,7 +131,12 @@ export const ContractStatus = {
   AMENDED: "AMENDED" as const,
 };
 
-export type InspectionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+export type InspectionStatus =
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED";
 export const InspectionStatus = {
   PENDING: "PENDING" as const,
   IN_PROGRESS: "IN_PROGRESS" as const,
@@ -119,7 +145,11 @@ export const InspectionStatus = {
   CANCELLED: "CANCELLED" as const,
 };
 
-export type ChecklistItemStatus = "PASS" | "FAIL" | "NOT_APPLICABLE" | "PENDING";
+export type ChecklistItemStatus =
+  | "PASS"
+  | "FAIL"
+  | "NOT_APPLICABLE"
+  | "PENDING";
 export const ChecklistItemStatus = {
   PASS: "PASS" as const,
   FAIL: "FAIL" as const,
@@ -157,22 +187,15 @@ export interface ClientDashboardData {
 }
 
 export interface ProjectManagerDashboardData {
-  activeProjects: number;
-  activeProjectsChange: number;
-  contractStatus: {
-    pending: number;
+  projectStats: {
+    total: number;
     active: number;
     completed: number;
+    planned: number;
   };
-  rfis: {
-    pending: number;
-    approved: number;
-    rejected: number;
-  };
-  qualityIssues: {
-    total: number;
-    critical: number;
-    minor: number;
+  users: {
+    clients: number;
+    contractors: number;
   };
 }
 
@@ -260,6 +283,8 @@ export interface TaskQuery {
   priority?: TaskPriority;
   dueDateBefore?: string;
   dueDateAfter?: string;
+  take?: number;
+  skip?: number;
 }
 
 export interface TaskStatsParams {
@@ -340,6 +365,8 @@ export interface Inspection {
   status: InspectionStatus;
   createdAt: string;
   updatedAt: string;
+  checklist?: ChecklistItem[];
+  photos?: string[];
 }
 
 export interface CreateInspectionDto {
@@ -389,6 +416,8 @@ export interface Comment {
   projectId: number;
   userId: string;
   content: string;
+  text?: string; // Legacy/Frontend property
+  author?: { name: string; avatar: string }; // Frontend property
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -397,10 +426,9 @@ export interface UserContextType {
   currentUser: CurrentUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  signup: (credentials: SignupCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<any>;
+  signup: (credentials: SignupCredentials) => Promise<any>;
   logout: () => void;
   updateUser: (user: CurrentUser) => void;
   refreshProfile: () => Promise<CurrentUser | null>;
-  selectRole: (role: string) => Promise<void>;
 }

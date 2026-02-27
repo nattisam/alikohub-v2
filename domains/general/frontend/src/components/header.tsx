@@ -1,5 +1,5 @@
-import { MdEmail } from "react-icons/md";
-import { FaPhone } from "react-icons/fa";
+import { MdEmail, MdLanguage } from "react-icons/md";
+import { FaPhoneAlt } from "react-icons/fa";
 import Navbar from "./Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import type { NavbarProps } from "./Navbar";
@@ -11,6 +11,7 @@ type NavLink = {
   label: string;
   scrollTo?: string;
   link?: string;
+  subdomain?: string;
 };
 
 type HeaderProps = {
@@ -29,7 +30,6 @@ type HeaderProps = {
   navBarClassName?: string;
   navLinksClassName?: string;
   logoClassName?: string;
-  mobileButtonClassName?: string;
   navLinksContainerClassName?: string;
 };
 
@@ -39,23 +39,22 @@ const Header = ({
     { label: "Home", scrollTo: "home" },
     { label: "About", scrollTo: "about" },
     { label: "Contact", scrollTo: "contact-us" },
-    { label: "Careers", link: "/careers" },
+    { label: "Careers", subdomain: "careers" },
   ],
   logoSrc = "/AlikoLogo.svg",
   showTopBar = true,
-  topBarBg = "bg-[#333333]",
-  stickyBgDefault = "bg-[#C9E4FA]",
-  stickyBgScrolled = "bg-white",
-  textColor = "text-black",
+  topBarBg = "bg-[#0F2544]",
+  stickyBgDefault = "bg-[#0F2544]",
+  stickyBgScrolled = "bg-[#0F2544]/90",
+  textColor = "text-gray-100",
   linkPosition = "justify-between",
   headerClassName = "",
-  homeHeaderButtonsClassName = " hidden lg:block md:block",
+  homeHeaderButtonsClassName = "hidden md:flex items-center",
   navbarProps,
-  navBarClassName = "flex md:hidden lg:hidden",
+  navBarClassName = "flex md:hidden",
   logoClassName = "",
   navLinksClassName = "",
-  mobileButtonClassName = "",
-  navLinksContainerClassName = "gap-x-28",
+  navLinksContainerClassName = "gap-x-8",
 }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
@@ -63,216 +62,171 @@ const Header = ({
 
   useEffect(() => {
     const onScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const handleSignUpClick = () => {
-    navigate("/auth/signup");
-  };
-
-  const handleLoginClick = () => {
-    navigate("/auth/login");
-  };
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-
-  // Update navLinks based on user status
-  const getNavLinks = () => {
-    // Remove the automatic addition of "Admin Panel" link to navLinks
-    // The admin panel button is already handled separately in the header buttons
-    return navLinks;
-  };
-
-  const updatedNavLinks = getNavLinks();
+  const getSubdomainUrl = (subdomain: string) =>
+    `https://${subdomain}.alikohub.com`;
 
   return (
     <>
+      {/* --- TOP BAR --- */}
       {showTopBar && (
         <header
-          className={`${topBarBg} bg-[#333333] hidden text-white lg:flex flex-col md:flex-row justify-between items-center px-4 py-2 gap-2`}
+          className={`${topBarBg} hidden lg:flex h-10 text-gray-300 items-center border-b border-white/10`}
         >
-          <nav
-            className="flex flex-col md:flex-row gap-4 md:gap-10 items-center"
-            aria-label="Top bar navigation"
-          >
-            <Link to="/" className="flex items-center text-sm">
-              <MdEmail className="text-lg mr-2" />
-              info@alikohub.com
-            </Link>
-            <Link to="/" className="flex items-center text-sm">
-              <FaPhone className="text-lg mr-2" />
-              +251 123 456 789
-            </Link>
-            <Link to="/" className="flex items-center text-sm">
-              <FaPhone className="text-lg mr-2" />
-              +251 123 456 789
-            </Link>
-          </nav>
-          <select
-            name="language"
-            id="lang"
-            aria-label="Select language"
-            className="bg-white rounded-4xl text-[#444444] px-4 py-2 text-xs h-8"
-          >
-            <option value="en">English</option>
-            <option value="fr">French</option>
-            <option value="sw">Swahili</option>
-          </select>
+          <div className="max-w-[1300px] mx-auto w-full px-6 flex justify-between items-center text-[13px] font-medium">
+            <nav className="flex items-center gap-6">
+              <a
+                href="mailto:info@alikohub.com"
+                className="flex items-center hover:text-white transition-colors"
+              >
+                <MdEmail className="mr-2 text-[#0D72BA]" /> info@alikohub.com
+              </a>
+              <a
+                href="tel:+251123456789"
+                className="flex items-center hover:text-white transition-colors"
+              >
+                <FaPhoneAlt className="mr-2 text-[#0D72BA] text-[11px]" /> +251
+                11 123 4567
+              </a>
+            </nav>
+            <div className="flex items-center gap-2">
+              <MdLanguage className="text-[#0D72BA]" />
+              <select className="bg-transparent border-none outline-none cursor-pointer hover:text-white">
+                <option value="en" className="text-black">
+                  English
+                </option>
+                <option value="fr" className="text-black">
+                  French
+                </option>
+                <option value="sw" className="text-black">
+                  Swahili
+                </option>
+              </select>
+            </div>
+          </div>
         </header>
       )}
+
+      {/* --- MAIN HEADER --- */}
       <header
-        className={`${headerClassName}  sticky top-0 w-full z-50 transition-all duration-300 ${
+        className={`${headerClassName} sticky top-0 w-full z-50 transition-all duration-500 ${
           isScrolled
-            ? `${stickyBgScrolled} backdrop-blur-3xl shadow-2xl`
-            : stickyBgDefault
+            ? `${stickyBgScrolled} backdrop-blur-md shadow-[0_4px_20px_-5px_rgba(0,0,0,0.3)] border-b border-white/10 py-3`
+            : `${stickyBgDefault} py-5`
         }`}
       >
         <div
-          className={`max-w-[1300px] mx-auto flex items-center justify-between px-4 py-4 flex-wrap gap-y-4 ${linkPosition}`}
+          className={`max-w-[1300px] mx-auto flex items-center px-6 ${linkPosition}`}
         >
-          <div className="flex items-center gap-4 ml-4">
+          {/* Logo */}
+          <Link to="/" className="flex-shrink-0">
             <img
               src={logoSrc}
               alt="AlikoHub logo"
-              className={` ${logoClassName || "h-12 lg:h-14"}`}
+              className={logoClassName || "h-10 lg:h-12 w-auto"}
             />
-          </div>
+          </Link>
 
-          <div
-            className={`flex ${textColor}  hidden md:block lg:block  ${navLinksContainerClassName} items-center`}
+          {/* Desktop Navigation */}
+          <nav
+            className={`hidden md:flex items-center ${navLinksContainerClassName} ${textColor}`}
           >
-            {updatedNavLinks.map(({ label, scrollTo, link }, i) => (
-              <Link
-                key={label + i}
-                to={link ? link : "/"}
-                state={scrollTo ? { scrollTo } : undefined}
-                className={`text-2xl font-semibold ${navLinksClassName} mx-10 hover:underline hover:decoration-4 hover:decoration-neutral-700 ${
-                  currentSection === scrollTo ||
-                  currentSection === link?.slice(1)
-                    ? "underline underline-offset-8 decoration-4 decoration-neutral-950"
-                    : ""
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-          <div>
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
+            {navLinks.map(({ label, scrollTo, link, subdomain }, i) => {
+              const commonClasses =
+                "text-[15px] font-semibold tracking-wide transition-all duration-300 relative group";
+              const activeIndicator =
+                "after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-[#0D72BA] after:transition-all group-hover:after:w-full";
+              const isActive =
+                currentSection === scrollTo ||
+                (link && currentSection === link.slice(1));
 
-                <span className="hidden lg:block md:block text-sm font-medium">
-                  Welcome, {user?.firstname || "User"}
+              if (subdomain) {
+                return (
+                  <a
+                    key={label + i}
+                    href={getSubdomainUrl(subdomain)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${commonClasses} bg-[#0D72BA] text-white px-4 py-1.5 rounded-md hover:bg-[#0B5FA0]`}
+                  >
+                    {label}
+                  </a>
+                );
+              }
+
+              return (
+                <Link
+                  key={label + i}
+                  to={link || "/"}
+                  state={scrollTo ? { scrollTo } : undefined}
+                  className={`${commonClasses} ${navLinksClassName} hover:text-[#0D72BA] ${activeIndicator} ${
+                    isActive ? "text-[#0D72BA] after:w-full" : ""
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Auth Buttons */}
+          <div className="flex items-center gap-3">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <span className="hidden lg:block text-sm font-semibold text-gray-300">
+                  Hi,{" "}
+                  <span className="text-[#0D72BA]">
+                    {user?.firstname || "User"}
+                  </span>
                 </span>
                 <Button
                   label="Logout"
                   onClick={handleLogout}
                   variant="secondary"
-                  className={`${homeHeaderButtonsClassName} w-24 items-end hidden lg:block md:block`}
-                  ariaLabel="Logout"
+                  className="!py-2 !px-5 text-sm font-bold border-white/20 text-white hover:bg-white/10 hidden md:block"
                 />
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className={homeHeaderButtonsClassName + " gap-3"}>
                 <Button
                   label="Login"
-                  onClick={handleLoginClick}
+                  onClick={() => navigate("/auth/login")}
                   variant="secondary"
-                  className={`${homeHeaderButtonsClassName} w-24 items-end hidden lg:block md:block`}
-                  ariaLabel="Login"
+                  className="!py-2 !px-6 text-sm font-bold text-gray-300 hover:text-white"
                 />
                 <Button
                   label="Sign Up"
-                  onClick={handleSignUpClick}
+                  onClick={() => navigate("/auth/signup")}
                   variant="primary"
-                  className={`${homeHeaderButtonsClassName} w-32 items-end hidden lg:block md:block`}
-                  ariaLabel="Sign Up"
+                  className="!py-2 !px-6 text-sm font-bold bg-[#0D72BA] hover:bg-[#0B5FA0]"
                 />
               </div>
             )}
-          </div>
-          <div
-            className={`${navBarClassName} flex md:hidden  lg:hidden items-center gap-4 mr-4`}
-          >
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
 
-                <span className="text-sm font-medium md:hidden lg:hidden">
-                  Welcome, {user?.firstname || "User"}
-                </span>
-                <Button
-                  label="Logout"
-                  onClick={handleLogout}
-                  variant="secondary"
-                  className={`w-20 ${mobileButtonClassName}`}
-                  ariaLabel="Logout"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Button
-                  label="Login"
-                  onClick={handleLoginClick}
-                  variant="secondary"
-                  className={`w-20 ${mobileButtonClassName}`}
-                  ariaLabel="Login"
-                />
-                <Button
-                  label="Sign Up"
-                  onClick={handleSignUpClick}
-                  variant="primary"
-                  className={`w-24 ${mobileButtonClassName}`}
-                  ariaLabel="Sign Up"
-                />
-              </div>
-            )}
-            <Navbar
-              navLinks={[
-                ...updatedNavLinks.map(({ label, scrollTo, link }) => ({
-                  label,
-                  onClick: () => {
-                    if (scrollTo) {
-                      const target = document.getElementById(scrollTo);
-                      if (target) {
-                        target.scrollIntoView({ behavior: "smooth" });
-                      }
-                    }
-                  },
-                })),
-                ...(isAuthenticated
-                  ? [
-                      {
-                        label: "Logout",
-                        onClick: handleLogout,
-                        isButton: true,
-                      },
-                    ]
-                  : [
-                      {
-                        label: "Login",
-                        onClick: handleLoginClick,
-                        isButton: true,
-                      },
-                      {
-                        label: "Sign Up",
-                        onClick: handleSignUpClick,
-                        isButton: true,
-                      },
-                    ]),
-              ]}
-              logoSrc="/AlikoLogo.svg"
-              drawerClassName="fixed top-0 right-0 h-screen w-full max-w-sm bg-gray-100 text-gray-900 shadow-xl z-50"
-              menuIconClassName="text-4xl text-black"
-              closeIconClassName="text-3xl text-white"
-              {...navbarProps}
-            />
+            {/* Mobile Menu */}
+            <div className={navBarClassName}>
+              <Navbar
+                {...navbarProps}
+                navLinks={navLinks.map((n) => ({
+                  label: n.label,
+                  onClick: () =>
+                    n.subdomain
+                      ? window.open(getSubdomainUrl(n.subdomain), "_blank")
+                      : navigate(n.link || "/"),
+                }))}
+                menuIconClassName="text-3xl text-white"
+              />
+            </div>
           </div>
         </div>
       </header>

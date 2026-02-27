@@ -5,81 +5,160 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import AuthPromptModal from "../auth/AuthPromptModal";
+import FeedbackModal from "../common/FeedbackModal";
 
 const TrendingCourses = ({ courses }: { courses: Course[] }) => {
   const enrollCourseMutation = useEnrollCourse();
+
+  const handleEnrollSuccess = () => {
+    setFeedback({
+      isOpen: true,
+      title: "Successfully Enrolled!",
+      message: "You have been enrolled in the course. Happy learning!",
+      type: "success",
+    });
+  };
+
+  const handleEnrollError = (error: any) => {
+    setFeedback({
+      isOpen: true,
+      title: "Enrollment Failed",
+      message:
+        error?.response?.data?.message ||
+        "There was an issue enrolling you in this course. Please try again.",
+      type: "error",
+    });
+  };
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
-  
+  const [selectedCourse, setSelectedCourse] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error" | "info";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
   // Fetch user's enrolled courses
   const { data: enrolledCourses = [] } = useQuery({
-    queryKey: ['userEnrollments', currentUser?.firebaseId],
+    queryKey: ["userEnrollments", currentUser?.firebaseId],
     queryFn: async () => {
       if (!currentUser) return [];
       try {
         const response = await enrollmentApi.getMyCourses();
         return Array.isArray(response.data) ? response.data : [];
       } catch (error) {
-        console.error('Error fetching enrolled courses:', error);
+        console.error("Error fetching enrolled courses:", error);
         return [];
       }
     },
     enabled: !!currentUser,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-  
-  // Function to check if user is enrolled in a specific course
-  const isUserEnrolled = (courseId: number) => {
-    return enrolledCourses.some((enrollment: any) => enrollment.id === courseId);
-  };
-  
-  // Ensure courses is an array
+
+  // Check if user is enrolled in a specific course
+  const isUserEnrolled = (courseId: number) =>
+    enrolledCourses.some((enrollment: any) => enrollment.id === courseId);
+
   const validCourses = Array.isArray(courses) ? courses : [];
 
   const handleEnroll = (courseId: number) => {
     if (currentUser) {
-      // Check if user has student active role
-      const userActiveRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-      if (userActiveRole === 'STUDENT' || currentUser.globalRole === 'USER') {
-        // Check if user is already enrolled in this course
+      const userActiveRole =
+        currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+      if (userActiveRole === "STUDENT" || currentUser.globalRole === "USER") {
         if (isUserEnrolled(courseId)) {
-          // If already enrolled, redirect to dashboard
           navigate("/dashboard");
           return;
         }
-        enrollCourseMutation.mutate(courseId);
+        enrollCourseMutation.mutate(courseId, {
+          onSuccess: handleEnrollSuccess,
+          onError: handleEnrollError,
+        });
       } else {
-        alert("Only students can enroll in courses. Please switch to student role.");
+        setFeedback({
+          isOpen: true,
+          title: "Role Required",
+          message:
+            "Only students can enroll in courses. Please switch to student role.",
+          type: "info",
+        });
       }
     } else {
-      // Redirect to login page for unauthenticated users
-      navigate("/auth/login");
+      setSelectedCourse({
+        id: courseId,
+        title:
+          validCourses.find((c) => c.id === courseId)?.title || "this course",
+      });
+    }
+  };
+
+  const handleViewDetails = (courseId: number, title: string) => {
+    if (currentUser) {
+      navigate(`/courses/${courseId}`);
+    } else {
+      setSelectedCourse({ id: courseId, title });
     }
   };
 
   return (
-    <section className="">
-      <h2 className="text-center text-2xl lg:text-4xl font-extrabold mt-4">
-        Trending Now
-      </h2>
-      <p className="text-center my-5 text-gray-400 w-[90%] md:w-[50%] mx-auto text-sm ">
-        AlikoHub is building Africa's digital future—uniting education, global
-        consultancy, and smart construction tools under one seamless platform.
-      </p>
-      <div className="overflow-x-scroll mx-4 px-1 md:py-4 md:mx-20 flex gap-2 md:gap-10">
-        {validCourses.length > 0 ? (
-          validCourses.map((course) => (
-            <TrendingCourseCard
-              key={course.id}
-              course={course}
-              isEnrolled={isUserEnrolled(course.id)}
-              onEnroll={() => handleEnroll(course.id)}
-            />
-          ))
-        ) : (
-          <p className="text-center w-full py-4 text-gray-500">No trending courses available</p>
-        )}
+    <section className="bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <h2 className="text-center text-2xl md:text-4xl font-bold text-gray-800 mb-4">
+          Most Popular <span className="text-[#17469E]">Courses</span>
+        </h2>
+
+        <p className="text-center mt-4 text-gray-500 text-sm md:text-base max-w-2xl mx-auto">
+          AlikoHub is building Africa's digital future—uniting education, global
+          consultancy, and smart construction tools under one seamless platform.
+        </p>
+
+        <div className="mt-8 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-6 md:gap-10 px-2 md:px-4">
+            {validCourses.length > 0 ? (
+              validCourses.map((course) => (
+                <TrendingCourseCard
+                  key={course.id}
+                  course={course}
+                  isEnrolled={isUserEnrolled(course.id)}
+                  onEnroll={() => handleEnroll(course.id)}
+                  onViewDetails={() =>
+                    handleViewDetails(course.id, course.title)
+                  }
+                />
+              ))
+            ) : (
+              <p className="text-center w-full py-6 text-gray-400">
+                No trending courses available
+              </p>
+            )}
+          </div>
+        </div>
       </div>
+
+      <AuthPromptModal
+        isOpen={!!selectedCourse}
+        onClose={() => setSelectedCourse(null)}
+        courseTitle={selectedCourse?.title}
+        courseId={selectedCourse?.id}
+      />
+      <FeedbackModal
+        isOpen={feedback.isOpen}
+        onClose={() => setFeedback({ ...feedback, isOpen: false })}
+        title={feedback.title}
+        message={feedback.message}
+        type={feedback.type}
+      />
     </section>
   );
 };

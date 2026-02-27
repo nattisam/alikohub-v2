@@ -15,7 +15,7 @@ const ContractsPage = () => {
 
   const isGlobalAdmin = currentUser?.globalRole === 'ADMIN';
   const userRole = currentUser?.role;
-  const isAdmin = isGlobalAdmin || userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN';
+  const isAdmin = isGlobalAdmin || userRole === 'ADMIN';
   const isContractor = userRole === 'CONTRACTOR';
   const isClient = userRole === 'CLIENT';
 
@@ -53,7 +53,7 @@ const ContractsPage = () => {
 
         for (const project of projects) {
           const projectContracts = allContracts.filter(
-            (contract) => contract.projectId === project.id
+            (contract: Contract) => contract.projectId === project.id
           );
 
           newContracts.push({

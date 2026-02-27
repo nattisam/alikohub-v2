@@ -8,6 +8,8 @@ import { ContractModule } from './contract/contract.module';
 import { InspectionModule } from './inspection/inspection.module';
 import { ClientReportModule } from './client-report/client-report.module';
 import { MilestonesModule } from './milestones/milestones.module';
+import { ContactController } from './contact/contact.controller';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [
@@ -18,7 +20,8 @@ import { MilestonesModule } from './milestones/milestones.module';
         InspectionModule,
         ClientReportModule,
         MilestonesModule,
+        AdminModule,
     ],
-    controllers: [ContechController]
+    controllers: [ContechController, ContactController]
 })
 export class ConTechServiceModule { }

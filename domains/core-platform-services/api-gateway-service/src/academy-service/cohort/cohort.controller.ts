@@ -60,10 +60,16 @@ export class CohortController {
   })
   findAllCohorts(
     @Request() req: RequestWithUser,
-    @Query('courseId', new ParseIntPipe({ optional: true })) courseId?: number,
+    @Query() query: any,
   ) {
-    const payload = { courseId, user: req.user };
+    const payload = { query, user: req.user };
     return this.academyClient.send({ cmd: 'find_all_cohorts' }, payload);
+  }
+
+  @Get('instructor/my')
+  @ApiOperation({ summary: 'Get all cohorts for current instructor' })
+  getMyCohorts(@Request() req: RequestWithUser, @Query() query: any) {
+    return this.academyClient.send({ cmd: 'find_instructor_cohorts' }, { user: req.user, query });
   }
 
   // Get cohort by ID

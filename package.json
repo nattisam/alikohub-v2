@@ -7,6 +7,13 @@
     "libraries/*"
   ],
   "main": "domains/general/frontend/index.js",
+  "scripts": {
+    "start": "node start-all.js",
+    "dev": "node start-all.js --sync",
+    "sync": "node start-all.js --sync",
+    "build": "node start-all.js --build",
+    "full-start": "node start-all.js --sync --build"
+  },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",

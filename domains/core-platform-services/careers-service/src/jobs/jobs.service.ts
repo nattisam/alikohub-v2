@@ -24,10 +24,14 @@ export class JobsService {
   }
 
   async findAllJobs() {
-    return this.prisma.job.findMany({
+    const jobs = await this.prisma.job.findMany({
       where: { status: 'OPEN' },
       orderBy: { createdAt: 'desc' },
     });
+    return jobs.map(job => ({
+      ...job,
+      salaryRange: job.salaryRange || 'Not specified',
+    }));
   }
 
   async findOneJob(id: number) {
@@ -42,11 +46,18 @@ export class JobsService {
       throw new NotFoundException(`Job with ID ${id} not found`);
     }
 
-    return job;
+    return {
+      ...job,
+      salaryRange: job.salaryRange || 'Not specified',
+    };
   }
 
   async updateJob(id: number, data: any, userId: string, isAdmin: boolean = false) {
-    const job = await this.findOneJob(id);
+    const job = await this.prisma.job.findUnique({ where: { id } });
+
+    if (!job) {
+       throw new NotFoundException(`Job with ID ${id} not found`);
+    }
     
     // Ownership check: only the poster or an admin can update
     if (!isAdmin && job.postedBy !== userId) {
@@ -66,7 +77,11 @@ export class JobsService {
   }
 
   async deleteJob(id: number, userId: string, isAdmin: boolean = false) {
-    const job = await this.findOneJob(id);
+    const job = await this.prisma.job.findUnique({ where: { id } });
+
+    if (!job) {
+       throw new NotFoundException(`Job with ID ${id} not found`);
+    }
 
     // Ownership check
     if (!isAdmin && job.postedBy !== userId) {
@@ -82,9 +97,12 @@ export class JobsService {
   async applyToJob(jobId: number, userId: string, applicationData: { coverLetter?: string; resumeUrl: string }) {
     // Validate resumeUrl
     try {
-      new URL(applicationData.resumeUrl);
+      const url = new URL(applicationData.resumeUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+          throw new Error();
+      }
     } catch (e) {
-      throw new ForbiddenException('Invalid resume URL provided');
+      throw new ForbiddenException('Invalid resume URL provided. Must be a valid HTTP/HTTPS URL.');
     }
 
     const job = await this.prisma.job.findUnique({ where: { id: jobId } });

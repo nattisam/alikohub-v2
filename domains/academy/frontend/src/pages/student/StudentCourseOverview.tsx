@@ -2,23 +2,22 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AllCourses from "../../components/course/AllCourses";
-
-import RoleSelectionModal from "../../components/auth/RoleSelectionModal";
 import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 
 const StudentCourseOverview = () => {
-  const { user: currentUser, isLoading } = useAuth();
+  const { user: currentUser, isLoading, setRoleModalOpen } = useAuth();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
 
   // Check role access similar to dashboard
   useEffect(() => {
     if (!currentUser) {
-      navigate('/auth/login');
+      navigate("/auth/login");
       return;
     }
 
-    const activeRole = currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
+    const activeRole =
+      currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
     const pendingRole = currentUser.pendingRole;
     const instructorStatus = currentUser.roleStatus?.instructor;
 
@@ -26,15 +25,21 @@ const StudentCourseOverview = () => {
     if (activeRole === "STUDENT") {
       return; // allowed
     }
-    
+
     // If user wants to apply as instructor, allow access to see the application modal, but only if not already a student
-    if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
+    if (
+      (pendingRole === "INSTRUCTOR" ||
+        instructorStatus === "pending" ||
+        instructorStatus === "not_applied") &&
+      activeRole !== "STUDENT"
+    ) {
       return; // allowed to see application modal
     }
 
-    // Redirect to role selection if user hasn't selected a role yet
-    navigate("/role"); // Redirect to role selection page
-  }, [currentUser, navigate]);
+    // Trigger global role selection modal and redirect to home if no role
+    setRoleModalOpen(true);
+    navigate("/");
+  }, [currentUser, navigate, setRoleModalOpen]);
 
   // If user is loading, show loading indicator
   if (isLoading) {
@@ -54,33 +59,31 @@ const StudentCourseOverview = () => {
   }
 
   // Check if user has selected a role and it's appropriate
-  const activeRole = currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole = (currentUser?.hasSelectedRole) && (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
-  
+  const activeRole =
+    currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+  const hasSelectedRole =
+    currentUser?.hasSelectedRole &&
+    (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
+
   // Check if user wants to apply as instructor
   const pendingRole = currentUser?.pendingRole;
   const instructorStatus = currentUser?.roleStatus?.instructor;
-  
-  // If user hasn't selected a role yet (role is still USER or undefined), show role selection modal
-  if (!hasSelectedRole || (activeRole !== 'STUDENT' && activeRole !== 'INSTRUCTOR')) {
-    // Show role selection modal
-    return (
-      <div className="min-h-screen bg-gray-50 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Select Your Role</h2>
-            <p className="text-gray-600 mb-6">
-              To access the course overview, please select the Student role.
-            </p>
-            <RoleSelectionModal onClose={() => navigate('/role')} />
-          </div>
-        </div>
-      </div>
-    );
+
+  // Role selection handled by useEffect and global modal
+  if (
+    !hasSelectedRole ||
+    (activeRole !== "STUDENT" && activeRole !== "INSTRUCTOR")
+  ) {
+    return null;
   }
 
   // Only show the instructor application modal if the user is not already a student
-  if ((pendingRole === 'INSTRUCTOR' || instructorStatus === 'pending' || instructorStatus === 'not_applied') && activeRole !== 'STUDENT') {
+  if (
+    (pendingRole === "INSTRUCTOR" ||
+      instructorStatus === "pending" ||
+      instructorStatus === "not_applied") &&
+    activeRole !== "STUDENT"
+  ) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
         <TeacherApplicationModal standalone={true} />
@@ -91,13 +94,13 @@ const StudentCourseOverview = () => {
   // Function to trigger refresh
   const handleEnrollmentComplete = () => {
     // Increment the refresh key to trigger re-render
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   // Function to handle viewing course content
   const handleViewCourseContent = async (courseId: number) => {
-    // Redirect to the Udemy-style module page without sidebar
-    navigate(`/student-module/${courseId}/modules`);
+    // Redirect to the course home (journey) page
+    navigate(`/student-dashboard/course/${courseId}`);
   };
 
   return (
@@ -112,9 +115,9 @@ const StudentCourseOverview = () => {
           </p>
         </div>
 
-        <AllCourses 
+        <AllCourses
           key={refreshKey}
-          onViewCourseContent={handleViewCourseContent} 
+          onViewCourseContent={handleViewCourseContent}
           onEnrollmentComplete={handleEnrollmentComplete}
         />
       </div>

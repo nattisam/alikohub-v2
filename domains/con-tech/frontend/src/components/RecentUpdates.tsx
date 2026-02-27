@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useUser } from '../hooks';
-import { useProjects } from '../queries/projects';
-import { useTasks } from '../queries/tasks';
-import { useInspections } from '../queries/inspections';
-import type { ExtendedCurrentUser } from '../components/types';
+import React, { useState, useEffect } from "react";
+import { useUser } from "../hooks";
+
+import type { ExtendedCurrentUser } from "../components/types";
 
 interface Update {
   title: string;
   description: string;
   date: string;
-  status?: 'warning';
+  status?: "warning";
 }
+
+import { ProjectsService } from "../services/projects.service";
+import { TasksService } from "../services/tasks.service";
+import { InspectionsService } from "../services/inspections.service";
+
+const projectsService = ProjectsService.getInstance();
+const tasksService = TasksService.getInstance();
+const inspectionsService = InspectionsService.getInstance();
 
 const RecentUpdates: React.FC = () => {
   const { currentUser } = useUser() as { currentUser: ExtendedCurrentUser };
@@ -18,10 +24,6 @@ const RecentUpdates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [projects, setProjects] = useState<any[]>([]);
-
-  const { data: projects = [] } = useProjects();
-  const { data: tasks = [] } = useTasks();
-  const { data: inspections = [] } = useInspections();
 
   useEffect(() => {
     if (currentUser) {
@@ -37,12 +39,14 @@ const RecentUpdates: React.FC = () => {
 
   const fetchProjects = async () => {
     if (!currentUser) return;
-    
+
     try {
-      const response: any = await projectsService.findAll({}, currentUser);
-      const userProjects = Array.isArray(response) ? response : (response.items || []);
+      const response: any = await projectsService.findAll({});
+      const userProjects = Array.isArray(response)
+        ? response
+        : response.items || [];
       setProjects(userProjects);
-      
+
       // Select the first project by default
       if (userProjects.length > 0 && !selectedProject) {
         setSelectedProject(userProjects[0].id);
@@ -54,44 +58,66 @@ const RecentUpdates: React.FC = () => {
 
   const fetchUpdates = async () => {
     if (!currentUser || !selectedProject) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Fetch recent tasks
-      const tasks = await tasksService.findByProject(selectedProject, { take: 5 }, currentUser);
-      
+      // Fetch recent tasks
+      const tasks = await tasksService.findByProject(selectedProject, {
+        take: 5,
+      });
+
       // Fetch recent inspections
-      const inspections = await inspectionsService.findAllForProject(selectedProject, { take: 5 }, currentUser);
-      
+      const inspections = await inspectionsService.findAllForProject(
+        selectedProject,
+        { take: 5 },
+      );
+
       // Combine and format updates
-      const taskUpdates: Update[] = tasks.map(task => ({
-        title: `Task "${task.title}" ${task.status.toLowerCase().replace('_', ' ')}`,
-        description: task.description || 'No description',
+      const taskUpdates: Update[] = tasks.map((task) => ({
+        title: `Task "${task.title}" ${task.status.toLowerCase().replace("_", " ")}`,
+        description: task.description || "No description",
         date: new Date(task.updatedAt).toLocaleDateString(),
-        status: task.status === 'BLOCKED' || task.status === 'ON_HOLD' ? 'warning' : undefined
+        status:
+          task.status === "BLOCKED" || task.status === "ON_HOLD"
+            ? "warning"
+            : undefined,
       }));
-      
-      const inspectionUpdates: Update[] = inspections.map(inspection => ({
-        title: `Inspection ${inspection.status.toLowerCase().replace('_', ' ')}`,
-        description: inspection.findings || 'No findings',
+
+      const inspectionUpdates: Update[] = inspections.map((inspection) => ({
+        title: `Inspection ${inspection.status.toLowerCase().replace("_", " ")}`,
+        description: inspection.findings || "No findings",
         date: new Date(inspection.updatedAt).toLocaleDateString(),
-        status: inspection.status === 'FAILED' ? 'warning' : undefined
+        status: inspection.status === "FAILED" ? "warning" : undefined,
       }));
-      
+
       // Combine and sort by date
       const allUpdates = [...taskUpdates, ...inspectionUpdates]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5);
-      
+
       setUpdates(allUpdates);
     } catch (err) {
       console.error("Error fetching updates:", err);
       // Fallback to static data on error
       setUpdates([
-        { title: 'Foundation completed on Aug 25', description: '2 days ago', date: '2 days ago' },
-        { title: 'Safety Inspection passed', description: '2-day delay due to weather', date: '5 days ago' },
-        { title: 'Change Order #3 requires approval', description: 'Review Now', date: '1 week ago', status: 'warning' },
+        {
+          title: "Foundation completed on Aug 25",
+          description: "2 days ago",
+          date: "2 days ago",
+        },
+        {
+          title: "Safety Inspection passed",
+          description: "2-day delay due to weather",
+          date: "5 days ago",
+        },
+        {
+          title: "Change Order #3 requires approval",
+          description: "Review Now",
+          date: "1 week ago",
+          status: "warning",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -100,9 +126,22 @@ const RecentUpdates: React.FC = () => {
 
   // Original static documents
   const staticUpdates: Update[] = [
-    { title: 'Foundation completed on Aug 25', description: '2 days ago', date: '2 days ago' },
-    { title: 'Safety Inspection passed', description: '2-day delay due to weather', date: '5 days ago' },
-    { title: 'Change Order #3 requires approval', description: 'Review Now', date: '1 week ago', status: 'warning' },
+    {
+      title: "Foundation completed on Aug 25",
+      description: "2 days ago",
+      date: "2 days ago",
+    },
+    {
+      title: "Safety Inspection passed",
+      description: "2-day delay due to weather",
+      date: "5 days ago",
+    },
+    {
+      title: "Change Order #3 requires approval",
+      description: "Review Now",
+      date: "1 week ago",
+      status: "warning",
+    },
   ];
 
   const displayUpdates = updates.length > 0 ? updates : staticUpdates;
@@ -117,7 +156,7 @@ const RecentUpdates: React.FC = () => {
             onChange={(e) => setSelectedProject(parseInt(e.target.value))}
             className="text-sm rounded border-gray-300"
           >
-            {projects.map(project => (
+            {projects.map((project) => (
               <option key={project.id} value={project.id}>
                 {project.name}
               </option>
@@ -125,7 +164,7 @@ const RecentUpdates: React.FC = () => {
           </select>
         )}
       </div>
-      
+
       {loading ? (
         <div className="text-center py-4">Loading updates...</div>
       ) : (
@@ -133,13 +172,15 @@ const RecentUpdates: React.FC = () => {
           {displayUpdates.map((update, index) => (
             <div
               key={index}
-              className={`p-4 rounded ${update.status === 'warning' ? 'bg-red-50' : 'bg-green-50'}`}
+              className={`p-4 rounded ${update.status === "warning" ? "bg-red-50" : "bg-green-50"}`}
             >
               <p className="font-bold">{update.title}</p>
               <p className="text-sm text-gray-500">{update.description}</p>
               <p className="text-sm text-gray-500">{update.date}</p>
-              {update.status === 'warning' && (
-                <button className="text-blue-500 text-sm mt-2">Review Now</button>
+              {update.status === "warning" && (
+                <button className="text-blue-500 text-sm mt-2">
+                  Review Now
+                </button>
               )}
             </div>
           ))}
