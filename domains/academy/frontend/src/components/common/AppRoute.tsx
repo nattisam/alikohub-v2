@@ -1,25 +1,30 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useUI } from "../../contexts/UIContext";
 import AccessDenied from "../states/AccessDenied";
 
 interface AppRouteProps {
   children: React.ReactNode;
   requiredRole?: "STUDENT" | "INSTRUCTOR"; // Exclude ADMIN as admin users should not access app routes
   allowNoRole?: boolean;
+  message?: string;
 }
 
 const AppRoute: React.FC<AppRouteProps> = ({
   children,
   requiredRole,
   allowNoRole = false,
+  message,
 }) => {
   const {
     user: currentUser,
     isLoading,
     isAuthenticated,
-    setRoleModalOpen,
+    isLoggingOut,
   } = useAuth();
+  const { setRoleModalOpen } = useUI();
+  const location = useLocation();
 
   const hasSelectedRole =
     currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
@@ -36,7 +41,12 @@ const AppRoute: React.FC<AppRouteProps> = ({
     setRoleModalOpen,
   ]);
 
-  // If we're still loading, show a loading indicator
+  // Get the normalized active role
+  const activeRole = (
+    currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole
+  )?.toUpperCase();
+
+  // 1. Loading State
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -48,96 +58,69 @@ const AppRoute: React.FC<AppRouteProps> = ({
     );
   }
 
-  // If user is not authenticated, redirect to login
+  // 2. Authentication Check
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />;
-  }
+    if (isLoggingOut) {
+      return <Navigate to="/auth/login" replace />;
+    }
 
-  // If user is an admin, redirect them to admin dashboard - they should not access app routes
-  if (currentUser?.globalRole === "ADMIN") {
-    return <Navigate to="/admin" replace />;
-  }
-
-  // If user hasn't selected a role yet, redirect to home page (modal will be triggered by useEffect)
-  if (!allowNoRole && currentUser && !hasSelectedRole) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Check if user has pending or rejected instructor application but is trying to access instructor-only resources
-  if (
-    requiredRole === "INSTRUCTOR" &&
-    currentUser &&
-    (currentUser.roleStatus?.instructor === "pending" ||
-      currentUser.roleStatus?.instructor === "rejected" ||
-      currentUser.roleStatus?.instructor === "not_applied")
-  ) {
-    // Don't allow access to instructor dashboard if application is pending, not applied, or rejected
+    const redirectUrl = encodeURIComponent(location.pathname + location.search);
+    const messagePart = message
+      ? `&message=${encodeURIComponent(message)}`
+      : "";
     return (
-      <AccessDenied
-        title="Access Denied"
-        message="You do not have access to the instructor dashboard."
+      <Navigate
+        to={`/auth/login?redirect=${redirectUrl}${messagePart}`}
+        replace
       />
     );
   }
 
-  // If a required role is specified, check if user has it
-  if (requiredRole && currentUser) {
-    // Active role should be the primary check
-    const activeRole =
-      currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
+  // 3. Admin Bypass
+  // Admins should be sent to the admin section, not allowed to stay in student/instructor routes
+  if (currentUser?.globalRole?.toUpperCase() === "ADMIN") {
+    return <Navigate to="/admin" replace />;
+  }
 
-    const hasRequiredRole =
-      activeRole === requiredRole ||
-      (requiredRole === "INSTRUCTOR" &&
-        (currentUser.roleStatus?.instructor === "not_applied" ||
-          currentUser.roleStatus?.instructor === "pending")); // User can access instructor application
+  // 4. Role Selection Check
+  // If user hasn't selected a role, send back to home (where the modal will trigger)
+  // allowNoRole is used for pages like Profile where a role isn't strictly required
+  if (!allowNoRole && !hasSelectedRole) {
+    return <Navigate to="/" replace />;
+  }
 
-    if (!hasRequiredRole) {
-      // Show access denied state if user doesn't have required role
+  // 5. Role-Specific Access Control
+  if (requiredRole) {
+    // Check for Instructor Application specifically
+    if (requiredRole === "INSTRUCTOR") {
+      const status = currentUser?.roleStatus?.instructor;
+      if (
+        status === "pending" ||
+        status === "rejected" ||
+        status === "not_applied"
+      ) {
+        return (
+          <AccessDenied
+            title="Access Denied"
+            message="You do not have access to the instructor dashboard."
+          />
+        );
+      }
+    }
+
+    // Role mismatch check
+    if (activeRole !== requiredRole) {
       return (
         <AccessDenied
           title="Access Denied"
-          message="You do not have permission to access this page."
+          message={`You do not have permission to access this ${requiredRole.toLowerCase()} page.`}
         />
       );
     }
   }
 
-  // If no required role is specified, allow access to authenticated users who have selected a role
-  // OR if allowNoRole is true
-  if (
-    !requiredRole &&
-    currentUser &&
-    (allowNoRole ||
-      currentUser.hasSelectedRole ||
-      currentUser.academyUser?.hasSelectedRole)
-  ) {
-    return <>{children}</>;
-  }
-
-  // If user has the required role, render the children
-  if (requiredRole && currentUser) {
-    const activeRole =
-      currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-
-    const hasRequiredRole =
-      activeRole === requiredRole ||
-      (requiredRole === "INSTRUCTOR" &&
-        (currentUser.roleStatus?.instructor === "not_applied" ||
-          currentUser.roleStatus?.instructor === "pending")); // User can access instructor application
-
-    if (hasRequiredRole) {
-      return <>{children}</>;
-    }
-  }
-
-  // Default fallback - should not reach here
-  return (
-    <AccessDenied
-      title="Access Denied"
-      message="You do not have permission to access this page."
-    />
-  );
+  // 6. Final Grant
+  return <>{children}</>;
 };
 
 export default AppRoute;

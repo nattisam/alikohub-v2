@@ -74,15 +74,10 @@ export const courseService = {
 
   // Courses (authenticated)
   getCourses: async (params?: Record<string, unknown>): Promise<Course[]> => {
-    try {
-      // All course endpoints require authentication in the backend
-      // Use the authenticated API for all requests
-      const response = await api.get("/academy/courses", { params });
-      return response.data?.items || response.data || [];
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error;
-    }
+    // All course endpoints require authentication in the backend
+    // Use the authenticated API for all requests
+    const response = await api.get("/academy/courses", { params });
+    return response.data?.items || response.data || [];
   },
   getCourse: async (courseId: number): Promise<Course> => {
     const response = await api.get(`/academy/courses/${courseId}`);

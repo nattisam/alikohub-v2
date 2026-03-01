@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useUI } from "../../contexts/UIContext";
 import { useNavigate } from "react-router-dom";
 import AllCourses from "../../components/course/AllCourses";
 import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 
 const StudentCourseOverview = () => {
-  const { user: currentUser, isLoading, setRoleModalOpen } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
+  const { setRoleModalOpen } = useUI();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for re-rendering
 

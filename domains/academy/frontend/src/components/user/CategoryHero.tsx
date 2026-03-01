@@ -1,9 +1,8 @@
-import React from "react";
 import { ChevronRight, Play } from "lucide-react";
-
-import stemHero from "/stemHero.jpg";
-import techHero from "/techLogo.jpg";
-import healthHero from "/healthLogo.jpg";
+import {
+  COURSE_HERO_IMAGES,
+  COURSE_BRAND_COLORS,
+} from "../../constants/course";
 
 interface CategoryHeroProps {
   category: "STEM" | "Technology" | "Health";
@@ -18,30 +17,10 @@ const CategoryHero: React.FC<CategoryHeroProps> = ({
   description,
   image,
 }) => {
-  const defaultImages = {
-    STEM: stemHero,
-    Technology: techHero,
-    Health: healthHero,
-  };
-
-  const heroImage = image || defaultImages[category];
-
-  const brandColors = {
-    STEM: {
-      accent: "text-[#3B82F6]",
-      btn: "bg-[#3B82F6] hover:bg-[#2563EB]",
-    },
-    Technology: {
-      accent: "text-[#F0802D]",
-      btn: "bg-[#F0802D] hover:bg-[#d97328]",
-    },
-    Health: {
-      accent: "text-[#00A89E]",
-      btn: "bg-[#00A89E] hover:bg-[#008c83]",
-    },
-  };
-
-  const currentBrand = brandColors[category] || brandColors.STEM;
+  const heroImage =
+    image || COURSE_HERO_IMAGES[category] || COURSE_HERO_IMAGES.STEM;
+  const currentBrand =
+    COURSE_BRAND_COLORS[category] || COURSE_BRAND_COLORS.STEM;
 
   return (
     <div className="flex flex-col w-full font-sans overflow-x-hidden">

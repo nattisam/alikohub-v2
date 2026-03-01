@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { enrollmentApi } from "../../api/enrollmentApi";
-import type { EnrollmentWithCourse } from "../../api/enrollmentApi";
-import type { Course } from "../../components/common/types.d.tsx";
+import { useEnrolledCourses } from "../../queries/studentCourses";
+import type { Course } from "../../services/course-service";
 import {
   BarChart2,
   CheckCircle,
@@ -18,154 +17,36 @@ import {
 } from "lucide-react";
 
 import StudentProgressTracker from "../../components/student/StudentProgressTracker";
-import TeacherApplicationModal from "../../components/auth/TeacherApplicationModal";
 import ErrorState from "../../components/states/ErrorState";
 
 const AcademyStudentDashboard = () => {
-  const { user: currentUser, isLoading, setRoleModalOpen } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [enrollments, setEnrollments] = useState<EnrollmentWithCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!currentUser) {
-      navigate("/auth/login");
-      return;
-    }
-
-    const activeRole =
-      currentUser.academyActiveRole || currentUser.academyUser?.activeRole;
-    const pendingRole = currentUser.pendingRole;
-    const instructorStatus = currentUser.roleStatus?.instructor;
-
-    if (activeRole === "STUDENT") return;
-    if (
-      (pendingRole === "INSTRUCTOR" ||
-        instructorStatus === "pending" ||
-        instructorStatus === "not_applied") &&
-      activeRole !== "STUDENT"
-    )
-      return;
-
-    // Trigger global role selection modal and redirect to home if no role
-    setRoleModalOpen(true);
-    navigate("/");
-  }, [currentUser, isLoading, navigate, setRoleModalOpen]);
-
-  const fetchDashboardData = async () => {
-    const fetchWithRetry = async (maxRetries = 3, delay = 1000) => {
-      let retries = 0;
-      while (retries <= maxRetries) {
-        try {
-          const coursesResponse = await enrollmentApi.getMyCourses();
-          const responseData = coursesResponse?.data;
-          const rawItems = Array.isArray(responseData)
-            ? responseData
-            : (responseData as any)?.items || [];
-
-          const detectedEnrollments: EnrollmentWithCourse[] = [];
-          const detectedCourses: Course[] = [];
-
-          rawItems.forEach((item: any) => {
-            if (item && typeof item === "object" && "courseId" in item) {
-              const enrollmentItem = item as EnrollmentWithCourse;
-              detectedEnrollments.push(enrollmentItem);
-              if (enrollmentItem.course) {
-                detectedCourses.push({
-                  ...enrollmentItem.course,
-                  progress:
-                    (enrollmentItem as any).progress ??
-                    (enrollmentItem.course as any).progress ??
-                    0,
-                } as unknown as Course);
-              }
-            } else if (item && typeof item === "object") {
-              detectedCourses.push(item as Course);
-            }
-          });
-
-          setEnrollments(detectedEnrollments);
-          setCourses(detectedCourses);
-          setError(null);
-          return;
-        } catch (error: any) {
-          const status = error.response?.status;
-          if (status === 401 || status === 404) {
-            setEnrollments([]);
-            setCourses([]);
-            setError(null);
-            return;
-          }
-          if (status === 429 && retries < maxRetries) {
-            await new Promise((resolve) =>
-              setTimeout(resolve, delay * Math.pow(2, retries)),
-            );
-            retries++;
-          } else {
-            setError(error as Error);
-            break;
-          }
-        }
-      }
-    };
-
-    setLoading(true);
-    try {
-      await fetchWithRetry();
-    } catch (err: any) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Use the refactored TanStack Query hook
+  const {
+    data: courses = [],
+    isLoading: isDataLoading,
+    error,
+    refetch,
+  } = useEnrolledCourses(currentUser?.firebaseId);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchDashboardData();
+    if (refreshKey > 0) {
+      refetch();
     }
-  }, [refreshKey, currentUser]);
+  }, [refreshKey, refetch]);
 
-  if (isLoading) {
+  if (isLoading || isDataLoading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-      </div>
-    );
-  }
-
-  if (!currentUser) return null;
-
-  const activeRole =
-    currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
-  const hasSelectedRole =
-    currentUser?.hasSelectedRole &&
-    (activeRole === "STUDENT" || activeRole === "INSTRUCTOR");
-  const pendingRole = currentUser?.pendingRole;
-  const instructorStatus = currentUser?.roleStatus?.instructor;
-
-  // Role selection handled by useEffect and global modal
-  if (
-    !hasSelectedRole ||
-    (activeRole !== "STUDENT" && activeRole !== "INSTRUCTOR")
-  ) {
-    return null;
-  }
-
-  if (
-    (pendingRole === "INSTRUCTOR" ||
-      instructorStatus === "pending" ||
-      instructorStatus === "not_applied") &&
-    activeRole !== "STUDENT"
-  ) {
-    return (
-      <div className="min-h-screen bg-[#09090b] pt-24">
-        <TeacherApplicationModal standalone={true} />
+      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin h-10 w-10 text-blue-600 mb-4" />
+        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+          Loading Dashboard...
+        </p>
       </div>
     );
   }
@@ -181,7 +62,7 @@ const AcademyStudentDashboard = () => {
     );
   }
 
-  if (loading) {
+  if (isDataLoading) {
     return (
       <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center">
         <Loader2 className="animate-spin h-10 w-10 text-blue-600 mb-4" />
@@ -336,7 +217,7 @@ const AcademyStudentDashboard = () => {
             </Link>
           </div>
 
-          {enrollments.length === 0 ? (
+          {courses.length === 0 ? (
             <div className="bg-white/[0.02] rounded-3xl p-16 text-center border border-dashed border-white/5 flex flex-col items-center">
               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 text-slate-600">
                 <Layout size={32} />
@@ -442,7 +323,7 @@ const AcademyStudentDashboard = () => {
             <div className="p-8 overflow-y-auto">
               <StudentProgressTracker
                 course={selectedCourse}
-                userId={currentUser.firebaseId}
+                userId={currentUser?.firebaseId || ""}
               />
             </div>
 

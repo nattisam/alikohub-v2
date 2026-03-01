@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, startTransition } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import logo from "../../assets/logo.svg";
+import { COURSE_LOGOS } from "../../constants/course";
 
 interface AcademyHeaderProps {
   currentTab: string;
@@ -49,12 +50,9 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   }, []);
 
   const handleLogout = () => {
-    startTransition(() => {
-      if (onLogout) onLogout();
-      else logout();
-      if (onLogoutComplete) onLogoutComplete();
-      else navigate("/");
-    });
+    if (onLogout) onLogout();
+    else logout();
+    if (onLogoutComplete) onLogoutComplete();
   };
 
   // Logic: Role-based Dashboard Path
@@ -77,9 +75,13 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
   // Logic to determine logo based on category route
   const getLogo = () => {
     const path = location.pathname;
-    if (path.includes("/category/STEM")) return "/stemLogo.jpg";
-    if (path.includes("/category/Technology")) return "/techLogo.jpg";
-    if (path.includes("/category/Health")) return "/healthLogo.jpg";
+    // Extract category from path /category/:name
+    const categoryMatch = path.match(/\/category\/([^/]+)/);
+    const category = categoryMatch ? categoryMatch[1] : null;
+
+    if (category && COURSE_LOGOS[category]) {
+      return COURSE_LOGOS[category];
+    }
     return logo;
   };
 

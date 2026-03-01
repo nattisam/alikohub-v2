@@ -1,16 +1,22 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import AccessDenied from '../states/AccessDenied';
+import AccessDenied from "../states/AccessDenied";
 
 interface AdminRouteProps {
   children: React.ReactNode;
 }
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const { user: currentUser, isLoading, isAuthenticated } = useAuth();
+  const {
+    user: currentUser,
+    isLoading,
+    isAuthenticated,
+    isLoggingOut,
+  } = useAuth();
+  const location = useLocation();
 
-  // If we're still loading, show a loading indicator
+  // 1. Loading State
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -22,20 +28,28 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // If user is not authenticated, redirect to login
+  // 2. Authentication Check
   if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />;
+    // If we're intentionally logging out, do a clean redirect
+    if (isLoggingOut) {
+      return <Navigate to="/auth/login" replace />;
+    }
+
+    const redirectUrl = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/auth/login?redirect=${redirectUrl}`} replace />;
   }
 
-  // Check if user has admin role (global role)
-  if (currentUser?.globalRole !== "ADMIN") {
-    return <AccessDenied 
-      title="Access Denied"
-      message="You do not have permission to access this page."
-    />;
+  // 3. Admin Authorization Check
+  if (currentUser?.globalRole?.toUpperCase() !== "ADMIN") {
+    return (
+      <AccessDenied
+        title="Access Denied"
+        message="You do not have permission to access the admin section."
+      />
+    );
   }
 
-  // If user is an admin, allow access
+  // 4. Final Grant
   return <>{children}</>;
 };
 

@@ -17,6 +17,7 @@ import {
   FaTimes,
   FaExclamationCircle,
 } from "react-icons/fa";
+import { COURSE_CATEGORIES } from "../../constants/course";
 
 // Types
 interface CourseFormData {
@@ -305,9 +306,11 @@ const InstructorCreateCourse: React.FC = () => {
                         }
                         className="w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#0a66c2] transition-all cursor-pointer"
                       >
-                        <option>STEM</option>
-                        <option>Health</option>
-                        <option>Technology</option>
+                        {COURSE_CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
