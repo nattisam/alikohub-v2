@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import alikohubLogo from "@/assets/alikohub-logo.png";
-import { useUser, useLogout } from "@/features/auth/hooks/useAuth";
+import { useUser, useLogout } from "@/hooks/useAuth";
 
 const navLinks = [
   { label: "Home", href: "/" },

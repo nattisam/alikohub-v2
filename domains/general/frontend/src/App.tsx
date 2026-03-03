@@ -10,8 +10,8 @@ import NotFound from "./pages/NotFound";
 const About = lazy(() => import("./pages/About"));
 const Programs = lazy(() => import("./pages/Programs"));
 const Partnership = lazy(() => import("./pages/Partnership"));
-const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
-const RegisterPage = lazy(() => import("./features/auth/pages/RegisterPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 
 const queryClient = new QueryClient();
 
