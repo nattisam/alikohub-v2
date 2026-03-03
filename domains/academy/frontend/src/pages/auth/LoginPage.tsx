@@ -21,28 +21,14 @@ const LoginPage: React.FC = () => {
     try {
       await login(data.email, data.password);
 
-      // Successfully logged in - determine redirect path
-      const userData = localStorage.getItem("user");
-      if (userData) {
-        if (redirectPath) {
-          navigate(redirectPath);
-          return;
-        }
-
-        try {
-          const user = JSON.parse(userData);
-          if (user.globalRole === "ADMIN") {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
-          }
-        } catch (e) {
-          navigate("/dashboard");
-        }
+      // If we have a specific redirect path from a previous page, use it
+      if (redirectPath) {
+        navigate(redirectPath);
       }
+      // Otherwise, we do nothing and let the parent PublicRoute
+      // handle the dashboard redirection automatically once state is updated
     } catch (error: any) {
-      console.error("Login error:", error);
-      // Error handling is managed by the context (loginError state)
+      console.error("Login call failed:", error);
     }
   };
 

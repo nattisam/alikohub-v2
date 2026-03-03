@@ -3,11 +3,11 @@ import React, {
   useContext,
   useEffect,
   useState,
-  startTransition,
   type ReactNode,
 } from "react";
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 import { authService } from "../services/auth-service";
+import { buildUser } from "../utils/user";
 
 import type {
   CurrentUser,
@@ -21,6 +21,7 @@ interface AuthContextType {
   user: CurrentUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isLoggingOut: boolean;
   isRoleSwitching: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (credentials: SignupCredentials) => Promise<void>;
@@ -37,111 +38,43 @@ interface AuthContextType {
   applyAsInstructorMutation: UseMutationResult<any, any, any, unknown>;
   loginError: string | null;
   signupError: string | null;
-  isRoleModalOpen: boolean;
-  setRoleModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const buildUser = (user: any): CurrentUser => {
-  if (!user) {
-    return {} as CurrentUser;
-  }
-
-  const academyUser = user?.academyUser;
-
-  // Convert backend lowercase roles to frontend uppercase format
-  const convertRoleToUppercase = (role: string) => {
-    if (!role || typeof role !== "string") return role;
-
-    switch (role.toLowerCase()) {
-      case "instructor":
-      case "teacher":
-        return "INSTRUCTOR";
-      case "student":
-        return "STUDENT";
-      case "admin":
-        return "ADMIN";
-      case "user":
-        return "USER";
-      case "course_manager":
-        return "COURSE_MANAGER";
-      default:
-        return role.toUpperCase();
-    }
-  };
-
-  const convertedAcademyUser = academyUser
-    ? {
-        ...academyUser,
-        role: convertRoleToUppercase(academyUser?.role),
-        activeRole: convertRoleToUppercase(academyUser?.activeRole),
-      }
-    : null;
-
-  return {
-    ...user,
-    firstName: user?.firstname || user?.firstName || "",
-    lastName: user?.lastname || user?.lastName || "",
-    academyUser: convertedAcademyUser,
-    academyRole: convertRoleToUppercase(academyUser?.role) || "USER",
-    academyActiveRole:
-      convertRoleToUppercase(user?.academyActiveRole) ||
-      convertRoleToUppercase(academyUser?.activeRole) ||
-      convertRoleToUppercase(user?.currentRole) ||
-      convertRoleToUppercase(academyUser?.role) ||
-      "USER",
-
-    hasSelectedRole: !!(
-      convertedAcademyUser?.role && convertedAcademyUser.role !== "USER"
-    ),
-    hasTeacherApplication: user.hasTeacherApplication || false,
-    instructorStatus:
-      user.instructorStatus || user.roleStatus?.instructor || "not_applied",
-    hasAcademyRole: user.hasAcademyRole || false,
-    canAccessDashboard: user.canAccessDashboard || false,
-    canEnrollCourses: user.canEnrollCourses || false,
-    canCreateCourses: user.canCreateCourses || false,
-
-    // Include INSTRUCTOR in availableRoles if user has applied and been approved
-    // Include INSTRUCTOR if the user has an approved instructor application status
-    availableRoles: [
-      "STUDENT",
-      // Include INSTRUCTOR if user's role is INSTRUCTOR, if they have an approved instructor application,
-      // or if they have permissions to create courses (which implies they are an instructor)
-      ...(convertedAcademyUser?.role === "INSTRUCTOR" ||
-      user?.roleStatus?.instructor === "approved" ||
-      user?.instructorStatus === "active" ||
-      user?.instructorStatus === "approved" ||
-      user?.canCreateCourses === true
-        ? ["INSTRUCTOR"]
-        : []),
-      ...(user?.globalRole === "ADMIN" ? ["ADMIN"] : []),
-    ].filter((v, i, a) => a.indexOf(v) === i), // Unique roles
-  };
-};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isRoleSwitching, setIsRoleSwitching] = useState(false);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    const rawUser = localStorage.getItem("user");
+    const initAuth = async () => {
+      const token = localStorage.getItem("accessToken");
+      const rawUser = localStorage.getItem("user");
 
-    if (token && rawUser) {
-      try {
-        setUser(JSON.parse(rawUser)); // trust cached user
-      } catch {
-        setUser(null);
+      if (token && rawUser) {
+        try {
+          const cachedUser = JSON.parse(rawUser);
+          setUser(cachedUser);
+
+          // Background validation
+          await refreshProfile(cachedUser);
+        } catch (error) {
+          console.error("Auth initialization failed:", error);
+          // If we have a token but validation fails, clear it
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("user");
+          setUser(null);
+        }
       }
-    }
 
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    initAuth();
 
     // Listen for logout events from other tabs
     const handleStorageChange = (e: StorageEvent) => {
@@ -185,18 +118,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
 
       try {
-        // Use the user data from the response which may contain updated role information
-        await authService.getProfile();
-        const finalUser = buildUser(data.user);
+        // Fetch full profile and academy status
+        const profile = await authService.getProfile();
+        const finalUser = buildUser(profile || data.user);
 
         setUser(finalUser);
+        localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("user", JSON.stringify(finalUser));
       } catch (error) {
-        // If profile fetch fails, we should still have the user data from login
+        // fallback to data from login response if profile fetch fails
         const finalUser = buildUser(data.user);
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
-
         console.error("Error fetching profile after login:", error);
       }
     },
@@ -210,19 +143,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       localStorage.setItem("firebaseCustomToken", data.firebaseCustomToken);
 
       try {
-        // Use the user data from the response which may contain updated role information
-        await authService.getProfile();
-        const finalUser = buildUser(data.user);
+        const profile = await authService.getProfile();
+        const finalUser = buildUser(profile || data.user);
 
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
       } catch (error) {
-        // If profile fetch fails, we should still have the user data from registration
-        // Build user with the registration response data as fallback
         const finalUser = buildUser(data.user);
         setUser(finalUser);
         localStorage.setItem("user", JSON.stringify(finalUser));
-
         console.error("Error fetching profile after signup:", error);
       }
     },
@@ -284,13 +213,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const logout = () => {
+    setIsLoggingOut(true);
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     localStorage.removeItem("firebaseCustomToken");
 
-    startTransition(() => {
-      setUser(null);
-    });
+    // Urgent update instead of transition to ensure guards see the state immediately
+    setUser(null);
+
+    // Reset logging out state after a longer delay to ensure all redirects finish
+    setTimeout(() => setIsLoggingOut(false), 1000);
 
     // Dispatch a custom event to notify other tabs about logout
     window.dispatchEvent(new CustomEvent("userLoggedOut"));
@@ -340,8 +272,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     await switchRoleMutation.mutateAsync(role);
   };
 
-  const refreshProfile = async () => {
-    if (!user) return null;
+  const refreshProfile = async (u?: CurrentUser) => {
+    const currentUser = u || user;
+    if (!currentUser) return null;
 
     try {
       const profile = await authService.getProfile();
@@ -349,7 +282,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       try {
         academyStatus = await authService.getUserAcademyStatus(
-          user.id.toString(),
+          currentUser.id.toString(),
         );
       } catch (e) {
         console.error("Failed to fetch academy status:", e);
@@ -419,6 +352,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         user,
         isAuthenticated: !!user,
         isLoading,
+        isLoggingOut,
         isRoleSwitching,
         login,
         signup,
@@ -435,8 +369,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         applyAsInstructorMutation,
         loginError,
         signupError,
-        isRoleModalOpen,
-        setRoleModalOpen: setIsRoleModalOpen,
       }}
     >
       {children}

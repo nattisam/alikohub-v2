@@ -1,36 +1,41 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import HomePage from "./pages/HomePage.tsx";
-import GeneralLoginPage from "./pages/LoginPage.tsx";
-import GeneralSignupPage from "./pages/SignupPage.tsx";
-import ProfilePage from "./pages/ProfilePage.tsx";
-import ErrorBoundary from "./components/common/ErrorBoundary";
-import NotFoundState from "./components/states/NotFoundState";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
 
-function App() {
-  return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <Router>
+const About = lazy(() => import("./pages/About"));
+const Programs = lazy(() => import("./pages/Programs"));
+const Partnership = lazy(() => import("./pages/Partnership"));
+const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("./features/auth/pages/RegisterPage"));
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/auth/login" element={<GeneralLoginPage />} />
-            <Route path="/auth/signup" element={<GeneralSignupPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route
-              path="*"
-              element={
-                <NotFoundState
-                  title="Page Not Found"
-                  message="The page you are looking for does not exist."
-                />
-              }
-            />
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/programs" element={<Programs />} />
+            <Route path="/partnership" element={<Partnership />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
-        </Router>
-      </AuthProvider>
-    </ErrorBoundary>
-  );
-}
+        </Suspense>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

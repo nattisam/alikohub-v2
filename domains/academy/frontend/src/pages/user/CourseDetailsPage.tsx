@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { enrollmentApi } from "../../api/enrollmentApi";
 import { useAuth } from "../../contexts/AuthContext";
+import { useUI } from "../../contexts/UIContext";
 import { useCourse } from "../../queries/courseQueries";
 import { useCourseModules } from "../../queries/moduleQueries";
 import type { CourseLesson, Course } from "../../components/common/types.d";
@@ -28,7 +29,8 @@ import FeedbackModal from "../../components/common/FeedbackModal";
 const CourseDetailsPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const [enrolling, setEnrolling] = useState(false);
-  const { user: currentUser, setRoleModalOpen, logout } = useAuth();
+  const { user: currentUser, logout } = useAuth();
+  const { setRoleModalOpen } = useUI();
   const navigate = useNavigate();
 
   const {
@@ -37,18 +39,6 @@ const CourseDetailsPage: React.FC = () => {
     isError,
     error,
   } = useCourse(parseInt(courseId || "0", 10));
-
-  useEffect(() => {
-    if (isError && (error as any)?.response?.status === 401) {
-      const timer = setTimeout(() => {
-        logout();
-        navigate(
-          `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`,
-        );
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isError, error, navigate, logout]);
 
   const hasRole = !!(
     currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole

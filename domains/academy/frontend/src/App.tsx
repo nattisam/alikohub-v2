@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
+import { useUI } from "./contexts/UIContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import PageLoader from "./components/common/PageLoader";
 
@@ -48,8 +49,6 @@ const CoursesManagementPage = lazy(
   () => import("./admin/CoursesManagementPage"),
 );
 
-import RequireAuthWithRedirect from "./components/auth/RequireAuthWithRedirect";
-import RedirectIfAuthenticated from "./components/auth/RedirectIfAuthenticated";
 import AcademyHeader from "./components/layout/AcademyHeader";
 import RoleSelectionModal from "./components/auth/RoleSelectionModal";
 import AppRoute from "./components/common/AppRoute";
@@ -100,7 +99,6 @@ const PublicLayout = () => {
         onLogoutComplete={handleLogoutComplete}
       />
       <Outlet />
-      <AcademyFooter />
     </>
   );
 };
@@ -148,7 +146,7 @@ const DashboardLayout = () => {
 };
 
 const RoleModalContainer = () => {
-  const { isRoleModalOpen, setRoleModalOpen } = useAuth();
+  const { isRoleModalOpen, setRoleModalOpen } = useUI();
 
   if (!isRoleModalOpen) return null;
 
@@ -179,74 +177,45 @@ function App() {
                   </PublicRoute>
                 }
               />
-              <Route
-                path="/about"
-                element={
-                  <PublicRoute>
-                    <AcademyAboutPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/partnership"
-                element={
-                  <PublicRoute>
-                    <AcademyPartnershipPage />
-                  </PublicRoute>
-                }
-              />
-              <Route
-                path="/contact"
-                element={
-                  <PublicRoute>
-                    <AcademyContactUsPage />
-                  </PublicRoute>
-                }
-              />
+              <Route path="/about" element={<AcademyAboutPage />} />
+              <Route path="/partnership" element={<AcademyPartnershipPage />} />
+              <Route path="/contact" element={<AcademyContactUsPage />} />
 
               <Route
                 path="/courses/:courseId"
                 element={
-                  <RequireAuthWithRedirect message="Please log in or sign up to view this course.">
+                  <AppRoute
+                    allowNoRole={true}
+                    message="Please log in or sign up to view this course."
+                  >
                     <CourseDetailsPage />
-                  </RequireAuthWithRedirect>
+                  </AppRoute>
                 }
               />
               <Route
                 path="/auth/login"
                 element={
-                  <RedirectIfAuthenticated redirectPath="/">
+                  <PublicRoute>
                     <LoginPage />
-                  </RedirectIfAuthenticated>
+                  </PublicRoute>
                 }
               />
 
               <Route
                 path="/auth/signup"
                 element={
-                  <RedirectIfAuthenticated redirectPath="/">
+                  <PublicRoute>
                     <SignupPage />
-                  </RedirectIfAuthenticated>
+                  </PublicRoute>
                 }
               />
             </Route>
 
-            <Route
-              path="/category/:categoryName"
-              element={
-                <PublicRoute>
-                  <CategoryPage />
-                </PublicRoute>
-              }
-            />
+            <Route path="/category/:categoryName" element={<CategoryPage />} />
 
             <Route
               path="/category/:categoryName/courses"
-              element={
-                <PublicRoute>
-                  <CategoryCoursesPage />
-                </PublicRoute>
-              }
+              element={<CategoryCoursesPage />}
             />
 
             {/* dashboard router */}

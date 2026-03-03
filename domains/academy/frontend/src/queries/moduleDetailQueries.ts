@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { courseService } from "../services/course-service";
+import { courseKeys } from "./courseKeys";
 
+/**
+ * Hook to fetch only modules for a course (without pre-fetching lessons).
+ */
 export const useCourseModulesOnly = (courseId: number) => {
   return useQuery({
-    queryKey: ["course-modules-only", courseId],
-    queryFn: async () => {
-      const modulesRes = await courseService.getModules(courseId);
-      return modulesRes;
-    },
+    queryKey: [...courseKeys.modules(courseId), "only"],
+    queryFn: () => courseService.getModules(courseId),
     enabled: !!courseId,
-    staleTime: 15 * 60 * 1000,     // 15 minutes - longer cache
-    gcTime: 30 * 60 * 1000,        // 30 minutes - keep in cache longer
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
   });
 };

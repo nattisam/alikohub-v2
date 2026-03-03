@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useUI } from "../../contexts/UIContext";
 import AcademyStudentDashboard from "../../pages/student/AcademyStudentDashboard";
 import StudentCourseOverview from "../../pages/student/StudentCourseOverview";
 import StudentProfile from "../../pages/student/StudentProfile";
@@ -17,18 +18,25 @@ const CheckoutCancelPage = React.lazy(
 );
 
 const StudentDashboardRouter: React.FC = () => {
-  const { user: currentUser, setRoleModalOpen } = useAuth();
+  const { user: currentUser } = useAuth();
+  const { setRoleModalOpen } = useUI();
   const navigate = useNavigate();
 
   // Check the active role from the user's academyUser
   const activeRole =
     currentUser?.academyActiveRole || currentUser?.academyUser?.activeRole;
   const hasSelectedRole = currentUser?.hasSelectedRole;
+
+  // If user is an admin, they can bypass these checks
+  if (currentUser?.globalRole === "ADMIN") {
+    // Though they should ideally use /admin, if they are here, don't redirect to /
+  }
   // Move redirection to useEffect
   React.useEffect(() => {
     // Check if user is trying to access student dashboard but has a different active role
     if (
       currentUser &&
+      currentUser.globalRole !== "ADMIN" &&
       activeRole &&
       activeRole !== "STUDENT" &&
       activeRole !== "ADMIN"
@@ -45,13 +53,14 @@ const StudentDashboardRouter: React.FC = () => {
   }, [currentUser, activeRole, setRoleModalOpen, navigate]);
 
   // If user hasn't selected a role yet, redirections handled by useEffect
-  if (currentUser && !hasSelectedRole) {
+  if (currentUser && !hasSelectedRole && currentUser.globalRole !== "ADMIN") {
     return null;
   }
 
   // Return null if redirecting
   if (
     currentUser &&
+    currentUser.globalRole !== "ADMIN" &&
     activeRole &&
     activeRole !== "STUDENT" &&
     activeRole !== "ADMIN"

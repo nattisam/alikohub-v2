@@ -153,15 +153,10 @@ export const authService = {
         backendRole = role.toLowerCase();
     }
 
-    try {
-      const response = await api.post("/auth/academy/select-role", {
-        role: backendRole,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("Error in role selection API call:", error);
-      throw error;
-    }
+    const response = await api.post("/auth/academy/select-role", {
+      role: backendRole,
+    });
+    return response.data;
   },
 
   switchRole: async (role: string) => {

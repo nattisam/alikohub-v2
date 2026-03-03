@@ -1,21 +1,19 @@
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate, useLocation, Outlet, Link } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
+import { Outlet, Link } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
   Menu,
   X,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 
 const AdminLayout = () => {
   const { user: currentUser, logout, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (path: string) => {
@@ -32,8 +30,11 @@ const AdminLayout = () => {
           <div className="w-full p-6">
             <div className="h-10 w-40 bg-white/10 animate-pulse rounded mb-8" />
             <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-12 bg-white/10 animate-pulse rounded-lg" />
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-12 bg-white/10 animate-pulse rounded-lg"
+                />
               ))}
             </div>
           </div>
@@ -52,22 +53,34 @@ const AdminLayout = () => {
   }
 
   const menuItems = [
-    { path: "/admin", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { path: "/admin/teacher-applications", label: "Teacher Applications", icon: <Users className="w-5 h-5" /> },
-    { path: "/admin/courses", label: "Manage Courses", icon: <BookOpen className="w-5 h-5" /> },
+    {
+      path: "/admin",
+      label: "Dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+    },
+    {
+      path: "/admin/teacher-applications",
+      label: "Teacher Applications",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
+      path: "/admin/courses",
+      label: "Manage Courses",
+      icon: <BookOpen className="w-5 h-5" />,
+    },
   ];
 
-  const NavLink = ({ item }: { item: typeof menuItems[0] }) => {
+  const NavLink = ({ item }: { item: (typeof menuItems)[0] }) => {
     const active = isActive(item.path);
     return (
       <Link
         to={item.path}
         onClick={() => setSidebarOpen(false)}
         className={cn(
-          'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium',
+          "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium",
           active
-            ? 'bg-[#3E92D1] text-white shadow-md'
-            : 'text-white/70 hover:bg-white/10 hover:text-white'
+            ? "bg-[#3E92D1] text-white shadow-md"
+            : "text-white/70 hover:bg-white/10 hover:text-white",
         )}
       >
         {item.icon}
@@ -85,18 +98,22 @@ const AdminLayout = () => {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 hover:bg-gray-100 rounded-lg"
         >
-          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {sidebarOpen ? (
+            <X className="w-5 h-5" />
+          ) : (
+            <Menu className="w-5 h-5" />
+          )}
         </button>
       </div>
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-screen w-64 bg-[#2e3b4d] border-r border-sidebar-border',
-          'flex flex-col gap-6 p-6 overflow-y-auto',
-          'transition-all duration-300 z-30',
-          'lg:sticky lg:translate-x-0 lg:top-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          "fixed left-0 top-0 h-screen w-64 bg-[#2e3b4d] border-r border-sidebar-border",
+          "flex flex-col gap-6 p-6 overflow-y-auto",
+          "transition-all duration-300 z-30",
+          "lg:sticky lg:translate-x-0 lg:top-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Logo */}
@@ -120,14 +137,15 @@ const AdminLayout = () => {
         <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
             <div className="w-8 h-8 rounded-full bg-[#3E92D1] flex items-center justify-center text-white text-sm font-bold">
-              {currentUser?.firstname?.[0] || 'A'}{currentUser?.lastname?.[0] || 'U'}
+              {currentUser?.firstname?.[0] || "A"}
+              {currentUser?.lastname?.[0] || "U"}
             </div>
             <div className="text-sm truncate">
               <div className="font-medium text-white truncate">
                 {currentUser?.firstname} {currentUser?.lastname}
               </div>
               <div className="text-xs text-white/50 truncate">
-                {currentUser?.email || 'admin@example.com'}
+                {currentUser?.email || "admin@example.com"}
               </div>
             </div>
           </div>
@@ -138,12 +156,11 @@ const AdminLayout = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-20 border-b border-gray-300 bg-[#FFFFFF] px-4 md:px-8 py-4 flex items-center justify-end">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all font-semibold"
               onClick={() => {
                 logout();
-                navigate("/auth/login");
               }}
             >
               <LogOut className="w-4 h-4" />

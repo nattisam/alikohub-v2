@@ -1,29 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { enrollmentService, type EnrollmentWithCourse } from "../services/enrollment-service";
-import { courseService, type Course } from "../services/course-service";
+import {
+  enrollmentService,
+  type EnrollmentWithCourse,
+} from "../services/enrollment-service";
+import { type Course } from "../services/course-service";
+import { enrollmentKeys } from "./enrollmentKeys";
+import { courseKeys } from "./courseKeys";
 
-export const useAllCourses = () => {
-  return useQuery({
-    queryKey: ["all-courses"],
-    queryFn: async () => {
-      const response = await courseService.getPublishedCourses();
-      const coursesData = (response as any).items || response;
-      return Array.isArray(coursesData) ? coursesData : [];
-    },
-    staleTime: 30 * 60 * 1000,     // 30 minutes - cache longer to reduce API calls
-    gcTime: 45 * 60 * 1000,        // 45 minutes - keep in cache longer
-    refetchOnWindowFocus: false,   // prevent refetch on window focus
-    refetchOnReconnect: false,     // prevent refetch on reconnect
-    retry: (failureCount, error: Error | unknown) => {
-      // Don't retry on 429 - let axios handle it to prevent cascading retries
-      const err = error as { response?: { status?: number } };
-      if (err?.response?.status === 429) {
-        return false;
-      }
-      return failureCount < 1;
-    },
-  });
-};
+// Note: useAllCourses is deprecated in favor of useCourses hook in src/hooks/useCourses.ts
+// which uses the unified select pattern and centralized constants.
 
 export const useTrendingCourses = (allCourses: any = []) => {
   const payload = allCourses?.items || allCourses;
@@ -32,32 +17,24 @@ export const useTrendingCourses = (allCourses: any = []) => {
 
 export const useEnrolledCourses = (userId?: string) => {
   return useQuery({
-    queryKey: ["enrolled-courses", userId],
-    queryFn: async () => {
-      if (!userId) {
-        return [];
-      }
-      const requestData = await enrollmentService.getEnrollmentsByUserId(userId);
-      
-      if (!Array.isArray(requestData)) {
-        return [];
-      }
-
-      // Extract course data from the enrollment response
-      const coursesData = requestData.map((enrollment: EnrollmentWithCourse) => {
-        if (!enrollment?.course) return null;
-        
-        // Ensure thumbnail is a string or provide a default
-        const courseData = {
-          ...enrollment.course,
-          thumbnail: enrollment.course.thumbnail || ""
-        };
-        return convertEnrollmentCourseToCourse(courseData);
-      }).filter(Boolean) as Course[];
-      
-      return coursesData;
+    queryKey: enrollmentKeys.byUser(userId || ""),
+    queryFn: () => {
+      if (!userId) return Promise.resolve([]);
+      return enrollmentService.getEnrollmentsByUserId(userId);
     },
     enabled: !!userId,
+    select: (data) => {
+      if (!Array.isArray(data)) return [];
+      return data
+        .map((enrollment: EnrollmentWithCourse) => {
+          if (!enrollment?.course) return null;
+          return convertEnrollmentCourseToCourse({
+            ...enrollment.course,
+            thumbnail: enrollment.course.thumbnail || "",
+          });
+        })
+        .filter((c): c is Course => c !== null);
+    },
   });
 };
 
@@ -65,18 +42,12 @@ export const useEnrollCourse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (courseId: number) => {
-      const enrollmentData = {
-        courseId: courseId
-      };
-      return enrollmentService.createEnrollment(enrollmentData);
-    },
+    mutationFn: (courseId: number) =>
+      enrollmentService.createEnrollment({ courseId }),
     onSuccess: () => {
-      // Invalidate enrolled courses to refresh the list
-      queryClient.invalidateQueries({ queryKey: ["enrolled-courses"] });
-      // Also invalidate all courses to update enrollment counts
-      queryClient.invalidateQueries({ queryKey: ["all-courses"] });
-      queryClient.invalidateQueries({ queryKey: ["trending-courses"] });
+      // Invalidate using the unified keys
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
+      queryClient.invalidateQueries({ queryKey: courseKeys.all });
     },
   });
 };
@@ -93,7 +64,9 @@ interface EnrollmentCourseData {
 }
 
 // Helper function to convert enrollment course data to Course interface
-const convertEnrollmentCourseToCourse = (enrollmentCourse: EnrollmentCourseData): Course => {
+const convertEnrollmentCourseToCourse = (
+  enrollmentCourse: EnrollmentCourseData,
+): Course => {
   return {
     id: enrollmentCourse.id,
     title: enrollmentCourse.title,
@@ -127,16 +100,21 @@ const convertEnrollmentCourseToCourse = (enrollmentCourse: EnrollmentCourseData)
       status: "active",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    }
+    },
   };
 };
 
-export const getSimilarCourses = (refCourse: Course, allCourses: Course[]): Course[] => {
+export const getSimilarCourses = (
+  refCourse: Course,
+  allCourses: Course[],
+): Course[] => {
   if (!Array.isArray(allCourses)) return [];
-  
-  return allCourses.filter(course => {
+
+  return allCourses.filter((course) => {
     if (course.category === refCourse.category && course.id !== refCourse.id) {
-      return refCourse.skills?.some((skill: string) => course.skills?.includes(skill));
+      return refCourse.skills?.some((skill: string) =>
+        course.skills?.includes(skill),
+      );
     }
     return false;
   });

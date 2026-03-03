@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useUI } from "../../contexts/UIContext";
 
 /**
  * Smart dashboard router that redirects users to the appropriate dashboard
@@ -27,14 +28,14 @@ const DashboardRouter: React.FC = () => {
   }
 
   // If user is an admin, always allow them to go to the admin dashboard
-  if (currentUser?.globalRole === "ADMIN") {
+  if (currentUser?.globalRole?.toUpperCase() === "ADMIN") {
     return <Navigate to="/admin" replace />;
   }
 
   const hasSelectedRole =
     currentUser?.hasSelectedRole || currentUser?.academyUser?.hasSelectedRole;
 
-  const { setRoleModalOpen } = useAuth();
+  const { setRoleModalOpen } = useUI();
 
   React.useEffect(() => {
     if (!hasSelectedRole && !isLoading && currentUser) {
