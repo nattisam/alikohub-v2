@@ -1,35 +1,121 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
-@keyframes move-in-from-left {
-  0% {
-    transform: translateX(-900px);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 30% 6%;
+    --foreground: 210 40% 96%;
+
+    --card: 220 28% 10%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 220 28% 10%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 37 78% 56%;
+    --primary-foreground: 220 30% 6%;
+
+    --secondary: 215 30% 16%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 215 25% 14%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 200 70% 55%;
+    --accent-foreground: 220 30% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 25% 18%;
+    --input: 215 25% 18%;
+    --ring: 37 78% 56%;
+
+    --radius: 0.75rem;
+
+    /* Custom AlikoHub tokens */
+    --navy: 220 30% 6%;
+    --navy-light: 220 28% 10%;
+    --navy-medium: 215 30% 16%;
+    --amber: 37 78% 56%;
+    --amber-light: 37 85% 65%;
+    --amber-glow: 37 90% 70%;
+    --sky: 200 70% 55%;
+    --sky-light: 200 80% 70%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(220 30% 6%) 0%, hsl(215 35% 12%) 50%, hsl(220 30% 8%) 100%);
+    --gradient-amber: linear-gradient(135deg, hsl(37 78% 56%) 0%, hsl(30 85% 50%) 100%);
+    --gradient-card: linear-gradient(160deg, hsl(220 28% 12%) 0%, hsl(220 28% 8%) 100%);
+    --gradient-glow: radial-gradient(ellipse at 30% 50%, hsl(37 78% 56% / 0.08) 0%, transparent 60%);
+
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 12px 40px -8px hsl(37 78% 56% / 0.2);
+    --shadow-amber: 0 4px 20px -4px hsl(37 78% 56% / 0.4);
+
+    --sidebar-background: 220 28% 10%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 37 78% 56%;
+    --sidebar-primary-foreground: 220 30% 6%;
+    --sidebar-accent: 215 30% 16%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 215 25% 18%;
+    --sidebar-ring: 37 78% 56%;
   }
-  100% {
-    transform: translateX(0);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
   }
 }
 
-@keyframes move-in-from-right {
-  0% {
-    transform: translateX(900px);
+@layer utilities {
+  .text-gradient-amber {
+    background: linear-gradient(135deg, hsl(37 78% 56%), hsl(37 90% 70%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  100% {
-    transform: translateX(0);
+
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(hsl(215 25% 18% / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(215 25% 18% / 0.3) 1px, transparent 1px);
+    background-size: 60px 60px;
   }
-}
 
-.move-in-from-left {
-  animation: move-in-from-left 1s ease-out 1;
-}
+  .glass-card {
+    background: hsl(220 28% 10% / 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(215 25% 18% / 0.5);
+  }
 
-.move-in-from-right {
-  animation: move-in-from-right 1s ease-out 1;
-}
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+  }
+
+  .animate-marquee:hover {
+    animation-play-state: paused;
+  }
 }
