@@ -34,7 +34,7 @@ const navLinks = [
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const user = useUser();
+  const { data: user } = useUser();
   const logout = useLogout();
 
   const userInitials = user
