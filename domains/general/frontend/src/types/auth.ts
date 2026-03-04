@@ -58,4 +58,5 @@ export interface RegisterCredentials {
   lastname: string;
   email: string;
   password?: string;
+  captchaToken?: string;
 }

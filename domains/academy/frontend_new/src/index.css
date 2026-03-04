@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Sora:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 25% 97%;
+    --foreground: 213 30% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 30% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 30% 20%;
+
+    --primary: 211 55% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 211 30% 93%;
+    --secondary-foreground: 213 30% 20%;
+
+    --muted: 216 20% 95%;
+    --muted-foreground: 215 14% 46%;
+
+    --accent: 211 55% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 45% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 18% 88%;
+    --input: 214 18% 88%;
+    --ring: 211 55% 38%;
+
+    --radius: 0.875rem;
+
+    --section-alt: 216 22% 95%;
+    --journey-bg: 213 40% 18%;
+    --journey-fg: 0 0% 100%;
+
+    --nav-bg: 0 0% 100%;
+    --nav-fg: 213 40% 18%;
+
+    --health: 0 42% 46%;
+    --tech: 224 70% 50%;
+    --stem: 150 42% 38%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 215 25% 8%;
+    --foreground: 210 20% 92%;
+    --card: 215 25% 12%;
+    --card-foreground: 210 20% 92%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 211 55% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 20% 18%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 217 20% 18%;
+    --muted-foreground: 215 15% 60%;
+    --accent: 211 55% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 45% 35%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 20% 20%;
+    --input: 217 20% 20%;
+    --ring: 211 55% 50%;
+    --section-alt: 215 25% 10%;
+    --journey-bg: 213 40% 14%;
+    --journey-fg: 0 0% 100%;
+    --nav-bg: 213 40% 14%;
+    --nav-fg: 0 0% 100%;
+    --health: 0 42% 50%;
+    --tech: 224 70% 55%;
+    --stem: 150 42% 45%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-20 md:py-28;
+  }
+
+  .section-alt {
+    background-color: hsl(var(--section-alt));
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--tech)), hsl(var(--accent)));
+  }
+
+  .journey-strip {
+    background: hsl(var(--journey-bg));
+    color: hsl(var(--journey-fg));
+  }
+
+  .nav-solid {
+    background: hsl(var(--nav-bg));
+    color: hsl(var(--nav-fg));
+  }
+
+  .stream-health {
+    color: hsl(var(--health));
+    background-color: hsl(var(--health) / 0.08);
+  }
+
+  .stream-tech {
+    color: hsl(var(--tech));
+    background-color: hsl(var(--tech) / 0.08);
+  }
+
+  .stream-stem {
+    color: hsl(var(--stem));
+    background-color: hsl(var(--stem) / 0.08);
+  }
+}

@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/card";
 import { useRegister } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
+import { useState } from "react";
 
 const registerSchema = zod.object({
   firstname: zod.string().min(2, "First name must be at least 2 characters"),
@@ -32,7 +34,9 @@ const registerSchema = zod.object({
 type RegisterFormValues = zod.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
+  const { data: user } = useUser();
   const { mutate: register, isPending } = useRegister();
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -45,7 +49,8 @@ const RegisterPage = () => {
   });
 
   const onSubmit = (values: RegisterFormValues) => {
-    register(values);
+    if (!captchaValue) return;
+    register({ ...values, captchaToken: captchaValue });
   };
 
   return (
@@ -120,7 +125,20 @@ const RegisterPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isPending}>
+              <div className="flex justify-center py-2">
+                <ReCAPTCHA
+                  sitekey={
+                    import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
+                    "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                  }
+                  onChange={(value) => setCaptchaValue(value)}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isPending || !captchaValue}
+              >
                 {isPending ? "Creating account..." : "Sign Up"}
               </Button>
             </form>

@@ -13,6 +13,8 @@ const Partnership = lazy(() => import("./pages/Partnership"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 
+import PublicRoute from "./components/PublicRoute";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -27,8 +29,12 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/programs" element={<Programs />} />
             <Route path="/partnership" element={<Partnership />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Route>
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

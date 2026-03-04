@@ -61,16 +61,14 @@ export const useLogout = () => {
     queryClient.setQueryData(["user"], null);
     queryClient.clear();
     toast.success("Logged out successfully");
-    navigate("/login");
+    navigate("/");
   };
 };
 
 export const useUser = () => {
-  const { data: user } = useQuery({
+  return useQuery({
     queryKey: ["user"],
     queryFn: () => authService.getSession().user,
-    staleTime: Infinity, // The user data is managed manually via mutations
+    staleTime: Infinity,
   });
-
-  return user;
 };

@@ -1,0 +1,19 @@
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "https://api.consultancy.alikohub.com",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add interceptor to add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
