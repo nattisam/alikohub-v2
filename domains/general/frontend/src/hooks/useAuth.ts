@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authService } from "../services/authService";
-import { LoginCredentials, RegisterCredentials, AuthResponse } from "../types";
+import { authService } from "@/services/authService";
+import {
+  LoginCredentials,
+  RegisterCredentials,
+  AuthResponse,
+} from "@/types/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 

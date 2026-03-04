@@ -19,29 +19,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useLogin } from "../hooks/useAuth";
+import { useRegister } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 
-const loginSchema = zod.object({
+const registerSchema = zod.object({
+  firstname: zod.string().min(2, "First name must be at least 2 characters"),
+  lastname: zod.string().min(2, "Last name must be at least 2 characters"),
   email: zod.string().email("Invalid email address"),
   password: zod.string().min(6, "Password must be at least 6 characters"),
 });
 
-type LoginFormValues = zod.infer<typeof loginSchema>;
+type RegisterFormValues = zod.infer<typeof registerSchema>;
 
-const LoginPage = () => {
-  const { mutate: login, isPending } = useLogin();
+const RegisterPage = () => {
+  const { mutate: register, isPending } = useRegister();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
+      firstname: "",
+      lastname: "",
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (values: LoginFormValues) => {
-    login(values);
+  const onSubmit = (values: RegisterFormValues) => {
+    register(values);
   };
 
   return (
@@ -49,15 +53,43 @@ const LoginPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Login
+            Create an account
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your email and password to access your account
+            Enter your details to create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="firstname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="email"
@@ -89,19 +121,19 @@ const LoginPage = () => {
                 )}
               />
               <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? "Logging in..." : "Login"}
+                {isPending ? "Creating account..." : "Sign Up"}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-muted-foreground">
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              to="/register"
+              to="/login"
               className="text-primary hover:underline font-medium"
             >
-              Create an account
+              Login
             </Link>
           </div>
         </CardFooter>
@@ -110,4 +142,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
