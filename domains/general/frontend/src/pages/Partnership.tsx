@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Building2, Users2, Globe, Briefcase, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import api from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -76,14 +77,52 @@ const Partnership = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.organization || !formData.partnershipInterest) {
       toast({ title: "Please fill in all required fields", variant: "destructive" });
       return;
     }
-    toast({ title: "Inquiry submitted!", description: "Our partnerships team will respond within 2 business days." });
-    setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+    const PARTNERSHIP_EMAIL =
+      (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PARTNERSHIP_EMAIL) ||
+      "info@alikohub.com";
+    const subject = `Partnership Inquiry: ${formData.partnershipInterest} - ${formData.fullName}`;
+    const content = [
+      `Full Name: ${formData.fullName}`,
+      `Email: ${formData.email}`,
+      `Organization: ${formData.organization}`,
+      formData.role ? `Role: ${formData.role}` : "",
+      `Interest: ${formData.partnershipInterest}`,
+      "",
+      "Message:",
+      formData.message || "",
+    ].filter(Boolean).join("\n");
+    try {
+      await api.post("/auth/contact/email", {
+        name: formData.fullName,
+        email: formData.email,
+        phone: "N/A",
+        organization: formData.organization,
+        role: formData.role,
+        partnershipInterest: formData.partnershipInterest,
+        message: `${subject}\n\n${content}`,
+      });
+      toast({ title: "Inquiry submitted!", description: "Our partnerships team will respond within 2 business days." });
+      setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+    } catch {
+      const to = PARTNERSHIP_EMAIL;
+      const body = encodeURIComponent(content);
+      const mailto = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`;
+      try {
+        await navigator.clipboard.writeText(`${subject}\n\n${content}`);
+      } catch {}
+      window.location.href = mailto;
+      toast({
+        title: "Using email app fallback",
+        description: "We couldn't reach the server. We've opened a prefilled email to info@alikohub.com and copied your message.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

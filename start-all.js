@@ -1,11 +1,20 @@
 import { fork, execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+let dotenvLoaded = false;
+try {
+  const dotenv = await import('dotenv');
+  dotenv.default.config();
+  dotenvLoaded = true;
+} catch {
+  // dotenv is optional; proceed without it
+}
 import fs from 'fs';
 
-// Load global environment variables from root .env
-dotenv.config();
+// Load global environment variables from root .env (best-effort)
+if (dotenvLoaded) {
+  // already loaded above
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

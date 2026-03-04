@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const API_BASE_URL =
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_BASE_URL) ||
+  "https://api.consultancy.alikohub.com";
+
 const api = axios.create({
-  baseURL: "https://api.consultancy.alikohub.com",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
