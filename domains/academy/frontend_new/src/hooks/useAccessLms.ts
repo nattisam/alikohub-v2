@@ -24,38 +24,34 @@ export const useAccessLms = () => {
       const activeRole = user.academyUser?.activeRole?.toLowerCase();
       const academyStatus = user.academyUser?.status?.toUpperCase();
 
-      // Default to 'student'.
-      let targetRole: "student" | "instructor" = "student";
+      // As per request, we now default to the student dashboard as the primary landing spot
+      // from the main website, even for users with instructor permissions.
+      const targetRole: "student" | "instructor" = "student";
 
-      if (academyRole === "instructor" && academyStatus === "ACTIVE") {
-        targetRole = "instructor";
-      } else if (academyRole === "student") {
-        targetRole = "student";
-      }
-
-      // Step 1: Select role if it's not already the current academy role
+      // Step 1: Ensure the role is selected in the session
       if (academyRole !== targetRole) {
         await selectRoleMutation.mutateAsync({
-          role: targetRole as "student" | "instructor",
+          role: targetRole,
         });
       }
 
-      // Step 2: Switch to the target role if it's not already active
+      // Step 2: Switch to the active role for pathing/permissions
       if (activeRole !== targetRole) {
         await switchRoleMutation.mutateAsync({
-          newRole: targetRole as "student" | "instructor",
+          newRole: targetRole,
         });
         toast.success(`Accessing LMS as ${targetRole}!`);
       } else {
         toast.success("Accessing LMS!");
       }
 
-      // Navigate to LMS after role operations complete
+      // Navigate to the dashboard for the selected role (defaulting to student)
       navigate("/lms");
     } catch (error: any) {
       console.error("Failed to access LMS:", error);
-      // Still try to navigate even if role switch fails
-      navigate("/lms");
+      // Fallback: stay on current role's dashboard or go to student if unsure
+      const currentActive = user.academyUser?.activeRole?.toLowerCase();
+      navigate(currentActive === "instructor" ? "/instructor/lms" : "/lms");
     }
   };
 

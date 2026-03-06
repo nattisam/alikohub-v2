@@ -2,41 +2,32 @@ import { useState } from "react";
 import { Search, Clock, BarChart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LmsNavbar from "@/components/LmsNavbar";
-
-import thumbCna from "@/assets/thumb-cna.jpg";
-import thumbMedicalCoding from "@/assets/thumb-medical-coding.jpg";
-import thumbHealthAnalytics from "@/assets/thumb-health-analytics.jpg";
-import thumbFullstack from "@/assets/thumb-fullstack.jpg";
-import thumbCloud from "@/assets/thumb-cloud.jpg";
-import thumbAiMl from "@/assets/thumb-ai-ml.jpg";
-import thumbAutocad from "@/assets/thumb-autocad.jpg";
-import thumbBim from "@/assets/thumb-bim.jpg";
-import thumbElectrical from "@/assets/thumb-electrical.jpg";
+import { useCourses } from "@/hooks/useAcademy";
+import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const streams = ["All", "Health", "Tech", "STEM"];
 const levels = ["All Levels", "Beginner", "Intermediate", "Advanced"];
-
-const courses = [
-  { title: "CNA Certification Prep", stream: "Health", level: "Beginner", duration: "8 weeks", rating: 4.7, streamClass: "stream-health", thumb: thumbCna },
-  { title: "Medical Coding Fundamentals", stream: "Health", level: "Intermediate", duration: "10 weeks", rating: 4.5, streamClass: "stream-health", thumb: thumbMedicalCoding },
-  { title: "Health Data Analytics", stream: "Health", level: "Advanced", duration: "12 weeks", rating: 4.8, streamClass: "stream-health", thumb: thumbHealthAnalytics },
-  { title: "Full-Stack Web Development", stream: "Tech", level: "Intermediate", duration: "16 weeks", rating: 4.9, streamClass: "stream-tech", thumb: thumbFullstack },
-  { title: "Introduction to Cloud Computing", stream: "Tech", level: "Beginner", duration: "6 weeks", rating: 4.6, streamClass: "stream-tech", thumb: thumbCloud },
-  { title: "AI and Machine Learning", stream: "Tech", level: "Advanced", duration: "14 weeks", rating: 4.8, streamClass: "stream-tech", thumb: thumbAiMl },
-  { title: "AutoCAD for Civil Engineering", stream: "STEM", level: "Beginner", duration: "8 weeks", rating: 4.4, streamClass: "stream-stem", thumb: thumbAutocad },
-  { title: "BIM Systems and Design", stream: "STEM", level: "Intermediate", duration: "10 weeks", rating: 4.5, streamClass: "stream-stem", thumb: thumbBim },
-  { title: "Electrical Systems Modeling", stream: "STEM", level: "Advanced", duration: "12 weeks", rating: 4.3, streamClass: "stream-stem", thumb: thumbElectrical },
-];
 
 const LmsExplore = () => {
   const [search, setSearch] = useState("");
   const [activeStream, setActiveStream] = useState("All");
   const [activeLevel, setActiveLevel] = useState("All Levels");
 
-  const filtered = courses.filter((c) => {
-    const matchStream = activeStream === "All" || c.stream === activeStream;
-    const matchLevel = activeLevel === "All Levels" || c.level === activeLevel;
+  const { data, isLoading } = useCourses({
+    status: "PUBLISHED",
+    category: activeStream === "All" ? undefined : activeStream,
+    difficulty: activeLevel === "All Levels" ? undefined : activeLevel,
+  });
+
+  const courses = Array.isArray(data) ? data : (data as any)?.courses || [];
+
+  const filtered = courses.filter((c: any) => {
+    const matchStream = activeStream === "All" || c.category === activeStream;
+    const matchLevel =
+      activeLevel === "All Levels" || c.difficulty === activeLevel;
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
+
     return matchStream && matchLevel && matchSearch;
   });
 
@@ -46,9 +37,13 @@ const LmsExplore = () => {
 
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-800 py-10">
         <div className="section-container relative z-10">
-          <h1 className="text-2xl md:text-3xl font-heading font-bold text-white mb-6">Explore Courses</h1>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-white mb-6">
+            Explore Courses
+          </h1>
+
           <div className="relative max-w-2xl mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+
             <input
               type="text"
               placeholder="Search courses..."
@@ -61,7 +56,6 @@ const LmsExplore = () => {
       </div>
 
       <div className="section-container py-8 pb-12">
-
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8">
           <div className="flex gap-2">
@@ -79,6 +73,7 @@ const LmsExplore = () => {
               </button>
             ))}
           </div>
+
           <div className="flex gap-2">
             {levels.map((l) => (
               <button
@@ -96,38 +91,79 @@ const LmsExplore = () => {
           </div>
         </div>
 
-        {/* Course Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((course) => (
-            <div
-              key={course.title}
-              className="bg-card rounded-lg border overflow-hidden hover:shadow-md transition-shadow duration-200"
-            >
-              <div className="h-40 overflow-hidden relative">
-                <img
-                  src={course.thumb}
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-                <span className={`absolute top-3 left-3 text-xs font-medium px-3 py-1 rounded-full ${course.streamClass}`}>
-                  {course.stream}
-                </span>
+        {/* Loading */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="h-40 w-full rounded-lg" />
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
-              <div className="p-5">
-                <h3 className="font-heading font-semibold text-foreground mb-2">{course.title}</h3>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {course.duration}</span>
-                  <span className="flex items-center gap-1"><BarChart className="w-3 h-3" /> {course.level}</span>
-                  <span className="flex items-center gap-1"><Star className="w-3 h-3 text-accent" /> {course.rating}</span>
-                </div>
-                <Button size="sm" className="w-full">Enroll</Button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground py-12">No courses found matching your filters.</p>
+        {/* Course Grid */}
+        {!isLoading && filtered.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((course: any) => (
+              <div
+                key={course.id}
+                className="bg-card rounded-lg border overflow-hidden hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="h-40 overflow-hidden relative">
+                  {course.thumbnail ? (
+                    <img
+                      src={course.thumbnail}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <Search className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  <span
+                    className={`absolute top-3 left-3 text-xs font-medium px-3 py-1 rounded-full stream-${course.category?.toLowerCase()}`}
+                  >
+                    {course.category}
+                  </span>
+                </div>
+
+                <div className="p-5">
+                  <h3 className="font-heading font-semibold text-foreground mb-2">
+                    {course.title}
+                  </h3>
+
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> 8 weeks
+                    </span>
+
+                    <span className="flex items-center gap-1">
+                      <BarChart className="w-3 h-3" /> {course.difficulty}
+                    </span>
+
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-accent" /> 4.8
+                    </span>
+                  </div>
+
+                  <Button size="sm" className="w-full" asChild>
+                    <Link to={`/lms/course/${course.slug}`}>View Details</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && filtered.length === 0 && (
+          <p className="text-center text-muted-foreground py-12">
+            No courses found matching your filters.
+          </p>
         )}
       </div>
     </div>

@@ -16,18 +16,11 @@ import { useUser, useLogout, useSwitchAcademyRole } from "@/hooks/useAuth";
 import { useAccessLms } from "@/hooks/useAccessLms";
 import { toast } from "sonner";
 
-const navLinks = [
-  { label: "Home", to: "/" },
-  { label: "About", to: "/about" },
-  { label: "Streams", to: "/#streams" },
-  { label: "Contact", to: "/contact" },
-  { label: "Apply for Instructor", to: "/apply-instructor" },
-];
-
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { data: user } = useUser();
+  const isAdmin = user?.globalRole === "ADMIN";
   const logout = useLogout();
   const { accessLms, isLoading } = useAccessLms();
   const switchRoleMutation = useSwitchAcademyRole();
@@ -52,6 +45,25 @@ const Navbar = () => {
     ? `${user.firstname?.charAt(0) || ""}${user.lastname?.charAt(0) || ""}`.toUpperCase()
     : "U";
 
+  const instructorStatus = user?.instructorStatus?.toUpperCase();
+  const isPendingInstructor =
+    user?.hasTeacherApplication ||
+    instructorStatus === "PENDING" ||
+    user?.roleStatus?.instructor?.toUpperCase() === "PENDING";
+
+  const dynamicLinks = [
+    { label: "Home", to: "/" },
+    { label: "About", to: "/about" },
+    { label: "Streams", to: "/#streams" },
+    { label: "Contact", to: "/contact" },
+    {
+      label: isPendingInstructor
+        ? "Application Pending"
+        : "Apply for Instructor",
+      to: "/apply-instructor",
+    },
+  ];
+
   return (
     <nav className="sticky top-0 z-50 nav-solid border-b border-border shadow-sm">
       <div className="section-container flex items-center justify-between h-16 md:h-20">
@@ -64,7 +76,7 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
+          {dynamicLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -75,6 +87,9 @@ const Navbar = () => {
               }`}
             >
               {link.label}
+              {link.label === "Application Pending" && (
+                <span className="ml-2 inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              )}
             </Link>
           ))}
         </div>
@@ -82,17 +97,23 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <Button size="sm" asChild disabled={isLoading}>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    accessLms();
-                  }}
-                  className="flex items-center"
-                >
-                  {isLoading ? "Accessing..." : "Access LMS"}
-                </button>
-              </Button>
+              {isAdmin ? (
+                <Button size="sm" asChild>
+                  <Link to="/admin">Admin Panel</Link>
+                </Button>
+              ) : (
+                <Button size="sm" asChild disabled={isLoading}>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      accessLms();
+                    }}
+                    className="flex items-center"
+                  >
+                    {isLoading ? "Accessing..." : "Access LMS"}
+                  </button>
+                </Button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -187,7 +208,7 @@ const Navbar = () => {
 
       {open && (
         <div className="md:hidden border-t px-4 pb-4 space-y-3">
-          {navLinks.map((link) => (
+          {dynamicLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -201,17 +222,25 @@ const Navbar = () => {
             {user ? (
               <>
                 <div className="flex flex-col w-full gap-2">
-                  <Button size="sm" className="w-full" disabled={isLoading}>
-                    <button
-                      onClick={() => {
-                        accessLms();
-                        setOpen(false);
-                      }}
-                      className="w-full flex items-center justify-center"
-                    >
-                      {isLoading ? "Accessing..." : "Access LMS"}
-                    </button>
-                  </Button>
+                  {isAdmin ? (
+                    <Button size="sm" className="w-full" asChild>
+                      <Link to="/admin" onClick={() => setOpen(false)}>
+                        Admin Panel
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button size="sm" className="w-full" disabled={isLoading}>
+                      <button
+                        onClick={() => {
+                          accessLms();
+                          setOpen(false);
+                        }}
+                        className="w-full flex items-center justify-center"
+                      >
+                        {isLoading ? "Accessing..." : "Access LMS"}
+                      </button>
+                    </Button>
+                  )}
 
                   {hasMultipleRoles && (
                     <div className="flex gap-2">

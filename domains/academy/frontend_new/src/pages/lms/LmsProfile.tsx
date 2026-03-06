@@ -1,77 +1,192 @@
-import { useState } from "react";
-import { User, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LmsNavbar from "@/components/LmsNavbar";
-import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/useAuth";
+import { useAcademyProfile, useUpdateAcademyProfile } from "@/hooks/useAcademy";
 
 const LmsProfile = () => {
-  const { toast } = useToast();
+  const { data: user } = useUser();
+  const { data: profile, isLoading } = useAcademyProfile();
+  const updateProfileMutation = useUpdateAcademyProfile();
+
   const [form, setForm] = useState({
-    firstName: "Boni",
-    lastName: "Birassa Aliko",
-    headline: "Student at Aliko Academy",
+    firstName: "",
+    lastName: "",
+    headline: "",
     bio: "",
     website: "",
-    twitter: "",
-    linkedin: "",
+    twitterX: "",
+    linkedIn: "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        firstName: user.firstname || "",
+        lastName: user.lastname || "",
+      }));
+    }
+    if (profile) {
+      setForm((prev) => ({
+        ...prev,
+        headline: profile.headline || "",
+        bio: profile.bio || "",
+        website: profile.website || "",
+        twitterX: profile.twitterX || "",
+        linkedIn: profile.linkedIn || "",
+      }));
+    }
+  }, [user, profile]);
 
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Profile updated", description: "Your changes have been saved." });
+    updateProfileMutation.mutate(form);
   };
 
-  const inputClass = "w-full rounded-lg border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30";
+  const inputClass =
+    "w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all";
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <LmsNavbar />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-slate-50">
       <LmsNavbar />
-      <div className="section-container max-w-2xl py-10">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <User className="w-5 h-5 text-primary" />
+      <div className="section-container max-w-2xl py-12 md:py-20">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center">
+            <User className="w-6 h-6 text-accent" />
           </div>
-          <h1 className="text-2xl font-heading font-bold text-foreground">Profile</h1>
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-slate-900">
+              Profile Settings
+            </h1>
+            <p className="text-sm text-slate-500 font-medium">
+              Manage your public profile and presence.
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSave} className="bg-card rounded-xl border p-8 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">First Name</label>
-              <input value={form.firstName} onChange={(e) => handleChange("firstName", e.target.value)} className={inputClass} />
+        <form
+          onSubmit={handleSave}
+          className="bg-white rounded-3xl border border-slate-100 p-8 md:p-10 shadow-sm space-y-8"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+                First Name
+              </label>
+              <input
+                value={form.firstName}
+                onChange={(e) => handleChange("firstName", e.target.value)}
+                className={inputClass}
+                disabled // Names are usually from auth
+              />
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Last Name</label>
-              <input value={form.lastName} onChange={(e) => handleChange("lastName", e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Headline</label>
-            <input value={form.headline} onChange={(e) => handleChange("headline", e.target.value)} className={inputClass} placeholder="e.g. Student, Developer, Nurse" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Biography</label>
-            <textarea rows={4} value={form.bio} onChange={(e) => handleChange("bio", e.target.value)} className={`${inputClass} resize-none`} placeholder="Tell us about yourself..." />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Website</label>
-            <input value={form.website} onChange={(e) => handleChange("website", e.target.value)} className={inputClass} placeholder="https://" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Twitter / X</label>
-              <input value={form.twitter} onChange={(e) => handleChange("twitter", e.target.value)} className={inputClass} placeholder="@username" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">LinkedIn</label>
-              <input value={form.linkedin} onChange={(e) => handleChange("linkedin", e.target.value)} className={inputClass} placeholder="Profile URL" />
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+                Last Name
+              </label>
+              <input
+                value={form.lastName}
+                onChange={(e) => handleChange("lastName", e.target.value)}
+                className={inputClass}
+                disabled // Names are usually from auth
+              />
             </div>
           </div>
-          <Button type="submit" className="gap-2"><Save className="w-4 h-4" /> Save Changes</Button>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+              Headline
+            </label>
+            <input
+              value={form.headline}
+              onChange={(e) => handleChange("headline", e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Senior Software Engineer at TechCo"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+              Biography
+            </label>
+            <textarea
+              rows={5}
+              value={form.bio}
+              onChange={(e) => handleChange("bio", e.target.value)}
+              className={`${inputClass} resize-none`}
+              placeholder="Tell your story. What are you passionate about?"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+              Personal Website
+            </label>
+            <input
+              value={form.website}
+              onChange={(e) => handleChange("website", e.target.value)}
+              className={inputClass}
+              placeholder="https://yourwebsite.com"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-50">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+                Twitter / X
+              </label>
+              <input
+                value={form.twitterX}
+                onChange={(e) => handleChange("twitterX", e.target.value)}
+                className={inputClass}
+                placeholder="@username"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">
+                LinkedIn
+              </label>
+              <input
+                value={form.linkedIn}
+                onChange={(e) => handleChange("linkedIn", e.target.value)}
+                className={inputClass}
+                placeholder="Profile URL or ID"
+              />
+            </div>
+          </div>
+
+          <div className="pt-6">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={updateProfileMutation.isPending}
+              className="w-full sm:w-auto gap-2 bg-slate-900 hover:bg-accent hover:text-slate-900 transition-all font-bold px-10"
+            >
+              {updateProfileMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Profile Changes
+            </Button>
+          </div>
         </form>
       </div>
     </div>

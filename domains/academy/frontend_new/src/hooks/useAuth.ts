@@ -74,10 +74,37 @@ export const useLogout = () => {
 };
 
 export const useUser = () => {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ["user"],
-    queryFn: () => authService.getSession().user,
-    staleTime: Infinity,
+    queryFn: async () => {
+      const { accessToken, user: localUser } = authService.getSession();
+      if (!accessToken) return null;
+      try {
+        const remoteUser = await authService.getProfile();
+
+        let mergedUser = { ...remoteUser };
+
+        // Fetch academy status to complement profile data, similar to old frontend
+        try {
+          const academyStatus = await authService.getUserAcademyStatus(
+            remoteUser.id.toString(),
+          );
+          mergedUser = { ...mergedUser, ...academyStatus };
+        } catch (statusError) {
+          console.error("Failed to fetch academy status:", statusError);
+        }
+
+        // Sync back to localStorage
+        const refreshToken = localStorage.getItem("refreshToken") || "";
+        authService.setSession(accessToken, refreshToken, mergedUser);
+        return mergedUser;
+      } catch (e) {
+        console.error("Failed to fetch remote profile:", e);
+        return localUser;
+      }
+    },
+    staleTime: 0, // Always fetch fresh profile on mount to get latest application status
   });
 };
 
@@ -88,22 +115,8 @@ export const useSelectAcademyRole = () => {
     mutationFn: (roleData: { role: "student" | "instructor" }) =>
       authService.selectAcademyRole(roleData),
     onSuccess: (data) => {
-      // Update user data in cache
-      const currentUser = queryClient.getQueryData<User>(["user"]);
-      if (currentUser) {
-        const updatedUser: User = {
-          ...currentUser,
-          academyUser: currentUser.academyUser
-            ? {
-                ...currentUser.academyUser,
-                role:
-                  data.user?.academyUser?.role || currentUser.academyUser?.role,
-              }
-            : null,
-        };
-        queryClient.setQueryData(["user"], updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-      }
+      // Invalidate user query to fetch the latest from server
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
     onError: (error: any) => {
       const message =
@@ -119,26 +132,15 @@ export const useSwitchAcademyRole = () => {
   return useMutation({
     mutationFn: (roleData: { newRole: "student" | "instructor" }) =>
       authService.switchAcademyRole(roleData),
-    onSuccess: (data) => {
-      // Update user data in cache
-      const currentUser = queryClient.getQueryData<User>(["user"]);
-      if (currentUser) {
-        const updatedUser: User = {
-          ...currentUser,
-          academyActiveRole:
-            data.user?.academyActiveRole || currentUser.academyActiveRole,
-          academyUser: currentUser.academyUser
-            ? {
-                ...currentUser.academyUser,
-                activeRole:
-                  data.user?.academyUser?.activeRole ||
-                  currentUser.academyUser?.activeRole,
-              }
-            : null,
-        };
-        queryClient.setQueryData(["user"], updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+    onSuccess: (data: any) => {
+      // If tokens are returned, update the session
+      if (data.accessToken && data.refreshToken) {
+        authService.setSession(data.accessToken, data.refreshToken, data.user);
       }
+
+      // Update user data in cache
+      queryClient.setQueryData(["user"], data.user);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
     onError: (error: any) => {
       const message =
@@ -149,6 +151,7 @@ export const useSwitchAcademyRole = () => {
 };
 
 export const useApplyInstructor = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   return useMutation({
@@ -156,11 +159,24 @@ export const useApplyInstructor = () => {
       authService.applyInstructor(applicationData),
     onSuccess: () => {
       toast.success("Application submitted successfully!");
+      // Invalidate the user query to re-fetch and see the new status
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       navigate("/");
     },
     onError: (error: any) => {
       const message =
         error.response?.data?.message || "Failed to submit application";
+      toast.error(message);
+    },
+  });
+};
+
+export const useUploadResume = () => {
+  return useMutation({
+    mutationFn: (file: File) => authService.uploadResume(file),
+    onError: (error: any) => {
+      const message =
+        error.response?.data?.message || "Failed to upload resume";
       toast.error(message);
     },
   });
