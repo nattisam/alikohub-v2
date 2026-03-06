@@ -21,6 +21,14 @@ import LmsAccountSecurity from "./pages/lms/LmsAccountSecurity";
 import LmsSubscriptions from "./pages/lms/LmsSubscriptions";
 import LmsNotifications from "./pages/lms/LmsNotifications";
 import LmsSettings from "./pages/lms/LmsSettings";
+import InstructorCourses from "./pages/lms/InstructorCourses";
+import InstructorCourseEditor from "./pages/lms/InstructorCourseEditor";
+import InstructorCreateCourse from "./pages/lms/InstructorCreateCourse";
+import InstructorAnalytics from "./pages/lms/InstructorAnalytics";
+import InstructorSchedules from "./pages/lms/InstructorSchedules";
+import InstructorSettings from "./pages/lms/InstructorSettings";
+import TeacherApplicationDetail from "./pages/admin/TeacherApplicationDetail";
+import CourseDetails from "./pages/lms/CourseDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import PublicRoute from "./components/PublicRoute";
@@ -37,7 +45,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/apply-instructor" element={<ApplyInstructor />} />
 
           {/* Public Auth Routes (Redirect if logged in) */}
           <Route element={<PublicRoute />}>
@@ -48,12 +55,43 @@ const App = () => (
           {/* Admin Routes */}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/applications" element={<AdminDashboard />} />
+            <Route path="/admin/courses" element={<AdminDashboard />} />
+            <Route
+              path="/admin/applications/:id"
+              element={<TeacherApplicationDetail />}
+            />
           </Route>
 
           {/* Protected LMS Routes */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/apply-instructor" element={<ApplyInstructor />} />
             <Route path="/lms" element={<LmsDashboard />} />
             <Route path="/instructor/lms" element={<InstructorDashboard />} />
+            <Route
+              path="/instructor/lms/courses"
+              element={<InstructorCourses />}
+            />
+            <Route
+              path="/instructor/lms/courses/new"
+              element={<InstructorCreateCourse />}
+            />
+            <Route
+              path="/instructor/lms/courses/:id"
+              element={<InstructorCourseEditor />}
+            />
+            <Route
+              path="/instructor/lms/analytics"
+              element={<InstructorAnalytics />}
+            />
+            <Route
+              path="/instructor/lms/schedules"
+              element={<InstructorSchedules />}
+            />
+            <Route
+              path="/instructor/lms/settings"
+              element={<InstructorSettings />}
+            />
             <Route path="/lms/explore" element={<LmsExplore />} />
             <Route path="/lms/my-learning" element={<LmsMyLearning />} />
             <Route path="/lms/certifications" element={<LmsCertifications />} />
@@ -66,6 +104,15 @@ const App = () => (
             <Route path="/lms/subscriptions" element={<LmsSubscriptions />} />
             <Route path="/lms/notifications" element={<LmsNotifications />} />
             <Route path="/lms/settings" element={<LmsSettings />} />
+            <Route path="/lms/course/:id" element={<CourseDetails />} />
+            <Route
+              path="/lms/learn/:slug"
+              element={
+                <div className="p-20 text-center">
+                  Course Player (Coming Soon)
+                </div>
+              }
+            />
           </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

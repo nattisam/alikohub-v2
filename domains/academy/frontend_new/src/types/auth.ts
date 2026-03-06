@@ -40,7 +40,7 @@ export interface User {
   careersRole: string;
   careersStatus: string;
   hasTeacherApplication?: boolean;
-  instructorStatus?: "PENDING" | "ACCEPTED" | "REJECTED";
+  instructorStatus?: "PENDING" | "ACCEPTED" | "REJECTED" | "APPROVED";
   roleStatus?: {
     instructor?: string;
   };

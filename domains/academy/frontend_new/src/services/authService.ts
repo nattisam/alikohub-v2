@@ -6,6 +6,7 @@ import {
   SelectRoleRequest,
   SwitchRoleRequest,
   InstructorApplicationRequest,
+  User,
 } from "@/types/auth";
 
 export const authService = {
@@ -60,6 +61,27 @@ export const authService = {
       "/auth/academy/apply-teacher",
       applicationData,
     );
+    return response.data;
+  },
+
+  uploadResume: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post("/upload/document", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  getProfile: async (): Promise<User> => {
+    const response = await api.get<User>("/users/profile");
+    return response.data;
+  },
+
+  getUserAcademyStatus: async (userId: string): Promise<any> => {
+    const response = await api.get(`/auth/academy/user-status/${userId}`);
     return response.data;
   },
 };

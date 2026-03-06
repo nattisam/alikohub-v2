@@ -1,0 +1,361 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { academyService } from "@/services/academyService";
+import { toast } from "sonner";
+
+export const useCourses = (params?: any) => {
+  return useQuery({
+    queryKey: ["courses", params],
+    queryFn: () => academyService.getCourses(params),
+  });
+};
+
+export const useCourseDetails = (courseId: string) => {
+  return useQuery({
+    queryKey: ["course", courseId],
+    queryFn: () => academyService.getCourseDetails(courseId),
+    enabled: !!courseId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+export const useEnrollInCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (courseId: string) => academyService.enrollInCourse(courseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+      toast.success("Enrolled successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to enroll");
+    },
+  });
+};
+
+export const useEnrollments = () => {
+  return useQuery({
+    queryKey: ["enrollments"],
+    queryFn: () => academyService.getMyEnrollments(),
+  });
+};
+
+export const useAcademyProfile = () => {
+  return useQuery({
+    queryKey: ["academy-profile"],
+    queryFn: () => academyService.getProfile(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 20 * 60 * 1000, // 20 minutes
+  });
+};
+
+export const useUpdateAcademyProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => academyService.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["academy-profile"] });
+      toast.success("Profile updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    },
+  });
+};
+
+export const useNotifications = () => {
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => academyService.getNotifications(),
+  });
+};
+
+export const useMarkNotificationRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (notifId: string) =>
+      academyService.markNotificationRead(notifId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+};
+
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (notifId: string) => academyService.deleteNotification(notifId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Notification deleted");
+    },
+  });
+};
+
+// Instructor Hooks
+export const useInstructorCourses = (params?: any) => {
+  return useQuery({
+    queryKey: ["instructor-courses", params],
+    queryFn: () => academyService.instructor.getMyCourses(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+export const useInstructorStats = () => {
+  return useQuery({
+    queryKey: ["instructor-stats"],
+    queryFn: () => academyService.instructor.getStats(),
+  });
+};
+
+export const useCreateCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      academyService.instructor.createCourse(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      toast.success("Course created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create course");
+    },
+  });
+};
+export const useUpdateCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      courseId,
+      formData,
+    }: {
+      courseId: string;
+      formData: FormData;
+    }) => academyService.instructor.updateCourse(courseId, formData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      toast.success("Course updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update course");
+    },
+  });
+};
+
+export const useDeleteCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (courseId: string) =>
+      academyService.instructor.deleteCourse(courseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      toast.success("Course deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to delete course");
+    },
+  });
+};
+
+export const useSubmitCourseForApproval = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (courseId: string) =>
+      academyService.instructor.submitCourseForApproval(courseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course"] });
+      toast.success("Course submitted for approval!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to submit course");
+    },
+  });
+};
+
+// Curriculum Hooks (Instructor)
+export const useCreateModule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      courseId: string;
+      title: string;
+      description?: string;
+    }) => academyService.instructor.createModule(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      toast.success("Module created!");
+    },
+  });
+};
+
+export const useUpdateModule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      moduleId,
+      data,
+      courseId,
+    }: {
+      moduleId: string;
+      data: any;
+      courseId: string;
+    }) => academyService.instructor.updateModule(moduleId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      toast.success("Module updated!");
+    },
+  });
+};
+
+export const useDeleteModule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ moduleId }: { moduleId: string; courseId: string }) =>
+      academyService.instructor.deleteModule(moduleId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      toast.success("Module deleted!");
+    },
+  });
+};
+
+export const useCreateLesson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      moduleId: number;
+      title: string;
+      type: string;
+    }) => academyService.instructor.createLesson(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["course"],
+      });
+    },
+  });
+};
+
+export const useUpdateLesson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      lessonId,
+      data,
+      courseId,
+    }: {
+      lessonId: string;
+      data: any;
+      courseId: string;
+    }) => academyService.instructor.updateLesson(lessonId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      toast.success("Lesson updated!");
+    },
+  });
+};
+
+export const useDeleteLesson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ lessonId }: { lessonId: string; courseId: string }) =>
+      academyService.instructor.deleteLesson(lessonId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      toast.success("Lesson deleted!");
+    },
+  });
+};
+
+// Admin Hooks
+export const useTeacherApplications = () => {
+  return useQuery({
+    queryKey: ["teacher-applications"],
+    queryFn: () => academyService.admin.getAllApplications(),
+  });
+};
+
+export const useAdminCourses = () => {
+  return useQuery({
+    queryKey: ["admin-courses"],
+    queryFn: () => academyService.admin.getAllCourses(),
+  });
+};
+
+export const useApproveTeacher = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      appId,
+      reviewNotes,
+    }: {
+      appId: string;
+      reviewNotes: string;
+    }) => academyService.admin.approveApplication(appId, reviewNotes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-applications"] });
+      toast.success("Teacher application approved!");
+    },
+  });
+};
+
+export const useRejectTeacher = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      appId,
+      reviewNotes,
+    }: {
+      appId: string;
+      reviewNotes: string;
+    }) => academyService.admin.rejectApplication(appId, reviewNotes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacher-applications"] });
+      toast.success("Teacher application rejected");
+    },
+  });
+};
+
+export const usePendingCourses = () => {
+  return useQuery({
+    queryKey: ["pending-courses"],
+    queryFn: () => academyService.admin.getPendingCourses(),
+  });
+};
+
+export const useApproveCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (courseId: string) =>
+      academyService.admin.approveCourse(courseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-courses"] });
+      toast.success("Course approved successfully!");
+    },
+  });
+};
+
+export const useRejectCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ courseId, reason }: { courseId: string; reason: string }) =>
+      academyService.admin.rejectCourse(courseId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-courses"] });
+      toast.success("Course rejected");
+    },
+  });
+};
