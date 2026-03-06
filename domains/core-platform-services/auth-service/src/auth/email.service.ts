@@ -166,7 +166,8 @@ export class EmailService {
 			<body>
 				<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
 					<h2 style="color: #667eea;">We received your inquiry</h2>
-					<p>Thank you for reaching out. Our team has received your details and will get back to you within 2 business days.</p>
+					<p>Your query has been successfully submitted. Thank you for contacting us. A member of our Partnerships Team will review your request and respond within 2 business days.</p>
+					<p>This email acts as a confirmation that the form was received and that the Partnerships Team will respond soon. 📧</p>
 					<div style="margin-top: 16px;">
 						<p><strong>Name:</strong> ${dto.name || ''}</p>
 						<p><strong>Email:</strong> ${dto.email || ''}</p>

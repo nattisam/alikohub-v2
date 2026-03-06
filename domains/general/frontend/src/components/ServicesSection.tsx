@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Globe2, HardHat, CalendarDays, Droplets, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import serviceAcademy from "@/assets/service-academy.jpg";
 import serviceConsultancy from "@/assets/service-consultancy.png";
@@ -16,6 +17,7 @@ const services = [
     icon: GraduationCap,
     image: serviceAcademy,
     link: "https://academy.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko Consultancy",
@@ -23,7 +25,8 @@ const services = [
       "Career advisory, professional development, and global mentorship services.",
     icon: Globe2,
     image: serviceConsultancy,
-    link: "#",
+    link: "https://consultancy.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko Events",
@@ -31,7 +34,8 @@ const services = [
       "Industry matchmaking, innovation forums, and ecosystem-building engagements.",
     icon: CalendarDays,
     image: serviceEvents,
-    link: "#",
+    link: "https://event.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko Engineering Technology",
@@ -39,7 +43,8 @@ const services = [
       "Applied engineering, digital infrastructure, and technology-driven solutions.",
     icon: HardHat,
     image: serviceContech,
-    link: "#",
+    link: "https://con-tech.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko WASH",
@@ -47,7 +52,7 @@ const services = [
       "Water, sanitation, and hygiene solutions driving public health impact and community resilience across Africa.",
     icon: Droplets,
     image: serviceAlikowash,
-    link: "https://alikowash.lovable.app/",
+    link: "/ventures/digital-health",
     darkOverlay: true,
   },
 ];
@@ -160,15 +165,25 @@ export function ServicesSection() {
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
                     {service.description}
                   </p>
-                  <a
-                    href={service.link}
-                    target={service.link.startsWith("http") ? "_blank" : undefined}
-                    rel={service.link.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
-                  >
-                    View site
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
+                  {(service as any).external ? (
+                    <a
+                      href={service.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
+                    >
+                      View Site
+                      <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <Link
+                      to={service.link}
+                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
+                    >
+                      Learn More
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

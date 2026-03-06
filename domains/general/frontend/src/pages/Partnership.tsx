@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Building2, Users2, Globe, Briefcase, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import api from "@/lib/api";
+import emailjs from "@emailjs/browser";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -63,11 +63,15 @@ const partnershipTypes = [
   "Implementer",
   "Government",
   "Next Venture Partner",
+  "Events",
+  "Consultancy",
+  "Academy",
   "Other",
 ];
 
 const Partnership = () => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -77,51 +81,52 @@ const Partnership = () => {
     message: "",
   });
 
+  const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
+  const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID";
+  const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.organization || !formData.partnershipInterest) {
       toast({ title: "Please fill in all required fields", variant: "destructive" });
       return;
     }
-    const PARTNERSHIP_EMAIL =
-      (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PARTNERSHIP_EMAIL) ||
-      "info@alikohub.com";
-    const subject = `Partnership Inquiry: ${formData.partnershipInterest} - ${formData.fullName}`;
-    const content = [
-      `Full Name: ${formData.fullName}`,
-      `Email: ${formData.email}`,
-      `Organization: ${formData.organization}`,
-      formData.role ? `Role: ${formData.role}` : "",
-      `Interest: ${formData.partnershipInterest}`,
-      "",
-      "Message:",
-      formData.message || "",
-    ].filter(Boolean).join("\n");
+
+    setIsLoading(true);
     try {
-      await api.post("/auth/contact/email", {
-        name: formData.fullName,
-        email: formData.email,
-        phone: "N/A",
-        organization: formData.organization,
-        role: formData.role,
-        partnershipInterest: formData.partnershipInterest,
-        message: `${subject}\n\n${content}`,
-      });
-      toast({ title: "Inquiry submitted!", description: "Our partnerships team will respond within 2 business days." });
-      setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
-    } catch {
-      const to = PARTNERSHIP_EMAIL;
-      const body = encodeURIComponent(content);
-      const mailto = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`;
-      try {
-        await navigator.clipboard.writeText(`${subject}\n\n${content}`);
-      } catch {}
-      window.location.href = mailto;
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          from_name: "Aliko Academy",
+          user_name: formData.fullName,
+          user_email: formData.email,
+          organization: formData.organization,
+          role: formData.role || "N/A",
+          partnership_interest: formData.partnershipInterest,
+          message: formData.message || "No message provided.",
+          reply_to: "info@alikohub.com",
+          confirmation_message:
+            `Hello ${formData.fullName},\n\nYour partnership request has been successfully submitted.\n\nWe look forward to reviewing your request. A member of our Partnerships Team will respond within 2 business days.\n\nThank you for contacting us.\n\nWarm regards,\nAliko Academy`,
+        },
+        EMAILJS_PUBLIC_KEY
+      );
+
       toast({
-        title: "Using email app fallback",
-        description: "We couldn't reach the server. We've opened a prefilled email to info@alikohub.com and copied your message.",
+        title: "Inquiry Submitted Successfully ✅",
+        description: "A confirmation email has been sent to your email address.",
+      });
+
+      setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+    } catch (error) {
+      console.error("EmailJS error:", error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your inquiry. Please try again or email us at info@alikohub.com.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -340,8 +345,15 @@ const Partnership = () => {
                 />
               </div>
 
-              <Button type="submit" size="lg" className="bg-primary text-primary-foreground hover:bg-amber-light shadow-[var(--shadow-amber)]">
-                Submit Inquiry <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isLoading}
+                className="bg-primary text-primary-foreground hover:bg-amber-light shadow-[var(--shadow-amber)] disabled:opacity-60"
+              >
+                {isLoading ? "Submitting..." : (
+                  <>Submit Inquiry <ArrowRight className="ml-2 h-4 w-4" /></>
+                )}
               </Button>
             </form>
           </motion.div>
