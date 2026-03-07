@@ -9,6 +9,17 @@ export const useCourses = (params?: any) => {
   });
 };
 
+export const useCoursesByCategory = (
+  category: string,
+  params?: { page?: number; pageSize?: number },
+) => {
+  return useQuery({
+    queryKey: ["courses", "category", category, params],
+    queryFn: () => academyService.getCoursesByCategory(category, params),
+    enabled: !!category,
+  });
+};
+
 export const useCourseDetails = (courseId: string) => {
   return useQuery({
     queryKey: ["course", courseId],
@@ -232,11 +243,8 @@ export const useDeleteModule = () => {
 export const useCreateLesson = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: {
-      moduleId: number;
-      title: string;
-      type: string;
-    }) => academyService.instructor.createLesson(data),
+    mutationFn: (data: { moduleId: number; title: string; type: string }) =>
+      academyService.instructor.createLesson(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["course"],

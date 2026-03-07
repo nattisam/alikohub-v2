@@ -1,0 +1,446 @@
+import { useParams, Link, Navigate } from "react-router-dom";
+import { Layout } from "@/components/categories/stem/layout/Layout";
+import { Button } from "@/components/categories/stem/ui/button";
+import { Badge } from "@/components/categories/stem/ui/badge";
+import { Card, CardContent } from "@/components/categories/stem/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/categories/stem/ui/accordion";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  GraduationCap,
+  Briefcase,
+  Building2,
+  ExternalLink,
+  AlertCircle,
+} from "lucide-react";
+import { useCoursesByCategory } from "@/hooks/useAcademy";
+import { cn } from "@/lib/categories/stem/utils";
+
+const ProgramDetail = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const { data, isLoading } = useCoursesByCategory("STEM");
+
+  const program = data?.courses.find((c: any) => c.slug === slug);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex h-[50vh] items-center justify-center">
+          <p className="text-muted-foreground">Loading program details...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!program) {
+    return <Navigate to="/programs" replace />;
+  }
+
+  // Fallbacks for UI that backend doesn't supply yet
+  const fallbacks = {
+    durationWeeks: 12,
+    weeklyHours: 5,
+    skillsGained: [
+      "Industry Standard Workflows",
+      "Specialized Knowledge",
+      "Hands-on Practical Experience",
+    ],
+    industryApplications: ["Engineering", "Technology", "Research"],
+    careerOutcomes: ["Technical Specialist", "Lead Engineer"],
+    alignmentStatement:
+      "This program is aligned with the latest industry standards and tools.",
+    prerequisites: ["Basic computer literacy", "Interest in STEM"],
+  };
+
+  // Enhanced contrast - brighter text colors
+  const levelClasses: Record<string, string> = {
+    BEGINNER: "bg-accent-green/12 text-accent-green border-accent-green/35",
+    INTERMEDIATE: "bg-primary/12 text-primary border-primary/35",
+    ADVANCED: "bg-accent/12 text-accent border-accent/35",
+  };
+
+  const deliveryClasses = {
+    Online: "bg-accent/12 text-accent border-accent/35",
+    Hybrid: "bg-accent-green/12 text-accent-green border-accent-green/35",
+  };
+
+  return (
+    <Layout>
+      {/* Breadcrumb */}
+      <div className="border-b border-divider bg-card">
+        <div className="container-content py-4">
+          <nav className="flex items-center gap-2 text-sm">
+            <Link
+              to="/programs"
+              className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Programs
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-medium truncate">
+              {program.title}
+            </span>
+          </nav>
+        </div>
+      </div>
+
+      {/* Hero */}
+      <section className="gradient-hero py-12 lg:py-16">
+        <div className="container-content">
+          <div className="max-w-4xl">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Badge
+                variant="outline"
+                className={cn(
+                  levelClasses[program.difficulty] || levelClasses.BEGINNER,
+                )}
+              >
+                {program.difficulty}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn(deliveryClasses["Online"])}
+              >
+                Online
+              </Badge>
+              <Badge
+                variant="outline"
+                className="bg-secondary text-secondary-foreground"
+              >
+                {program.category?.name || "STEM"}
+              </Badge>
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
+              {program.title}
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground max-w-3xl">
+              {program.description ||
+                program.shortDescription ||
+                "No detailed description available."}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {fallbacks.durationWeeks} weeks
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                {fallbacks.weeklyHours} hours/week
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section className="section-padding">
+        <div className="container-content">
+          <div className="grid lg:grid-cols-3 gap-10">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-10">
+              {/* Who This Is For */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Who This Program Is For
+                </h2>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <Card className="border-primary/25 bg-primary/8">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <GraduationCap className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          Students
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Building industry-ready skills
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-accent/25 bg-accent/8">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <Briefcase className="h-5 w-5 text-accent mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          Professionals
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Upskilling or transitioning
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-accent-green/25 bg-accent-green/8">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <Building2 className="h-5 w-5 text-accent-green mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          Organizations
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Workforce development
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Skills Gained */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Skills & Capabilities You Gain
+                </h2>
+                <ul className="space-y-3">
+                  {fallbacks.skillsGained.map(
+                    (skill: string, index: number) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-accent-green/8 border border-accent-green/20"
+                      >
+                        <CheckCircle2 className="h-5 w-5 text-accent-green mt-0.5 flex-shrink-0" />
+                        <span className="text-foreground/90">{skill}</span>
+                      </li>
+                    ),
+                  )}
+                </ul>
+              </div>
+
+              {/* Industry Applications */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Typical Industry Applications
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {fallbacks.industryApplications.map(
+                    (app: string, index: number) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="text-sm py-1.5 px-3 bg-primary/10 text-primary border-primary/30"
+                      >
+                        {app}
+                      </Badge>
+                    ),
+                  )}
+                </div>
+              </div>
+
+              {/* Curriculum */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Curriculum Outline
+                </h2>
+                <Accordion type="single" collapsible className="space-y-2">
+                  {program.modules && program.modules.length > 0 ? (
+                    program.modules.map((module: any, index: number) => (
+                      <AccordionItem
+                        key={index}
+                        value={`module-${index}`}
+                        className="border border-accent/25 rounded-lg px-4 bg-accent/6"
+                      >
+                        <AccordionTrigger className="hover:no-underline py-4">
+                          <span className="font-medium text-foreground text-left">
+                            {module.title}
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-4">
+                          <ul className="space-y-2">
+                            {module.lessons && module.lessons.length > 0 ? (
+                              module.lessons.map(
+                                (topic: any, topicIndex: number) => (
+                                  <li
+                                    key={topicIndex}
+                                    className="flex items-center gap-2 text-foreground/80"
+                                  >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                                    {topic.title}
+                                  </li>
+                                ),
+                              )
+                            ) : (
+                              <li className="text-sm text-muted-foreground">
+                                No lessons added yet.
+                              </li>
+                            )}
+                          </ul>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-6 text-center text-muted-foreground border border-dashed rounded-lg">
+                      No curriculum details available yet.
+                    </div>
+                  )}
+                </Accordion>
+              </div>
+
+              {/* Career Outcomes */}
+              <div className="bg-accent-green/10 rounded-xl p-6 border border-accent-green/25">
+                <h2 className="font-display text-xl font-bold text-accent-green mb-4">
+                  After this program, you can become:
+                </h2>
+                <ul className="space-y-2">
+                  {fallbacks.careerOutcomes.map(
+                    (outcome: string, index: number) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-3 text-foreground/90"
+                      >
+                        <Briefcase className="h-4 w-4 text-accent-green flex-shrink-0" />
+                        {outcome}
+                      </li>
+                    ),
+                  )}
+                </ul>
+              </div>
+
+              {/* Industry Alignment */}
+              <div className="bg-primary/10 rounded-xl p-6 border border-primary/25">
+                <h2 className="font-display text-xl font-bold text-primary mb-3">
+                  Industry Alignment
+                </h2>
+                <p className="text-foreground/85">
+                  {fallbacks.alignmentStatement}
+                </p>
+              </div>
+
+              {/* Certification Disclaimer */}
+              <div className="bg-muted/50 border border-divider rounded-xl p-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-medium text-muted-foreground">
+                      Certification Disclaimer
+                    </h3>
+                    <p className="mt-1 text-sm text-foreground/80">
+                      Certification exams and credentials are administered by
+                      third-party vendors. Aliko Academy STEM provides training
+                      and preparation only and does not guarantee exam outcomes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-6">
+                {/* Enrollment Card */}
+                <Card className="border-primary/30 bg-gradient-to-b from-primary/10 to-transparent">
+                  <CardContent className="p-6">
+                    <h3 className="font-display text-lg font-semibold text-primary mb-4">
+                      Ready to Enroll?
+                    </h3>
+                    <div className="space-y-4">
+                      <Button
+                        asChild
+                        className="w-full"
+                        size="lg"
+                        variant="hero"
+                      >
+                        <Link
+                          to={`/apply?program=${encodeURIComponent(program.title)}`}
+                        >
+                          Apply Now
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild className="w-full" variant="outline">
+                        <Link to="/enterprise">Request Group Training</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Program Details */}
+                <Card className="border-accent/25 bg-accent/6">
+                  <CardContent className="p-6">
+                    <h3 className="font-display text-lg font-semibold text-accent mb-4">
+                      Program Details
+                    </h3>
+                    <dl className="space-y-4">
+                      <div className="flex justify-between items-center py-2 border-b border-accent/15">
+                        <dt className="text-sm text-muted-foreground">Level</dt>
+                        <dd className="font-medium text-foreground">
+                          {program.difficulty || "Beginner"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-accent/15">
+                        <dt className="text-sm text-muted-foreground">
+                          Delivery Mode
+                        </dt>
+                        <dd className="font-medium text-foreground">Online</dd>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-accent/15">
+                        <dt className="text-sm text-muted-foreground">
+                          Duration
+                        </dt>
+                        <dd className="font-medium text-foreground">
+                          {fallbacks.durationWeeks} weeks
+                        </dd>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <dt className="text-sm text-muted-foreground">
+                          Weekly Commitment
+                        </dt>
+                        <dd className="font-medium text-foreground">
+                          {fallbacks.weeklyHours} hours
+                        </dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+
+                {/* Prerequisites */}
+                <Card className="border-accent-green/25 bg-accent-green/6">
+                  <CardContent className="p-6">
+                    <h3 className="font-display text-lg font-semibold text-accent-green mb-4">
+                      Prerequisites
+                    </h3>
+                    <ul className="space-y-2">
+                      {fallbacks.prerequisites.map(
+                        (prereq: string, index: number) => (
+                          <li
+                            key={index}
+                            className="flex items-start gap-2 text-sm text-foreground/85"
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent-green mt-2" />
+                            {prereq}
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Back to Programs */}
+      <section className="py-8 border-t border-divider bg-card">
+        <div className="container-content">
+          <Button asChild variant="ghost">
+            <Link to="/programs">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to All Programs
+            </Link>
+          </Button>
+        </div>
+      </section>
+    </Layout>
+  );
+};
+
+export default ProgramDetail;

@@ -1,0 +1,105 @@
+import { useState } from "react";
+import { Layout } from "@/components/categories/stem/layout/Layout";
+import { Button } from "@/components/categories/stem/ui/button";
+import { Card, CardContent } from "@/components/categories/stem/ui/card";
+import { Input } from "@/components/categories/stem/ui/input";
+import { Textarea } from "@/components/categories/stem/ui/textarea";
+import { Label } from "@/components/categories/stem/ui/label";
+import { Mail, MapPin, ArrowRight, Phone } from "lucide-react";
+import { toast } from "sonner";
+
+const Contact = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      // Mock submission - replace with real API call when backend is available
+      console.log('Contact form submitted:', formData);
+      toast.success("Message sent!", { description: "We'll get back to you soon." });
+      setFormData({ name: "", email: "", message: "" });
+    } catch (err: any) {
+      toast.error("Failed to send message", { description: err.message || "Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Layout>
+      <section className="gradient-hero py-20 lg:py-28">
+        <div className="container-content">
+          <h1 className="font-display text-5xl font-extrabold text-foreground">
+            Contact <span className="text-primary">Us</span>
+          </h1>
+          <p className="mt-5 text-xl text-[hsl(210_30%_82%)] max-w-2xl leading-relaxed">
+            Have questions about our programs? Get in touch with our team.
+          </p>
+        </div>
+      </section>
+
+      <section className="section-padding">
+        <div className="container-content">
+          <div className="grid lg:grid-cols-2 gap-14">
+            <div>
+              <h2 className="font-display text-3xl font-bold text-foreground mb-8">Get in Touch</h2>
+              <div className="space-y-5 mb-10">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/10 border border-primary/25">
+                  <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <Mail className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <span className="font-bold text-foreground">stem@alikogroup.com</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-accent/10 border border-accent/25">
+                  <div className="h-12 w-12 rounded-lg bg-accent/20 flex items-center justify-center">
+                    <MapPin className="h-6 w-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <span className="font-bold text-foreground">Middle East & International</span>
+                  </div>
+                </div>
+              </div>
+              <Button asChild variant="outline" size="lg">
+                <a href="/enterprise">
+                  Request Enterprise Training 
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+
+            <Card className="border-divider bg-card shadow-2xl">
+              <CardContent className="p-8">
+                <h3 className="font-display text-2xl font-bold text-foreground mb-6">Send a Message</h3>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="font-bold">Name *</Label>
+                    <Input id="name" required value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} className="h-12" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="font-bold">Email *</Label>
+                    <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} className="h-12" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message" className="font-bold">Message *</Label>
+                    <Textarea id="message" rows={5} required value={formData.message} onChange={(e) => setFormData(p => ({ ...p, message: e.target.value }))} />
+                  </div>
+                  <Button type="submit" variant="hero" size="lg" disabled={isSubmitting} className="w-full">
+                    {isSubmitting ? "Sending..." : "Send Message"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+    </Layout>
+  );
+};
+
+export default Contact;
