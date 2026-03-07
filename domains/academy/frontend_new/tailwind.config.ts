@@ -2,7 +2,12 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
@@ -42,6 +47,10 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          green: "hsl(var(--accent-green))",
+          orange: "hsl(var(--accent-orange))",
+          cyan: "hsl(var(--accent-cyan))",
+          blue: "hsl(var(--accent-blue))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -51,6 +60,25 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        teal: {
+          DEFAULT: "hsl(var(--teal))",
+          foreground: "hsl(var(--teal-foreground))",
+        },
+        "health-red": {
+          DEFAULT: "hsl(var(--health-red))",
+          foreground: "hsl(var(--health-red-foreground))",
+        },
+        "footer-bg": "hsl(var(--footer-bg))",
+        surface: "hsl(var(--surface))",
+        "surface-elevated": "hsl(var(--surface-elevated))",
+        divider: "hsl(var(--divider))",
+        navbar: "hsl(var(--navbar))",
+        civil: "hsl(var(--civil))",
+        structural: "hsl(var(--structural))",
+        mechanical: "hsl(var(--mechanical))",
+        electrical: "hsl(var(--electrical))",
+        architectural: "hsl(var(--architectural))",
+        project: "hsl(var(--project))",
         health: "hsl(var(--health))",
         tech: "hsl(var(--tech))",
         stem: "hsl(var(--stem))",

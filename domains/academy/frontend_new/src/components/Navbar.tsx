@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import logoAcademy from "@/assets/logo-aliko-academy.png";
-import { useUser, useLogout, useSwitchAcademyRole } from "@/hooks/useAuth";
+import { useUser, useLogout } from "@/hooks/useAuth";
 import { useAccessLms } from "@/hooks/useAccessLms";
 import { toast } from "sonner";
 
@@ -23,23 +23,6 @@ const Navbar = () => {
   const isAdmin = user?.globalRole === "ADMIN";
   const logout = useLogout();
   const { accessLms, isLoading } = useAccessLms();
-  const switchRoleMutation = useSwitchAcademyRole();
-
-  const handleSwitchRole = async (newRole: "student" | "instructor") => {
-    try {
-      await switchRoleMutation.mutateAsync({ newRole });
-      toast.success(`Switched to ${newRole} role successfully!`);
-    } catch (error) {
-      // Error handled by hook
-    }
-  };
-
-  const academyRole = user?.academyUser?.role?.toUpperCase();
-  const activeRole = user?.academyUser?.activeRole?.toUpperCase();
-  const academyStatus = user?.academyUser?.status?.toUpperCase();
-
-  const hasMultipleRoles = academyRole === "INSTRUCTOR";
-  const isInstructorApproved = academyStatus === "ACTIVE";
 
   const userInitials = user
     ? `${user.firstname?.charAt(0) || ""}${user.lastname?.charAt(0) || ""}`.toUpperCase()
@@ -143,34 +126,7 @@ const Navbar = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {hasMultipleRoles && (
-                    <>
-                      {activeRole === "INSTRUCTOR" ? (
-                        <DropdownMenuItem
-                          onClick={() => handleSwitchRole("student")}
-                        >
-                          Switch to Student Role
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            isInstructorApproved &&
-                            handleSwitchRole("instructor")
-                          }
-                          disabled={!isInstructorApproved}
-                          className={
-                            !isInstructorApproved
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }
-                        >
-                          Switch to Instructor Role{" "}
-                          {!isInstructorApproved && "(Pending Approval)"}
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
+
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"
                     onClick={() => logout()}
@@ -240,41 +196,6 @@ const Navbar = () => {
                         {isLoading ? "Accessing..." : "Access LMS"}
                       </button>
                     </Button>
-                  )}
-
-                  {hasMultipleRoles && (
-                    <div className="flex gap-2">
-                      {activeRole === "INSTRUCTOR" ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            handleSwitchRole("student");
-                            setOpen(false);
-                          }}
-                        >
-                          Switch to Student
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          disabled={!isInstructorApproved}
-                          onClick={() => {
-                            if (isInstructorApproved) {
-                              handleSwitchRole("instructor");
-                              setOpen(false);
-                            }
-                          }}
-                        >
-                          {isInstructorApproved
-                            ? "Switch to Instructor"
-                            : "Instructor (Pending)"}
-                        </Button>
-                      )}
-                    </div>
                   )}
 
                   <Button

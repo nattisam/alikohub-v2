@@ -10,14 +10,27 @@ import {
   Edit,
   Trash2,
   Eye,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInstructorCourses } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import { academyService } from "@/services/academyService";
+import { toast } from "sonner";
 
 const InstructorCourses = () => {
-  const { data: coursesData, isLoading } = useInstructorCourses({ page: 1, pageSize: 10 });
+  const { data: coursesData, isLoading, refetch } = useInstructorCourses({ page: 1, pageSize: 10 });
+
+  const handleSubmitForApproval = async (courseId: string) => {
+    try {
+      await academyService.instructor.submitCourseForApproval(courseId);
+      toast.success("Course submitted for review successfully!");
+      refetch(); // Refresh the courses list
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to submit course");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -156,6 +169,19 @@ const InstructorCourses = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          {/* Submit for Approval - Only for DRAFT courses */}
+                          {course.status === 'DRAFT' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-emerald-600"
+                              title="Submit for Approval"
+                              onClick={() => handleSubmitForApproval(course.id)}
+                            >
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          )}
+                          
                           <Button
                             variant="ghost"
                             size="icon"

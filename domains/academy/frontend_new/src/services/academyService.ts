@@ -24,8 +24,24 @@ export const academyService = {
     );
     // Backend returns { items, total, ... } but frontend expects { courses, total }
     return {
-      courses: response.data.items || response.data.courses,
+      courses: (response.data as any).items || response.data.courses,
       total: response.data.total,
+    };
+  },
+
+  getCoursesByCategory: async (
+    category: string,
+    params?: { page?: number; pageSize?: number },
+  ) => {
+    const response = await api.get(`/academy/courses/category/${category}`, {
+      params,
+    });
+    return {
+      courses: response.data.items || response.data.courses || [],
+      total: response.data.total || 0,
+      page: response.data.page || 1,
+      pageSize: response.data.pageSize || 10,
+      totalPages: response.data.totalPages || 1,
     };
   },
 
@@ -106,7 +122,7 @@ export const academyService = {
       );
       // Backend returns { items, total, ... } but frontend expects { courses, total }
       return {
-        courses: response.data.items || response.data.courses,
+        courses: (response.data as any).items || response.data.courses,
         total: response.data.total,
       };
     },
@@ -148,7 +164,7 @@ export const academyService = {
 
     // Modules
     createModule: async (data: {
-      courseId: number;
+      courseId: string;
       title: string;
       description?: string;
     }) => {
@@ -174,7 +190,7 @@ export const academyService = {
 
     // Lessons
     createLesson: async (data: {
-      moduleId: number;
+      moduleId: string;
       title: string;
       type: string;
     }) => {
