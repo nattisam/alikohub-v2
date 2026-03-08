@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Clock, BarChart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LmsNavbar from "@/components/LmsNavbar";
-import { useCourses } from "@/hooks/useAcademy";
+import { useCourses, useCoursesByCategory } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -14,21 +14,29 @@ const LmsExplore = () => {
   const [activeStream, setActiveStream] = useState("All");
   const [activeLevel, setActiveLevel] = useState("All Levels");
 
-  const { data, isLoading } = useCourses({
-    status: "PUBLISHED",
-    category: activeStream === "All" ? undefined : activeStream,
-    difficulty: activeLevel === "All Levels" ? undefined : activeLevel,
-  });
+  const { data: allCoursesData, isLoading: isLoadingAll } = useCourses(
+    { status: "PUBLISHED", page: 1, pageSize: 10 },
+    { enabled: activeStream === "All" },
+  );
+
+  const { data: categoryCoursesData, isLoading: isLoadingCategory } =
+    useCoursesByCategory(
+      activeStream !== "All" ? activeStream : "",
+      { page: 1, pageSize: 10 },
+      { enabled: activeStream !== "All" },
+    );
+
+  const data = activeStream === "All" ? allCoursesData : categoryCoursesData;
+  const isLoading = activeStream === "All" ? isLoadingAll : isLoadingCategory;
 
   const courses = Array.isArray(data) ? data : (data as any)?.courses || [];
 
   const filtered = courses.filter((c: any) => {
-    const matchStream = activeStream === "All" || c.category === activeStream;
     const matchLevel =
       activeLevel === "All Levels" || c.difficulty === activeLevel;
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
 
-    return matchStream && matchLevel && matchSearch;
+    return matchLevel && matchSearch;
   });
 
   return (
@@ -152,7 +160,19 @@ const LmsExplore = () => {
                   </div>
 
                   <Button size="sm" className="w-full" asChild>
-                    <Link to={`/lms/course/${course.slug}`}>View Details</Link>
+                    <Link
+                      to={
+                        course.category === "STEM"
+                          ? "/stem/programs"
+                          : course.category === "Health"
+                            ? "/health/programs"
+                            : course.category === "Tech"
+                              ? "/technology/programs"
+                              : `/lms/course/${course.slug}`
+                      }
+                    >
+                      View Details
+                    </Link>
                   </Button>
                 </div>
               </div>

@@ -51,9 +51,13 @@ export const academyService = {
   },
 
   // Student Endpoints
-  enrollInCourse: async (courseId: string) => {
+  enrollInCourse: async (
+    courseId: string | number,
+    paymentGateway: string = "CHAPA",
+  ) => {
     const response = await api.post<Enrollment>("/academy/enrollment", {
-      courseId,
+      courseId: Number(courseId),
+      paymentGateway,
     });
     return response.data;
   },

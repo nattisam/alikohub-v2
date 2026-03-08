@@ -45,7 +45,9 @@ export const authService = {
   },
 
   selectAcademyRole: async (roleData: SelectRoleRequest): Promise<any> => {
-    const response = await api.post("/academy/profile/select-role", roleData);
+    // We use the /auth/academy/select-role endpoint because it updates the primary
+    // permission table (academyUser) used by the switch-role guard.
+    const response = await api.post("/auth/academy/select-role", roleData);
     return response.data;
   },
 

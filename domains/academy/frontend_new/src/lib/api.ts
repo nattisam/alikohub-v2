@@ -7,12 +7,49 @@ const api = axios.create({
   },
 });
 
-// Add interceptor to add token to requests if available
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Add interceptor to add Firebase token dynamically
+api.interceptors.request.use(async (config) => {
+  try {
+    // Import Firebase modules
+    const { getAuth } = await import("firebase/auth");
+    const { getApps, initializeApp, getApp } = await import("firebase/app");
+
+    // Import config
+    const firebaseConfig = (await import("@/config/firebase")).default;
+
+    // Initialize Firebase if not already initialized
+    let app;
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp();
+    }
+
+    const auth = getAuth(app);
+
+    // Prioritize localStorage token as it reflects active Academy session/role
+    const localToken = localStorage.getItem("accessToken");
+    if (localToken) {
+      config.headers.Authorization = `Bearer ${localToken}`;
+      return config;
+    }
+
+    if (auth.currentUser) {
+      // Fallback to Firebase ID token
+      const token = await auth.currentUser.getIdToken(true);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+    // Fallback to localStorage token
+    const localToken = localStorage.getItem("accessToken");
+    if (localToken) {
+      config.headers.Authorization = `Bearer ${localToken}`;
+    }
   }
+
   return config;
 });
 

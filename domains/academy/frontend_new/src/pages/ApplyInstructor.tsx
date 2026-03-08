@@ -162,8 +162,8 @@ const ApplyInstructor = () => {
               You're an Instructor!
             </h1>
             <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto leading-relaxed">
-              Welcome to the family. Your application was accepted and you are
-              ready to start sharing your expertise.
+              Welcome, Your application was accepted and you are ready to start
+              sharing your expertise.
             </p>
             <Button
               size="lg"
