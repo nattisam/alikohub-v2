@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/categories/health/layout/Layout";
 import { programs as staticPrograms } from "@/data/categories/health/programs";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,15 @@ import {
   Loader2,
 } from "lucide-react";
 import { useHealthCourseDetails } from "@/hooks/useHealth";
+import { useEnrollInCourse } from "@/hooks/useAcademy";
 
 const ProgramDetail = () => {
   const { programId } = useParams<{ programId: string }>();
+  const navigate = useNavigate();
   const { data: apiProgram, isLoading } = useHealthCourseDetails(
     programId || "",
   );
+  const enrollMutation = useEnrollInCourse();
 
   // Use API data if available, fallback to static data
   const programData =
@@ -70,6 +73,20 @@ const ProgramDetail = () => {
           "Aliko Academy Professional Certification",
       }
     : null;
+
+  const handleEnroll = () => {
+    if (!program) return;
+    enrollMutation.mutate(
+      { courseId: program.id.toString(), paymentGateway: "CHAPA" },
+      {
+        onSuccess: (responseData: any) => {
+          if (!responseData?.checkoutUrl) {
+            navigate(`/lms/learn/${program.slug || program.id}`);
+          }
+        },
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -196,15 +213,19 @@ const ProgramDetail = () => {
                   </div>
                 </div>
                 <Button
-                  asChild
+                  onClick={handleEnroll}
+                  disabled={
+                    enrollMutation.isPending ||
+                    program.enrollmentStatus !== "open"
+                  }
                   className="w-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
                   size="lg"
                 >
-                  <Link to="/health/apply">
-                    {program.enrollmentStatus === "open"
-                      ? "Apply Now"
+                  {enrollMutation.isPending
+                    ? "Enrolling..."
+                    : program.enrollmentStatus === "open"
+                      ? "Enroll Now"
                       : "Join Waitlist"}
-                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -410,10 +431,14 @@ const ProgramDetail = () => {
                       : "Start Date: TBD"}
                   </Badge>
                   <Button
-                    asChild
+                    onClick={handleEnroll}
+                    disabled={
+                      enrollMutation.isPending ||
+                      program.enrollmentStatus !== "open"
+                    }
                     className="w-full mt-4 shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
                   >
-                    <Link to="/health/apply">Apply Now</Link>
+                    {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
                   </Button>
                 </CardContent>
               </Card>

@@ -2,21 +2,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { academyService } from "@/services/academyService";
 import { toast } from "sonner";
 
-export const useCourses = (params?: any) => {
+export const useCourses = (params?: any, options?: any) => {
   return useQuery({
     queryKey: ["courses", params],
     queryFn: () => academyService.getCourses(params),
+    ...options,
   });
 };
 
 export const useCoursesByCategory = (
   category: string,
   params?: { page?: number; pageSize?: number },
+  options?: any,
 ) => {
   return useQuery({
     queryKey: ["courses", "category", category, params],
     queryFn: () => academyService.getCoursesByCategory(category, params),
     enabled: !!category,
+    ...options,
   });
 };
 
@@ -33,10 +36,20 @@ export const useCourseDetails = (courseId: string) => {
 export const useEnrollInCourse = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (courseId: string) => academyService.enrollInCourse(courseId),
-    onSuccess: () => {
+    mutationFn: ({
+      courseId,
+      paymentGateway = "CHAPA",
+    }: {
+      courseId: string | number;
+      paymentGateway?: string;
+    }) => academyService.enrollInCourse(courseId, paymentGateway),
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["enrollments"] });
-      toast.success("Enrolled successfully!");
+      if (data?.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast.success("Enrolled successfully!");
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to enroll");

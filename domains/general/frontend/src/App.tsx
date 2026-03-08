@@ -1,21 +1,44 @@
+import React, { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { useSSO } from "@/hooks/useSSO";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-
-const About = lazy(() => import("./pages/About"));
-const Programs = lazy(() => import("./pages/Programs"));
-const Partnership = lazy(() => import("./pages/Partnership"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
-const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+import About from "./pages/About";
+import Programs from "./pages/Programs";
+import Partnership from "./pages/Partnership";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import VerifyEmail from "./pages/VerifyEmail";
 
 import PublicRoute from "./components/PublicRoute";
 
 const queryClient = new QueryClient();
+
+function SSOProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useSSO();
+  const queryClient = useQueryClient();
+
+  React.useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated && user) {
+        queryClient.setQueryData(["user"], user);
+      } else {
+        queryClient.setQueryData(["user"], null);
+      }
+    }
+  }, [isAuthenticated, isLoading, user, queryClient]);
+
+  return <>{children}</>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -23,22 +46,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Suspense fallback={<div className="min-h-screen bg-background" />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/programs" element={<Programs />} />
-            <Route path="/partnership" element={<Partnership />} />
+        <SSOProvider>
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/programs" element={<Programs />} />
+              <Route path="/partnership" element={<Partnership />} />
 
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Route>
+              <Route element={<PublicRoute />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+              </Route>
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+              {/* Email Verification Route */}
+              <Route path="/verify-email" element={<VerifyEmail />} />
+
+              {/* Payment Success Route */}
+              <Route path="/payment/success" element={<PaymentSuccess />} />
+
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </SSOProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

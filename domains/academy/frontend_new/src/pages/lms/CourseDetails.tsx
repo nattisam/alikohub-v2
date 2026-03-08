@@ -27,11 +27,16 @@ const CourseDetails = () => {
 
   const handleEnroll = () => {
     if (!course) return;
-    enrollMutation.mutate(course.id, {
-      onSuccess: () => {
-        navigate(`/lms/learn/${course.slug}`);
+    enrollMutation.mutate(
+      { courseId: course.id.toString(), paymentGateway: "CHAPA" },
+      {
+        onSuccess: (data: any) => {
+          if (!data?.checkoutUrl) {
+            navigate(`/lms/learn/${course.slug}`);
+          }
+        },
       },
-    });
+    );
   };
 
   if (isLoading) {

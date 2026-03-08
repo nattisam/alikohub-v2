@@ -243,18 +243,6 @@ const InstructorCourseEditor = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {course?.status !== "DRAFT" && course?.status !== "REJECTED" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden sm:flex gap-2"
-                asChild
-              >
-                <Link to={`/lms/course/${course?.slug}`} target="_blank">
-                  <Eye className="w-4 h-4" /> Preview
-                </Link>
-              </Button>
-            )}
             <Button
               size="sm"
               onClick={handleSaveBasicInfo}

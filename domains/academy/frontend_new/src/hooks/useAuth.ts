@@ -114,9 +114,37 @@ export const useSelectAcademyRole = () => {
   return useMutation({
     mutationFn: (roleData: { role: "student" | "instructor" }) =>
       authService.selectAcademyRole(roleData),
-    onSuccess: (data) => {
-      // Invalidate user query to fetch the latest from server
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+    onSuccess: (data: any, variables: { role: "student" | "instructor" }) => {
+      console.log(
+        `[useAuth] Select Role Success. Targeted: ${variables.role}. Backend Response User Role: ${data.user?.academyUser?.role}`,
+      );
+
+      // 1. Adopt tokens immediately
+      if (data.accessToken) {
+        const currentRefresh =
+          data.refreshToken || localStorage.getItem("refreshToken") || "";
+        const existingUser = queryClient.getQueryData(["user"]) || {};
+        authService.setSession(
+          data.accessToken,
+          currentRefresh,
+          data.user || existingUser,
+        );
+      }
+
+      // 2. Aggressively patch local cache to the target role
+      // This is crucial because if the backend returns the old 'USER' role in its response,
+      // it will block Step 2 (switch-role). We FORCE it to our selected target locally.
+      queryClient.setQueryData(["user"], (old: any) => {
+        const base = data.user || old || {};
+        return {
+          ...base,
+          academyRole: variables.role.toUpperCase(), // Sync flat property
+          academyUser: {
+            ...(base.academyUser || {}),
+            role: variables.role.toUpperCase(), // Sync nested object
+          },
+        };
+      });
     },
     onError: (error: any) => {
       const message =
@@ -132,15 +160,33 @@ export const useSwitchAcademyRole = () => {
   return useMutation({
     mutationFn: (roleData: { newRole: "student" | "instructor" }) =>
       authService.switchAcademyRole(roleData),
-    onSuccess: (data: any) => {
-      // If tokens are returned, update the session
-      if (data.accessToken && data.refreshToken) {
-        authService.setSession(data.accessToken, data.refreshToken, data.user);
+    onSuccess: (
+      data: any,
+      variables: { newRole: "student" | "instructor" },
+    ) => {
+      // Adopt new tokens if returned
+      if (data.accessToken) {
+        const currentRefresh =
+          data.refreshToken || localStorage.getItem("refreshToken") || "";
+        const existingUser = queryClient.getQueryData(["user"]) || {};
+        authService.setSession(
+          data.accessToken,
+          currentRefresh,
+          data.user || existingUser,
+        );
       }
 
       // Update user data in cache
-      queryClient.setQueryData(["user"], data.user);
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.setQueryData(["user"], (old: any) => {
+        const base = data.user || old || {};
+        return {
+          ...base,
+          academyUser: {
+            ...(base.academyUser || {}),
+            activeRole: variables.newRole, // Manually ensure the active role reflects our switch
+          },
+        };
+      });
     },
     onError: (error: any) => {
       const message =
