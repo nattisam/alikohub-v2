@@ -85,16 +85,15 @@ const Navbar = () => {
                   <Link to="/admin">Admin Panel</Link>
                 </Button>
               ) : (
-                <Button size="sm" asChild disabled={isLoading}>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      accessLms();
-                    }}
-                    className="flex items-center"
-                  >
-                    {isLoading ? "Accessing..." : "Access LMS"}
-                  </button>
+                <Button
+                  size="sm"
+                  disabled={isLoading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    accessLms();
+                  }}
+                >
+                  {isLoading ? "Accessing..." : "Access LMS"}
                 </Button>
               )}
               <DropdownMenu>
@@ -185,16 +184,16 @@ const Navbar = () => {
                       </Link>
                     </Button>
                   ) : (
-                    <Button size="sm" className="w-full" disabled={isLoading}>
-                      <button
-                        onClick={() => {
-                          accessLms();
-                          setOpen(false);
-                        }}
-                        className="w-full flex items-center justify-center"
-                      >
-                        {isLoading ? "Accessing..." : "Access LMS"}
-                      </button>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      disabled={isLoading}
+                      onClick={() => {
+                        accessLms();
+                        setOpen(false);
+                      }}
+                    >
+                      {isLoading ? "Accessing..." : "Access LMS"}
                     </Button>
                   )}
 

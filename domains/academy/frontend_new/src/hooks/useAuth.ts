@@ -104,7 +104,8 @@ export const useUser = () => {
         return localUser;
       }
     },
-    staleTime: 0, // Always fetch fresh profile on mount to get latest application status
+    staleTime: 30000, // Trust cache for 30s to prevent 429s on rapid navigation
+    retry: 1,
   });
 };
 
@@ -115,10 +116,6 @@ export const useSelectAcademyRole = () => {
     mutationFn: (roleData: { role: "student" | "instructor" }) =>
       authService.selectAcademyRole(roleData),
     onSuccess: (data: any, variables: { role: "student" | "instructor" }) => {
-      console.log(
-        `[useAuth] Select Role Success. Targeted: ${variables.role}. Backend Response User Role: ${data.user?.academyUser?.role}`,
-      );
-
       // 1. Adopt tokens immediately
       if (data.accessToken) {
         const currentRefresh =
