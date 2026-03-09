@@ -240,4 +240,17 @@ export class EventsController {
     removePortfolio(@Request() req: RequestWithUser, @Param('id') id: string) {
         return this.eventsClient.send({ cmd: 'remove_portfolio' }, { id, user: req.user });
     }
+
+    // Messaging Management
+    @ApiOperation({ summary: 'Send message to event attendees' })
+    @Post(':id/message')
+    sendMessage(@Request() req: RequestWithUser, @Param('id') id: string, @Body() body: any) {
+        return this.eventsClient.send({ cmd: 'send_event_message' }, { id, dto: body, user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Get messaging statistics' })
+    @Get('messaging/stats')
+    getMessagingStats(@Request() req: RequestWithUser) {
+        return this.eventsClient.send({ cmd: 'get_messaging_stats' }, { user: req.user });
+    }
 }
