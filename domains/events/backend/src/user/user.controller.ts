@@ -1,9 +1,12 @@
 import {
   Controller,
   UseGuards,
+  HttpException,
+  HttpStatus,
   Logger,
   UsePipes,
   UseFilters,
+  ForbiddenException,
 } from "@nestjs/common";
 import { MessagePattern, Payload, EventPattern } from "@nestjs/microservices";
 import { EventsRole } from "../generated/client";
@@ -63,7 +66,7 @@ export class UserController {
         payload.user,
       );
       if (!adminProfile || adminProfile.role !== EventsRole.ADMIN) {
-        throw new Error("Unauthorized: Only admins can update roles");
+        throw new ForbiddenException("Unauthorized: Only admins can update roles");
       }
 
       return await this.userService.updateRole(payload.userId, payload.role);
@@ -81,7 +84,7 @@ export class UserController {
   async getAllProfiles(@Payload() payload: { user: AuthenticatedUser }) {
     const adminProfile = await this.userService.getProfileAndSync(payload.user);
     if (!adminProfile || adminProfile.role !== EventsRole.ADMIN) {
-      throw new Error("Unauthorized");
+      throw new ForbiddenException("Unauthorized: Admin access required");
     }
     return this.userService.findAllProfiles();
   }
@@ -93,7 +96,7 @@ export class UserController {
   ) {
     const adminProfile = await this.userService.getProfileAndSync(payload.user);
     if (!adminProfile || adminProfile.role !== EventsRole.ADMIN) {
-      throw new Error("Unauthorized");
+      throw new ForbiddenException("Unauthorized: Admin access required");
     }
     return this.userService.removeProfile(payload.userId);
   }

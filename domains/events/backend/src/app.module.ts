@@ -5,6 +5,10 @@ import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth";
 import { PostsModule } from "./posts/posts.module";
 import { PromotionRequestsModule } from "./promotion-requests/promotion-requests.module";
+import { TicketsModule } from "./tickets/tickets.module";
+import { RegistrationsModule } from "./registrations/registrations.module";
+import { RsvpsModule } from "./rsvps/rsvps.module";
+import { PortfolioModule } from "./portfolio/portfolio.module";
 import { AppController } from "./app.controller";
 
 @Module({
@@ -13,6 +17,10 @@ import { AppController } from "./app.controller";
     DatabaseModule,
     PostsModule,
     PromotionRequestsModule,
+    TicketsModule,
+    RegistrationsModule,
+    RsvpsModule,
+    PortfolioModule,
     UserModule,
     AuthModule,
   ],

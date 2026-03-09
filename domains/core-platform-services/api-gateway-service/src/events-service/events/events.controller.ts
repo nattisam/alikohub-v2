@@ -54,6 +54,18 @@ export class EventsController {
         return this.eventsClient.send({ cmd: 'find_all_posts' }, { ...query, user: req.user });
     }
 
+    @ApiOperation({ summary: 'Get statistics for events management' })
+    @Get('stats')
+    getStats(@Request() req: RequestWithUser) {
+        return this.eventsClient.send({ cmd: 'get_stats' }, { user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Get a single post by ID' })
+    @Get(':id')
+    findOnePost(@Request() req: RequestWithUser, @Param('id') id: string) {
+        return this.eventsClient.send({ cmd: 'find_one_post' }, { id, user: req.user });
+    }
+
     @ApiOperation({ summary: 'Update a draft or rejected post' })
     @Patch(':id')
     @UseInterceptors(FileInterceptor('coverImage'))
@@ -126,5 +138,106 @@ export class EventsController {
     @Patch('promotions/:id/review')
     markPromotionReviewed(@Request() req: RequestWithUser, @Param('id') id: string) {
         return this.eventsClient.send({ cmd: 'mark_promotion_request_reviewed' }, { id, user: req.user });
+    }
+
+    // Ticket Management
+    @ApiOperation({ summary: 'Create a ticket tier' })
+    @Post('tickets')
+    createTicket(@Request() req: RequestWithUser, @Body() body: any) {
+        return this.eventsClient.send({ cmd: 'create_ticket' }, { dto: body, user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Get tickets for an event' })
+    @Get(':eventId/tickets')
+    findEventTickets(@Param('eventId') eventId: string) {
+        return this.eventsClient.send({ cmd: 'find_event_tickets' }, { eventId });
+    }
+
+    @ApiOperation({ summary: 'Remove a ticket tier' })
+    @Delete('tickets/:id')
+    removeTicket(@Request() req: RequestWithUser, @Param('id') id: string) {
+        return this.eventsClient.send({ cmd: 'remove_ticket' }, { id, user: req.user });
+    }
+
+    // Registration Management
+    @ApiOperation({ summary: 'Get all registrations for my events' })
+    @Get('registrations')
+    findAllRegistrations(@Request() req: RequestWithUser) {
+        return this.eventsClient.send({ cmd: 'find_all_registrations' }, { user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Register for an event' })
+    @Post('registrations')
+    createRegistration(@Request() req: RequestWithUser, @Body() body: any) {
+        return this.eventsClient.send({ cmd: 'create_registration' }, { dto: body, user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Toggle check-in status' })
+    @Patch('registrations/:id/checkin')
+    toggleCheckIn(@Request() req: RequestWithUser, @Param('id') id: string) {
+        return this.eventsClient.send({ cmd: 'toggle_checkin' }, { id, user: req.user });
+    }
+
+    // RSVP Management
+    @ApiOperation({ summary: 'Get all RSVPs for my events' })
+    @Get('rsvps')
+    findAllRsvps(@Request() req: RequestWithUser) {
+        return this.eventsClient.send({ cmd: 'find_all_rsvps' }, { user: req.user });
+    }
+
+    @ApiOperation({ summary: 'RSVP for a social event' })
+    @Post('rsvps')
+    createRsvp(@Body() body: any) {
+        return this.eventsClient.send({ cmd: 'create_rsvp' }, { dto: body });
+    }
+
+    @Get('landing')
+    getLandingInfo() {
+        return this.eventsClient.send({ cmd: 'get_landing_info' }, {});
+    }
+
+    @ApiOperation({ summary: 'Upload a file' })
+    @Post('upload')
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: { type: 'string', format: 'binary' },
+                type: { type: 'string', enum: ['image', 'video', 'document'] },
+            },
+        },
+    })
+    async uploadFile(
+        @UploadedFile() file: Express.Multer.File,
+        @Body('type') type: 'image' | 'video' | 'document' = 'image',
+    ) {
+        return this.fileUploadService.uploadFile(file, type);
+    }
+
+    @ApiOperation({ summary: 'Remove an RSVP' })
+    @Delete('rsvps/:id')
+    removeRsvp(@Request() req: RequestWithUser, @Param('id') id: string) {
+        return this.eventsClient.send({ cmd: 'remove_rsvp' }, { id, user: req.user });
+    }
+
+    // Portfolio Management
+    @ApiOperation({ summary: 'Get all portfolio media' })
+    @Get('portfolio')
+    findAllPortfolio(@Query('portal') portal?: string) {
+        return this.eventsClient.send({ cmd: 'find_all_portfolio' }, { portal });
+    }
+
+    @ApiOperation({ summary: 'Add portfolio media' })
+    @Post('portfolio')
+    createPortfolio(@Request() req: RequestWithUser, @Body() body: any) {
+        return this.eventsClient.send({ cmd: 'create_portfolio' }, { dto: body, user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Remove portfolio media' })
+    @Delete('portfolio/:id')
+    removePortfolio(@Request() req: RequestWithUser, @Param('id') id: string) {
+        return this.eventsClient.send({ cmd: 'remove_portfolio' }, { id, user: req.user });
     }
 }

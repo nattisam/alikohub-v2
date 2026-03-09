@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 # Copy package files and install dependencies
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source code and other necessary files
 COPY . .
@@ -27,7 +27,7 @@ WORKDIR /usr/src/app
 # Copy package files and install only production dependencies
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm install --omit=dev
+RUN npm install --omit=dev --legacy-peer-deps
 
 # Copy the built application from the builder stage
 COPY --from=builder /usr/src/app/dist ./dist

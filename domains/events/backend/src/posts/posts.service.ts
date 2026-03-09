@@ -21,21 +21,30 @@ export class PostsService {
 
     if (
       !profile ||
-      (profile.role !== EventsRole.ADMIN &&
+      (createPostDto.type !== PostType.SOCIAL_EVENT &&
+        profile.role !== EventsRole.ADMIN &&
         profile.role !== EventsRole.CONTENT_MANAGER)
     ) {
       throw new ForbiddenException(
-        "Only Content Managers and Admins can create content.",
+        "Only Content Managers and Admins can create professional content.",
       );
     }
+
+    const status =
+      createPostDto.type === PostType.SOCIAL_EVENT
+        ? PostStatus.PUBLISHED
+        : PostStatus.DRAFT;
 
     return this.prisma.post.create({
       data: {
         ...createPostDto,
         authorId: user.firebaseId,
-        status: PostStatus.DRAFT,
+        status,
         eventDate: createPostDto.eventDate
           ? new Date(createPostDto.eventDate)
+          : null,
+        endEventDate: createPostDto.endEventDate
+          ? new Date(createPostDto.endEventDate)
           : null,
       },
     });
@@ -87,7 +96,18 @@ export class PostsService {
   }
 
   async findOne(id: string, isPublic = false) {
-    const post = await this.prisma.post.findUnique({ where: { id } });
+    const post = await this.prisma.post.findUnique({
+      where: { id },
+      include: {
+        sessions: true,
+        tickets: {
+          where: { isActive: true },
+        },
+        sponsors: true,
+        rsvps: !isPublic, // Only show RSVPs to admin/author
+      },
+    });
+
     if (!post) throw new NotFoundException("Post not found");
 
     if (isPublic && post.status !== PostStatus.PUBLISHED) {
@@ -130,6 +150,8 @@ export class PostsService {
     const updateData: any = { ...updatePostDto };
     if (updateData.eventDate)
       updateData.eventDate = new Date(updateData.eventDate);
+    if (updateData.endEventDate)
+      updateData.endEventDate = new Date(updateData.endEventDate);
 
     // If CM updates a rejected post, it resets rejection reason
     if (
@@ -211,5 +233,66 @@ export class PostsService {
     }
 
     return this.prisma.post.delete({ where: { id } });
+  }
+
+  async getStats(user: AuthenticatedUser) {
+    const profile = await this.userService.getProfileAndSync(user);
+    if (!profile) throw new ForbiddenException("No events profile found.");
+
+    const isInternal =
+      profile.role === EventsRole.ADMIN ||
+      profile.role === EventsRole.CONTENT_MANAGER;
+    if (!isInternal) throw new ForbiddenException("Access denied.");
+
+    const where: any = {};
+    if (profile.role !== EventsRole.ADMIN) {
+      where.authorId = user.firebaseId;
+    }
+
+    const events = await this.prisma.post.findMany({
+      where,
+      select: {
+        id: true,
+        type: true,
+        registrations: {
+          select: {
+            totalPaid: true,
+            isCheckedIn: true,
+          },
+        },
+        rsvps: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    const stats = {
+      proEvents: 0,
+      socialEvents: 0,
+      totalReg: 0,
+      totalRsvp: 0,
+      revenue: 0,
+      checkedIn: 0,
+    };
+
+    events.forEach((e) => {
+      if (e.type === PostType.EVENT) {
+        stats.proEvents++;
+      } else if (e.type === PostType.SOCIAL_EVENT) {
+        stats.socialEvents++;
+      }
+
+      stats.totalReg += e.registrations.length;
+      stats.totalRsvp += e.rsvps.length;
+      stats.revenue += e.registrations.reduce(
+        (sum, r) => sum + (r.totalPaid || 0),
+        0,
+      );
+      stats.checkedIn += e.registrations.filter((r) => r.isCheckedIn).length;
+    });
+
+    return stats;
   }
 }

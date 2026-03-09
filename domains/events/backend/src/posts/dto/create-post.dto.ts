@@ -47,4 +47,20 @@ export class CreatePostDto {
   @IsString()
   @IsOptional()
   externalLink?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endEventDate?: string;
+
+  @IsString()
+  @IsOptional()
+  hostName?: string;
+
+  @IsString()
+  @IsOptional()
+  privacy?: string;
+
+  @IsString()
+  @IsOptional()
+  templateId?: string;
 }

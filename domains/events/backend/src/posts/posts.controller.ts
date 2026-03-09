@@ -72,7 +72,7 @@ export class PostsController {
     }
   }
 
-  @MessagePattern({ cmd: "find_post_by_id" })
+  @MessagePattern({ cmd: "find_one_post" })
   @UsePipes(new JoiValidationPipe(PostIdSchema))
   async findOne(
     @Payload()
@@ -188,5 +188,11 @@ export class PostsController {
       );
       throw error;
     }
+  }
+
+  @MessagePattern({ cmd: "get_stats" })
+  async getStats(@Payload() payload: { user: AuthenticatedUser }) {
+    this.logger.log(`Fetching stats for user: ${payload.user.firebaseId}`);
+    return this.postsService.getStats(payload.user);
   }
 }

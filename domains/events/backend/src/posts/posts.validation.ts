@@ -40,6 +40,23 @@ export const CreatePostSchema = Joi.object({
       .optional()
       .allow("", null)
       .description("Related external URL"),
+    endEventDate: Joi.date()
+      .iso()
+      .optional()
+      .allow(null)
+      .description("Scheduled end date for events"),
+    hostName: Joi.string()
+      .optional()
+      .allow("", null)
+      .description("Name of the host"),
+    privacy: Joi.string()
+      .optional()
+      .allow("", null)
+      .description("Privacy setting"),
+    templateId: Joi.string()
+      .optional()
+      .allow("", null)
+      .description("Theme template ID"),
   })
     .required()
     .description("Post creation details"),
@@ -81,6 +98,23 @@ export const UpdatePostSchema = Joi.object({
       .optional()
       .allow("", null)
       .description("Updated external link"),
+    endEventDate: Joi.date()
+      .iso()
+      .optional()
+      .allow(null)
+      .description("Updated end event date"),
+    hostName: Joi.string()
+      .optional()
+      .allow("", null)
+      .description("Updated host name"),
+    privacy: Joi.string()
+      .optional()
+      .allow("", null)
+      .description("Updated privacy"),
+    templateId: Joi.string()
+      .optional()
+      .allow("", null)
+      .description("Updated template ID"),
     status: Joi.string()
       .valid(...Object.values(PostStatus))
       .optional()

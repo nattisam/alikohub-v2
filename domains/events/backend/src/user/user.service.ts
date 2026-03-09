@@ -46,12 +46,12 @@ export class UserService {
       where: { id: user.firebaseId },
     });
 
-    // If no profile exists and user is global ADMIN, create it automatically
-    if (!profile && user.globalRole === "ADMIN") {
+    // If no profile exists, create a basic USER profile (or ADMIN if globalRole matches)
+    if (!profile) {
       profile = await this.prisma.eventsProfile.create({
         data: {
           id: user.firebaseId,
-          role: EventsRole.ADMIN,
+          role: user.globalRole === "ADMIN" ? EventsRole.ADMIN : EventsRole.USER,
         },
       });
     }
