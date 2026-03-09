@@ -14,7 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import LmsNavbar from "@/components/LmsNavbar";
 import { useUser } from "@/hooks/useAuth";
-import { useEnrollments } from "@/hooks/useAcademy";
+import {
+  useEnrollments,
+  useStudentAnalytics,
+  useStudentDashboard,
+} from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -58,15 +62,27 @@ const recordedWebinars = [
 
 const LmsDashboard = () => {
   const { data: user } = useUser();
-  const { data: enrollments, isLoading } = useEnrollments();
+  const { data: enrollments, isLoading: isEnrollmentsLoading } =
+    useEnrollments();
+  const { data: analytics, isLoading: isAnalyticsLoading } =
+    useStudentAnalytics();
+  const { data: dashboard, isLoading: isDashboardLoading } =
+    useStudentDashboard();
 
-  const overallProgress =
-    enrollments && enrollments.length > 0
-      ? Math.round(
-          enrollments.reduce((acc, curr) => acc + curr.progress, 0) /
-            enrollments.length,
-        )
-      : 0;
+  const isLoading =
+    isEnrollmentsLoading || isAnalyticsLoading || isDashboardLoading;
+
+  const totalLessonsAll =
+    enrollments?.reduce((acc, e) => acc + (e.course?.lessonsCount || 0), 0) ||
+    1;
+  const calculatedProgress = analytics
+    ? Math.min(
+        Math.round((analytics.lessonsViewed / totalLessonsAll) * 100),
+        100,
+      )
+    : 0;
+
+  const overallProgress = dashboard?.overallProgress || calculatedProgress || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -176,7 +192,7 @@ const LmsDashboard = () => {
                       </div>
 
                       <Button size="sm" asChild className="gap-1 self-start">
-                        <Link to={`/lms/learn/${enrollment.course?.slug}`}>
+                        <Link to={`/lms/learn/${enrollment.courseId}`}>
                           Continue <ArrowRight className="w-3 h-3" />
                         </Link>
                       </Button>
@@ -206,24 +222,22 @@ const LmsDashboard = () => {
                   },
                   {
                     icon: Award,
-                    label: "Completed",
-                    value:
-                      enrollments?.filter((e) => e.status === "COMPLETED")
-                        .length || 0,
+                    label: "Courses Done",
+                    value: analytics?.programsCompleted || 0,
                     bg: "bg-emerald-50",
                     iconColor: "text-emerald-600",
                   },
                   {
                     icon: Clock,
-                    label: "Hours Learned",
-                    value: "12",
+                    label: "Lessons Viewed",
+                    value: analytics?.lessonsViewed || 0,
                     bg: "bg-amber-50",
                     iconColor: "text-amber-600",
                   },
                   {
                     icon: TrendingUp,
-                    label: "Avg Score",
-                    value: "85%",
+                    label: "Quizzes Done",
+                    value: analytics?.quizzesCompleted || 0,
                     bg: "bg-purple-50",
                     iconColor: "text-purple-600",
                   },
@@ -238,7 +252,7 @@ const LmsDashboard = () => {
                     <p className="text-lg font-heading font-bold text-foreground">
                       {stat.value}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground whitespace-nowrap">
                       {stat.label}
                     </p>
                   </div>

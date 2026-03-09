@@ -1,6 +1,6 @@
 export type CourseStatus = "DRAFT" | "PENDING" | "PUBLISHED" | "REJECTED";
 export type LessonType = "VIDEO" | "TEXT" | "QUIZ";
-export type ContentType = "VIDEO" | "PDF" | "LINK" | "DOCUMENT";
+export type ContentType = "VIDEO" | "PDF" | "TEXT" | "QUIZ" | "ASSIGNMENT";
 export type Difficulty = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 
 export interface Course {
@@ -42,6 +42,12 @@ export interface Module {
   updatedAt: string;
 }
 
+export type ExerciseType =
+  | "MULTIPLE_CHOICE"
+  | "TRUE_FALSE"
+  | "SHORT_ANSWER"
+  | "FILE_UPLOAD";
+
 export interface Lesson {
   id: string;
   moduleId: string;
@@ -52,6 +58,7 @@ export interface Lesson {
   duration?: number;
   isFreePreview: boolean;
   contents?: Content[];
+  exercises?: Exercise[];
   createdAt: string;
   updatedAt: string;
 }
@@ -64,6 +71,20 @@ export interface Content {
   url?: string;
   filePath?: string;
   metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Exercise {
+  id: string;
+  moduleId: string;
+  lessonId: string;
+  title: string;
+  type: ExerciseType;
+  question: string;
+  options?: string[];
+  correctAnswer?: string;
+  points: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -144,7 +144,7 @@ const LmsMyLearning = () => {
                     )}
 
                     <Button size="sm" asChild className="gap-1">
-                      <Link to={`/lms/learn/${enrollment.course?.slug}`}>
+                      <Link to={`/lms/learn/${enrollment.courseId}`}>
                         {enrollment.status === "COMPLETED"
                           ? "Review"
                           : "Continue"}

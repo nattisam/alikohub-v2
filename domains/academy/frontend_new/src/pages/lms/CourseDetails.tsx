@@ -20,9 +20,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const CourseDetails = () => {
-  const { slug } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { data: course, isLoading } = useCourseDetails(slug || "");
+  const { data: course, isLoading } = useCourseDetails(id || "");
   const enrollMutation = useEnrollInCourse();
 
   const handleEnroll = () => {
@@ -32,7 +32,7 @@ const CourseDetails = () => {
       {
         onSuccess: (data: any) => {
           if (!data?.checkoutUrl) {
-            navigate(`/lms/learn/${course.slug}`);
+            navigate(`/lms/learn/${course.id}`);
           }
         },
       },

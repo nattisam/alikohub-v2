@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/categories/health/layout/Layout";
-import {
-  programs as staticPrograms,
-  type EnrollmentStatus,
-} from "@/data/categories/health/programs";
 import { examPrepPrograms } from "@/data/categories/health/examPrepPrograms";
 import {
   Card,
@@ -36,33 +32,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHealthCourses } from "@/hooks/useHealth";
 
 type ModalityFilter = "all" | "Hybrid" | "Online" | "In-Person";
+type EnrollmentStatus = "open" | "closed";
 type StatusFilter = "all" | EnrollmentStatus;
 
 const Programs = () => {
   const [modalityFilter, setModalityFilter] = useState<ModalityFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
-  const { data: healthCoursesData, isLoading } = useHealthCourses();
+  const { data: healthCoursesData = [], isLoading } = useHealthCourses();
 
-  // Transform API courses to match the local program structure if needed, or use them directly
-  const apiPrograms = (healthCoursesData?.items || []).map((course: any) => ({
+  // Transform API courses to match the local program structure
+  const programs = healthCoursesData.map((course: any) => ({
     id: course.id,
     name: course.title,
-    credential: "Professional Certificate", // Fallback for API
+    credential: course.category || "Healthcare Training",
     shortDescription: course.shortDescription,
-    description: course.shortDescription,
-    duration: "10-12 Weeks", // Fallback for Health programs
-    hours: { total: 120 }, // Fallback
-    modality: "Hybrid", // Default for Health programs
-    location: "Global",
-    tuition: course.price || 1200,
-    enrollmentStatus: "open",
-    startDate: "Next Cohort",
-    featured: course.enrolledNum > 5,
+    description: course.description || course.shortDescription,
+    duration: course.duration || "Self-paced",
+    hours: course.hours || {
+      total: course.lessonsCount ? course.lessonsCount * 1 : 0,
+    },
+    modality: course.modality || "Online",
+    location: course.location || "Remote",
+    tuition: course.price || 0,
+    enrollmentStatus: course.status === "PUBLISHED" ? "open" : "closed",
+    startDate: course.startDate || "Immediate",
+    featured: (course as any).featured || course.enrolledCount > 5,
     image_url: course.thumbnail,
   }));
-
-  const programs = apiPrograms.length > 0 ? apiPrograms : staticPrograms;
 
   const filteredPrograms = programs
     .filter((program: any) => {
@@ -75,10 +72,6 @@ const Programs = () => {
     .sort((a: any, b: any) => {
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
-      if (a.enrollmentStatus === "open" && b.enrollmentStatus !== "open")
-        return -1;
-      if (a.enrollmentStatus !== "open" && b.enrollmentStatus === "open")
-        return 1;
       return 0;
     });
 
