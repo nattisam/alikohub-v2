@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 const ForgotPassword = () => {
@@ -14,15 +14,15 @@ const ForgotPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      await api.post("/auth/forgot-password", { email });
       setSent(true);
       toast.success("Check your email for the reset link");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to send reset link";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 

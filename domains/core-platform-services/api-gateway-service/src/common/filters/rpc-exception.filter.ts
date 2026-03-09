@@ -74,13 +74,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       details = exc.details || exc.response?.details || exc.error?.details || null;
       
       // Handle connection errors
-      if (exc.code === 'ECONNREFUSED') {
+      if (exc.code === 'ECONNREFUSED' || exc.code === 'ECONNRESET' || exc.message?.includes('EAI_AGAIN')) {
          statusCode = HttpStatus.SERVICE_UNAVAILABLE;
          message = 'A downstream service is currently unavailable. Please try again later.';
          error = 'Service Unavailable';
       }
     }
-    // 4. Handle generic Error objects
+    // 4. Handle string-based exceptions (common from some microservice configurations)
+    else if (typeof exception === 'string') {
+      message = exception;
+      if (exception.toLowerCase().includes('forbidden') || exception.toLowerCase().includes('permission')) {
+        statusCode = HttpStatus.FORBIDDEN;
+        error = 'Forbidden';
+      } else if (exception.toLowerCase().includes('unauthorized') || exception.toLowerCase().includes('token')) {
+        statusCode = HttpStatus.UNAUTHORIZED;
+        error = 'Unauthorized';
+      } else if (exception.toLowerCase().includes('not found')) {
+        statusCode = HttpStatus.NOT_FOUND;
+        error = 'Not Found';
+      } else if (exception.toLowerCase().includes('conflict') || exception.toLowerCase().includes('already exists') || exception.toLowerCase().includes('already enrolled')) {
+        statusCode = HttpStatus.CONFLICT;
+        error = 'Conflict';
+      }
+    }
+    // 5. Handle generic Error objects
     else if (exception instanceof Error) {
       message = exception.message;
       const errorWithCode = exception as Error & { code?: string };
@@ -98,10 +115,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const excWithStack = exception as { stack?: string };
       if (excWithStack.stack) {
         this.logger.error(excWithStack.stack);
-      } else {
+      } else if (typeof exception === 'object') {
         // Log the whole exception object if there's no stack trace
         console.error('[CRITICAL] Internal Error without stack trace:', exception);
-        console.dir(exception, { depth: null });
+      } else {
+        console.error('[CRITICAL] Internal Error (Primitive Type):', exception);
       }
       
       // Security: Do not leak internal error messages for 500 errors to the client in production

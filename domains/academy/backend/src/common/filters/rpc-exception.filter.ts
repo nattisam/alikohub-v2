@@ -15,49 +15,42 @@ export class RpcExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(RpcExceptionFilter.name);
 
   catch(exception: any, _host: ArgumentsHost): Observable<any> {
+    const exceptionName = exception?.constructor?.name || exception?.name || 'UnknownException';
+    this.logger.log(`RpcExceptionFilter caught [${exceptionName}]: ${JSON.stringify(exception)}`);
+    if (exception && exception.stack) this.logger.log(`Stack: ${exception.stack}`);
+
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let error = 'Internal Server Error';
     let details: any = null;
 
-    // 1. Check for HttpException (duck typing + constructor check + name check)
-    if (
-      exception &&
-      (exception instanceof HttpException ||
-        (typeof exception.getStatus === 'function' &&
-          typeof exception.getResponse === 'function') ||
-        exception.constructor?.name === 'ForbiddenException' ||
-        exception.constructor?.name === 'NotFoundException' ||
-        exception.constructor?.name === 'BadRequestException' ||
-        (exception as any).name === 'ForbiddenException' ||
-        (exception as any).name === 'NotFoundException' ||
-        (exception as any).message?.includes('permission')) // desperate fallback for 403
-    ) {
-      status =
-        typeof exception.getStatus === 'function'
-          ? exception.getStatus()
-          : exception.constructor?.name === 'ForbiddenException' ||
-              (exception as any).name === 'ForbiddenException' ||
-              (exception as any).message?.includes('permission')
-            ? 403
-            : exception.constructor?.name === 'NotFoundException' ||
-                (exception as any).name === 'NotFoundException'
-              ? 404
-              : 400;
-
-      const response =
-        typeof exception.getResponse === 'function'
-          ? exception.getResponse()
-          : exception.message;
+    // 1. Check for NestJS HttpException
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const response = exception.getResponse();
       if (typeof response === 'object') {
-        message = Array.isArray(response.message)
-          ? response.message[0]
-          : response.message || exception.message;
-        error = response.error || 'Http Error';
-        details = response.details || null;
+        const resObj = response as any;
+        message = Array.isArray(resObj.message) ? resObj.message[0] : resObj.message || exception.message;
+        error = resObj.error || 'Http Error';
+        details = resObj.details || null;
       } else {
         message = response;
-        error = 'Http Error';
+        error = exception.name || 'Http Error';
+      }
+    }
+    // 2. Duck typing check for other common NestJS-like exceptions that might not be instances of HttpException
+    else if (
+      exception &&
+      typeof exception.getStatus === 'function' &&
+      typeof exception.getResponse === 'function'
+    ) {
+      status = exception.getStatus();
+      const response = exception.getResponse();
+      if (typeof response === 'object') {
+        message = (response as any).message || exception.message;
+        error = (response as any).error || 'Error';
+      } else {
+        message = response;
       }
     }
     // 2. Check for objects with explicit status properties
@@ -140,9 +133,9 @@ export class RpcExceptionFilter implements ExceptionFilter {
     };
 
     if (status >= 500) {
-      this.logger.error(`Fatal Error: ${JSON.stringify(errorResponse)}`);
+      this.logger.error(`Returning 500 error for [${exceptionName}]: ${JSON.stringify(errorResponse)}`);
     } else {
-      this.logger.warn(`Handled Exception: ${message} (Status: ${status})`);
+      this.logger.warn(`Handled Exception [${exceptionName}]: ${message} (Status: ${status})`);
     }
 
     return throwError(() => new RpcException(errorResponse));

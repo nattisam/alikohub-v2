@@ -159,11 +159,16 @@ export class EventsController {
         return this.eventsClient.send({ cmd: 'remove_ticket' }, { id, user: req.user });
     }
 
-    // Registration Management
     @ApiOperation({ summary: 'Get all registrations for my events' })
     @Get('registrations')
     findAllRegistrations(@Request() req: RequestWithUser) {
         return this.eventsClient.send({ cmd: 'find_all_registrations' }, { user: req.user });
+    }
+
+    @ApiOperation({ summary: 'Get my event registrations as attendee' })
+    @Get('my-tickets')
+    findMyTickets(@Request() req: RequestWithUser) {
+        return this.eventsClient.send({ cmd: 'find_my_tickets' }, { user: req.user });
     }
 
     @ApiOperation({ summary: 'Register for an event' })

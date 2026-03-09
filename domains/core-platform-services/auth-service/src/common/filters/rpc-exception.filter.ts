@@ -23,9 +23,42 @@ export class RpcExceptionFilter implements ExceptionFilter {
     let error = 'Internal Server Error';
     let details: any = null;
 
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const response = exception.getResponse() as any;
+    // 1. Check for HttpException (duck typing + constructor check + name check)
+    if (
+      exception &&
+      (exception instanceof HttpException ||
+        (typeof exception.getStatus === 'function' &&
+          typeof exception.getResponse === 'function') ||
+        exception.constructor?.name === 'ForbiddenException' ||
+        exception.constructor?.name === 'UnauthorizedException' ||
+        exception.constructor?.name === 'NotFoundException' ||
+        exception.constructor?.name === 'BadRequestException' ||
+        (exception as any).name === 'ForbiddenException' ||
+        (exception as any).name === 'NotFoundException' ||
+        (exception as any).message?.includes('Unauthorized') ||
+        (exception as any).message?.includes('Forbidden'))
+    ) {
+      status =
+        typeof exception.getStatus === 'function'
+          ? exception.getStatus()
+          : exception.constructor?.name === 'ForbiddenException' ||
+              (exception as any).name === 'ForbiddenException' ||
+              (exception as any).message?.includes('Forbidden') ||
+              (exception as any).message?.includes('permission')
+            ? 403
+            : exception.constructor?.name === 'UnauthorizedException' ||
+                (exception as any).name === 'UnauthorizedException' ||
+                (exception as any).message?.includes('Unauthorized')
+              ? 401
+              : exception.constructor?.name === 'NotFoundException' ||
+                  (exception as any).name === 'NotFoundException'
+                ? 404
+                : 400;
+
+      const response =
+        typeof exception.getResponse === 'function'
+          ? exception.getResponse()
+          : exception.message;
       if (typeof response === 'object') {
         message = Array.isArray(response.message) ? response.message[0] : response.message || exception.message;
         error = response.error || 'Http Error';

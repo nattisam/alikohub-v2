@@ -43,7 +43,20 @@ async function bootstrap() {
           },
         },
       });
-      console.log(`Academy: RabbitMQ transport configured for ${rabbitmqUrl}`);
+      // Add connection for Payment Events
+      app.connectMicroservice({
+        transport: Transport.RMQ,
+        options: {
+          urls: [rabbitmqUrl],
+          queue: 'academy_payment_fulfillment',
+          exchange: 'payment_events',
+          exchangeType: 'fanout',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      });
+      console.log(`Academy: RabbitMQ transports configured for ${rabbitmqUrl}`);
     } catch (e) {
       console.warn(`Academy: RabbitMQ transport not available: ${e.message}`);
     }

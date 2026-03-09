@@ -14,4 +14,6 @@ export class CreateEnrollmentDto {
 
   @IsInt()
   courseId: number;
+
+  paymentGateway?: string;
 }

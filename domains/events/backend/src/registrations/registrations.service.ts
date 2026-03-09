@@ -70,4 +70,15 @@ export class RegistrationsService {
       },
     });
   }
+
+  async findAllMyRegistrations(user: AuthenticatedUser) {
+    return this.prisma.registration.findMany({
+      where: { userId: user.firebaseId },
+      include: {
+        event: true,
+        ticket: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
 }

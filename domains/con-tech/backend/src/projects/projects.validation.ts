@@ -139,6 +139,14 @@ export const CreateProjectUpdateSchema = Joi.object({
   isVisibleToClient: Joi.boolean()
     .optional()
     .description('Whether this update is visible to the client'),
+  photos: Joi.array()
+    .items(Joi.string())
+    .optional()
+    .description('List of photo URLs for the update'),
+  tags: Joi.array()
+    .items(Joi.string())
+    .optional()
+    .description('Categorization tags for the update'),
   user: Joi.any().required().description('The authenticated user'),
 }).description('Schema for creating a weekly project update');
 

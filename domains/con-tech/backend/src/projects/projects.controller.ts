@@ -298,6 +298,8 @@ export class ProjectsController {
       projectId: number;
       text: string;
       isVisibleToClient?: boolean;
+      photos?: string[];
+      tags?: string[];
       user: AuthenticatedUser;
     },
   ) {
@@ -310,6 +312,8 @@ export class ProjectsController {
         payload.text,
         payload.user,
         payload.isVisibleToClient,
+        payload.photos,
+        payload.tags,
       );
     } catch (error: any) {
       this.logger.error(

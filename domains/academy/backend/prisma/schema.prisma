@@ -110,6 +110,7 @@ enum PaymentStatus {
 // ... existing models ...
 
 enum EnrollmentStatus {
+  PENDING
   ACTIVE
   COMPLETED
   DROPPED

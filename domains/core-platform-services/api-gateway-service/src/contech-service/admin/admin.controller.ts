@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Inject,
   Query,
   UseGuards,
@@ -49,5 +50,13 @@ export class AdminController {
   ) {
     const payload = { user: req.user, role, page, pageSize };
     return this.contechClient.send({ cmd: 'list_contech_users' }, payload);
+  }
+
+  @ApiOperation({ summary: 'Register a new ConTech user (Client/Contractor)' })
+  @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @Post('users')
+  registerUser(@Request() req: RequestWithUser, @Body() userData: any) {
+    const payload = { user: req.user, ...userData };
+    return this.contechClient.send({ cmd: 'register_contech_user' }, payload);
   }
 }

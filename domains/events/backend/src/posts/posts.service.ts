@@ -53,21 +53,45 @@ export class PostsService {
   async findAll(query: {
     type?: PostType;
     status?: PostStatus;
+    authorId?: string;
     page?: number;
     limit?: number;
     public?: boolean;
+    user?: AuthenticatedUser;
   }) {
     const {
       type,
       status,
+      authorId,
       page = 1,
       limit = 10,
       public: isPublic = false,
+      user,
     } = query;
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (type) where.type = type;
+
+    // Apply role-based filtering for non-public requests
+    if (!isPublic && user) {
+      const profile = await this.userService.getProfileAndSync(user);
+      const isPrivileged =
+        profile &&
+        (profile.role === EventsRole.ADMIN ||
+          profile.role === EventsRole.CONTENT_MANAGER);
+
+      if (!isPrivileged) {
+        // Regular users only see their own posts in management view
+        where.authorId = user.firebaseId;
+      } else if (authorId) {
+        // Privileged users can filter by authorId if they want
+        where.authorId = authorId;
+      }
+    } else if (authorId) {
+      // For public requests, we still allow filtering by authorId if provided
+      where.authorId = authorId;
+    }
 
     // Public requests only see PUBLISHED content
     if (isPublic) {

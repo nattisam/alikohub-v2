@@ -436,6 +436,43 @@ export class AuthController {
     );
   }
 
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset email' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim()
+  })))
+  async forgotPassword(@Body() body: { email: string }) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'forgot_password' }, body).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Forgot Password');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update password using reset link' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim(),
+    newPassword: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required()
+  })))
+  async resetPassword(@Body() body: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'reset_password' }, body).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Reset Password');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
   @Post('contech/user')
   @UseGuards(AuthGuard, AdminAccessGuard)
   @HttpCode(HttpStatus.CREATED)

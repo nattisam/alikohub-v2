@@ -64,3 +64,16 @@ export const UserStatusUpdateSchema = Joi.object({
 export const UserIdentitySchema = Joi.object({
   firebaseId: Joi.string().required().description('Firebase user ID'),
 }).description('Schema for operations requiring a single user identity');
+
+export const ForgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required().trim().description('User email addressed'),
+}).description('Schema for password reset request');
+
+export const ResetPasswordSchema = Joi.object({
+  email: Joi.string().email().required().trim().description('User email address'),
+  newPassword: Joi.string()
+    .min(8)
+    .regex(passwordRegex)
+    .required()
+    .description('New password'),
+}).description('Schema for confirming password reset');

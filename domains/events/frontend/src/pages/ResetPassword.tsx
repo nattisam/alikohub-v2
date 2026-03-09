@@ -1,42 +1,43 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
+  const [searchParams] = useSearchParams();
+  const hasResetToken = searchParams.get("mode") === "resetPassword" || searchParams.has("oobCode");
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      await api.post("/auth/reset-password", { email, newPassword: password });
       toast.success("Password updated successfully!");
       navigate("/signin");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update password";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isRecovery) {
+  if (!hasResetToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center">
@@ -56,8 +57,12 @@ const ResetPassword = () => {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 bg-card p-8 rounded-xl border border-border shadow-card">
           <div>
+            <Label htmlFor="email" className="font-body">Email Address</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" placeholder="Your email address" />
+          </div>
+          <div>
             <Label htmlFor="password" className="font-body">New Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" placeholder="Min 6 characters" />
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" placeholder="Min 8 characters" />
           </div>
           <Button type="submit" className="w-full font-body" disabled={loading}>
             {loading ? "Updating..." : "Update Password"}

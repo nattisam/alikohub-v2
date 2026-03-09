@@ -41,11 +41,15 @@ model Post {
   publishDate      DateTime?
   
   // Event specific fields
+  slug             String?     @unique
   eventDate        DateTime?
   endEventDate     DateTime?
   startTime        String?
   endTime          String?
+  timezone         String?     @default("UTC")
   location         String?     // Physical or Link
+  locationAddress  String?
+  locationMapUrl   String?
   externalLink     String?
   hostName         String?     // For social events
   privacy          String?     // public, link_only, password

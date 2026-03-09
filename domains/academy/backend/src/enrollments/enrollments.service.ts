@@ -5,11 +5,14 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { AuthenticatedUser, UserService } from '../user/user.service';
-import { CourseStatus } from '../generated/client';
+import { CourseStatus, EnrollmentStatus, PaymentStatus } from '../generated/client';
+import { ClientProxy } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class EnrollmentsService {
@@ -18,50 +21,20 @@ export class EnrollmentsService {
   constructor(
     private prisma: PrismaService,
     private userService: UserService,
+    @Inject('PAYMENT_SERVICE') private readonly paymentClient: ClientProxy,
   ) {}
 
   async create(dto: CreateEnrollmentDto, user: AuthenticatedUser) {
-    this.logger.log(
-      `Creating enrollment. DTO: ${JSON.stringify(dto)}, User: ${JSON.stringify(user)}`,
-    );
-
-    // Log the raw DTO for debugging
-    console.log('Enrollment Service - Received DTO:', dto);
-    console.log('Enrollment Service - DTO keys:', Object.keys(dto));
-    console.log('Enrollment Service - cohortId value:', dto.cohortId);
-    console.log('Enrollment Service - cohortId type:', typeof dto.cohortId);
-
-    // Check if cohortId is explicitly null or undefined
-    if (dto.cohortId === null) {
-      console.log('Enrollment Service - cohortId is explicitly null');
-    } else if (dto.cohortId === undefined) {
-      console.log('Enrollment Service - cohortId is undefined');
-    } else {
-      console.log('Enrollment Service - cohortId has a value:', dto.cohortId);
-    }
+    this.logger.log(`Creating enrollment. DTO: ${JSON.stringify(dto)}, User: ${JSON.stringify(user)}`);
 
     // Manual validation
     if (!dto.courseId) {
       throw new BadRequestException('Course ID is required');
     }
 
-    if (dto.courseId && !Number.isInteger(dto.courseId)) {
-      throw new BadRequestException('Course ID must be an integer');
-    }
-
-    if (
-      dto.cohortId !== undefined &&
-      dto.cohortId !== null &&
-      !Number.isInteger(dto.cohortId)
-    ) {
-      throw new BadRequestException('Cohort ID must be an integer');
-    }
-
     const academyProfile = await this.userService.getOrCreateProfile(user);
-    this.logger.log(`User academy profile: ${JSON.stringify(academyProfile)}`);
-
+    
     let userIdToEnroll: string;
-
     if (dto.userId) {
       if (academyProfile.role !== 'ADMIN') {
         throw new ForbiddenException('Only admins can enroll other users.');
@@ -71,129 +44,135 @@ export class EnrollmentsService {
       userIdToEnroll = user.firebaseId;
     }
 
-    this.logger.log(`User ID to enroll: ${userIdToEnroll}`);
-
     // Ensure user has an academy profile
-    const userProfile =
-      await this.userService.ensureProfileExists(userIdToEnroll);
-
+    const userProfile = await this.userService.ensureProfileExists(userIdToEnroll);
     if (!userProfile) {
-      throw new BadRequestException(
-        `User with ID ${userIdToEnroll} could not be synchronized or does not exist in the Auth Service.`,
-      );
+      throw new BadRequestException(`User with ID ${userIdToEnroll} does not exist or could not be synchronized.`);
     }
 
     // Validate that the course exists and is published
-    let course;
-    try {
-      course = await this.prisma.course.findUnique({
-        where: { id: dto.courseId },
-      });
+    const course = await this.prisma.course.findUnique({
+      where: { id: dto.courseId },
+    });
 
-      if (!course) {
-        throw new BadRequestException(
-          `Course with ID ${dto.courseId} does not exist.`,
-        );
-      }
-
-      if (course.status !== CourseStatus.PUBLISHED) {
-        throw new BadRequestException(
-          `Course with ID ${dto.courseId} is not published and cannot be enrolled in.`,
-        );
-      }
-
-      this.logger.log(
-        `Course validation passed. Course: ${JSON.stringify(course)}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error validating course: ${error.message}`,
-        error.stack,
-      );
-      throw error;
+    if (!course) {
+      throw new BadRequestException(`Course with ID ${dto.courseId} does not exist.`);
     }
 
-    // Handle cohort logic - if cohortId provided, validate it; otherwise allow direct course enrollment
+    if (course.status !== CourseStatus.PUBLISHED) {
+      throw new BadRequestException(`Course with ID ${dto.courseId} is not published.`);
+    }
+
     const cohortId = dto.cohortId;
     if (cohortId !== undefined && cohortId !== null) {
-      // Validate that the cohort exists and is associated with the course
-      try {
         const cohort = await this.prisma.cohort.findUnique({
-          where: { id: cohortId },
-          include: { course: true },
+            where: { id: cohortId },
         });
 
         if (!cohort) {
-          throw new BadRequestException(
-            `Cohort with ID ${cohortId} does not exist.`,
-          );
+            throw new BadRequestException(`Cohort with ID ${cohortId} does not exist.`);
         }
 
         if (cohort.courseId !== dto.courseId) {
-          throw new BadRequestException(
-            `Cohort ${cohortId} is not associated with course ${dto.courseId}.`,
-          );
+            throw new BadRequestException(`Cohort ${cohortId} is not associated with course ${dto.courseId}.`);
         }
-
-        this.logger.log(
-          `Cohort validation passed. Cohort: ${JSON.stringify(cohort)}`,
-        );
-      } catch (error) {
-        this.logger.error(
-          `Error validating cohort: ${error.message}`,
-          error.stack,
-        );
-        throw error;
-      }
-    } else {
-      this.logger.log(
-        `No cohort ID provided, allowing direct course enrollment`,
-      );
-      console.log(
-        'Enrollment Service - Processing direct course enrollment (no cohort)',
-      );
     }
 
-    // --- FREE vs PAID Placeholder Logic ---
     const isPaid = course.price && course.price > 0;
+    this.logger.log(`Course ${course.id} is ${isPaid ? 'PAID' : 'FREE'}. Price: ${course.price}`);
+
     const enrollmentType = isPaid ? 'PAID' : 'FREE';
     const paymentStatus = isPaid ? 'PENDING' : 'COMPLETED';
+    const enrollmentStatus = isPaid ? 'PENDING' : 'ACTIVE';
 
-    try {
-      console.log('Enrollment Service - Creating enrollment record with:', {
+    // 1. Check for existing enrollment
+    const existingEnrollment = await this.prisma.enrollment.findFirst({
+      where: {
         userId: userIdToEnroll,
-        cohortId: cohortId, // This can be null for direct course enrollment
         courseId: dto.courseId,
-        enrollmentType: enrollmentType,
-        paymentStatus: paymentStatus,
-      });
+        cohortId: cohortId || null,
+      },
+    });
 
-      const enrollment = await this.prisma.enrollment.create({
-        data: {
-          userId: userIdToEnroll,
-          cohortId: cohortId,
-          courseId: dto.courseId,
-          enrollmentType: enrollmentType,
-          paymentStatus: paymentStatus,
-        } as any,
-      });
-
-      this.logger.log(
-        `Enrollment created successfully: ${JSON.stringify(enrollment)}`,
-      );
-      console.log(
-        'Enrollment Service - Enrollment created successfully:',
-        enrollment,
-      );
-      return enrollment;
-    } catch (e: any) {
-      this.logger.error(`Error creating enrollment: ${e.message}`, e.stack);
-      console.log('Enrollment Service - Error creating enrollment:', e);
-      if (e.code === 'P2002') {
-        throw new ConflictException('User already enrolled in this course');
+    if (existingEnrollment) {
+      this.logger.log(`Existing enrollment found for user ${userIdToEnroll} in course ${dto.courseId}. Status: ${existingEnrollment.status}, Payment: ${existingEnrollment.paymentStatus}`);
+      if (
+        existingEnrollment.status === EnrollmentStatus.ACTIVE ||
+        existingEnrollment.paymentStatus === PaymentStatus.COMPLETED
+      ) {
+        throw new ConflictException('User already enrolled and paid for this course');
       }
-      throw e;
+        
+        // Update existing pending/failed enrollment
+        await this.prisma.enrollment.update({
+          where: { id: existingEnrollment.id },
+          data: {
+            paymentStatus,
+            status: enrollmentStatus as any,
+          },
+        });
+    } else {
+        // Create new enrollment
+        await this.prisma.enrollment.create({
+          data: {
+            userId: userIdToEnroll,
+            cohortId: cohortId || null,
+            courseId: dto.courseId,
+            enrollmentType: enrollmentType as any,
+            paymentStatus,
+            status: enrollmentStatus as any,
+          },
+        });
     }
+
+    // Need the enrollment object for metadata (especially the ID)
+    const activeEnrollment = await this.prisma.enrollment.findFirst({
+        where: {
+            userId: userIdToEnroll,
+            courseId: dto.courseId,
+            cohortId: cohortId || null,
+        }
+    });
+
+    // 3. Handle Payment Initialization
+    if (isPaid) {
+      try {
+        // Fetch user details for payment gateway (email is required)
+        const userDetails = await this.userService.getUserById(userIdToEnroll);
+
+        const paymentSession = await lastValueFrom(
+          this.paymentClient.send({ cmd: 'initialize_payment' }, {
+            amount: course.price,
+            currency: 'ETB',
+            email: userDetails?.email || user.email || '',
+            firstName: userDetails?.firstname || '',
+            lastName: userDetails?.lastname || '',
+            provider: dto.paymentGateway || 'CHAPA',
+            userId: userIdToEnroll,
+            purpose: `COURSE_PURCHASE_${course.id}`,
+            metadata: {
+              courseId: course.id,
+              enrollmentId: activeEnrollment.id,
+              userId: userIdToEnroll,
+              courseTitle: course.title,
+            },
+          })
+        );
+
+        this.logger.log(`Payment initialized successfully. Checkout URL: ${paymentSession.checkoutUrl}`);
+
+        return {
+          ...activeEnrollment,
+          checkoutUrl: paymentSession.checkoutUrl,
+          message: 'Payment required to complete enrollment'
+        };
+      } catch (error) {
+        this.logger.error(`Failed to initialize payment: ${error.message}`);
+        throw new Error('Could not initialize payment for course purchase');
+      }
+    }
+
+    return activeEnrollment;
   }
 
   async findAll(user: AuthenticatedUser, query: any = {}) {

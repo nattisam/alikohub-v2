@@ -301,4 +301,42 @@ export class UserService {
       totalPages: Math.ceil(total / pageSize),
     };
   }
+
+  async createContechUser(data: {
+    email: string;
+    firstname: string;
+    lastname?: string;
+    password?: string;
+    role: ContechRole;
+  }) {
+    this.logger.log(`Requesting user creation from Auth Service: ${data.email}`);
+    try {
+      const authUser: AuthenticatedUser = await firstValueFrom(
+        this.authClient.send({ cmd: 'create_contech_user' }, data),
+      );
+
+      // Create the local profile as well
+      await this.prisma.contechProfile.upsert({
+        where: { userId: authUser.firebaseId },
+        create: {
+          userId: authUser.firebaseId,
+          role: data.role,
+          hasSelectedRole: true,
+        },
+        update: {
+          role: data.role,
+          hasSelectedRole: true,
+        },
+      });
+
+      return authUser;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to create ConTech user via Auth Service: ${errorMessage}`,
+      );
+      throw error;
+    }
+  }
 }

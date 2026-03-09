@@ -34,4 +34,10 @@ export class RegistrationsController {
     this.logger.log(`Toggling check-in for registration ID: ${payload.id}`);
     return this.registrationsService.toggleCheckIn(payload.id, payload.user);
   }
+
+  @MessagePattern({ cmd: "find_my_tickets" })
+  async findMyTickets(@Payload() payload: { user: AuthenticatedUser }) {
+    this.logger.log(`Fetching tickets for user: ${payload.user.firebaseId}`);
+    return this.registrationsService.findAllMyRegistrations(payload.user);
+  }
 }

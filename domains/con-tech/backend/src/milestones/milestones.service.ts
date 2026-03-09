@@ -130,10 +130,12 @@ export class MilestonesService {
 
     const project = (milestone as unknown as { Project: Project }).Project;
     const profile = await this.userService.getOrCreateProfile(user);
-    if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException(
-        'You do not have permission to view this milestone.',
-      );
+    if (profile.role === 'CLIENT') {
+      if (project.clientId !== user.firebaseId || !milestone.isVisibleToClient) {
+        throw new ForbiddenException(
+          'You do not have permission to view this milestone.',
+        );
+      }
     }
     if (
       profile.role === 'CONTRACTOR' &&

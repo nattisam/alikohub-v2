@@ -9,10 +9,12 @@ import { AcademyServiceModule } from './academy-service';
 import { ConTechServiceModule } from './contech-service/contech-service.module';
 import { EventsServiceModule } from './events-service/events-service.module';
 import { CareersServiceModule } from './careers-service/careers.module';
+import { ConsultancyServiceModule } from './consultancy-service/consultancy.module';
 import { FileUploadModule } from './file-upload-service/file-upload.module';
 import { HealthModule } from './health/health.module';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import { HttpClientProxy } from './common/clients/http-client.proxy';
+import { PaymentServiceModule } from './payment-service/payment.module';
 
 @Global()
 @Module({
@@ -84,6 +86,30 @@ import { HttpClientProxy } from './common/clients/http-client.proxy';
           },
         }),
       },
+      {
+        name: 'PAYMENT_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('PAYMENT_SERVICE_HOST') || 'localhost',
+            port: Number(configService.get('PAYMENT_SERVICE_PORT')) || 3012,
+          },
+        }),
+      },
+      {
+        name: 'CONSULTANCY_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('CONSULTANCY_SERVICE_HOST') || 'localhost',
+            port: configService.get('CONSULTANCY_SERVICE_PORT') || 3006,
+          },
+        }),
+      },
     ]),
     CaptchaModule,
     UserModule,
@@ -91,7 +117,9 @@ import { HttpClientProxy } from './common/clients/http-client.proxy';
     ConTechServiceModule,
     EventsServiceModule,
     CareersServiceModule,
+    ConsultancyServiceModule,
     FileUploadModule,
+    PaymentServiceModule,
     HealthModule,
   ],
   providers: [

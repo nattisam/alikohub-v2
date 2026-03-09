@@ -1,7 +1,7 @@
-import { Controller, UseGuards, UsePipes, Logger } from '@nestjs/common';
+import { Controller, UseGuards, UsePipes, Logger, HttpException } from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthenticatedUser } from '../user/user.service';
 import { AcademyProfileGuard } from '../auth/academy-profile.guard';
 import { Roles } from '../auth/role-guard/roles.decorator';
@@ -16,6 +16,43 @@ import {
   CourseIdEnrollmentSchema,
   UserOnlySchema,
 } from './enrollments.validation';
+
+/**
+ * Helper to convert any thrown exception into an RpcException
+ * that preserves the original HTTP status code and message.
+ * This is necessary because NestJS microservice transports
+ * do NOT apply HTTP exception filters — they serialize
+ * unrecognised errors as generic "Internal server error".
+ */
+function toRpcException(error: any): RpcException {
+  if (error instanceof RpcException) return error;
+
+  const statusCode =
+    error instanceof HttpException ? error.getStatus() : 500;
+
+  let message = error?.message || 'Internal server error';
+  let errorName = 'Internal Server Error';
+
+  if (error instanceof HttpException) {
+    const response = error.getResponse();
+    if (typeof response === 'object') {
+      const res = response as any;
+      message = Array.isArray(res.message)
+        ? res.message[0]
+        : res.message || message;
+      errorName = res.error || error.name || errorName;
+    } else {
+      message = response as string;
+    }
+  }
+
+  return new RpcException({
+    statusCode,
+    message,
+    error: errorName,
+    timestamp: new Date().toISOString(),
+  });
+}
 
 @Controller()
 @UseGuards(AcademyProfileGuard)
@@ -38,7 +75,7 @@ export class EnrollmentsController {
         `Failed to create enrollment for course ID ${payload.dto.courseId} by user ${payload.user.firebaseId}: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -57,7 +94,7 @@ export class EnrollmentsController {
         `Admin ${payload.user.firebaseId} failed to fetch all enrollments: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -81,7 +118,7 @@ export class EnrollmentsController {
         `Instructor ${payload.user.firebaseId} failed to fetch their enrollments: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -111,7 +148,7 @@ export class EnrollmentsController {
         `Failed to fetch enrollments for cohort ID ${payload.cohortId} by user ${payload.user.firebaseId}: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -128,7 +165,7 @@ export class EnrollmentsController {
         `Failed to remove enrollment ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -150,7 +187,7 @@ export class EnrollmentsController {
         `Failed to fetch enrollments for user ID ${payload.userId} by user ${payload.user.firebaseId}: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -167,7 +204,7 @@ export class EnrollmentsController {
         `User ${payload.user.firebaseId} failed to fetch their own enrollments: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 
@@ -195,7 +232,7 @@ export class EnrollmentsController {
         `Failed to fetch enrollments for course ID ${payload.courseId} by user ${payload.user.firebaseId}: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw toRpcException(error);
     }
   }
 }

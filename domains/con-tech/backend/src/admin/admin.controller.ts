@@ -5,7 +5,7 @@ import { UserService, AuthenticatedUser } from '../user/user.service';
 import { ContechRole } from '../generated/client';
 import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
 import { JoiValidationPipe } from '../common/pipes/joi-validation.pipe';
-import { AdminDashboardSchema, ListProfilesSchema } from './admin.validation';
+import { AdminDashboardSchema, ListProfilesSchema, CreateUserSchema } from './admin.validation';
 
 @Controller()
 @UseFilters(RpcExceptionFilter)
@@ -84,6 +84,39 @@ export class AdminController {
       this.logger.error(
         `Failed to list users for admin ${user.firebaseId}: ${errorMessage}`,
         errorStack,
+      );
+      throw error;
+    }
+  }
+
+  @MessagePattern({ cmd: 'register_contech_user' })
+  @UsePipes(new JoiValidationPipe(CreateUserSchema))
+  async registerUser(@Payload() payload: Record<string, any>) {
+    const { user, ...userData } = payload as {
+      user: AuthenticatedUser;
+      email: string;
+      firstname: string;
+      lastname?: string;
+      password?: string;
+      role: ContechRole;
+    };
+
+    this.logger.log(
+      `Admin ${user.firebaseId} is registering a new ${userData.role}: ${userData.email}`,
+    );
+
+    try {
+      const adminProfile = await this.userService.getOrCreateProfile(user);
+      if (adminProfile.role !== 'ADMIN') {
+        throw new Error('Unauthorized: Admin access required');
+      }
+
+      return await this.userService.createContechUser(userData);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to register user ${userData.email} by admin ${user.firebaseId}: ${errorMessage}`,
       );
       throw error;
     }

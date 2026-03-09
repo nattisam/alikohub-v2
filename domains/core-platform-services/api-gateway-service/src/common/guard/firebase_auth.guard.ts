@@ -49,47 +49,76 @@ export class AuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
-    // Prefer Bearer token (more reliable for cross-origin), fall back to cookie
-    const authMethods: Array<{ type: 'cookie' | 'jwt'; value: string }> = [];
+    // 2. Perform authentication
+    let lastError: any = null;
+
     if (bearerToken) {
-      authMethods.push({ type: 'jwt', value: bearerToken });
-    }
-    if (sessionCookie) {
-      authMethods.push({ type: 'cookie', value: sessionCookie });
-    }
-
-    if (authMethods.length === 0) {
-      throw new UnauthorizedException('No authentication provided (cookie or token)');
-    }
-
-    // Try each auth method in order
-    for (const auth of authMethods) {
+      // First try AlikoHub JWT
       try {
         const authResponse = await firstValueFrom(
           this.authClient
-            .send(
-              { cmd: 'verify' },
-              { type: auth.type, value: auth.value },
-            )
-            .pipe(
-              timeout(5000),
-              catchError(() => {
-                throw new UnauthorizedException('Session is invalid or expired');
-              }),
-            ),
+            .send({ cmd: 'verify' }, { type: 'jwt', value: bearerToken })
+            .pipe(timeout(5000)),
         );
         
         if (authResponse?.user) {
-          // Attach the full user object to the request
           request.user = authResponse.user;
           return true;
         }
-      } catch {
-        // Try next auth method
-        continue;
+      } catch (err) {
+        lastError = err;
+        
+        // If JWT fails, try Firebase ID token as fallback
+        try {
+          const authResponse = await firstValueFrom(
+            this.authClient
+              .send({ cmd: 'verify' }, { type: 'token', value: bearerToken })
+              .pipe(timeout(5000)),
+          );
+          
+          if (authResponse?.user) {
+            request.user = authResponse.user;
+            return true;
+          }
+        } catch (innerErr) {
+          lastError = innerErr;
+        }
       }
     }
 
-    throw new UnauthorizedException('Authentication failed - all methods exhausted');
+    if (sessionCookie && !request.user) {
+      try {
+        const authResponse = await firstValueFrom(
+          this.authClient
+            .send({ cmd: 'verify' }, { type: 'cookie', value: sessionCookie })
+            .pipe(timeout(5000)),
+        );
+        
+        if (authResponse?.user) {
+          request.user = authResponse.user;
+          return true;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    // 3. Handle failure
+    if (!request.user) {
+      if (!bearerToken && !sessionCookie) {
+        throw new UnauthorizedException('Authentication required: Please provide a valid token or session.');
+      }
+
+      const errorMessage = lastError?.message || 'Authentication failed: Your session may have expired or is invalid.';
+      
+      // TEST-08 Check: Avoid generic exhausted message
+      if (errorMessage.includes('exhausted') || errorMessage === 'TimeoutError') {
+         throw new UnauthorizedException('Authentication service unreachable or session expired. Please log in again.');
+      }
+
+      throw new UnauthorizedException(errorMessage);
+    }
+
+    return true;
   }
 }

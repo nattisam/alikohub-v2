@@ -14,6 +14,9 @@ export const CreateEnrollmentSchema = Joi.object({
     userId: Joi.string()
       .optional()
       .description('The user ID to enroll (if authorized to enroll others)'),
+    paymentGateway: Joi.string()
+      .optional()
+      .description('The payment gateway to use (CHAPA or STRIPE)'),
   })
     .required()
     .description('Enrollment details'),

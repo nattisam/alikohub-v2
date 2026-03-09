@@ -432,6 +432,8 @@ export class ProjectsService {
     text: string,
     user: AuthenticatedUser,
     isVisibleToClient: boolean = false,
+    photos: string[] = [],
+    tags: string[] = [],
   ) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -464,6 +466,8 @@ export class ProjectsService {
         authorId: user.firebaseId,
         text,
         isVisibleToClient,
+        photos,
+        tags,
       },
     });
   }

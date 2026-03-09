@@ -52,20 +52,21 @@ export class PostsController {
   @UsePipes(new JoiValidationPipe(FindAllPostsSchema))
   async findAll(
     @Payload()
-    query: {
+    payload: {
       type?: PostType;
       status?: PostStatus;
       page?: number;
       limit?: number;
       public?: boolean;
+      user?: AuthenticatedUser;
     },
   ) {
-    this.logger.log(`Fetching all posts with query: ${JSON.stringify(query)}`);
+    this.logger.log(`Fetching all posts with query: ${JSON.stringify(payload)}`);
     try {
-      return await this.postsService.findAll(query);
+      return await this.postsService.findAll(payload);
     } catch (error) {
       this.logger.error(
-        `Failed to fetch posts with query ${JSON.stringify(query)}: ${error.message}`,
+        `Failed to fetch posts with query ${JSON.stringify(payload)}: ${error.message}`,
         error.stack,
       );
       throw error;

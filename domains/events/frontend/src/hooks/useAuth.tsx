@@ -20,8 +20,8 @@ interface AuthContextType {
   user: User | null;
   eventsProfile: EventsProfile | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: unknown }>;
+  signIn: (email: string, password: string) => Promise<{ error: unknown }>;
   signOut: () => Promise<void>;
   isAdmin: () => boolean;
   isContentManager: () => boolean;
@@ -67,8 +67,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const lastname = rest.join(" ");
       await api.post("/auth/register", { email, password, firstname, lastname });
       return { error: null };
-    } catch (error: any) {
-      return { error: error.response?.data || error };
+    } catch (error) {
+      return { error };
     }
   };
 
@@ -81,8 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await fetchProfile();
       }
       return { error: null };
-    } catch (error: any) {
-      return { error: error.response?.data || error };
+    } catch (error) {
+      return { error };
     }
   };
 

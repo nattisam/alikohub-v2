@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class AcademyStatusGuard implements CanActivate {
@@ -7,19 +7,16 @@ export class AcademyStatusGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Access denied: User not authenticated');
+      throw new UnauthorizedException('Access denied: User not authenticated');
     }
 
-    // Determine highest available role
+    // Determine highest available role - prioritize active role
     let academyRole = user.academyActiveRole || user.academyUser?.role;
-    if (user.academyUser?.role === 'ADMIN' || user.academyUser?.role === 'INSTRUCTOR') {
-       academyRole = user.academyUser.role;
-    }
 
     const academyStatus = user.academyStatus || user.academyUser?.status;
 
     if (!academyRole) {
-      throw new ForbiddenException('Access denied: No academy role assigned. Please select a role to continue.');
+      throw new UnauthorizedException('Access denied: No academy role assigned. Please select a role to continue.');
     }
 
     if (academyStatus !== 'ACTIVE') {
@@ -37,7 +34,7 @@ export class StudentAccessGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Access denied: User not authenticated');
+      throw new UnauthorizedException('Access denied: User not authenticated');
     }
 
     let academyRole = user.academyActiveRole || user.academyUser?.role;
@@ -69,7 +66,7 @@ export class TeacherAccessGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Access denied: User not authenticated');
+      throw new UnauthorizedException('Access denied: User not authenticated');
     }
 
     const academyRole = user.academyActiveRole || user.academyUser?.role;
@@ -99,7 +96,7 @@ export class AdminAccessGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Access denied: User not authenticated');
+      throw new UnauthorizedException('Access denied: User not authenticated');
     }
 
     const academyRole = user.academyActiveRole || user.academyUser?.role;

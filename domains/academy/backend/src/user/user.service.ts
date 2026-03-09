@@ -149,15 +149,12 @@ export class UserService {
         this.logger.log(
           `[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`,
         );
-        // Determine effective role: prioritize ADMIN > INSTRUCTOR > STUDENT > USER
+        // Determine effective role: prioritize activeRole if present, otherwise base role
         let effectiveRole = authRecord.activeRole || authRecord.role;
 
-        // If the user is a global admin, they are an admin in Academy too
-        if (authRecord.globalRole === 'ADMIN' || authRecord.role === 'ADMIN') {
+        // If the user is a global admin, they are an admin in Academy too regardless of active role
+        if (authRecord.globalRole === 'ADMIN') {
           effectiveRole = 'ADMIN';
-        } else if (authRecord.role === 'INSTRUCTOR') {
-          // If approved as instructor, use it if not already admin
-          effectiveRole = 'INSTRUCTOR';
         }
 
         if (effectiveRole) {
