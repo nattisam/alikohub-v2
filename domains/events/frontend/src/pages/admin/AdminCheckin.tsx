@@ -139,5 +139,3 @@ const AdminCheckin = () => {
 };
 
 export default AdminCheckin;
-
-export default AdminCheckin;

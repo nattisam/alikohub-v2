@@ -92,5 +92,3 @@ const AdminRSVPs = () => {
 };
 
 export default AdminRSVPs;
-
-export default AdminRSVPs;

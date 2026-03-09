@@ -192,5 +192,3 @@ const AdminMedia = () => {
 };
 
 export default AdminMedia;
-
-export default AdminMedia;
