@@ -77,7 +77,7 @@ const ProgramDetail = () => {
       {
         onSuccess: (responseData: any) => {
           if (!responseData?.checkoutUrl) {
-            navigate(`/lms/learn/${program.slug || program.id}`);
+            navigate(`/lms/learn/${program.id}`);
           }
         },
       },

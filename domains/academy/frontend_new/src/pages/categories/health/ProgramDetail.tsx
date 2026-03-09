@@ -1,6 +1,5 @@
 import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/categories/health/layout/Layout";
-import { programs as staticPrograms } from "@/data/categories/health/programs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,9 +27,8 @@ const ProgramDetail = () => {
   );
   const enrollMutation = useEnrollInCourse();
 
-  // Use API data if available, fallback to static data
-  const programData =
-    apiProgram || staticPrograms.find((p) => p.id === programId);
+  // Use API data
+  const programData = apiProgram;
 
   // Transform to a consistent structure
   const program = programData
@@ -81,7 +79,7 @@ const ProgramDetail = () => {
       {
         onSuccess: (responseData: any) => {
           if (!responseData?.checkoutUrl) {
-            navigate(`/lms/learn/${program.slug || program.id}`);
+            navigate(`/lms/learn/${program.id}`);
           }
         },
       },

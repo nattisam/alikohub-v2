@@ -7,7 +7,8 @@ export const useHealthCourses = (params?: any) => {
     queryKey: ["health-courses", params],
     queryFn: async () => {
       const response = await healthService.getHealthCourses(params);
-      return response.data;
+      // Handle the paginated response structure
+      return (response.data as any).items || response.data.courses || [];
     },
   });
 };

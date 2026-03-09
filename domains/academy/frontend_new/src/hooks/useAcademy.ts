@@ -28,8 +28,18 @@ export const useCourseDetails = (courseId: string) => {
     queryKey: ["course", courseId],
     queryFn: () => academyService.getCourseDetails(courseId),
     enabled: !!courseId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCourseBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: ["course", "slug", slug],
+    queryFn: () => academyService.getCourseBySlug(slug),
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -112,6 +122,41 @@ export const useDeleteNotification = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast.success("Notification deleted");
+    },
+  });
+};
+
+export const useStudentAnalytics = () => {
+  return useQuery({
+    queryKey: ["student-analytics"],
+    queryFn: () => academyService.getStudentAnalytics(),
+  });
+};
+
+export const useStudentDashboard = () => {
+  return useQuery({
+    queryKey: ["student-dashboard"],
+    queryFn: () => academyService.getStudentDashboard(),
+  });
+};
+
+export const useMarkLessonComplete = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      courseId,
+      lessonId,
+    }: {
+      courseId: string;
+      lessonId: string;
+    }) => academyService.markLessonComplete(courseId, lessonId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["course", variables.courseId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["student-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["student-dashboard"] });
     },
   });
 };
@@ -256,12 +301,81 @@ export const useDeleteModule = () => {
 export const useCreateLesson = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { moduleId: number; title: string; type: string }) =>
+    mutationFn: (data: { moduleId: string; title: string; type: string }) =>
       academyService.instructor.createLesson(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["course"],
       });
+      toast.success("Lesson created!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create lesson");
+    },
+  });
+};
+
+export const useCreateContent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => {
+      if (data instanceof FormData) {
+        return academyService.instructor.uploadContent(data);
+      }
+      return academyService.instructor.createContent(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["course"],
+      });
+      toast.success("Content added successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to add content");
+    },
+  });
+};
+
+export const useDeleteContent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (contentId: string) =>
+      academyService.instructor.deleteContent(contentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["course"],
+      });
+      toast.success("Content deleted!");
+    },
+  });
+};
+
+export const useDeleteExercise = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (exerciseId: string) =>
+      academyService.instructor.deleteExercise(exerciseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["course"],
+      });
+      toast.success("Exercise deleted!");
+    },
+  });
+};
+
+export const useCreateExercise = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => academyService.instructor.createExercise(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["course"],
+      });
+      toast.success("Exercise created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create exercise");
     },
   });
 };

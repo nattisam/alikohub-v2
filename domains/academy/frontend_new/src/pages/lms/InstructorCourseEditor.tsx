@@ -10,6 +10,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BasicInfoTab } from "./components/BasicInfoTab";
+import { CurriculumTab } from "./components/CurriculumTab";
+import { SettingsTab } from "./components/SettingsTab";
+import { ModuleModal } from "./components/ModuleModal";
+import { LessonModal } from "./components/LessonModal";
+import { ContentModal } from "./components/ContentModal";
+import { ExerciseModal } from "./components/ExerciseModal";
+import { PreviewModal } from "./components/PreviewModal";
 import {
   useCourseDetails,
   useCreateCourse,
@@ -18,14 +28,11 @@ import {
   useCreateLesson,
   useUpdateLesson,
   useSubmitCourseForApproval,
+  useCreateContent,
+  useDeleteContent,
+  useCreateExercise,
+  useDeleteExercise,
 } from "@/hooks/useAcademy";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BasicInfoTab } from "./components/BasicInfoTab";
-import { CurriculumTab } from "./components/CurriculumTab";
-import { SettingsTab } from "./components/SettingsTab";
-import { ModuleModal } from "./components/ModuleModal";
-import { LessonModal } from "./components/LessonModal";
 
 const InstructorCourseEditor = () => {
   const { id } = useParams();
@@ -39,6 +46,10 @@ const InstructorCourseEditor = () => {
   const createLessonMutation = useCreateLesson();
   const updateLessonMutation = useUpdateLesson();
   const submitCourseMutation = useSubmitCourseForApproval();
+  const createContentMutation = useCreateContent();
+  const deleteContentMutation = useDeleteContent();
+  const createExerciseMutation = useCreateExercise();
+  const deleteExerciseMutation = useDeleteExercise();
 
   const [activeTab, setActiveTab] = useState("basic");
   const [formData, setFormData] = useState({
@@ -51,7 +62,14 @@ const InstructorCourseEditor = () => {
   // Modal states
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [isContentModalOpen, setIsContentModalOpen] = useState(false);
+  const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
   const [selectedModuleId, setSelectedModuleId] = useState<string>("");
+  const [selectedLessonId, setSelectedLessonId] = useState<string>("");
+  const [previewContent, setPreviewContent] = useState<any>(null);
+
   const [moduleTitle, setModuleTitle] = useState("");
   const [moduleDescription, setModuleDescription] = useState("");
   const [lessonTitle, setLessonTitle] = useState("");
@@ -109,7 +127,7 @@ const InstructorCourseEditor = () => {
     }
     createModuleMutation.mutate(
       {
-        courseId: Number(id!),
+        courseId: id!,
         title: moduleTitle,
         description: moduleDescription || undefined,
       },
@@ -126,7 +144,7 @@ const InstructorCourseEditor = () => {
   const handleAddLesson = (moduleId: string) => {
     setSelectedModuleId(moduleId);
     setLessonTitle("");
-    setLessonType("Exercise");
+    setLessonType("VIDEO");
     setIsLessonModalOpen(true);
   };
 
@@ -137,7 +155,7 @@ const InstructorCourseEditor = () => {
     }
     createLessonMutation.mutate(
       {
-        moduleId: Number(selectedModuleId),
+        moduleId: selectedModuleId,
         title: lessonTitle,
         type: lessonType,
       },
@@ -149,6 +167,51 @@ const InstructorCourseEditor = () => {
         },
       },
     );
+  };
+
+  const handleAddContent = (moduleId: string, lessonId: string) => {
+    setSelectedModuleId(moduleId);
+    setSelectedLessonId(lessonId);
+    setIsContentModalOpen(true);
+  };
+
+  const handleCreateContent = (data: any) => {
+    createContentMutation.mutate(data, {
+      onSuccess: () => {
+        setIsContentModalOpen(false);
+      },
+    });
+  };
+
+  const handleAddExercise = (moduleId: string, lessonId: string) => {
+    setSelectedModuleId(moduleId);
+    setSelectedLessonId(lessonId);
+    setIsExerciseModalOpen(true);
+  };
+
+  const handleCreateExercise = (data: any) => {
+    createExerciseMutation.mutate(data, {
+      onSuccess: () => {
+        setIsExerciseModalOpen(false);
+      },
+    });
+  };
+
+  const handleDeleteContent = (contentId: string) => {
+    if (window.confirm("Are you sure you want to delete this content?")) {
+      deleteContentMutation.mutate(contentId);
+    }
+  };
+
+  const handleDeleteExercise = (exerciseId: string) => {
+    if (window.confirm("Are you sure you want to delete this exercise?")) {
+      deleteExerciseMutation.mutate(exerciseId);
+    }
+  };
+
+  const handleView = (content: any) => {
+    setPreviewContent(content);
+    setIsPreviewModalOpen(true);
   };
 
   const handleSubmitForApproval = () => {
@@ -178,6 +241,11 @@ const InstructorCourseEditor = () => {
           course={course}
           onAddModule={handleAddModule}
           onAddLesson={handleAddLesson}
+          onAddContent={handleAddContent}
+          onAddExercise={handleAddExercise}
+          onDeleteContent={handleDeleteContent}
+          onDeleteExercise={handleDeleteExercise}
+          onView={handleView}
           isRejected={course?.status === "REJECTED"}
         />
       );
@@ -325,6 +393,31 @@ const InstructorCourseEditor = () => {
         onTitleChange={setLessonTitle}
         onTypeChange={setLessonType}
         isCreating={createLessonMutation.isPending}
+      />
+
+      {/* Content Modal */}
+      <ContentModal
+        isOpen={isContentModalOpen}
+        onClose={() => setIsContentModalOpen(false)}
+        onAdd={handleCreateContent}
+        lessonId={selectedLessonId}
+        isAdding={createContentMutation.isPending}
+      />
+
+      {/* Exercise Modal */}
+      <ExerciseModal
+        isOpen={isExerciseModalOpen}
+        onClose={() => setIsExerciseModalOpen(false)}
+        onAdd={handleCreateExercise}
+        moduleId={selectedModuleId}
+        lessonId={selectedLessonId}
+        isAdding={createExerciseMutation.isPending}
+      />
+
+      <PreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        content={previewContent}
       />
     </div>
   );

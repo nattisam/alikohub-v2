@@ -50,6 +50,11 @@ export const academyService = {
     return response.data;
   },
 
+  getCourseBySlug: async (slug: string) => {
+    const response = await api.get<Course>(`/academy/courses/slug/${slug}`);
+    return response.data;
+  },
+
   // Student Endpoints
   enrollInCourse: async (
     courseId: string | number,
@@ -88,6 +93,16 @@ export const academyService = {
     const response = await api.get<Content[]>(
       `/academy/content/lesson/${lessonId}`,
     );
+    return response.data;
+  },
+
+  getStudentAnalytics: async () => {
+    const response = await api.get("/academy/progress/analytics/student");
+    return response.data;
+  },
+
+  getStudentDashboard: async () => {
+    const response = await api.get("/academy/progress/dashboard");
     return response.data;
   },
 
@@ -230,8 +245,45 @@ export const academyService = {
       return response.data;
     },
 
+    createContent: async (data: {
+      lessonId: string;
+      title: string;
+      type: string;
+      url?: string;
+    }) => {
+      const response = await api.post<Content>("/academy/content", data);
+      return response.data;
+    },
+
+    updateContent: async (contentId: string, data: { title?: string }) => {
+      const response = await api.patch<Content>(
+        `/academy/content/${contentId}`,
+        data,
+      );
+      return response.data;
+    },
+
     deleteContent: async (contentId: string) => {
       const response = await api.delete(`/academy/content/${contentId}`);
+      return response.data;
+    },
+
+    // Exercises
+    createExercise: async (data: any) => {
+      const response = await api.post("/academy/exercises", data);
+      return response.data;
+    },
+
+    updateExercise: async (exerciseId: string, data: any) => {
+      const response = await api.patch(
+        `/academy/exercises/${exerciseId}`,
+        data,
+      );
+      return response.data;
+    },
+
+    deleteExercise: async (exerciseId: string) => {
+      const response = await api.delete(`/academy/exercises/${exerciseId}`);
       return response.data;
     },
   },

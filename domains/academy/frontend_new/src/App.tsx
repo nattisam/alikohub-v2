@@ -35,6 +35,7 @@ import InstructorSchedules from "./pages/lms/InstructorSchedules";
 import InstructorSettings from "./pages/lms/InstructorSettings";
 import TeacherApplicationDetail from "./pages/admin/TeacherApplicationDetail";
 import CourseDetails from "./pages/lms/CourseDetails";
+import LmsLearn from "./pages/lms/LmsLearn";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import VerifyEmail from "./pages/VerifyEmail";
 
@@ -236,14 +237,7 @@ const App = () => (
               <Route path="/lms/notifications" element={<LmsNotifications />} />
               <Route path="/lms/settings" element={<LmsSettings />} />
               <Route path="/lms/course/:id" element={<CourseDetails />} />
-              <Route
-                path="/lms/learn/:slug"
-                element={
-                  <div className="p-20 text-center">
-                    Course Player (Coming Soon)
-                  </div>
-                }
-              />
+              <Route path="/lms/learn/:id" element={<LmsLearn />} />
             </Route>
 
             {/* STEM Category Routes */}
