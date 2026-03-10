@@ -54,6 +54,7 @@ const services = [
     image: serviceAlikowash,
     link: "/ventures/digital-health",
     darkOverlay: true,
+    external: false,
   },
 ];
 

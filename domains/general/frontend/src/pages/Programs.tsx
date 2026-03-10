@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -134,7 +135,7 @@ const Programs = () => {
                     rel="noopener noreferrer"
                     className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-2 transition-all"
                   >
-                    View Site →
+                    Visit Site →
                   </a>
                 ) : (
                   <Link

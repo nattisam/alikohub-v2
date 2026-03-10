@@ -20,7 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import partnerGenshifter from "@/assets/partner-genshifter.jpg";
 import partnerAlikore from "@/assets/partner-alikore.png";
 import partnerConshifter from "@/assets/partner-conshifter.png";
-import partnerWefta from "@/assets/partner-wefta.png";
 import partnerKindred from "@/assets/partner-kindred.png";
 
 import partnerInvestorBg from "@/assets/partner-investor.jpg";
@@ -55,6 +54,7 @@ const options = [
     icon: Briefcase,
     title: "Partner as Our Next Venture",
     image: partnerVentureBg,
+    learnMoreUrl: "https://academy.alikohub.com/",
   },
 ];
 
@@ -63,9 +63,6 @@ const partnershipTypes = [
   "Implementer",
   "Government",
   "Next Venture Partner",
-  "Events",
-  "Consultancy",
-  "Academy",
   "Other",
 ];
 
@@ -81,10 +78,6 @@ const Partnership = () => {
     message: "",
   });
 
-  const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
-  const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID";
-  const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.organization || !formData.partnershipInterest) {
@@ -92,37 +85,62 @@ const Partnership = () => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        {
-          from_name: "Aliko Academy",
-          user_name: formData.fullName,
-          user_email: formData.email,
-          organization: formData.organization,
-          role: formData.role || "N/A",
-          partnership_interest: formData.partnershipInterest,
-          message: formData.message || "No message provided.",
-          reply_to: "info@alikohub.com",
-          confirmation_message:
-            `Hello ${formData.fullName},\n\nYour partnership request has been successfully submitted.\n\nWe look forward to reviewing your request. A member of our Partnerships Team will respond within 2 business days.\n\nThank you for contacting us.\n\nWarm regards,\nAliko Academy`,
-        },
-        EMAILJS_PUBLIC_KEY
-      );
+    // Save submission locally for the Admin view
+    const submission = {
+      ...formData,
+      submittedAt: new Date().toISOString(),
+    };
+    const existingSubmissionsStr = localStorage.getItem('partnershipSubmissions');
+    const existingSubmissions = existingSubmissionsStr ? JSON.parse(existingSubmissionsStr) : [];
+    existingSubmissions.push(submission);
+    localStorage.setItem('partnershipSubmissions', JSON.stringify(existingSubmissions));
 
-      toast({
-        title: "Inquiry Submitted Successfully ✅",
-        description: "A confirmation email has been sent to your email address.",
-      });
+    // Read EmailJS credentials from environment variables
+    const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
+    const TEMPLATE_USER = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || ""; // User confirmation
+    const TEMPLATE_ORG = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ORG || ""; // Org admin notification
+    const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
+
+    // Shared template variables — cover all common EmailJS variable name conventions
+    const templateParams = {
+      from_name: formData.fullName,
+      from_email: formData.email,
+      to_name: formData.fullName,
+      to_email: formData.email,
+      user_email: formData.email,
+      reply_to: formData.email,
+      email: formData.email,
+      name: formData.fullName,
+      full_name: formData.fullName,
+      organization: formData.organization,
+      role: formData.role || "N/A",
+      partnership_interest: formData.partnershipInterest,
+      message: formData.message || "No message provided.",
+    };
+
+    setIsLoading(true);
+
+    try {
+      // --- Email 1: User confirmation ---
+      const userRes = await emailjs.send(SERVICE_ID, TEMPLATE_USER, templateParams, PUBLIC_KEY);
+
+      // --- Email 2: Organization admin notification ---
+      const orgRes = await emailjs.send(SERVICE_ID, TEMPLATE_ORG, templateParams, PUBLIC_KEY);
 
       setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
-    } catch (error) {
-      console.error("EmailJS error:", error);
       toast({
-        title: "Submission Failed",
-        description: "There was an error submitting your inquiry. Please try again or email us at info@alikohub.com.",
+        title: "Inquiry submitted!",
+        description: "A confirmation has been sent to your email. Our team will respond within 2 business days.",
+      });
+
+    } catch (error: any) {
+      console.error("EmailJS error:", error);
+      const errorMsg = error?.text ?? "Please check your EmailJS credentials.";
+      // Form data is already saved locally — let the user know
+      setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+      toast({
+        title: "Inquiry received",
+        description: `Your submission was saved, but the email notification failed: ${errorMsg}`,
         variant: "destructive",
       });
     } finally {
@@ -190,6 +208,16 @@ const Partnership = () => {
                   <h3 className="font-heading text-lg font-bold text-white">
                     {opt.title}
                   </h3>
+                  {opt.learnMoreUrl && (
+                    <a
+                      href={opt.learnMoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+                    >
+                      Learn More <ArrowRight className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </motion.div>
             ))}
