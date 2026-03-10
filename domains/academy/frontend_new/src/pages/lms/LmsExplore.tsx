@@ -160,19 +160,7 @@ const LmsExplore = () => {
                   </div>
 
                   <Button size="sm" className="w-full" asChild>
-                    <Link
-                      to={
-                        course.category === "STEM"
-                          ? "/stem/programs"
-                          : course.category === "Health"
-                            ? "/health/programs"
-                            : course.category === "Tech"
-                              ? "/technology/programs"
-                              : `/lms/course/${course.slug}`
-                      }
-                    >
-                      View Details
-                    </Link>
+                    <Link to={`/lms/course/${course.id}`}>View Details</Link>
                   </Button>
                 </div>
               </div>
