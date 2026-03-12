@@ -1,7 +1,9 @@
+
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { GraduationCap, Heart, Cpu, Briefcase, Droplets } from "lucide-react";
+import { GraduationCap, Heart, Cpu, Briefcase, Droplets, CalendarDays, Globe2 } from "lucide-react";
 
 const pillars = [
   {
@@ -14,6 +16,7 @@ const pillars = [
       "Finance, Accounting, Design, Marketing",
       "Academic Preparation and Language Learning",
     ],
+    link: "https://academy.alikohub.com/",
   },
   {
     icon: Heart,
@@ -25,6 +28,7 @@ const pillars = [
       "Health data analytics and population health",
       "Climate-linked and zoonotic disease monitoring",
     ],
+    link: "https://aliko-academy-health.lovable.app/",
   },
   {
     icon: Cpu,
@@ -36,17 +40,31 @@ const pillars = [
       "Civil, electrical, mechanical, and architectural fields",
       "Applied problem-solving aligned with employer expectations",
     ],
+    link: "https://con-tech.alikohub.com/",
   },
   {
-    icon: Briefcase,
-    title: "Consultancy & Events",
+    icon: Globe2,
+    title: "Aliko Consultancy",
     description: "Guiding youth through personalized career pathways and connecting them to employers, investors, and public sector partners.",
     bullets: [
       "Career advice, skill assessment, resume building",
+      "Professional networking and global mentorship",
+      "Government and private sector partnership spaces",
+      "Career pathways planning",
+    ],
+    link: "https://consultancy.alikohub.com/",
+  },
+  {
+    icon: CalendarDays,
+    title: "Aliko Events",
+    description: "Connecting youth with employers, investors, and public sector partners through industry matchmaking and innovation forums.",
+    bullets: [
       "Employer and talent matchmaking",
       "Investor forums and innovation challenges",
-      "Government and private sector partnership spaces",
+      "Industry networking events",
+      "Ecosystem-building engagements",
     ],
+    link: "https://event.alikohub.com/",
   },
   {
     icon: Droplets,
@@ -79,7 +97,7 @@ const Programs = () => {
               AlikoHub Ventures
             </span>
             <h1 className="font-heading text-4xl font-bold text-foreground sm:text-5xl">
-              Five Pillars of <span className="text-gradient-amber">Youth Empowerment</span>
+              Six Pillars of <span className="text-gradient-amber">Youth Empowerment</span>
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Integrated pathways in Digital Health, One Health, STEM, and entrepreneurship, designed to reach 50,000 youth across Africa.
@@ -110,14 +128,23 @@ const Programs = () => {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href={(pillar as any).link || "#"}
-                  target={(pillar as any).link ? "_blank" : undefined}
-                  rel={(pillar as any).link ? "noopener noreferrer" : undefined}
-                  className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-2 transition-all"
-                >
-                  {(pillar as any).link ? "View Website →" : "Learn More →"}
-                </a>
+                {typeof (pillar as any).link === "string" && (pillar as any).link.startsWith("http") ? (
+                  <a
+                    href={(pillar as any).link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-2 transition-all"
+                  >
+                    Visit Site →
+                  </a>
+                ) : (
+                  <Link
+                    to={(pillar as any).link || "/programs"}
+                    className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-2 transition-all"
+                  >
+                    Learn More →
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>

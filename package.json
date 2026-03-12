@@ -1,7 +1,7 @@
 {
   "name": "alikohub-reimplementation",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
   "workspaces": [
     "domains/*",
     "libraries/*"
@@ -13,17 +13,5 @@
     "sync": "node start-all.js --sync",
     "build": "node start-all.js --build",
     "full-start": "node start-all.js --sync --build"
-  },
-  "dependencies": {
-    "@nestjs/common": "^11.1.6",
-    "@nestjs/core": "^11.1.6",
-    "@nestjs/microservices": "^11.1.6",
-    "nx": "^21.2.2",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-icons": "^5.5.0",
-    "react-router-dom": "^7.6.3",
-    "tailwind-scrollbar": "^4.0.2",
-    "ts-jest": "^29.4.0"
   }
 }

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Globe2, HardHat, CalendarDays, Droplets, ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import serviceAcademy from "@/assets/service-academy.jpg";
 import serviceConsultancy from "@/assets/service-consultancy.png";
@@ -16,6 +17,7 @@ const services = [
     icon: GraduationCap,
     image: serviceAcademy,
     link: "https://academy.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko Consultancy",
@@ -23,7 +25,8 @@ const services = [
       "Career advisory, professional development, and global mentorship services.",
     icon: Globe2,
     image: serviceConsultancy,
-    link: "#",
+    link: "https://consultancy.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko Events",
@@ -31,7 +34,8 @@ const services = [
       "Industry matchmaking, innovation forums, and ecosystem-building engagements.",
     icon: CalendarDays,
     image: serviceEvents,
-    link: "#",
+    link: "https://event.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko Engineering Technology",
@@ -39,7 +43,8 @@ const services = [
       "Applied engineering, digital infrastructure, and technology-driven solutions.",
     icon: HardHat,
     image: serviceContech,
-    link: "#",
+    link: "https://con-tech.alikohub.com/",
+    external: true,
   },
   {
     title: "Aliko WASH",
@@ -47,21 +52,22 @@ const services = [
       "Water, sanitation, and hygiene solutions driving public health impact and community resilience across Africa.",
     icon: Droplets,
     image: serviceAlikowash,
-    link: "https://alikowash.lovable.app/",
+    link: "/ventures/digital-health",
     darkOverlay: true,
+    external: false,
   },
 ];
 
 export function ServicesSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
-
+  
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
     let animationId: number;
-    let scrollSpeed = 0.5;
+    let scrollSpeed = 1.2; // Increased speed as requested
 
     const animate = () => {
       if (!isPaused && container) {
@@ -78,11 +84,7 @@ export function ServicesSection() {
     return () => cancelAnimationFrame(animationId);
   }, [isPaused]);
 
-  const scroll = (dir: "left" | "right") => {
-    if (!scrollRef.current) return;
-    const amount = 320;
-    scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
-  };
+
 
   // Duplicate services for infinite scroll effect
   const displayServices = [...services, ...services];
@@ -109,29 +111,12 @@ export function ServicesSection() {
           </p>
         </motion.div>
 
-        {/* Scroll controls */}
         <div className="relative">
-          <button
-            onClick={() => scroll("left")}
-            className="absolute -left-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 border border-border/50 text-foreground backdrop-blur-sm transition-all hover:bg-primary/20 hover:border-primary/30"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 border border-border/50 text-foreground backdrop-blur-sm transition-all hover:bg-primary/20 hover:border-primary/30"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          {/* Scrolling cards */}
           <div
             ref={scrollRef}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="flex gap-6 overflow-x-hidden scroll-smooth"
+            className="flex gap-6 overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none touch-none"
           >
             {displayServices.map((service, i) => (
               <div
@@ -160,15 +145,25 @@ export function ServicesSection() {
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
                     {service.description}
                   </p>
-                  <a
-                    href={service.link}
-                    target={service.link.startsWith("http") ? "_blank" : undefined}
-                    rel={service.link.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
-                  >
-                    View site
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
+                  {(service as any).external ? (
+                    <a
+                      href={service.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
+                    >
+                      View Site
+                      <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <Link
+                      to={service.link}
+                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
+                    >
+                      Learn More
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

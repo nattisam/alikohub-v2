@@ -124,9 +124,9 @@ export class EmailService {
 		return this.sendEmail(to, subject, htmlContent);
 	}
 
-	async sendContactEmail(dto: { name: string; email: string; phone: string; message: string }): Promise<boolean> {
-		const subject = `New Contact Form Submission - Aliko ConTech`;
-		const adminEmail = process.env.CONTECH_ADMIN_EMAIL || 'admin@alikohub.com';
+	async sendContactEmail(dto: any): Promise<boolean> {
+		const subject = `New Contact Form Submission - AlikoHub`;
+		const adminEmail = process.env.PARTNERSHIP_ADMIN_EMAIL || process.env.CONTECH_ADMIN_EMAIL || 'info@alikohub.com';
 		const htmlContent = `
 			<!DOCTYPE html>
 			<html>
@@ -136,21 +136,63 @@ export class EmailService {
 			</head>
 			<body>
 				<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-					<h2 style="color: #667eea;">New ConTech Inquiry</h2>
-					<p><strong>Name:</strong> ${dto.name}</p>
-					<p><strong>Email:</strong> ${dto.email}</p>
-					<p><strong>Phone:</strong> ${dto.phone}</p>
+					<h2 style="color: #667eea;">New Public Inquiry</h2>
+					<p><strong>Name:</strong> ${dto.name || ''}</p>
+					<p><strong>Email:</strong> ${dto.email || ''}</p>
+					${dto.organization ? `<p><strong>Organization:</strong> ${dto.organization}</p>` : ``}
+					${dto.role ? `<p><strong>Role:</strong> ${dto.role}</p>` : ``}
+					${dto.partnershipInterest ? `<p><strong>Interest:</strong> ${dto.partnershipInterest}</p>` : ``}
+					<p><strong>Phone:</strong> ${dto.phone || ''}</p>
 					<p><strong>Message:</strong></p>
 					<div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
-						${dto.message.replace(/\n/g, '<br>')}
+						${(dto.message || '').toString().replace(/\n/g, '<br>')}
 					</div>
-					<p style="margin-top: 20px; font-size: 12px; color: #666;">This message was sent from the Aliko ConTech public contact form.</p>
+					<p style="margin-top: 20px; font-size: 12px; color: #666;">This message was sent from a public contact form.</p>
 				</div>
 			</body>
 			</html>
 		`;
 
-		return this.sendEmail(adminEmail, subject, htmlContent);
+		const adminSent = await this.sendEmail(adminEmail, subject, htmlContent);
+
+		const ackSubject = 'Thanks for your inquiry to AlikoHub Partnerships';
+		const ackHtml = `
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="utf-8">
+				<title>Inquiry Received</title>
+			</head>
+			<body>
+				<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+					<h2 style="color: #667eea;">We received your inquiry</h2>
+					<p>Your query has been successfully submitted. Thank you for contacting us. A member of our Partnerships Team will review your request and respond within 2 business days.</p>
+					<p>This email acts as a confirmation that the form was received and that the Partnerships Team will respond soon. 📧</p>
+					<div style="margin-top: 16px;">
+						<p><strong>Name:</strong> ${dto.name || ''}</p>
+						<p><strong>Email:</strong> ${dto.email || ''}</p>
+						${dto.organization ? `<p><strong>Organization:</strong> ${dto.organization}</p>` : ``}
+						${dto.role ? `<p><strong>Role:</strong> ${dto.role}</p>` : ``}
+						${dto.partnershipInterest ? `<p><strong>Interest:</strong> ${dto.partnershipInterest}</p>` : ``}
+					</div>
+					${dto.message ? `
+					<div style="margin-top: 12px;">
+						<p><strong>Your message:</strong></p>
+						<div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
+							${dto.message.toString().replace(/\n/g, '<br>')}
+						</div>
+					</div>` : ``}
+					<p style="margin-top: 20px;">If any detail is incorrect, please reply to this email with the correct information.</p>
+					<p style="margin-top: 20px; font-size: 12px; color: #666;">&copy; ${new Date().getFullYear()} AlikoHub</p>
+				</div>
+			</body>
+			</html>
+		`;
+
+		if (dto?.email) {
+			await this.sendEmail(dto.email, ackSubject, ackHtml);
+		}
+		return adminSent;
 	}
 
 	private async sendEmail(to: string, subject: string, htmlContent: string): Promise<boolean> {

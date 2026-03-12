@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Building2, Users2, Globe, Briefcase, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import emailjs from "@emailjs/browser";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 import partnerGenshifter from "@/assets/partner-genshifter.jpg";
 import partnerAlikore from "@/assets/partner-alikore.png";
 import partnerConshifter from "@/assets/partner-conshifter.png";
-import partnerWefta from "@/assets/partner-wefta.png";
 import partnerKindred from "@/assets/partner-kindred.png";
 
 import partnerInvestorBg from "@/assets/partner-investor.jpg";
@@ -54,6 +54,7 @@ const options = [
     icon: Briefcase,
     title: "Partner as Our Next Venture",
     image: partnerVentureBg,
+    learnMoreUrl: "https://academy.alikohub.com/",
   },
 ];
 
@@ -67,6 +68,7 @@ const partnershipTypes = [
 
 const Partnership = () => {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -76,14 +78,74 @@ const Partnership = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.organization || !formData.partnershipInterest) {
       toast({ title: "Please fill in all required fields", variant: "destructive" });
       return;
     }
-    toast({ title: "Inquiry submitted!", description: "Our partnerships team will respond within 2 business days." });
-    setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+
+    // Save submission locally for the Admin view
+    const submission = {
+      ...formData,
+      submittedAt: new Date().toISOString(),
+    };
+    const existingSubmissionsStr = localStorage.getItem('partnershipSubmissions');
+    const existingSubmissions = existingSubmissionsStr ? JSON.parse(existingSubmissionsStr) : [];
+    existingSubmissions.push(submission);
+    localStorage.setItem('partnershipSubmissions', JSON.stringify(existingSubmissions));
+
+    // Read EmailJS credentials from environment variables
+    const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
+    const TEMPLATE_USER = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || ""; // User confirmation
+    const TEMPLATE_ORG = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ORG || ""; // Org admin notification
+    const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
+
+    // Shared template variables — cover all common EmailJS variable name conventions
+    const templateParams = {
+      from_name: formData.fullName,
+      from_email: formData.email,
+      to_name: formData.fullName,
+      to_email: formData.email,
+      user_email: formData.email,
+      reply_to: formData.email,
+      email: formData.email,
+      name: formData.fullName,
+      full_name: formData.fullName,
+      organization: formData.organization,
+      role: formData.role || "N/A",
+      partnership_interest: formData.partnershipInterest,
+      message: formData.message || "No message provided.",
+    };
+
+    setIsLoading(true);
+
+    try {
+      // --- Email 1: User confirmation ---
+      const userRes = await emailjs.send(SERVICE_ID, TEMPLATE_USER, templateParams, PUBLIC_KEY);
+
+      // --- Email 2: Organization admin notification ---
+      const orgRes = await emailjs.send(SERVICE_ID, TEMPLATE_ORG, templateParams, PUBLIC_KEY);
+
+      setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+      toast({
+        title: "Inquiry submitted!",
+        description: "A confirmation has been sent to your email. Our team will respond within 2 business days.",
+      });
+
+    } catch (error: any) {
+      console.error("EmailJS error:", error);
+      const errorMsg = error?.text ?? "Please check your EmailJS credentials.";
+      // Form data is already saved locally — let the user know
+      setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+      toast({
+        title: "Inquiry received",
+        description: `Your submission was saved, but the email notification failed: ${errorMsg}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -146,6 +208,16 @@ const Partnership = () => {
                   <h3 className="font-heading text-lg font-bold text-white">
                     {opt.title}
                   </h3>
+                  {opt.learnMoreUrl && (
+                    <a
+                      href={opt.learnMoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+                    >
+                      Learn More <ArrowRight className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -301,8 +373,15 @@ const Partnership = () => {
                 />
               </div>
 
-              <Button type="submit" size="lg" className="bg-primary text-primary-foreground hover:bg-amber-light shadow-[var(--shadow-amber)]">
-                Submit Inquiry <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isLoading}
+                className="bg-primary text-primary-foreground hover:bg-amber-light shadow-[var(--shadow-amber)] disabled:opacity-60"
+              >
+                {isLoading ? "Submitting..." : (
+                  <>Submit Inquiry <ArrowRight className="ml-2 h-4 w-4" /></>
+                )}
               </Button>
             </form>
           </motion.div>

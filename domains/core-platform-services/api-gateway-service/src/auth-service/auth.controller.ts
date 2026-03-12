@@ -117,6 +117,22 @@ export class AuthController {
     );
   }
 
+  @Post('contact/email')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Submit partnership/contact inquiry email' })
+  @ApiResponse({ status: 201, description: 'Email accepted for delivery' })
+  async submitContact(@Body() body: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'send_contact_email' }, body).pipe(
+        timeout(15000),
+        catchError(error => {
+          this.handleError(error, 'Submit Contact Email');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
 
   @Post('academy/select-role')
   @UseGuards(AuthGuard)

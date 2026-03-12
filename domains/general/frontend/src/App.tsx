@@ -14,8 +14,8 @@ import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Programs from "./pages/Programs";
 import Partnership from "./pages/Partnership";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+// import LoginPage from "./pages/LoginPage";
+// import RegisterPage from "./pages/RegisterPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import VerifyEmail from "./pages/VerifyEmail";
 
@@ -53,11 +53,11 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/programs" element={<Programs />} />
               <Route path="/partnership" element={<Partnership />} />
-
+              {/* 
               <Route element={<PublicRoute />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-              </Route>
+              </Route> */}
 
               {/* Email Verification Route */}
               <Route path="/verify-email" element={<VerifyEmail />} />
