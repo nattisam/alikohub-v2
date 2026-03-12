@@ -35,7 +35,7 @@ const InstructorCreateCourse = () => {
     shortDescription: "",
     skills: [] as string[],
     newSkill: "",
-    estimatedTime: 0,
+    price: 0,
     thumbnail: null as File | null,
     thumbnailPreview: "" as string,
   });
@@ -251,7 +251,6 @@ const InstructorCreateCourse = () => {
                         ))}
                       </select>
                     </div>
-                   
                   </div>
 
                   <div>
@@ -267,7 +266,6 @@ const InstructorCreateCourse = () => {
                       className="resize-none h-20 border-slate-200 focus:ring-accent"
                     />
                   </div>
-
                 </div>
               </div>
             </div>
@@ -393,7 +391,7 @@ const InstructorCreateCourse = () => {
 
               <div className="space-y-10 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-100">
+                  <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-100 md:col-span-2">
                     <div className="flex items-center gap-3 mb-6">
                       <div className="p-2 bg-accent/10 rounded-lg text-accent">
                         <DollarSign className="w-5 h-5" />
@@ -407,48 +405,22 @@ const InstructorCreateCourse = () => {
                         $
                       </span>
                       <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={formData.price}
-                        onChange={(e) =>
-                          handleUpdateField({ price: Number(e.target.value) })
-                        }
-                        className="pl-6 h-14 border-none bg-transparent text-3xl font-black text-slate-900 focus:ring-0"
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
-                      Students will see this as the enrollment fee.
-                    </p>
-                  </div>
-
-                  <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-100">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-accent/10 rounded-lg text-accent">
-                        <Clock className="w-5 h-5" />
-                      </div>
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                        Time Commitment
-                      </label>
-                    </div>
-                    <div className="relative flex items-end gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={formData.estimatedTime}
-                        onChange={(e) =>
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.price || ""}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
                           handleUpdateField({
-                            estimatedTime: Number(e.target.value),
-                          })
-                        }
-                        className="h-14 border-none bg-transparent text-3xl font-black text-slate-900 focus:ring-0 w-24 p-0"
+                            price: val === "" ? 0 : parseInt(val),
+                          });
+                        }}
+                        placeholder="0"
+                        className="pl-6 h-14 border-none bg-transparent text-3xl font-black text-slate-900 focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      <span className="text-sm font-bold text-slate-400 pb-3">
-                        HOURS
-                      </span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
-                      Approximate total duration of all lessons.
+                      Students will see this as the enrollment fee. Set to 0 for
+                      free.
                     </p>
                   </div>
                 </div>

@@ -342,30 +342,30 @@ export const CurriculumTab = ({
                           {lesson.title}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          title="Add Learning Material (Video/PDF)"
-                          className="h-8 w-8 text-slate-400 hover:text-primary"
+                          size="sm"
+                          className="h-8 px-2.5 text-[10px] font-black uppercase tracking-[0.05em] text-primary hover:bg-primary/5 gap-1.5 rounded-lg border border-primary/10 transition-all"
                           onClick={() => onAddContent(module.id, lesson.id)}
                         >
-                          <MonitorPlay className="w-4 h-4" />
+                          <MonitorPlay className="w-3.5 h-3.5" />
+                          Add Content
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          title="Add Assessment/Quiz"
-                          className="h-8 w-8 text-slate-400 hover:text-primary"
+                          size="sm"
+                          className="h-8 px-2.5 text-[10px] font-black uppercase tracking-[0.05em] text-amber-600 hover:bg-amber-50 gap-1.5 rounded-lg border border-amber-200/50 transition-all"
                           onClick={() => onAddExercise(module.id, lesson.id)}
                         >
-                          <ClipboardList className="w-4 h-4" />
+                          <ClipboardList className="w-3.5 h-3.5" />
+                          Add Quiz
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           title="Delete Lesson"
-                          className="h-8 w-8 text-slate-300 hover:text-red-500"
+                          className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
                           onClick={() => onDeleteLesson(lesson.id)}
                         >
                           <Trash2 className="w-4 h-4" />
