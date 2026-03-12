@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { Search, Clock, BarChart, Star } from "lucide-react";
+import { Search, Clock, BarChart, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LmsNavbar from "@/components/LmsNavbar";
-import { useCourses, useCoursesByCategory } from "@/hooks/useAcademy";
+import {
+  useCourses,
+  useCoursesByCategory,
+  useCoursesByDifficulty,
+} from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -14,29 +18,62 @@ const LmsExplore = () => {
   const [activeStream, setActiveStream] = useState("All");
   const [activeLevel, setActiveLevel] = useState("All Levels");
 
+  // Fetch all published courses
   const { data: allCoursesData, isLoading: isLoadingAll } = useCourses(
-    { status: "PUBLISHED", page: 1, pageSize: 10 },
-    { enabled: activeStream === "All" },
+    { status: "PUBLISHED", page: 1, pageSize: 20 },
+    { enabled: activeStream === "All" && activeLevel === "All Levels" },
   );
 
+  // Fetch courses by category
   const { data: categoryCoursesData, isLoading: isLoadingCategory } =
     useCoursesByCategory(
       activeStream !== "All" ? activeStream : "",
-      { page: 1, pageSize: 10 },
-      { enabled: activeStream !== "All" },
+      { page: 1, pageSize: 20 },
+      { enabled: activeStream !== "All" && activeLevel === "All Levels" },
     );
 
-  const data = activeStream === "All" ? allCoursesData : categoryCoursesData;
-  const isLoading = activeStream === "All" ? isLoadingAll : isLoadingCategory;
+  // Fetch courses by difficulty
+  const { data: difficultyCoursesData, isLoading: isLoadingDifficulty } =
+    useCoursesByDifficulty(
+      activeLevel !== "All Levels" ? activeLevel : "",
+      { page: 1, pageSize: 20 },
+      { enabled: activeLevel !== "All Levels" && activeStream === "All" },
+    );
+
+  // Determine active dataset
+  let data;
+  let isLoading;
+
+  if (activeStream !== "All" && activeLevel !== "All Levels") {
+    // If both are selected, we will fetch by category and filter locally by difficulty
+    // or fetch ALL and filter both. Let's fetch by category and filter by difficulty.
+    data = categoryCoursesData;
+    isLoading = isLoadingCategory;
+  } else if (activeStream !== "All") {
+    data = categoryCoursesData;
+    isLoading = isLoadingCategory;
+  } else if (activeLevel !== "All Levels") {
+    data = difficultyCoursesData;
+    isLoading = isLoadingDifficulty;
+  } else {
+    data = allCoursesData;
+    isLoading = isLoadingAll;
+  }
 
   const courses = Array.isArray(data) ? data : (data as any)?.courses || [];
 
   const filtered = courses.filter((c: any) => {
-    const matchLevel =
-      activeLevel === "All Levels" || c.difficulty === activeLevel;
+    let matchLevel = true;
+    let matchStream = true;
+
+    if (activeStream !== "All" && activeLevel !== "All Levels") {
+      // Data is from category, we need to filter by difficulty
+      matchLevel = c.difficulty?.toUpperCase() === activeLevel.toUpperCase();
+    }
+
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
 
-    return matchLevel && matchSearch;
+    return matchLevel && matchStream && matchSearch;
   });
 
   return (
@@ -145,9 +182,10 @@ const LmsExplore = () => {
                     {course.title}
                   </h3>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> 8 weeks
+                      <Clock className="w-3 h-3" />{" "}
+                      {course.estimatedTime || "8 weeks"}
                     </span>
 
                     <span className="flex items-center gap-1">
@@ -155,7 +193,13 @@ const LmsExplore = () => {
                     </span>
 
                     <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-accent" /> 4.8
+                      <Users className="w-3 h-3" />{" "}
+                      {course.enrollmentCount || 0} learners
+                    </span>
+
+                    <span className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-accent" />{" "}
+                      {course.rating || "4.8"}
                     </span>
                   </div>
 

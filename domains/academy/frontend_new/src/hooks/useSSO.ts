@@ -71,14 +71,30 @@ export const useSSO = () => {
         unsubscribe = onIdTokenChanged(
           firebaseAuth,
           async (firebaseUser: FirebaseUser | null) => {
+            const localSession = authService.getSession();
+            const hasLocalSession =
+              !!localSession.accessToken && !!localSession.user;
+
             if (firebaseUser) {
               try {
                 // Get fresh ID token
                 const idToken = await firebaseUser.getIdToken(true);
 
+                if (hasLocalSession) {
+                  // Prefer the local API session if it exists (e.g. standard login)
+                  // Let the backend profile manage the roles instead of overwriting with Firebase defaults.
+                  setState({
+                    isAuthenticated: true,
+                    isLoading: false,
+                    user: localSession.user,
+                    emailVerified: firebaseUser.emailVerified,
+                  });
+                  return;
+                }
+
                 // Get user data from our backend or use Firebase user data
                 const userData: User = {
-                  id: parseInt(firebaseUser.uid),
+                  id: parseInt(firebaseUser.uid) || Date.now(),
                   firebaseId: firebaseUser.uid,
                   firstname: firebaseUser.displayName?.split(" ")[0] || "",
                   lastname: firebaseUser.displayName?.split(" ")[1] || "",
@@ -120,14 +136,24 @@ export const useSSO = () => {
                 });
               }
             } else {
-              // User is signed out
-              authService.logout();
-              setState({
-                isAuthenticated: false,
-                isLoading: false,
-                user: null,
-                emailVerified: false,
-              });
+              if (hasLocalSession) {
+                // User logged in locally but not on Firebase, keep them logged in
+                setState({
+                  isAuthenticated: true,
+                  isLoading: false,
+                  user: localSession.user,
+                  emailVerified: false,
+                });
+              } else {
+                // User is signed out completely
+                authService.logout();
+                setState({
+                  isAuthenticated: false,
+                  isLoading: false,
+                  user: null,
+                  emailVerified: false,
+                });
+              }
             }
           },
         );

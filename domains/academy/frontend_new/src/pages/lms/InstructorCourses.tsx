@@ -13,14 +13,23 @@ import {
   Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useInstructorCourses } from "@/hooks/useAcademy";
+import { useInstructorCourses, useDeleteCourse } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { academyService } from "@/services/academyService";
 import { toast } from "sonner";
+import { DeleteConfirmationModal } from "@/components/DeleteConfirmationModal";
+import { useState } from "react";
 
 const InstructorCourses = () => {
-  const { data: coursesData, isLoading, refetch } = useInstructorCourses({ page: 1, pageSize: 10 });
+  const {
+    data: coursesData,
+    isLoading,
+    refetch,
+  } = useInstructorCourses({ page: 1, pageSize: 10 });
+
+  const deleteCourseMutation = useDeleteCourse();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleSubmitForApproval = async (courseId: string) => {
     try {
@@ -29,6 +38,17 @@ const InstructorCourses = () => {
       refetch(); // Refresh the courses list
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to submit course");
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteId) {
+      deleteCourseMutation.mutate(deleteId, {
+        onSuccess: () => {
+          setDeleteId(null);
+          refetch();
+        },
+      });
     }
   };
 
@@ -170,37 +190,35 @@ const InstructorCourses = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           {/* Submit for Approval - Only for DRAFT courses */}
-                          {course.status === 'DRAFT' && (
+                          {course.status === "DRAFT" && (
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-400 hover:text-emerald-600"
-                              title="Submit for Approval"
+                              size="sm"
+                              className="text-slate-500 hover:text-emerald-600 font-medium"
                               onClick={() => handleSubmitForApproval(course.id)}
                             >
-                              <Send className="w-4 h-4" />
+                              Submit
                             </Button>
                           )}
-                          
+
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-accent"
+                            size="sm"
+                            className="text-slate-500 hover:text-accent font-medium"
                             asChild
-                            title="Edit"
-                            disabled={course.status === 'REJECTED'}
+                            disabled={course.status === "REJECTED"}
                           >
                             <Link to={`/instructor/lms/courses/${course.id}`}>
-                              <Edit className="w-4 h-4" />
+                              Edit
                             </Link>
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-red-600"
-                            title="Delete"
+                            size="sm"
+                            className="text-slate-500 hover:text-red-600 font-medium"
+                            onClick={() => setDeleteId(course.id)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            Delete
                           </Button>
                         </div>
                       </td>
@@ -212,6 +230,15 @@ const InstructorCourses = () => {
           </div>
         </div>
       </main>
+
+      <DeleteConfirmationModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Course?"
+        description="Are you sure you want to delete this course? This action cannot be undone and all modules, lessons, and student progress will be permanently removed."
+        isDeleting={deleteCourseMutation.isPending}
+      />
     </div>
   );
 };

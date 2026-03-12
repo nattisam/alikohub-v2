@@ -104,11 +104,12 @@ const CourseDetails = () => {
                   {course.difficulty} Level
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-accent" /> 8 Weeks Duration
+                  <Clock className="w-4 h-4 text-accent" />{" "}
+                  {course.estimatedTime || "8 weeks"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-accent" />{" "}
-                  {course.enrolledCount || 0} Learners
+                  {course.enrollmentCount || course.enrolledCount || 0} Learners
                 </div>
               </div>
 

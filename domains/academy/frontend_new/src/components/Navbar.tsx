@@ -15,6 +15,7 @@ import logoAcademy from "@/assets/logo-aliko-academy.png";
 import { useUser, useLogout } from "@/hooks/useAuth";
 import { useAccessLms } from "@/hooks/useAccessLms";
 import { toast } from "sonner";
+import AuthPromptModal from "./auth/AuthPromptModal";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -23,6 +24,7 @@ const Navbar = () => {
   const isAdmin = user?.globalRole === "ADMIN";
   const logout = useLogout();
   const { accessLms, isLoading } = useAccessLms();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const userInitials = user
     ? `${user.firstname?.charAt(0) || ""}${user.lastname?.charAt(0) || ""}`.toUpperCase()
@@ -146,8 +148,8 @@ const Navbar = () => {
               >
                 <Link to="/login">Login</Link>
               </Button>
-              <Button size="sm" asChild>
-                <Link to="/lms">Access LMS</Link>
+              <Button size="sm" onClick={() => setShowAuthModal(true)}>
+                Access LMS
               </Button>
             </>
           )}
@@ -222,16 +224,26 @@ const Navbar = () => {
                     Login
                   </Link>
                 </Button>
-                <Button size="sm" className="flex-1" asChild>
-                  <Link to="/lms" onClick={() => setOpen(false)}>
-                    Access LMS
-                  </Link>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowAuthModal(true);
+                    setOpen(false);
+                  }}
+                >
+                  Access LMS
                 </Button>
               </>
             )}
           </div>
         </div>
       )}
+
+      <AuthPromptModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </nav>
   );
 };

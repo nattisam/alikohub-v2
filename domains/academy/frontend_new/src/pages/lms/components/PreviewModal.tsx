@@ -15,6 +15,7 @@ interface PreviewModalProps {
     type: string;
     url?: string;
     content?: string; // For text content or exercise description
+    options?: any; // For quiz options
   };
 }
 
@@ -25,18 +26,46 @@ export const PreviewModal = ({
 }: PreviewModalProps) => {
   if (!content) return null;
 
+  const getEmbedUrl = (url: string) => {
+    try {
+      if (url.includes("youtube.com/watch")) {
+        const urlObj = new URL(url);
+        const videoId = urlObj.searchParams.get("v");
+        return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
+      } else if (url.includes("youtu.be/")) {
+        const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+        return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  };
+
   const renderPreview = () => {
     switch (content.type) {
-      case "VIDEO":
+      case "VIDEO": {
+        const embedUrl = content.url ? getEmbedUrl(content.url) : null;
+        const isEmbed = embedUrl && embedUrl !== content.url;
+
         return (
-          <div className="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center">
-            {content.url ? (
-              <video
-                src={content.url}
-                controls
-                className="w-full h-full"
-                poster="/placeholder.svg"
-              />
+          <div className="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center relative shadow-inner">
+            {embedUrl ? (
+              isEmbed ? (
+                <iframe
+                  src={embedUrl}
+                  className="w-full h-full border-0 absolute inset-0"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                />
+              ) : (
+                <video
+                  src={embedUrl}
+                  controls
+                  className="w-full h-full"
+                  poster="/placeholder.svg"
+                />
+              )
             ) : (
               <div className="text-white flex flex-col items-center gap-2">
                 <Video className="w-12 h-12 opacity-20" />
@@ -47,6 +76,7 @@ export const PreviewModal = ({
             )}
           </div>
         );
+      }
       case "PDF":
         return (
           <div className="w-full h-[600px] rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
@@ -98,21 +128,65 @@ export const PreviewModal = ({
       case "MULTIPLE_CHOICE":
       case "TRUE_FALSE":
         return (
-          <div className="p-6 rounded-xl bg-amber-50/50 border border-amber-100">
-            <div className="flex items-center gap-3 mb-4 text-amber-700 font-bold uppercase tracking-wider text-xs">
-              <HelpCircle className="w-4 h-4" />
-              <span>Quiz Preview</span>
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">
-              {content.title}
-            </h3>
-            <p className="text-slate-600 font-medium bg-white p-4 rounded-lg border border-slate-100">
-              {content.content || "No question text available for preview."}
-            </p>
-            <div className="mt-8 flex justify-end">
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-100 px-3 py-1.5 rounded-full">
-                Interactive Quiz
-              </span>
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 shadow-sm relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-orange-100/40 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-6 text-amber-700 font-bold uppercase tracking-wider text-xs">
+                <HelpCircle className="w-4 h-4" />
+                <span>Quiz Preview</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-6 font-heading">
+                {content.title}
+              </h3>
+              <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl border border-white/40 shadow-sm mb-6">
+                <p className="text-slate-800 font-medium text-lg">
+                  {content.content || "No question text available for preview."}
+                </p>
+              </div>
+
+              {content.options &&
+                Array.isArray(content.options) &&
+                content.options.length > 0 && (
+                  <div className="space-y-3">
+                    {content.options.map((opt: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-xl border flex items-center gap-4 transition-colors ${
+                          opt.isCorrect
+                            ? "bg-emerald-50 border-emerald-200 shadow-sm"
+                            : "bg-white/60 border-slate-200"
+                        }`}
+                      >
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            opt.isCorrect
+                              ? "bg-emerald-500 text-white"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {String.fromCharCode(65 + idx)}
+                        </div>
+                        <span
+                          className={`font-medium ${opt.isCorrect ? "text-emerald-900" : "text-slate-700"}`}
+                        >
+                          {opt.text}
+                        </span>
+                        {opt.isCorrect && (
+                          <div className="ml-auto text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            Correct Answer
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              <div className="mt-8 flex justify-end">
+                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-white/60 px-3 py-1.5 rounded-full border border-amber-100 shadow-sm">
+                  Interactive Quiz
+                </span>
+              </div>
             </div>
           </div>
         );

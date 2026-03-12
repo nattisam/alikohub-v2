@@ -20,6 +20,8 @@ interface CurriculumTabProps {
   onAddLesson: (moduleId: string) => void;
   onAddContent: (moduleId: string, lessonId: string) => void;
   onAddExercise: (moduleId: string, lessonId: string) => void;
+  onDeleteModule: (moduleId: string) => void;
+  onDeleteLesson: (lessonId: string) => void;
   onDeleteContent: (contentId: string) => void;
   onDeleteExercise: (exerciseId: string) => void;
   onView: (content: any) => void;
@@ -32,6 +34,8 @@ export const CurriculumTab = ({
   onAddLesson,
   onAddContent,
   onAddExercise,
+  onDeleteModule,
+  onDeleteLesson,
   onDeleteContent,
   onDeleteExercise,
   onView,
@@ -90,6 +94,7 @@ export const CurriculumTab = ({
                   variant="ghost"
                   size="icon"
                   className="text-slate-400 hover:text-red-500"
+                  onClick={() => onDeleteModule(module.id)}
                   disabled={isRejected}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -148,10 +153,11 @@ export const CurriculumTab = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400"
+                        className="h-8 w-8 text-slate-400 hover:text-red-500"
+                        onClick={() => onDeleteLesson(lesson.id)}
                         disabled={isRejected}
                       >
-                        <Settings className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -221,7 +227,9 @@ export const CurriculumTab = ({
                             onClick={() =>
                               onView({
                                 ...exercise,
+                                type: exercise.type || "QUIZ",
                                 content: exercise.question,
+                                options: exercise.options,
                               })
                             }
                           >

@@ -18,7 +18,20 @@ import {
   useAdminCourses,
   useApproveCourse,
   useRejectCourse,
+  useAdminAnalytics,
 } from "@/hooks/useAcademy";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  LineChart,
+  Line,
+  Legend,
+} from "recharts";
 import ReviewApplicationModal from "@/components/ReviewApplicationModal";
 import ReviewCourseModal from "@/components/ReviewCourseModal";
 import { TeacherApplication, Course } from "@/types/academy";
@@ -34,17 +47,16 @@ const AdminDashboard = () => {
   const getActiveTab = () => {
     const path = location.pathname;
     if (path === "/admin/courses") return "courses";
-    if (path === "/admin/applications") return "applications";
-    if (path === "/admin") return "analytics";
-    return "analytics"; // Default
+    if (path === "/admin/analytics") return "analytics";
+    return "applications"; // Default
   };
 
   const activeTab = getActiveTab();
 
   const handleTabChange = (value: string) => {
-    if (value === "applications") navigate("/admin/applications");
+    if (value === "applications") navigate("/admin");
     else if (value === "courses") navigate("/admin/courses");
-    else if (value === "analytics") navigate("/admin");
+    else if (value === "analytics") navigate("/admin/analytics");
   };
 
   const { data: applications, isLoading: appsLoading } =
@@ -56,10 +68,19 @@ const AdminDashboard = () => {
   const approveCourseMutation = useApproveCourse();
   const rejectCourseMutation = useRejectCourse();
 
+  const { data: analyticsData, isLoading: analyticsLoading } =
+    useAdminAnalytics();
+
   const [selectedApp, setSelectedApp] = useState<TeacherApplication | null>(
     null,
   );
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+
+  const chartData = [
+    { name: "Courses", value: analyticsData?.totalCourses || 0 },
+    { name: "Progress", value: analyticsData?.totalProgress || 0 },
+    { name: "Enrollments", value: analyticsData?.totalEnrollments || 0 },
+  ];
 
   const handleReview = (application: TeacherApplication) => {
     setSelectedApp(application);
@@ -466,9 +487,94 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle className="text-lg">Platform Analytics</CardTitle>
               </CardHeader>
-              <CardContent className="py-12 text-center text-slate-500">
-                <LayoutDashboard className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <p>Advanced analytics and reporting coming soon.</p>
+              <CardContent className="py-6">
+                {analyticsLoading ? (
+                  <div className="py-12 text-center text-slate-500">
+                    Loading analytics...
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="h-[300px]">
+                      <h3 className="text-sm font-semibold text-slate-600 mb-4 text-center">
+                        Overview (Bar Chart)
+                      </h3>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={chartData}
+                          margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis axisLine={false} tickLine={false} />
+                          <RechartsTooltip
+                            cursor={{ fill: "transparent" }}
+                            contentStyle={{
+                              borderRadius: "8px",
+                              border: "none",
+                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                            }}
+                          />
+                          <Bar
+                            dataKey="value"
+                            fill="#3b82f6"
+                            radius={[4, 4, 0, 0]}
+                            barSize={40}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="h-[300px]">
+                      <h3 className="text-sm font-semibold text-slate-600 mb-4 text-center">
+                        Trends (Line Graph)
+                      </h3>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis axisLine={false} tickLine={false} />
+                          <RechartsTooltip
+                            contentStyle={{
+                              borderRadius: "8px",
+                              border: "none",
+                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                            }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#10b981"
+                            strokeWidth={3}
+                            dot={{
+                              r: 6,
+                              fill: "#10b981",
+                              strokeWidth: 2,
+                              stroke: "#fff",
+                            }}
+                            activeDot={{ r: 8 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

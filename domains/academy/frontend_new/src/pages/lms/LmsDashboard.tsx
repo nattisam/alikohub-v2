@@ -82,7 +82,24 @@ const LmsDashboard = () => {
       )
     : 0;
 
-  const overallProgress = dashboard?.overallProgress || calculatedProgress || 0;
+  let sumPercentage = 0;
+  if (dashboard && Array.isArray(dashboard) && dashboard.length > 0) {
+    const validProgresses = dashboard.filter(
+      (d: any) => typeof d.percentage === "number",
+    );
+    if (validProgresses.length > 0) {
+      sumPercentage = validProgresses.reduce(
+        (sum: number, d: any) => sum + d.percentage,
+        0,
+      );
+      sumPercentage = Math.round(sumPercentage / validProgresses.length);
+    }
+  }
+
+  const overallProgress =
+    dashboard && Array.isArray(dashboard) && dashboard.length > 0
+      ? sumPercentage
+      : calculatedProgress || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -157,48 +174,57 @@ const LmsDashboard = () => {
                   </Button>
                 </div>
               ) : (
-                enrollments?.map((enrollment) => (
-                  <div
-                    key={enrollment.id}
-                    className="bg-card rounded-lg border p-5 hover:shadow-md transition-shadow duration-200"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted">
-                            {enrollment.course?.category || "Course"}
-                          </span>
-                        </div>
+                enrollments?.map((enrollment) => {
+                  const pData =
+                    dashboard && Array.isArray(dashboard)
+                      ? dashboard.find(
+                          (d: any) =>
+                            d.courseId === Number(enrollment.courseId),
+                        )
+                      : null;
+                  const currentProgress =
+                    pData?.percentage || enrollment.progress || 0;
 
-                        <h3 className="font-heading font-semibold text-foreground">
-                          {enrollment.course?.title}
-                        </h3>
-
-                        <div className="mt-3 max-w-xs">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-muted-foreground">
-                              Progress
-                            </span>
-                            <span className="font-medium">
-                              {enrollment.progress}%
+                  return (
+                    <div
+                      key={enrollment.id}
+                      className="bg-card rounded-lg border p-5 hover:shadow-md transition-shadow duration-200"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted">
+                              {enrollment.course?.category || "Course"}
                             </span>
                           </div>
 
-                          <Progress
-                            value={enrollment.progress}
-                            className="h-2"
-                          />
-                        </div>
-                      </div>
+                          <h3 className="font-heading font-semibold text-foreground">
+                            {enrollment.course?.title}
+                          </h3>
 
-                      <Button size="sm" asChild className="gap-1 self-start">
-                        <Link to={`/lms/learn/${enrollment.courseId}`}>
-                          Continue <ArrowRight className="w-3 h-3" />
-                        </Link>
-                      </Button>
+                          <div className="mt-3 max-w-xs">
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">
+                                Progress
+                              </span>
+                              <span className="font-medium">
+                                {currentProgress}%
+                              </span>
+                            </div>
+
+                            <Progress value={currentProgress} className="h-2" />
+                          </div>
+                        </div>
+
+                        <Button size="sm" asChild className="gap-1 self-start">
+                          <Link to={`/lms/learn/${enrollment.courseId}`}>
+                            Continue <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

@@ -23,13 +23,24 @@ export const useCoursesByCategory = (
   });
 };
 
+export const useCoursesByDifficulty = (
+  difficulty: string,
+  params?: { page?: number; pageSize?: number },
+  options?: any,
+) => {
+  return useQuery({
+    queryKey: ["courses", "difficulty", difficulty, params],
+    queryFn: () => academyService.getCoursesByDifficulty(difficulty, params),
+    enabled: !!difficulty,
+    ...options,
+  });
+};
+
 export const useCourseDetails = (courseId: string) => {
   return useQuery({
     queryKey: ["course", courseId],
     queryFn: () => academyService.getCourseDetails(courseId),
     enabled: !!courseId,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -161,6 +172,27 @@ export const useMarkLessonComplete = () => {
   });
 };
 
+export const useSubmitExercise = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      exerciseId,
+      answer,
+    }: {
+      exerciseId: string;
+      answer: string;
+    }) => academyService.submitExercise(exerciseId, answer),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["student-dashboard"] });
+      toast.success("Exercise submitted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to submit exercise");
+    },
+  });
+};
+
 // Instructor Hooks
 export const useInstructorCourses = (params?: any) => {
   return useQuery({
@@ -175,6 +207,39 @@ export const useInstructorStats = () => {
   return useQuery({
     queryKey: ["instructor-stats"],
     queryFn: () => academyService.instructor.getStats(),
+  });
+};
+
+export const useCourseAnalytics = (courseId: string) => {
+  return useQuery({
+    queryKey: ["course-analytics", courseId],
+    queryFn: () => academyService.instructor.getCourseAnalytics(courseId),
+    enabled: !!courseId,
+  });
+};
+
+export const useTeachingSchedules = (params?: {
+  page?: number;
+  pageSize?: number;
+}) => {
+  return useQuery({
+    queryKey: ["teaching-schedules", params],
+    queryFn: () => academyService.instructor.getTeachingSchedules(params),
+  });
+};
+
+export const useCreateTeachingSchedule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) =>
+      academyService.instructor.createTeachingSchedule(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teaching-schedules"] });
+      toast.success("Schedule created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create schedule");
+    },
   });
 };
 
@@ -427,6 +492,13 @@ export const useAdminCourses = () => {
   return useQuery({
     queryKey: ["admin-courses"],
     queryFn: () => academyService.admin.getAllCourses(),
+  });
+};
+
+export const useAdminAnalytics = () => {
+  return useQuery({
+    queryKey: ["admin-analytics"],
+    queryFn: () => academyService.admin.getPlatformAnalytics(),
   });
 };
 

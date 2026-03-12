@@ -25,6 +25,8 @@ export interface Course {
   modulesCount?: number;
   lessonsCount?: number;
   enrolledCount?: number;
+  enrollmentCount?: number;
+  estimatedTime?: string;
   rating?: number;
   createdAt: string;
   updatedAt: string;

@@ -7,6 +7,8 @@ import {
   Layout,
   Book,
   Settings as SettingsIcon,
+  BarChart3,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
@@ -15,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BasicInfoTab } from "./components/BasicInfoTab";
 import { CurriculumTab } from "./components/CurriculumTab";
 import { SettingsTab } from "./components/SettingsTab";
+import { AnalyticsTab } from "./components/AnalyticsTab";
+import { ScheduleTab } from "./components/ScheduleTab";
 import { ModuleModal } from "./components/ModuleModal";
 import { LessonModal } from "./components/LessonModal";
 import { ContentModal } from "./components/ContentModal";
@@ -25,14 +29,17 @@ import {
   useCreateCourse,
   useUpdateCourse,
   useCreateModule,
+  useDeleteModule,
   useCreateLesson,
   useUpdateLesson,
+  useDeleteLesson,
   useSubmitCourseForApproval,
   useCreateContent,
   useDeleteContent,
   useCreateExercise,
   useDeleteExercise,
 } from "@/hooks/useAcademy";
+import { DeleteConfirmationModal } from "@/components/DeleteConfirmationModal";
 
 const InstructorCourseEditor = () => {
   const { id } = useParams();
@@ -43,8 +50,10 @@ const InstructorCourseEditor = () => {
   const createCourseMutation = useCreateCourse();
   const updateCourseMutation = useUpdateCourse();
   const createModuleMutation = useCreateModule();
+  const deleteModuleMutation = useDeleteModule();
   const createLessonMutation = useCreateLesson();
   const updateLessonMutation = useUpdateLesson();
+  const deleteLessonMutation = useDeleteLesson();
   const submitCourseMutation = useSubmitCourseForApproval();
   const createContentMutation = useCreateContent();
   const deleteContentMutation = useDeleteContent();
@@ -74,6 +83,13 @@ const InstructorCourseEditor = () => {
   const [moduleDescription, setModuleDescription] = useState("");
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonType, setLessonType] = useState("VIDEO");
+
+  // Delete states
+  const [deleteConfig, setDeleteConfig] = useState<{
+    type: "module" | "lesson" | "content" | "exercise";
+    id: string;
+    title: string;
+  } | null>(null);
 
   const showCurriculum =
     course && course.status !== "DRAFT" && course.status !== "REJECTED";
@@ -197,15 +213,29 @@ const InstructorCourseEditor = () => {
     });
   };
 
-  const handleDeleteContent = (contentId: string) => {
-    if (window.confirm("Are you sure you want to delete this content?")) {
-      deleteContentMutation.mutate(contentId);
-    }
-  };
+  const handleDeleteConfirm = () => {
+    if (!deleteConfig) return;
 
-  const handleDeleteExercise = (exerciseId: string) => {
-    if (window.confirm("Are you sure you want to delete this exercise?")) {
-      deleteExerciseMutation.mutate(exerciseId);
+    const { type, id: deleteId } = deleteConfig;
+
+    if (type === "module") {
+      deleteModuleMutation.mutate(
+        { moduleId: deleteId, courseId: id! },
+        { onSuccess: () => setDeleteConfig(null) },
+      );
+    } else if (type === "lesson") {
+      deleteLessonMutation.mutate(
+        { lessonId: deleteId, courseId: id! },
+        { onSuccess: () => setDeleteConfig(null) },
+      );
+    } else if (type === "content") {
+      deleteContentMutation.mutate(deleteId, {
+        onSuccess: () => setDeleteConfig(null),
+      });
+    } else if (type === "exercise") {
+      deleteExerciseMutation.mutate(deleteId, {
+        onSuccess: () => setDeleteConfig(null),
+      });
     }
   };
 
@@ -243,8 +273,18 @@ const InstructorCourseEditor = () => {
           onAddLesson={handleAddLesson}
           onAddContent={handleAddContent}
           onAddExercise={handleAddExercise}
-          onDeleteContent={handleDeleteContent}
-          onDeleteExercise={handleDeleteExercise}
+          onDeleteModule={(mid) =>
+            setDeleteConfig({ type: "module", id: mid, title: "Module" })
+          }
+          onDeleteLesson={(lid) =>
+            setDeleteConfig({ type: "lesson", id: lid, title: "Lesson" })
+          }
+          onDeleteContent={(cid) =>
+            setDeleteConfig({ type: "content", id: cid, title: "Content" })
+          }
+          onDeleteExercise={(eid) =>
+            setDeleteConfig({ type: "exercise", id: eid, title: "Exercise" })
+          }
           onView={handleView}
           isRejected={course?.status === "REJECTED"}
         />
@@ -259,6 +299,14 @@ const InstructorCourseEditor = () => {
           isSubmitting={submitCourseMutation.isPending}
         />
       );
+    }
+
+    if (activeTab === "analytics" && isEdit) {
+      return <AnalyticsTab courseId={id!} />;
+    }
+
+    if (activeTab === "schedule" && isEdit) {
+      return <ScheduleTab courseId={id!} />;
     }
 
     return null;
@@ -339,6 +387,12 @@ const InstructorCourseEditor = () => {
               ? [{ id: "curriculum", label: "Curriculum", icon: Book }]
               : []),
             { id: "settings", label: "Settings", icon: SettingsIcon },
+            ...(isEdit
+              ? [
+                  { id: "analytics", label: "Analytics", icon: BarChart3 },
+                  { id: "schedule", label: "Schedule", icon: Calendar },
+                ]
+              : []),
           ].map((tab) => (
             <button
               key={tab.id}
@@ -418,6 +472,20 @@ const InstructorCourseEditor = () => {
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
         content={previewContent}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={!!deleteConfig}
+        onClose={() => setDeleteConfig(null)}
+        onConfirm={handleDeleteConfirm}
+        title={`Delete ${deleteConfig?.title}?`}
+        description={`Are you sure you want to delete this ${deleteConfig?.title.toLowerCase()}? This action cannot be undone.`}
+        isDeleting={
+          deleteModuleMutation.isPending ||
+          deleteLessonMutation.isPending ||
+          deleteContentMutation.isPending ||
+          deleteExerciseMutation.isPending
+        }
       />
     </div>
   );

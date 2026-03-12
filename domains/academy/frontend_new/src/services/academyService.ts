@@ -45,6 +45,25 @@ export const academyService = {
     };
   },
 
+  getCoursesByDifficulty: async (
+    difficulty: string,
+    params?: { page?: number; pageSize?: number },
+  ) => {
+    const response = await api.get(
+      `/academy/courses/difficulty/${difficulty.toUpperCase()}`,
+      {
+        params,
+      },
+    );
+    return {
+      courses: response.data.items || response.data.courses || [],
+      total: response.data.total || 0,
+      page: response.data.page || 1,
+      pageSize: response.data.pageSize || 10,
+      totalPages: response.data.totalPages || 1,
+    };
+  },
+
   getCourseDetails: async (courseId: string) => {
     const response = await api.get<Course>(`/academy/courses/${courseId}`);
     return response.data;
@@ -113,6 +132,13 @@ export const academyService = {
     return response.data;
   },
 
+  submitExercise: async (exerciseId: string, answer: string) => {
+    const response = await api.post(`/academy/exercises/${exerciseId}/submit`, {
+      answer,
+    });
+    return response.data;
+  },
+
   getNotifications: async () => {
     const response = await api.get("/academy/notifications/me");
     return response.data;
@@ -150,6 +176,28 @@ export const academyService = {
       const response = await api.get<InstructorStats>(
         "/academy/progress/instructor/stats",
       );
+      return response.data;
+    },
+    // New: Get analytics for a specific course
+    getCourseAnalytics: async (courseId: string) => {
+      const response = await api.get(
+        `/academy/progress/course/${courseId}/analytics`,
+      );
+      return response.data;
+    },
+    // New: Get teaching schedules for instructor
+    getTeachingSchedules: async (params?: {
+      page?: number;
+      pageSize?: number;
+    }) => {
+      const response = await api.get(`/academy/teaching-schedules/instructor`, {
+        params,
+      });
+      return response.data;
+    },
+    // New: Create a teaching schedule
+    createTeachingSchedule: async (data: any) => {
+      const response = await api.post(`/academy/teaching-schedules`, data);
       return response.data;
     },
 
@@ -294,6 +342,11 @@ export const academyService = {
       const response = await api.get<TeacherApplication[]>(
         "/auth/academy/teacher-applications",
       );
+      return response.data;
+    },
+
+    getPlatformAnalytics: async () => {
+      const response = await api.get("/academy/progress/analytics/overall");
       return response.data;
     },
 

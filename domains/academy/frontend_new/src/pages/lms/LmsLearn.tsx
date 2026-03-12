@@ -5,6 +5,8 @@ import {
   useMarkLessonComplete,
   useEnrollments,
   useStudentAnalytics,
+  useStudentDashboard,
+  useSubmitExercise,
 } from "@/hooks/useAcademy";
 import LmsNavbar from "@/components/LmsNavbar";
 import {
@@ -18,6 +20,7 @@ import {
   Lock,
   Menu,
   X,
+  Youtube,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -31,23 +34,27 @@ const LmsLearn = () => {
   const { data: enrollments } = useEnrollments();
   const { data: analytics } = useStudentAnalytics();
   const markCompleteMutation = useMarkLessonComplete();
+  const submitExerciseMutation = useSubmitExercise();
+
+  const { data: dashboardData } = useStudentDashboard();
 
   const enrollment = enrollments?.find((e) => e.courseId === id);
 
-  // Calculate progress based on student analytics as requested
-  const totalLessons =
-    course?.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 1;
-  const calculatedProgress = analytics
-    ? Math.min(Math.round((analytics.lessonsViewed / totalLessons) * 100), 100)
-    : 0;
+  // Find progress from dashboard data
+  const courseProgressData = dashboardData?.find(
+    (d: any) => d.courseId === Number(id),
+  );
 
-  const progress = enrollment?.progress || calculatedProgress || 0;
+  const progress = courseProgressData?.percentage || enrollment?.progress || 0;
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = useState<
     "overview" | "materials" | "quizzes"
   >("overview");
+  const [selectedAnswers, setSelectedAnswers] = useState<
+    Record<string, string>
+  >({});
 
   // Auto-select first lesson on load
   useEffect(() => {
@@ -138,13 +145,45 @@ const LmsLearn = () => {
     }
   };
 
+  const handleOptionSelect = (exerciseId: string, option: string) => {
+    setSelectedAnswers((prev) => ({ ...prev, [exerciseId]: option }));
+  };
+
+  const handleExerciseSubmit = (exerciseId: string) => {
+    const answer = selectedAnswers[exerciseId];
+    if (!answer) {
+      toast.error("Please select an answer first.");
+      return;
+    }
+    submitExerciseMutation.mutate({ exerciseId, answer });
+  };
+
+  const isYouTube = (url?: string) => {
+    if (!url) return false;
+    return url.includes("youtube.com") || url.includes("youtu.be");
+  };
+
+  const getYouTubeEmbedUrl = (url: string) => {
+    let videoId = "";
+    try {
+      if (url.includes("youtu.be/")) {
+        videoId = url.split("youtu.be/")[1].split("?")[0];
+      } else if (url.includes("youtube.com/watch")) {
+        videoId = new URL(url).searchParams.get("v") || "";
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return `https://www.youtube.com/embed/${videoId}`;
+  };
+
   const renderActiveContent = () => {
     if (viewMode === "quizzes") {
       return (
         <div className="mt-8 max-w-4xl mx-auto space-y-12 pb-20">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-50 text-amber-500 rounded-xl">
+              <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
                 <HelpCircle className="w-6 h-6" />
               </div>
               <h2 className="text-2xl font-heading font-bold text-slate-900">
@@ -154,7 +193,7 @@ const LmsLearn = () => {
             <Button
               variant="outline"
               onClick={() => setViewMode("overview")}
-              className="rounded-xl border-slate-200"
+              className="rounded-xl border-slate-200 hover:bg-slate-100 transition-colors"
             >
               Back to Overview
             </Button>
@@ -163,55 +202,89 @@ const LmsLearn = () => {
           {activeLesson?.exercises?.map((exercise, eIdx) => (
             <div
               key={exercise.id}
-              className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm relative overflow-hidden"
+              className="bg-white/80 backdrop-blur-md rounded-2xl p-8 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
             >
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-400" />
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 to-amber-600" />
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-heading font-bold text-slate-900 leading-tight">
                     {eIdx + 1}. {exercise.title}
                   </h3>
-                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-1">
-                    {exercise.points} Points •{" "}
-                    {exercise.type?.replace("_", " ")}
-                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-bold text-amber-700 uppercase tracking-widest">
+                      {exercise.points} Points
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      • {exercise.type?.replace("_", " ")}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 mb-8">
-                <p className="text-lg font-medium text-slate-700 leading-relaxed">
+              <div className="p-6 bg-slate-50/80 rounded-xl border border-slate-100/50 mb-8 shadow-inner">
+                <p className="text-lg font-medium text-slate-800 leading-relaxed">
                   {exercise.question}
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {exercise.options?.map((option, idx) => (
-                  <button
-                    key={idx}
-                    className="w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:border-accent hover:bg-accent/5 transition-all flex items-center gap-4 group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-accent group-hover:text-white flex items-center justify-center font-bold text-slate-400 transition-colors">
-                      {String.fromCharCode(65 + idx)}
-                    </div>
-                    <span className="font-semibold text-slate-600">
-                      {option}
-                    </span>
-                  </button>
-                ))}
+              <div className="space-y-4">
+                {exercise.options?.map((option, idx) => {
+                  const isSelected = selectedAnswers[exercise.id] === option;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleOptionSelect(exercise.id, option)}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-4 group ${
+                        isSelected
+                          ? "border-amber-500 bg-amber-50/50 shadow-sm"
+                          : "border-slate-100 hover:border-amber-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-colors ${
+                          isSelected
+                            ? "bg-amber-500 text-white"
+                            : "bg-white border border-slate-200 text-slate-400 group-hover:border-amber-300 group-hover:text-amber-500"
+                        }`}
+                      >
+                        {String.fromCharCode(65 + idx)}
+                      </div>
+                      <span
+                        className={`font-medium ${
+                          isSelected
+                            ? "text-amber-900"
+                            : "text-slate-600 group-hover:text-slate-900"
+                        }`}
+                      >
+                        {option}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="mt-8 flex justify-end">
-                <Button className="bg-slate-900 text-white px-8 h-10 rounded-xl font-bold">
-                  Submit Question {eIdx + 1}
+                <Button
+                  onClick={() => handleExerciseSubmit(exercise.id)}
+                  disabled={submitExerciseMutation.isPending}
+                  className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-all active:scale-95"
+                >
+                  {submitExerciseMutation.isPending
+                    ? "Submitting..."
+                    : `Submit Question ${eIdx + 1}`}
                 </Button>
               </div>
             </div>
           ))}
 
           {!activeLesson?.exercises?.length && (
-            <div className="text-center py-20 bg-white rounded-2xl border border-dotted border-slate-300">
-              <p className="text-slate-400 font-medium">
+            <div className="text-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-sm">
+              <HelpCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium pb-2 text-lg">
                 No assessments found for this lesson.
+              </p>
+              <p className="text-slate-400 text-sm">
+                Once exercises are added, they will appear here.
               </p>
             </div>
           )}
@@ -224,7 +297,7 @@ const LmsLearn = () => {
         <div className="mt-8 max-w-4xl mx-auto space-y-12 pb-20">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-50 text-blue-500 rounded-xl">
+              <div className="p-3 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20">
                 <PlayCircle className="w-6 h-6" />
               </div>
               <h2 className="text-2xl font-heading font-bold text-slate-900">
@@ -234,7 +307,7 @@ const LmsLearn = () => {
             <Button
               variant="outline"
               onClick={() => setViewMode("overview")}
-              className="rounded-xl border-slate-200"
+              className="rounded-xl border-slate-200 hover:bg-slate-100 transition-colors"
             >
               Back to Overview
             </Button>
@@ -243,48 +316,63 @@ const LmsLearn = () => {
           {activeLesson?.contents?.map((content, cIdx) => (
             <div
               key={content.id}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
+              className="bg-white/80 backdrop-blur-md rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-50 bg-slate-50/30">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-slate-100 flex items-center justify-center">
-                    <span className="text-xs font-bold text-slate-400">
-                      {cIdx + 1}
-                    </span>
+              <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shadow-inner">
+                    {cIdx + 1}
                   </div>
-                  <h3 className="text-lg font-heading font-bold text-slate-900">
+                  <h3 className="text-xl font-heading font-bold text-slate-900">
                     {content.title}
                   </h3>
                 </div>
               </div>
 
-              <div className="p-6">
+              <div className="p-6 md:p-8 bg-slate-50/50">
                 {content.type === "VIDEO" ? (
-                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-lg">
-                    <video
-                      src={content.url}
-                      controls
-                      className="w-full h-full"
-                    />
+                  <div className="w-full rounded-2xl overflow-hidden bg-black shadow-2xl relative border border-slate-200/50">
+                    {isYouTube(content.url) ? (
+                      <div className="aspect-video w-full">
+                        <iframe
+                          className="w-full h-full border-0"
+                          src={getYouTubeEmbedUrl(content.url || "")}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    ) : (
+                      <div className="aspect-video w-full">
+                        <video
+                          src={content.url}
+                          controls
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="p-4 bg-emerald-50 text-emerald-500 rounded-full w-fit mx-auto mb-4">
-                      <FileText className="w-8 h-8" />
+                  <div className="p-10 text-center bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center">
+                    <div className="p-5 bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 rounded-full w-fit mx-auto mb-6 shadow-inner">
+                      <FileText className="w-10 h-10" />
                     </div>
-                    <p className="text-slate-600 mb-6 font-medium">
-                      {content.type} Resource available for viewing
+                    <h4 className="text-slate-800 font-bold text-xl mb-2">
+                      Resource Document
+                    </h4>
+                    <p className="text-slate-500 mb-8 font-medium max-w-md">
+                      This material is ready for download or direct viewing.
+                      Click below to access.
                     </p>
                     <Button
                       asChild
-                      className="bg-accent text-slate-900 font-bold px-8 h-11 rounded-xl"
+                      className="bg-slate-900 text-white hover:bg-slate-800 font-bold px-10 h-12 rounded-xl shadow-lg shadow-slate-900/10 transition-transform active:scale-95"
                     >
                       <a
                         href={content.url}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Open {content.type}
+                        Open {content.type} Resource
                       </a>
                     </Button>
                   </div>
@@ -294,9 +382,13 @@ const LmsLearn = () => {
           ))}
 
           {!activeLesson?.contents?.length && (
-            <div className="text-center py-20 bg-white rounded-2xl border border-dotted border-slate-300">
-              <p className="text-slate-400 font-medium">
+            <div className="text-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-sm">
+              <Video className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium pb-2 text-lg">
                 No materials found for this lesson.
+              </p>
+              <p className="text-slate-400 text-sm">
+                Materials will appear here once the instructor uploads them.
               </p>
             </div>
           )}

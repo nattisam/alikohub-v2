@@ -3,7 +3,34 @@ import InstructorNavbar from "@/components/InstructorNavbar";
 import { BarChart2, TrendingUp, Users, BookOpen, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { useInstructorStats } from "@/hooks/useAcademy";
+import { Skeleton } from "@/components/ui/skeleton";
+
 const InstructorAnalytics = () => {
+  const { data: stats, isLoading } = useInstructorStats();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <InstructorNavbar />
+        <main className="section-container py-8 md:py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-24" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <InstructorNavbar />
@@ -20,19 +47,36 @@ const InstructorAnalytics = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Student Growth
+                Total Courses
               </CardTitle>
-              <Users className="h-4 w-4 text-blue-500" />
+              <BookOpen className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+24%</div>
+              <div className="text-2xl font-bold">
+                {stats?.totalCourses || 0}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Active courses</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Students
+              </CardTitle>
+              <Users className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.totalStudents || 0}
+              </div>
               <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3 text-emerald-500" />
-                From previous month
+                Overall enrollment
               </p>
             </CardContent>
           </Card>
@@ -40,31 +84,28 @@ const InstructorAnalytics = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Course Completion
+                Average Rating
               </CardTitle>
-              <BookOpen className="h-4 w-4 text-emerald-500" />
+              <TrendingUp className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">68%</div>
-              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-blue-500" />
-                Average completion rate
-              </p>
+              <div className="text-2xl font-bold">
+                {stats?.averageRating || 0}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Student feedback</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Est. Revenue
-              </CardTitle>
-              <BarChart2 className="h-4 w-4 text-purple-500" />
+              <CardTitle className="text-sm font-medium">Experience</CardTitle>
+              <Clock className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$1,240</div>
-              <p className="text-xs text-slate-500 mt-1">
-                Projected for March 2024
-              </p>
+              <div className="text-2xl font-bold">
+                {stats?.yearsOfExperience || 0}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Years of teaching</p>
             </CardContent>
           </Card>
         </div>
