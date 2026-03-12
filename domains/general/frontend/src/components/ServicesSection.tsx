@@ -61,13 +61,13 @@ const services = [
 export function ServicesSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
-
+  
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
     let animationId: number;
-    let scrollSpeed = 0.5;
+    let scrollSpeed = 1.2; // Increased speed as requested
 
     const animate = () => {
       if (!isPaused && container) {
@@ -84,11 +84,7 @@ export function ServicesSection() {
     return () => cancelAnimationFrame(animationId);
   }, [isPaused]);
 
-  const scroll = (dir: "left" | "right") => {
-    if (!scrollRef.current) return;
-    const amount = 320;
-    scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
-  };
+
 
   // Duplicate services for infinite scroll effect
   const displayServices = [...services, ...services];
@@ -115,29 +111,12 @@ export function ServicesSection() {
           </p>
         </motion.div>
 
-        {/* Scroll controls */}
         <div className="relative">
-          <button
-            onClick={() => scroll("left")}
-            className="absolute -left-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 border border-border/50 text-foreground backdrop-blur-sm transition-all hover:bg-primary/20 hover:border-primary/30"
-            aria-label="Scroll left"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 border border-border/50 text-foreground backdrop-blur-sm transition-all hover:bg-primary/20 hover:border-primary/30"
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          {/* Scrolling cards */}
           <div
             ref={scrollRef}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="flex gap-6 overflow-x-hidden scroll-smooth"
+            className="flex gap-6 overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none touch-none"
           >
             {displayServices.map((service, i) => (
               <div

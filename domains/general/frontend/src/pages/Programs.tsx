@@ -28,7 +28,7 @@ const pillars = [
       "Health data analytics and population health",
       "Climate-linked and zoonotic disease monitoring",
     ],
-    link: "/ventures/digital-health",
+    link: "https://aliko-academy-health.lovable.app/",
   },
   {
     icon: Cpu,

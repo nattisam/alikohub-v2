@@ -150,7 +150,7 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               <>
-                <Button
+                {/* <Button
                   asChild
                   variant="ghost"
                   size="sm"
@@ -164,7 +164,7 @@ export function Navbar() {
                   className="bg-primary text-primary-foreground hover:bg-amber-light shadow-[var(--shadow-amber)]"
                 >
                   <Link to="/register">Sign Up</Link>
-                </Button>
+                </Button> */}
               </>
             )}
           </div>
@@ -259,7 +259,7 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="sm"
                         asChild
@@ -275,7 +275,7 @@ export function Navbar() {
                         onClick={() => setMobileOpen(false)}
                       >
                         <Link to="/register">Sign Up</Link>
-                      </Button>
+                      </Button> */}
                     </>
                   )}
                 </div>
