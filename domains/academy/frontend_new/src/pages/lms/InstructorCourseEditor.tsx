@@ -413,7 +413,7 @@ const InstructorCourseEditor = () => {
         </div>
       </div>
 
-      <main className="section-container py-12 max-w-5xl mx-auto">
+      <main className="section-container py-12 max-w-7xl mx-auto">
         {renderTabContent()}
       </main>
 

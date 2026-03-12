@@ -19,6 +19,30 @@ interface PreviewModalProps {
   };
 }
 
+const getFullUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  const baseUrl = "https://api.consultancy.alikohub.com";
+  const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+  return `${baseUrl}${cleanUrl}`;
+};
+
+const parseOptions = (options: any): string[] => {
+  if (Array.isArray(options)) return options;
+  if (typeof options === "string") {
+    try {
+      const parsed = JSON.parse(options);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return options
+        .split(",")
+        .map((o: string) => o.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+};
+
 export const PreviewModal = ({
   isOpen,
   onClose,
@@ -45,13 +69,20 @@ export const PreviewModal = ({
   const renderPreview = () => {
     switch (content.type) {
       case "VIDEO": {
-        const embedUrl = content.url ? getEmbedUrl(content.url) : null;
-        const isEmbed = embedUrl && embedUrl !== content.url;
+        const isYT =
+          content.url &&
+          (content.url.includes("youtube.com") ||
+            content.url.includes("youtu.be"));
+        const embedUrl = content.url
+          ? isYT
+            ? getEmbedUrl(content.url)
+            : getFullUrl(content.url)
+          : null;
 
         return (
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black flex items-center justify-center relative shadow-inner">
             {embedUrl ? (
-              isEmbed ? (
+              isYT ? (
                 <iframe
                   src={embedUrl}
                   className="w-full h-full border-0 absolute inset-0"
@@ -82,7 +113,7 @@ export const PreviewModal = ({
           <div className="w-full h-[600px] rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
             {content.url ? (
               <iframe
-                src={`${content.url}#toolbar=0`}
+                src={`${getFullUrl(content.url)}#toolbar=0`}
                 className="w-full h-full"
                 title={content.title}
               />
@@ -110,7 +141,7 @@ export const PreviewModal = ({
             </p>
             {content.url ? (
               <a
-                href={content.url}
+                href={getFullUrl(content.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors"
@@ -126,7 +157,8 @@ export const PreviewModal = ({
         );
       case "QUIZ":
       case "MULTIPLE_CHOICE":
-      case "TRUE_FALSE":
+      case "TRUE_FALSE": {
+        const options = parseOptions(content.options);
         return (
           <div className="p-8 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 shadow-sm relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-100/50 rounded-full blur-2xl pointer-events-none" />
@@ -145,42 +177,21 @@ export const PreviewModal = ({
                 </p>
               </div>
 
-              {content.options &&
-                Array.isArray(content.options) &&
-                content.options.length > 0 && (
-                  <div className="space-y-3">
-                    {content.options.map((opt: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded-xl border flex items-center gap-4 transition-colors ${
-                          opt.isCorrect
-                            ? "bg-emerald-50 border-emerald-200 shadow-sm"
-                            : "bg-white/60 border-slate-200"
-                        }`}
-                      >
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            opt.isCorrect
-                              ? "bg-emerald-500 text-white"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {String.fromCharCode(65 + idx)}
-                        </div>
-                        <span
-                          className={`font-medium ${opt.isCorrect ? "text-emerald-900" : "text-slate-700"}`}
-                        >
-                          {opt.text}
-                        </span>
-                        {opt.isCorrect && (
-                          <div className="ml-auto text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                            Correct Answer
-                          </div>
-                        )}
+              {options && options.length > 0 && (
+                <div className="space-y-3">
+                  {options.map((opt: string, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl border flex items-center gap-4 transition-colors bg-white/60 border-slate-200"
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-500">
+                        {String.fromCharCode(65 + idx)}
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <span className="font-medium text-slate-700">{opt}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="mt-8 flex justify-end">
                 <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-white/60 px-3 py-1.5 rounded-full border border-amber-100 shadow-sm">
@@ -190,6 +201,7 @@ export const PreviewModal = ({
             </div>
           </div>
         );
+      }
       default:
         return (
           <div className="p-12 text-center text-slate-400 font-medium">
