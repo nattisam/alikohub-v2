@@ -70,6 +70,7 @@ export class TransactionService {
 
     this.logger.log(`Transaction ${transaction.reference} completed successfully.`);
 
+    this.logger.log(`Emitting payment.succeeded event for reference: ${updated.reference}`);
     // Emit event to RabbitMQ
     this.client.emit('payment.succeeded', {
       transactionId: updated.id,

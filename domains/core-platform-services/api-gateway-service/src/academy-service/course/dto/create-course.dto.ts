@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsEnum,
   IsInt,
+  IsNumber,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -66,15 +67,20 @@ export class CreateCourseDto {
   @IsOptional()
   enrolledNum?: number;
 
-  @ApiPropertyOptional({ example: 5 })
-  @IsInt()
+  @ApiPropertyOptional({ example: 4.5 })
+  @IsNumber()
   @IsOptional()
   rating?: number;
 
-  @ApiPropertyOptional({ example: 500 })
-  @IsInt()
+  @ApiPropertyOptional({ example: 499.99 })
+  @IsNumber()
   @IsOptional()
   price?: number;
+
+  @ApiPropertyOptional({ example: 49.99 })
+  @IsNumber()
+  @IsOptional()
+  priceInUsd?: number;
 
   @ApiPropertyOptional({ example: ['Prerequisite 1'] })
   @IsOptional()

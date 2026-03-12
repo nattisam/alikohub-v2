@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   Req,
+  Delete,
   Inject,
   UseGuards,
 } from '@nestjs/common';
@@ -51,9 +52,25 @@ export class ConsultancyController {
 
   @Post('availability/rules')
   @Roles('ADMIN')
-  async createAvailabilityRule(@Req() req: Request, @Body() data: Record<string, unknown>) {
+  async createAvailabilityRule(@Body() data: Record<string, unknown>) {
     return firstValueFrom(
-      this.client.send({ cmd: 'create_availability_rule' }, { user: req.user!, ...data }),
+      this.client.send({ cmd: 'create_availability_rule' }, data),
+    );
+  }
+
+  @Patch('availability/rules/:id')
+  @Roles('ADMIN')
+  async updateAvailabilityRule(@Param('id') id: string, @Body() data: Record<string, unknown>) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'update_availability_rule' }, { id, ...data }),
+    );
+  }
+
+  @Delete('availability/rules/:id')
+  @Roles('ADMIN')
+  async removeAvailabilityRule(@Param('id') id: string) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'remove_availability_rule' }, { id }),
     );
   }
 
@@ -66,10 +83,11 @@ export class ConsultancyController {
     );
   }
 
+  @Public()
   @Post('bookings')
   async createBooking(@Req() req: Request, @Body() data: Record<string, unknown>) {
     return firstValueFrom(
-      this.client.send({ cmd: 'create_booking' }, { userId: req.user!.firebaseId, ...data }),
+      this.client.send({ cmd: 'create_booking' }, { userId: req.user?.firebaseId, ...data }),
     );
   }
 
@@ -80,11 +98,30 @@ export class ConsultancyController {
     );
   }
 
+  @Patch('bookings/:id')
+  @Roles('ADMIN')
+  async updateBooking(
+    @Param('id') id: string,
+    @Body() data: Record<string, unknown>,
+  ) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'update_booking' }, { id, ...data }),
+    );
+  }
+
   // --- Applications ---
+  @Get('applications')
+  @Roles('ADMIN')
+  async getAllApplications() {
+    return firstValueFrom(
+      this.client.send({ cmd: 'get_all_applications' }, {}),
+    );
+  }
+  @Public()
   @Post('applications')
   async createApplication(@Req() req: Request, @Body() data: Record<string, unknown>) {
     return firstValueFrom(
-      this.client.send({ cmd: 'create_application' }, { userId: req.user!.firebaseId, ...data }),
+      this.client.send({ cmd: 'create_application' }, { userId: req.user?.firebaseId, ...data }),
     );
   }
 
@@ -99,6 +136,17 @@ export class ConsultancyController {
   async getApplication(@Param('id') id: string, @Req() req: Request) {
     return firstValueFrom(
       this.client.send({ cmd: 'get_application' }, { id, user: req.user! }),
+    );
+  }
+
+  @Patch('applications/:id')
+  @Roles('ADMIN')
+  async updateApplication(
+    @Param('id') id: string,
+    @Body() data: Record<string, unknown>,
+  ) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'update_application' }, { id, ...data }),
     );
   }
 
@@ -118,7 +166,13 @@ export class ConsultancyController {
     );
   }
 
-  // --- CMS ---
+  @Public()
+  @Post('applications/documents')
+  async addApplicationDocument(@Body() data: Record<string, unknown>) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'add_application_document' }, data),
+    );
+  }
   @Public()
   @Get('cms/pages')
   async getPages() {
@@ -149,14 +203,122 @@ export class ConsultancyController {
     return firstValueFrom(this.client.send({ cmd: 'get_testimonials' }, {}));
   }
 
+  // --- Admin CMS ---
+  @Post('cms/pages')
+  @Roles('ADMIN')
+  async createPage(@Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'create_page' }, data));
+  }
+
+  @Patch('cms/pages/:id')
+  @Roles('ADMIN')
+  async updatePage(@Param('id') id: string, @Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'update_page' }, { id, ...data }));
+  }
+
+  @Delete('cms/pages/:id')
+  @Roles('ADMIN')
+  async removePage(@Param('id') id: string) {
+    return firstValueFrom(this.client.send({ cmd: 'remove_page' }, { id }));
+  }
+
+  @Post('cms/resources')
+  @Roles('ADMIN')
+  async createResource(@Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'create_resource' }, data));
+  }
+
+  @Patch('cms/resources/:id')
+  @Roles('ADMIN')
+  async updateResource(@Param('id') id: string, @Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'update_resource' }, { id, ...data }));
+  }
+
+  @Delete('cms/resources/:id')
+  @Roles('ADMIN')
+  async removeResource(@Param('id') id: string) {
+    return firstValueFrom(this.client.send({ cmd: 'remove_resource' }, { id }));
+  }
+
+  @Post('cms/webinars')
+  @Roles('ADMIN')
+  async createWebinar(@Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'create_webinar' }, data));
+  }
+
+  @Patch('cms/webinars/:id')
+  @Roles('ADMIN')
+  async updateWebinar(@Param('id') id: string, @Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'update_webinar' }, { id, ...data }));
+  }
+
+  @Delete('cms/webinars/:id')
+  @Roles('ADMIN')
+  async removeWebinar(@Param('id') id: string) {
+    return firstValueFrom(this.client.send({ cmd: 'remove_webinar' }, { id }));
+  }
+
+  @Post('cms/testimonials')
+  @Roles('ADMIN')
+  async createTestimonial(@Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'create_testimonial' }, data));
+  }
+
+  @Patch('cms/testimonials/:id')
+  @Roles('ADMIN')
+  async updateTestimonial(@Param('id') id: string, @Body() data: Record<string, unknown>) {
+    return firstValueFrom(this.client.send({ cmd: 'update_testimonial' }, { id, ...data }));
+  }
+
+  @Delete('cms/testimonials/:id')
+  @Roles('ADMIN')
+  async removeTestimonial(@Param('id') id: string) {
+    return firstValueFrom(this.client.send({ cmd: 'remove_testimonial' }, { id }));
+  }
+
+  @Public()
+  @Get('applications/status/:code')
+  async getApplicationByCode(@Param('code') code: string) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'get_application_by_code' }, { code }),
+    );
+  }
   // --- Contact ---
+  @Public()
   @Post('contact')
   async createContactSubmission(@Req() req: Request, @Body() data: Record<string, unknown>) {
     return firstValueFrom(
       this.client.send({ cmd: 'create_contact_submission' }, {
-        userId: req.user!.firebaseId,
+        userId: req.user?.firebaseId,
         ...data,
       }),
+    );
+  }
+
+  @Patch('contacts/:id')
+  @Roles('ADMIN')
+  async updateContact(
+    @Param('id') id: string,
+    @Body() data: Record<string, unknown>,
+  ) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'update_contact' }, { id, ...data }),
+    );
+  }
+
+  @Delete('contacts/:id')
+  @Roles('ADMIN')
+  async removeContact(@Param('id') id: string) {
+    return firstValueFrom(
+      this.client.send({ cmd: 'remove_contact' }, { id }),
+    );
+  }
+
+  @Get('contacts')
+  @Roles('ADMIN')
+  async getAllContacts() {
+    return firstValueFrom(
+      this.client.send({ cmd: 'get_all_contacts' }, {}),
     );
   }
 }

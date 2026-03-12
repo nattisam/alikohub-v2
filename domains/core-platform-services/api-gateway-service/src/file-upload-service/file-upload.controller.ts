@@ -2,6 +2,7 @@ import { Controller, Post, UseInterceptors, UploadedFile, Inject, BadRequestExce
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '../common/guard/firebase_auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 import { FileUploadService } from './file-upload.service';
 
 @Controller('upload')
@@ -31,6 +32,7 @@ export class FileUploadController {
     return this.fileUploadService.uploadFile(file, 'image');
   }
 
+  @Public()
   @Post('document')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 50 * 1024 * 1024 } }))
   @ApiConsumes('multipart/form-data')

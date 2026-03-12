@@ -10,7 +10,7 @@ import {
 import { ContactService } from './contact.service';
 import { Prisma } from '../generated/client';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { resolvePayload } from '../common/utils/payload-resolver.util';
+import { resolvePayload, resolveParam } from '../common/utils/payload-resolver.util';
 
 @Controller('contact-submissions')
 export class ContactController {
@@ -25,6 +25,7 @@ export class ContactController {
     return this.contactService.create(resolvePayload(data, payload));
   }
 
+  @MessagePattern({ cmd: 'get_all_contacts' })
   @Get()
   findAll() {
     return this.contactService.findAll();
@@ -35,16 +36,22 @@ export class ContactController {
     return this.contactService.findOne(id);
   }
 
+  @MessagePattern({ cmd: 'update_contact' })
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() data: Prisma.ContactSubmissionUpdateInput,
+    @Payload() payload: any,
   ) {
-    return this.contactService.update(id, data);
+    const targetId = resolveParam(id, payload?.id);
+    const resolvedData = resolvePayload(data, payload);
+    return this.contactService.update(targetId, resolvedData);
   }
 
+  @MessagePattern({ cmd: 'remove_contact' })
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.contactService.remove(id);
+  remove(@Param('id') id: string, @Payload() payload: any) {
+    const targetId = resolveParam(id, payload?.id);
+    return this.contactService.remove(targetId);
   }
 }

@@ -68,7 +68,7 @@ export class CoursesService {
         thumbnail: dto.thumbnail,
         category: dto.category,
         // Automatically set to DRAFT to allow teacher to add content before approval
-        status: CourseStatus.DRAFT,
+        status: dto.status || CourseStatus.DRAFT,
         skills: dto.skills || [],
         conceptsLearned: dto.conceptsLearned || [],
         outcomes: (dto as any).outcomes || [],
@@ -77,6 +77,7 @@ export class CoursesService {
         enrolledNum: dto.enrolledNum || 0,
         rating: dto.rating,
         price: dto.price,
+        priceInUsd: dto.priceInUsd,
         prerequisites: dto.prerequisites || [],
         languages: dto.languages || [],
         instructorId: instructorId,
@@ -149,7 +150,7 @@ export class CoursesService {
           shortDescription: dto.shortDescription,
           longDescription: dto.longDescription,
           category: dto.category,
-          status: CourseStatus.DRAFT, // Start as draft
+          status: dto.status || CourseStatus.DRAFT,
           skills: dto.skills || [],
           conceptsLearned: dto.conceptsLearned || [],
           outcomes: (dto as any).outcomes || [],
@@ -158,6 +159,7 @@ export class CoursesService {
           enrolledNum: dto.enrolledNum || 0,
           rating: dto.rating,
           price: dto.price,
+          priceInUsd: dto.priceInUsd,
           prerequisites: dto.prerequisites || [],
           languages: dto.languages || [],
           instructorId: instructorId,

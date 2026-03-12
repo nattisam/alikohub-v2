@@ -55,6 +55,16 @@ export class ApplicationService {
     });
   }
 
+  async findByCode(applicationCode: string) {
+    const application = await this.prisma.application.findUnique({
+      where: { applicationCode },
+      include: { logs: true },
+    });
+    if (!application)
+      throw new NotFoundException(`Application with code ${applicationCode} not found`);
+    return application;
+  }
+
   async updateStatus(
     id: string,
     newStatus: ApplicationStatus,

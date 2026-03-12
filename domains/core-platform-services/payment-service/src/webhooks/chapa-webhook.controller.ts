@@ -12,23 +12,26 @@ export class ChapaWebhookController {
     private readonly transactionService: TransactionService,
   ) {}
 
-  @MessagePattern('webhook_chapa')
+  @MessagePattern({ cmd: 'webhook_chapa' })
   async handleWebhook(@Payload() payload: { data: any, signature: string }) {
     const { data, signature } = payload;
-    this.logger.log(`Received Chapa webhook for reference: ${data.tx_ref}`);
+    const ref = data.tx_ref || data.reference;
+    this.logger.log(`Received Chapa webhook event for reference: ${ref}`);
     
-    // 1. Verify
+    // Signature can be 'none' if triggered by a redirect (internal)
     const verification = await this.chapaService.verifyWebhook(data, signature);
 
     if (verification.isValid) {
+      this.logger.log(`Webhook verification SUCCESS for ${ref}. Status: ${verification.status}`);
       if (verification.status === 'COMPLETED') {
-        await this.transactionService.handleWebhookSuccess(verification.providerReference, verification.amount);
+        await this.transactionService.handleWebhookSuccess(ref, verification.amount);
       } else {
-        await this.transactionService.handleWebhookFailure(verification.providerReference);
+        await this.transactionService.handleWebhookFailure(ref);
       }
       return { received: true };
     }
 
+    this.logger.warn(`Webhook verification FAILED for ${ref}`);
     return { received: false, error: 'Invalid signature or verification failed' };
   }
 }

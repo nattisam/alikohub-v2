@@ -42,14 +42,23 @@ export class CmsController {
     return this.cmsService.findBySlug(resolveParam(slug, payloadSlug));
   }
 
+  @MessagePattern({ cmd: 'update_page' })
   @Patch('pages/:id')
-  updatePage(@Param('id') id: string, @Body() data: Prisma.PageUpdateInput) {
-    return this.cmsService.updatePage(id, data);
+  updatePage(
+    @Param('id') id: string,
+    @Body() data: Prisma.PageUpdateInput,
+    @Payload() payload: any,
+  ) {
+    const targetId = resolveParam(id, payload?.id);
+    const resolvedData = resolvePayload(data, payload);
+    return this.cmsService.updatePage(targetId, resolvedData);
   }
 
+  @MessagePattern({ cmd: 'remove_page' })
   @Delete('pages/:id')
-  removePage(@Param('id') id: string) {
-    return this.cmsService.removePage(id);
+  removePage(@Param('id') id: string, @Payload() payload: any) {
+    const targetId = resolveParam(id, payload?.id);
+    return this.cmsService.removePage(targetId);
   }
 
   // --- Resources ---
@@ -71,17 +80,23 @@ export class CmsController {
     return this.cmsService.findAllResources(resolveParam(type, payload?.type));
   }
 
+  @MessagePattern({ cmd: 'update_resource' })
   @Patch('resources/:id')
   updateResource(
     @Param('id') id: string,
     @Body() data: Prisma.ResourceUpdateInput,
+    @Payload() payload: any,
   ) {
-    return this.cmsService.updateResource(id, data);
+    const targetId = resolveParam(id, payload?.id);
+    const resolvedData = resolvePayload(data, payload);
+    return this.cmsService.updateResource(targetId, resolvedData);
   }
 
+  @MessagePattern({ cmd: 'remove_resource' })
   @Delete('resources/:id')
-  removeResource(@Param('id') id: string) {
-    return this.cmsService.removeResource(id);
+  removeResource(@Param('id') id: string, @Payload() payload: any) {
+    const targetId = resolveParam(id, payload?.id);
+    return this.cmsService.removeResource(targetId);
   }
 
   // --- Webinars ---
@@ -100,17 +115,23 @@ export class CmsController {
     return this.cmsService.findAllWebinars();
   }
 
+  @MessagePattern({ cmd: 'update_webinar' })
   @Patch('webinars/:id')
   updateWebinar(
     @Param('id') id: string,
     @Body() data: Prisma.WebinarUpdateInput,
+    @Payload() payload: any,
   ) {
-    return this.cmsService.updateWebinar(id, data);
+    const targetId = resolveParam(id, payload?.id);
+    const resolvedData = resolvePayload(data, payload);
+    return this.cmsService.updateWebinar(targetId, resolvedData);
   }
 
+  @MessagePattern({ cmd: 'remove_webinar' })
   @Delete('webinars/:id')
-  removeWebinar(@Param('id') id: string) {
-    return this.cmsService.removeWebinar(id);
+  removeWebinar(@Param('id') id: string, @Payload() payload: any) {
+    const targetId = resolveParam(id, payload?.id);
+    return this.cmsService.removeWebinar(targetId);
   }
 
   // --- Testimonials ---
@@ -129,16 +150,22 @@ export class CmsController {
     return this.cmsService.findAllTestimonials();
   }
 
+  @MessagePattern({ cmd: 'update_testimonial' })
   @Patch('testimonials/:id')
   updateTestimonial(
     @Param('id') id: string,
     @Body() data: Prisma.TestimonialUpdateInput,
+    @Payload() payload: any,
   ) {
-    return this.cmsService.updateTestimonial(id, data);
+    const targetId = resolveParam(id, payload?.id);
+    const resolvedData = resolvePayload(data, payload);
+    return this.cmsService.updateTestimonial(targetId, resolvedData);
   }
 
+  @MessagePattern({ cmd: 'remove_testimonial' })
   @Delete('testimonials/:id')
-  removeTestimonial(@Param('id') id: string) {
-    return this.cmsService.removeTestimonial(id);
+  removeTestimonial(@Param('id') id: string, @Payload() payload: any) {
+    const targetId = resolveParam(id, payload?.id);
+    return this.cmsService.removeTestimonial(targetId);
   }
 }

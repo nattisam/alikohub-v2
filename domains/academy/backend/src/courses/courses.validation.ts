@@ -44,13 +44,14 @@ export const CreateCourseSchema = Joi.object({
       .optional()
       .description('Number of students currently enrolled'),
     rating: Joi.number()
-      .integer()
       .optional()
       .description('Average user rating of the course'),
     price: Joi.number()
-      .integer()
       .optional()
       .description('Cost of the course in minor units (e.g., cents)'),
+    priceInUsd: Joi.number()
+      .optional()
+      .description('Cost of the course in USD for Stripe payments'),
     prerequisites: Joi.array()
       .items(Joi.string())
       .optional()
@@ -122,8 +123,9 @@ export const UpdateCourseSchema = Joi.object({
       .integer()
       .optional()
       .description('The updated enrollment count'),
-    rating: Joi.number().integer().optional().description('The updated rating'),
-    price: Joi.number().integer().optional().description('The updated price'),
+    rating: Joi.number().optional().description('The updated rating'),
+    price: Joi.number().optional().description('The updated price'),
+    priceInUsd: Joi.number().optional().description('The updated price in USD'),
     prerequisites: Joi.array()
       .items(Joi.string())
       .optional()

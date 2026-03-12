@@ -3,6 +3,7 @@ import {
   IsString,
   IsNotEmpty,
   IsInt,
+  IsNumber,
   IsOptional,
   IsEnum,
   IsArray,
@@ -64,9 +65,13 @@ export class CreateCourseDto {
   @IsOptional()
   rating?: number;
 
-  @IsInt()
+  @IsNumber()
   @IsOptional()
   price?: number;
+
+  @IsNumber()
+  @IsOptional()
+  priceInUsd?: number;
 
   @IsArray()
   @IsString({ each: true })

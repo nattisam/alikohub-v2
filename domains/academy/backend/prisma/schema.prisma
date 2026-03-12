@@ -50,7 +50,8 @@ model Course {
   targetLevel      String?
   enrolledNum      Int? // Changed from String? to Int?
   rating           Int?
-  price            Int?
+  price            Float?
+  priceInUsd       Float?
   prerequisites    String[]
   languages        String[]
   cohorts          Cohort[]

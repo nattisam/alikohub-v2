@@ -140,14 +140,18 @@ export class EnrollmentsService {
         // Fetch user details for payment gateway (email is required)
         const userDetails = await this.userService.getUserById(userIdToEnroll);
 
+        const provider = dto.paymentGateway || 'CHAPA';
+        const amount = provider === 'STRIPE' ? (course.priceInUsd || course.price) : course.price;
+        const currency = provider === 'STRIPE' ? 'USD' : 'ETB';
+
         const paymentSession = await lastValueFrom(
           this.paymentClient.send({ cmd: 'initialize_payment' }, {
-            amount: course.price,
-            currency: 'ETB',
+            amount,
+            currency,
             email: userDetails?.email || user.email || '',
             firstName: userDetails?.firstname || '',
             lastName: userDetails?.lastname || '',
-            provider: dto.paymentGateway || 'CHAPA',
+            provider,
             userId: userIdToEnroll,
             purpose: `COURSE_PURCHASE_${course.id}`,
             metadata: {

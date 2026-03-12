@@ -50,9 +50,16 @@ export class BookingController {
     return this.bookingService.findOne(id);
   }
 
+  @MessagePattern({ cmd: 'update_booking' })
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: Prisma.BookingUpdateInput) {
-    return this.bookingService.update(id, data);
+  update(
+    @Param('id') id: string,
+    @Body() data: Prisma.BookingUpdateInput,
+    @Payload() payload: any,
+  ) {
+    const targetId = resolveParam(id, payload?.id);
+    const resolvedData = resolvePayload(data, payload);
+    return this.bookingService.update(targetId, resolvedData);
   }
 
   @Delete(':id')

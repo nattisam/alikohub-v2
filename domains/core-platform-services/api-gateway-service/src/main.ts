@@ -22,6 +22,7 @@ import { RpcExceptionFilter } from './common/filters';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,
+    rawBody: true,
   });
 
   const logger = new Logger('Bootstrap');
@@ -53,6 +54,8 @@ async function bootstrap() {
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3006',
+    'http://116.203.122.210:8080',
+    'http://116.203.122.210:8081',
   ];
 
   app.enableCors({

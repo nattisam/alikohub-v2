@@ -11,7 +11,7 @@ import { AppController } from './app.controller';
       isGlobal: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
+      rootPath: process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
     FileModule,

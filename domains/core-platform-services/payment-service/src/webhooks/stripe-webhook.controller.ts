@@ -12,13 +12,23 @@ export class StripeWebhookController {
     private readonly transactionService: TransactionService,
   ) {}
 
-  @MessagePattern('webhook_stripe')
-  async handleWebhook(@Payload() payload: { data: any, signature: string }) {
+  @MessagePattern({ cmd: 'webhook_stripe' })
+  async handleWebhook(@Payload() payload: any) {
     const { data, signature } = payload;
-    this.logger.log('Processing Stripe webhook via message pattern');
+    this.logger.log(`Processing Stripe webhook. Signature: ${signature ? 'present' : 'missing'}`);
+    
+    let rawData = data;
+    if (data && data.type === 'Buffer') {
+        rawData = Buffer.from(data.data);
+        this.logger.log('Converted Stripe payload from Buffer object');
+    } else if (typeof data === 'string' || Buffer.isBuffer(data)) {
+        this.logger.log(`Stripe payload is ${typeof data === 'string' ? 'string' : 'Buffer'}`);
+    } else {
+        this.logger.log(`Stripe payload type: ${typeof data}. Keys: ${Object.keys(data || {})}`);
+        rawData = JSON.stringify(data);
+    }
 
-    // Signature verification requires the raw body (data should be the buffer/string)
-    const verification = await this.stripeService.verifyWebhook(data, signature);
+    const verification = await this.stripeService.verifyWebhook(rawData, signature);
 
     if (verification.isValid) {
       if (verification.status === 'COMPLETED') {

@@ -78,6 +78,8 @@ services:
       - FILE_UPLOAD_SERVICE_PORT=3009
       - HOME_SERVICE_HOST=home-service
       - HOME_SERVICE_PORT=3010
+      - PAYMENT_SERVICE_HOST=payment-service
+      - PAYMENT_SERVICE_PORT=3012
       - RECAPTCHA_SECRET_KEY=${RECAPTCHA_SECRET_KEY:-6LdnZEMsAAAAAMahTcQqDzW0cC7VxzpiuDpyf3Jx}
     depends_on:
       auth-service:
@@ -242,6 +244,7 @@ services:
       - NODE_ENV=production
       - PORT=3009
       - UPLOAD_PATH=/app/uploads
+      - HOST_URL=http://116.203.122.210:3006
     volumes:
       - uploads_data:/app/uploads
     healthcheck:
@@ -277,7 +280,7 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - STRIPE_SUCCESS_URL=${STRIPE_SUCCESS_URL:-http://localhost:3000/payment/success}
       - STRIPE_CANCEL_URL=${STRIPE_CANCEL_URL:-http://localhost:3000/payment/cancel}
-      - CHAPA_CALLBACK_URL=${CHAPA_CALLBACK_URL:-http://api.consultancy.alikohub.com:3006/payment/chapa/webhook}
+      - CHAPA_CALLBACK_URL=${CHAPA_CALLBACK_URL:-http://api.consultancy.alikohub.com:3006/payments/webhooks/chapa}
     depends_on:
       postgres:
         condition: service_healthy
