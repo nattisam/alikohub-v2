@@ -25,6 +25,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+// import { motion, AnimatePresence } from "framer-motion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const LmsLearn = () => {
@@ -170,329 +173,374 @@ const LmsLearn = () => {
         videoId = url.split("youtu.be/")[1].split("?")[0];
       } else if (url.includes("youtube.com/watch")) {
         videoId = new URL(url).searchParams.get("v") || "";
+      } else if (url.includes("youtube.com/embed/")) {
+        videoId = url.split("youtube.com/embed/")[1].split("?")[0];
       }
     } catch (e) {
       console.error(e);
     }
-    return `https://www.youtube.com/embed/${videoId}`;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`;
+  };
+
+  const getFullUrl = (url?: string) => {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    const baseUrl = "https://api.consultancy.alikohub.com";
+    const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+    return `${baseUrl}${cleanUrl}`;
+  };
+
+  const parseOptions = (options: any): string[] => {
+    if (Array.isArray(options)) return options;
+    if (typeof options === "string") {
+      try {
+        const parsed = JSON.parse(options);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return options
+          .split(",")
+          .map((o: string) => o.trim())
+          .filter(Boolean);
+      }
+    }
+    return [];
   };
 
   const renderActiveContent = () => {
     if (viewMode === "quizzes") {
       return (
-        <div className="mt-8 max-w-4xl mx-auto space-y-12 pb-20">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500 text-white rounded-xl shadow-lg shadow-amber-500/20">
-                <HelpCircle className="w-6 h-6" />
-              </div>
-              <h2 className="text-2xl font-heading font-bold text-slate-900">
-                Lesson Assessments
-              </h2>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setViewMode("overview")}
-              className="rounded-xl border-slate-200 hover:bg-slate-100 transition-colors"
-            >
-              Back to Overview
-            </Button>
-          </div>
+        <div className="mx-auto w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <button
+            onClick={() => setViewMode("overview")}
+            className="mb-6 flex items-center gap-2 text-sm font-semibold text-slate-400 transition-all hover:text-primary group"
+          >
+            <ChevronLeft
+              size={16}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            Back to Overview
+          </button>
 
-          {activeLesson?.exercises?.map((exercise, eIdx) => (
-            <div
-              key={exercise.id}
-              className="bg-white/80 backdrop-blur-md rounded-2xl p-8 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
-            >
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 to-amber-600" />
-              <div className="flex items-center justify-between mb-6">
+          <div className="rounded-[32px] bg-white p-8 sm:p-12 shadow-card border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32" />
+
+            <div className="relative z-10">
+              <div className="mb-10 flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 shadow-sm border border-amber-100">
+                  <HelpCircle size={24} />
+                </div>
                 <div>
-                  <h3 className="text-xl font-heading font-bold text-slate-900 leading-tight">
-                    {eIdx + 1}. {exercise.title}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-bold text-amber-700 uppercase tracking-widest">
-                      {exercise.points} Points
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      • {exercise.type?.replace("_", " ")}
-                    </span>
-                  </div>
+                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-heading">
+                    Knowledge Check
+                  </h1>
+                  <p className="text-sm text-slate-500 font-medium mt-1">
+                    Complete all assessments to validate your learning.
+                  </p>
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-50/80 rounded-xl border border-slate-100/50 mb-8 shadow-inner">
-                <p className="text-lg font-medium text-slate-800 leading-relaxed">
-                  {exercise.question}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {exercise.options?.map((option, idx) => {
-                  const isSelected = selectedAnswers[exercise.id] === option;
+              <div className="space-y-12">
+                {activeLesson?.exercises?.map((exercise, eIdx) => {
+                  const options = parseOptions(exercise.options);
                   return (
-                    <button
-                      key={idx}
-                      onClick={() => handleOptionSelect(exercise.id, option)}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-4 group ${
-                        isSelected
-                          ? "border-amber-500 bg-amber-50/50 shadow-sm"
-                          : "border-slate-100 hover:border-amber-300 hover:bg-slate-50"
-                      }`}
+                    <div
+                      key={exercise.id}
+                      className="relative pt-10 border-t border-slate-100 first:border-0 first:pt-0"
                     >
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-colors ${
-                          isSelected
-                            ? "bg-amber-500 text-white"
-                            : "bg-white border border-slate-200 text-slate-400 group-hover:border-amber-300 group-hover:text-amber-500"
-                        }`}
-                      >
-                        {String.fromCharCode(65 + idx)}
+                      <div className="mb-6">
+                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                          Question {eIdx + 1}
+                        </span>
+                        <h2 className="mt-4 text-xl font-bold text-slate-900 leading-snug">
+                          {exercise.question}
+                        </h2>
                       </div>
-                      <span
-                        className={`font-medium ${
-                          isSelected
-                            ? "text-amber-900"
-                            : "text-slate-600 group-hover:text-slate-900"
-                        }`}
+
+                      <RadioGroup
+                        value={selectedAnswers[exercise.id]}
+                        onValueChange={(v) =>
+                          handleOptionSelect(exercise.id, v)
+                        }
+                        className="flex flex-col gap-3"
                       >
-                        {option}
-                      </span>
-                    </button>
+                        {options.map((option, idx) => {
+                          const isSelected =
+                            selectedAnswers[exercise.id] === option;
+                          return (
+                            <Label
+                              key={idx}
+                              htmlFor={`q${exercise.id}-o${idx}`}
+                              className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-5 transition-all duration-300 ${
+                                isSelected
+                                  ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                                  : "border-slate-100 bg-slate-50/30 hover:bg-slate-50 hover:border-slate-200"
+                              }`}
+                            >
+                              <RadioGroupItem
+                                value={option}
+                                id={`q${exercise.id}-o${idx}`}
+                                className="border-slate-300 data-[state=checked]:border-primary"
+                              />
+                              <span
+                                className={`flex-1 text-base font-semibold ${isSelected ? "text-slate-900" : "text-slate-600"}`}
+                              >
+                                {option}
+                              </span>
+                            </Label>
+                          );
+                        })}
+                      </RadioGroup>
+
+                      <div className="mt-8 flex justify-end">
+                        <Button
+                          onClick={() => handleExerciseSubmit(exercise.id)}
+                          disabled={
+                            submitExerciseMutation.isPending ||
+                            !selectedAnswers[exercise.id]
+                          }
+                          className="rounded-xl px-8 h-11 bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-200"
+                        >
+                          {submitExerciseMutation.isPending
+                            ? "Submitting..."
+                            : "Submit Answer"}
+                        </Button>
+                      </div>
+                    </div>
                   );
                 })}
-              </div>
 
-              <div className="mt-8 flex justify-end">
-                <Button
-                  onClick={() => handleExerciseSubmit(exercise.id)}
-                  disabled={submitExerciseMutation.isPending}
-                  className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-all active:scale-95"
-                >
-                  {submitExerciseMutation.isPending
-                    ? "Submitting..."
-                    : `Submit Question ${eIdx + 1}`}
-                </Button>
+                {!activeLesson?.exercises?.length && (
+                  <div className="text-center py-20 bg-slate-50/50 rounded-[24px] border border-dashed border-slate-200">
+                    <HelpCircle className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
+                      No assessments for this lesson
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          ))}
-
-          {!activeLesson?.exercises?.length && (
-            <div className="text-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-sm">
-              <HelpCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium pb-2 text-lg">
-                No assessments found for this lesson.
-              </p>
-              <p className="text-slate-400 text-sm">
-                Once exercises are added, they will appear here.
-              </p>
-            </div>
-          )}
+          </div>
         </div>
       );
     }
 
     if (viewMode === "materials") {
       return (
-        <div className="mt-8 max-w-4xl mx-auto space-y-12 pb-20">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20">
-                <PlayCircle className="w-6 h-6" />
+        <div className="mx-auto w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <button
+            onClick={() => setViewMode("overview")}
+            className="mb-6 flex items-center gap-2 text-sm font-semibold text-slate-400 transition-all hover:text-primary group"
+          >
+            <ChevronLeft
+              size={16}
+              className="transition-transform group-hover:-translate-x-1"
+            />
+            Back to Overview
+          </button>
+
+          <div className="rounded-[32px] bg-white p-8 sm:p-12 shadow-card border border-slate-100">
+            <div className="mb-10 flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm border border-primary/10">
+                <PlayCircle size={24} />
               </div>
-              <h2 className="text-2xl font-heading font-bold text-slate-900">
-                Learning Materials
-              </h2>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-heading">
+                  Learning Materials
+                </h1>
+                <p className="text-sm text-slate-500 font-medium mt-1">
+                  Access all lesson videos and downloadable resources.
+                </p>
+              </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setViewMode("overview")}
-              className="rounded-xl border-slate-200 hover:bg-slate-100 transition-colors"
-            >
-              Back to Overview
-            </Button>
-          </div>
 
-          {activeLesson?.contents?.map((content, cIdx) => (
-            <div
-              key={content.id}
-              className="bg-white/80 backdrop-blur-md rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden"
-            >
-              <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shadow-inner">
-                    {cIdx + 1}
+            <div className="space-y-12">
+              {activeLesson?.contents?.map((content, cIdx) => (
+                <div
+                  key={content.id}
+                  className="pt-10 border-t border-slate-100 first:border-0 first:pt-0"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+                      Material {cIdx + 1}
+                    </span>
+                    <h3 className="text-xl font-bold text-slate-900 leading-snug">
+                      {content.title}
+                    </h3>
                   </div>
-                  <h3 className="text-xl font-heading font-bold text-slate-900">
-                    {content.title}
-                  </h3>
-                </div>
-              </div>
 
-              <div className="p-6 md:p-8 bg-slate-50/50">
-                {content.type === "VIDEO" ? (
-                  <div className="w-full rounded-2xl overflow-hidden bg-black shadow-2xl relative border border-slate-200/50">
-                    {isYouTube(content.url) ? (
-                      <div className="aspect-video w-full">
+                  {content.type === "VIDEO" ? (
+                    <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-2xl ring-1 ring-slate-200/50">
+                      {isYouTube(content.url) ? (
                         <iframe
                           className="w-full h-full border-0"
                           src={getYouTubeEmbedUrl(content.url || "")}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                         ></iframe>
-                      </div>
-                    ) : (
-                      <div className="aspect-video w-full">
+                      ) : (
                         <video
-                          src={content.url}
+                          src={getFullUrl(content.url)}
                           controls
+                          controlsList="nodownload"
                           className="w-full h-full object-contain"
                         />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-10 text-center bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center">
-                    <div className="p-5 bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 rounded-full w-fit mx-auto mb-6 shadow-inner">
-                      <FileText className="w-10 h-10" />
+                      )}
                     </div>
-                    <h4 className="text-slate-800 font-bold text-xl mb-2">
-                      Resource Document
-                    </h4>
-                    <p className="text-slate-500 mb-8 font-medium max-w-md">
-                      This material is ready for download or direct viewing.
-                      Click below to access.
-                    </p>
-                    <Button
-                      asChild
-                      className="bg-slate-900 text-white hover:bg-slate-800 font-bold px-10 h-12 rounded-xl shadow-lg shadow-slate-900/10 transition-transform active:scale-95"
-                    >
-                      <a
-                        href={content.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                  ) : (
+                    <div className="flex items-center justify-between p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm group-hover:border-primary/20 group-hover:text-primary transition-all">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">
+                            {content.title}
+                          </p>
+                          <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+                            {content.type || "Document"} Resource
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="bg-white rounded-xl px-5 h-10 font-bold border-slate-200 hover:border-primary hover:text-primary shadow-sm"
                       >
-                        Open {content.type} Resource
-                      </a>
-                    </Button>
-                  </div>
-                )}
-              </div>
+                        <a
+                          href={getFullUrl(content.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View Resource
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
 
-          {!activeLesson?.contents?.length && (
-            <div className="text-center py-20 bg-white/50 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-sm">
-              <Video className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium pb-2 text-lg">
-                No materials found for this lesson.
-              </p>
-              <p className="text-slate-400 text-sm">
-                Materials will appear here once the instructor uploads them.
-              </p>
-            </div>
-          )}
+            {!activeLesson?.contents?.length && (
+              <div className="text-center py-20 bg-slate-50/50 rounded-[24px] border border-dashed border-slate-200">
+                <Video className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
+                  No materials for this lesson
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       );
     }
 
     // Default: Lesson Overview
     return (
-      <div className="mt-8 max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl p-10 md:p-14 border border-slate-100 shadow-sm text-center relative overflow-hidden">
-          {/* Decorative Pattern */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+      <div className="py-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <div className="mx-auto w-full max-w-4xl rounded-[40px] bg-white p-10 sm:p-16 shadow-card border border-slate-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
 
-          <div className="relative z-10">
-            <div
-              className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg ${
-                activeLesson?.type === "VIDEO"
-                  ? "bg-blue-500 text-white shadow-blue-100"
-                  : "bg-emerald-500 text-white shadow-emerald-100"
-              }`}
-            >
-              {activeLesson?.type === "VIDEO" ? (
-                <Video className="w-8 h-8" />
-              ) : (
-                <FileText className="w-8 h-8" />
-              )}
+          <div className="flex flex-col items-center text-center relative z-10">
+            <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[32px] bg-slate-50 border border-slate-100 shadow-sm rotate-3 group-hover:rotate-0 transition-all">
+              <PlayCircle className="w-10 h-10 text-primary" />
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-heading font-bold text-slate-900 mb-4 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 font-heading">
               {activeLesson?.title}
             </h1>
-            <p className="text-slate-500 text-base md:text-lg font-medium max-w-2xl mx-auto mb-10">
-              Welcome to this lesson! Explore the materials and complete the
-              assessments to master this topic.
-            </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
-              <div
-                onClick={() => setViewMode("materials")}
-                className="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-300 hover:bg-white transition-all cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Learning Materials
-                  </p>
-                  <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                </div>
-                <div className="space-y-3">
-                  {activeLesson?.contents?.slice(0, 3).map((c) => (
-                    <div key={c.id} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded bg-white flex items-center justify-center border border-slate-100">
-                        <PlayCircle className="w-3 h-3 text-slate-400" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-600 truncate">
-                        {c.title}
+            <div className="mt-4 flex items-center gap-3">
+              <span className="px-3 py-1 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200">
+                Lesson {currentLessonIndex + 1}
+              </span>
+              <div className="h-1 w-1 rounded-full bg-slate-300" />
+              <span className="text-sm font-bold text-primary uppercase tracking-wider">
+                {activeLesson?.type} Content
+              </span>
+            </div>
+
+            <p className="mt-8 max-w-2xl text-lg text-slate-500 font-medium leading-relaxed">
+              Ready to dive in? Explore the rich learning materials and test
+              your mastery with interactive assessments designed for this
+              lesson.
+            </p>
+          </div>
+
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-6">
+              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">
+                Learning Materials
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                {activeLesson?.contents?.map((content) => (
+                  <button
+                    key={content.id}
+                    onClick={() => setViewMode("materials")}
+                    className="flex items-center gap-4 rounded-3xl border border-slate-100 p-5 text-left bg-white shadow-inset hover:bg-slate-50 transition-all hover:shadow-card-hover group"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-white transition-colors border border-transparent group-hover:border-slate-100">
+                      <PlayCircle className="w-6 h-6 text-slate-500 group-hover:text-primary transition-colors" />
+                    </div>
+
+                    <div>
+                      <span className="block text-base font-bold text-slate-800 group-hover:text-primary transition-colors truncate max-w-[180px]">
+                        {content.title}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Click to View
                       </span>
                     </div>
-                  ))}
-                  {(activeLesson?.contents?.length || 0) > 3 && (
-                    <p className="text-[10px] font-bold text-accent">
-                      + {activeLesson!.contents!.length - 3} more items
-                    </p>
-                  )}
-                  {!activeLesson?.contents?.length && (
-                    <p className="text-xs text-slate-400 font-medium italic">
+                  </button>
+                ))}
+
+                {!activeLesson?.contents?.length && (
+                  <div className="p-6 rounded-3xl border border-dashed border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center text-center">
+                    <Video className="w-8 h-8 text-slate-200 mb-2" />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
                       No materials yet
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div
-                onClick={() => setViewMode("quizzes")}
-                className="p-6 rounded-2xl bg-amber-50/30 border border-amber-100/50 hover:border-amber-300 hover:bg-white transition-all cursor-pointer group"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest">
-                    Assessments
-                  </p>
-                  <ChevronRight className="w-3 h-3 text-amber-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
-                </div>
-                <div className="space-y-3">
-                  {activeLesson?.exercises?.slice(0, 3).map((e) => (
-                    <div key={e.id} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded bg-white flex items-center justify-center border border-amber-100">
-                        <HelpCircle className="w-3 h-3 text-amber-500" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-600 truncate">
-                        {e.title}
+            <div className="space-y-6">
+              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">
+                Assessments
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                {activeLesson?.exercises?.map((exercise) => (
+                  <button
+                    key={exercise.id}
+                    onClick={() => setViewMode("quizzes")}
+                    className="flex items-center gap-4 rounded-3xl border border-slate-100 p-5 text-left bg-white shadow-inset hover:bg-slate-50 transition-all hover:shadow-card-hover relative overflow-hidden group"
+                  >
+                    <div className="absolute left-0 top-0 h-full w-1 bg-amber-400 opacity-50 transition-opacity group-hover:opacity-100" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 group-hover:bg-white transition-colors border border-transparent group-hover:border-amber-100">
+                      <HelpCircle className="w-6 h-6 text-amber-600" />
+                    </div>
+
+                    <div>
+                      <span className="block text-base font-bold text-slate-800 transition-colors truncate max-w-[180px]">
+                        {exercise.title || "Lesson Quiz"}
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
+                        Start Assessment
                       </span>
                     </div>
-                  ))}
-                  {(activeLesson?.exercises?.length || 0) > 3 && (
-                    <p className="text-[10px] font-bold text-amber-600">
-                      + {activeLesson!.exercises!.length - 3} more quizzes
-                    </p>
-                  )}
-                  {!activeLesson?.exercises?.length && (
-                    <p className="text-xs text-slate-400 font-medium italic">
+                  </button>
+                ))}
+
+                {!activeLesson?.exercises?.length && (
+                  <div className="p-6 rounded-3xl border border-dashed border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center text-center">
+                    <HelpCircle className="w-8 h-8 text-slate-200 mb-2" />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
                       No quizzes yet
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -504,66 +552,70 @@ const LmsLearn = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <div className="h-16 bg-slate-900 flex items-center justify-between px-4 md:px-8 border-b border-white/10 shrink-0">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 text-white hover:bg-white/10 rounded-lg md:hidden"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => navigate("/lms/my-learning")}
-            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm font-bold hidden sm:inline">
-              Back to Dashboard
-            </span>
-          </button>
-          <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block" />
-          <h1 className="text-white font-bold text-sm md:text-base truncate max-w-[200px] md:max-w-md">
-            {course.title}
-          </h1>
-        </div>
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shrink-0">
+        <div className="mx-auto grid max-w-screen-2xl grid-cols-3 items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          {/* Left */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 md:hidden"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-        <div className="hidden md:flex items-center gap-8 flex-1 justify-center px-20">
-          <div className="w-full max-w-xs">
-            <div className="flex justify-between text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5">
-              <span>Course Progress</span>
-              <span>{progress}%</span>
+            <button
+              onClick={() => navigate("/lms/my-learning")}
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back to Dashboard</span>
+            </button>
+          </div>
+
+          {/* Center Title */}
+          <div className="text-center text-sm sm:text-base font-semibold text-foreground truncate">
+            {course.title}
+          </div>
+
+          {/* Right Controls */}
+          <div className="flex items-center justify-end gap-4">
+            {/* Progress */}
+            <div className="hidden sm:flex items-center gap-3">
+              <div className="h-2 w-28 overflow-hidden rounded-full bg-muted lg:w-40">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+
+              <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                {progress}%
+              </span>
             </div>
-            <Progress
-              value={progress}
-              className="h-1 bg-white/10"
-              indicatorClassName="bg-accent"
-            />
+
+            {/* Complete Button */}
+            <Button
+              onClick={handleMarkComplete}
+              disabled={markCompleteMutation.isPending}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Mark as Complete</span>
+            </Button>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            className="bg-accent hover:bg-amber-light text-slate-900 font-bold rounded-xl h-10 px-6 sm:px-8 shadow-lg shadow-accent/20"
-            onClick={handleMarkComplete}
-            disabled={markCompleteMutation.isPending}
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Mark as Complete</span>
-            <span className="sm:hidden text-xs">Complete</span>
-          </Button>
-        </div>
-      </div>
+      </header>
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* Sidebar */}
         <div
           className={`
-          fixed md:relative z-30 w-80 bg-white border-r border-slate-100 flex flex-col h-[calc(100vh-64px)] transition-all duration-300
+          fixed md:relative z-30 w-80 bg-white border-r border-slate-100 flex flex-col transition-all duration-300
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:w-0 md:opacity-0 md:invisible"}
         `}
         >
           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <h2 className="text-sm font-heading font-bold text-slate-900 uppercase tracking-widest">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Course Curriculum
             </h2>
             <button
@@ -574,103 +626,81 @@ const LmsLearn = () => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
             {course.modules?.map((module, mIdx) => (
-              <div key={module.id} className="space-y-2">
-                <div className="px-3 flex items-center justify-between group">
-                  <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    <span className="w-5 h-5 rounded bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
-                      {mIdx + 1}
-                    </span>
-                    {module.title}
-                  </h3>
-                </div>
+              <div key={module.id} className="space-y-4">
+                <h3 className="flex items-center gap-3 text-sm font-semibold text-foreground">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-medium text-slate-500">
+                    {mIdx + 1}
+                  </span>
+                  {module.title}
+                </h3>
 
-                <div className="space-y-1">
+                <ul className="ml-3 flex flex-col gap-1 border-l border-slate-100 pl-5">
                   {module.lessons?.map((lesson) => {
                     const isActive = activeLessonId === lesson.id;
-                    const isCompleted = false; // We use total progress tracking now
-
                     return (
-                      <button
-                        key={lesson.id}
-                        onClick={() => {
-                          setActiveLessonId(lesson.id);
-                          if (window.innerWidth < 768) setIsSidebarOpen(false);
-                        }}
-                        className={`
-                          w-full flex items-center justify-between p-3 rounded-xl transition-all text-left
-                          ${
+                      <li key={lesson.id} className="relative">
+                        <button
+                          onClick={() => {
+                            setActiveLessonId(lesson.id);
+                            if (window.innerWidth < 768)
+                              setIsSidebarOpen(false);
+                          }}
+                          className={`group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-200 ${
                             isActive
-                              ? "bg-slate-800 text-white shadow-md translate-x-1"
-                              : "text-slate-600 hover:bg-slate-50"
-                          }
-                        `}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-xl border ${
-                              isActive
-                                ? "bg-white/10 border-white/10"
-                                : isCompleted
-                                  ? "bg-emerald-50 border-emerald-100"
-                                  : "bg-white border-slate-100 shadow-xs"
-                            }`}
+                              ? "text-primary"
+                              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                          }`}
+                        >
+                          <span
+                            className={`${isActive ? "text-primary" : "text-slate-400 group-hover:text-slate-600"}`}
                           >
-                            {isCompleted ? (
-                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                            ) : lesson.type === "VIDEO" ? (
-                              <Video className="w-3.5 h-3.5" />
+                            {lesson.type === "VIDEO" ? (
+                              <PlayCircle size={16} />
                             ) : (
-                              <FileText className="w-3.5 h-3.5" />
+                              <FileText size={16} />
                             )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold leading-tight mb-0.5">
-                              {lesson.title}
-                            </p>
-                            <p
-                              className={`text-[9px] font-bold uppercase tracking-widest ${isActive ? "text-white/40" : "text-slate-400"}`}
-                            >
-                              {lesson.type || "LESSON"}
-                            </p>
-                          </div>
-                        </div>
-                        {isCompleted && (
-                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          </span>
+                          <span className="flex-1 truncate">
+                            {lesson.title}
+                          </span>
+                          <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                            {lesson.type}
+                          </span>
+                        </button>
+                        {isActive && (
+                          <div className="absolute inset-0 -z-10 rounded-md bg-primary/5" />
                         )}
-                      </button>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               </div>
             ))}
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-12 relative flex flex-col items-center">
-          {/* Navigation Overlays */}
-          <div className="max-w-[1200px] w-full flex-1">
-            {renderActiveContent()}
-          </div>
+        <div className="flex-1 overflow-y-auto bg-background p-4 md:p-8 relative flex flex-col items-center">
+          <div className="max-w-6xl w-full flex-1">{renderActiveContent()}</div>
 
-          <div className="mt-auto pt-8 flex items-center gap-4 w-full max-w-4xl justify-between">
+          <div className="mt-8 flex items-center justify-between w-full max-w-4xl border-t border-slate-100 pt-6">
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={handlePrev}
               disabled={currentLessonIndex === 0}
-              className="rounded-xl h-11 px-6 font-bold border border-transparent hover:border-slate-200"
+              className="rounded-lg h-10 px-4 text-sm font-medium"
             >
-              <ChevronLeft className="w-5 h-5 mr-1" /> Previous
+              <ChevronLeft className="w-4 h-4 mr-2" /> Previous
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={handleNext}
               disabled={currentLessonIndex === flatLessons.length - 1}
-              className="rounded-xl h-11 px-6 font-bold border border-transparent hover:border-slate-200"
+              className="rounded-lg h-10 px-4 text-sm font-medium"
             >
-              Next <ChevronRight className="w-5 h-5 ml-1" />
+              Next <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>

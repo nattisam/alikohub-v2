@@ -82,6 +82,8 @@ export const useEnrollments = () => {
   return useQuery({
     queryKey: ["enrollments"],
     queryFn: () => academyService.getMyEnrollments(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -112,6 +114,9 @@ export const useNotifications = () => {
   return useQuery({
     queryKey: ["notifications"],
     queryFn: () => academyService.getNotifications(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000, // Poll every 5 minutes
   });
 };
 
@@ -141,6 +146,8 @@ export const useStudentAnalytics = () => {
   return useQuery({
     queryKey: ["student-analytics"],
     queryFn: () => academyService.getStudentAnalytics(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -148,6 +155,8 @@ export const useStudentDashboard = () => {
   return useQuery({
     queryKey: ["student-dashboard"],
     queryFn: () => academyService.getStudentDashboard(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -207,6 +216,8 @@ export const useInstructorStats = () => {
   return useQuery({
     queryKey: ["instructor-stats"],
     queryFn: () => academyService.instructor.getStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -215,6 +226,8 @@ export const useCourseAnalytics = (courseId: string) => {
     queryKey: ["course-analytics", courseId],
     queryFn: () => academyService.instructor.getCourseAnalytics(courseId),
     enabled: !!courseId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -225,6 +238,8 @@ export const useTeachingSchedules = (params?: {
   return useQuery({
     queryKey: ["teaching-schedules", params],
     queryFn: () => academyService.instructor.getTeachingSchedules(params),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

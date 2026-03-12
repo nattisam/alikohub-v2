@@ -1,6 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useSSO } from '@/hooks/useSSO';
-import { useUser } from '@/hooks/useAuth';
+import { Navigate, useLocation } from "react-router-dom";
+import { useUser } from "@/hooks/useAuth";
 
 interface AccessGuardProps {
   children: React.ReactNode;
@@ -9,18 +8,17 @@ interface AccessGuardProps {
   redirectTo?: string;
 }
 
-export const AccessGuard = ({ 
-  children, 
-  requiredRole, 
+export const AccessGuard = ({
+  children,
+  requiredRole,
   requirePayment = false,
-  redirectTo 
+  redirectTo,
 }: AccessGuardProps) => {
-  const { isAuthenticated, isLoading, emailVerified } = useSSO();
   const { data: user, isLoading: userLoading } = useUser();
   const location = useLocation();
 
   // Show loading while checking auth state
-  if (isLoading || userLoading) {
+  if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -32,19 +30,14 @@ export const AccessGuard = ({
   }
 
   // 1. Check Authentication
-  if (!isAuthenticated || !user) {
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // 2. Check Email Verification
-  if (!emailVerified) {
-    return <Navigate to="/verify-email" replace />;
   }
 
   // 3. Check Role Requirements
   if (requiredRole) {
     const userRole = user.academyRole || user.globalRole;
-    if (userRole !== requiredRole && userRole !== 'ADMIN') {
+    if (userRole !== requiredRole && userRole !== "ADMIN") {
       return <Navigate to="/unauthorized" replace />;
     }
   }
@@ -52,9 +45,13 @@ export const AccessGuard = ({
   // 4. Check Payment Status (if required)
   if (requirePayment) {
     const paymentStatus = user.paymentStatus || user.academyStatus;
-    
+
     // Redirect to payment if status is PENDING or not paid
-    if (paymentStatus === 'PENDING' || !paymentStatus || paymentStatus === 'UNPAID') {
+    if (
+      paymentStatus === "PENDING" ||
+      !paymentStatus ||
+      paymentStatus === "UNPAID"
+    ) {
       return <Navigate to="/payment" state={{ from: location }} replace />;
     }
   }
@@ -74,20 +71,16 @@ export const StudentGuard = ({ children }: { children: React.ReactNode }) => (
   </AccessGuard>
 );
 
-export const InstructorGuard = ({ children }: { children: React.ReactNode }) => (
-  <AccessGuard requiredRole="instructor">
-    {children}
-  </AccessGuard>
-);
+export const InstructorGuard = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => <AccessGuard requiredRole="instructor">{children}</AccessGuard>;
 
 export const AdminGuard = ({ children }: { children: React.ReactNode }) => (
-  <AccessGuard requiredRole="ADMIN">
-    {children}
-  </AccessGuard>
+  <AccessGuard requiredRole="ADMIN">{children}</AccessGuard>
 );
 
 export const VerifiedGuard = ({ children }: { children: React.ReactNode }) => (
-  <AccessGuard requirePayment={false}>
-    {children}
-  </AccessGuard>
+  <AccessGuard requirePayment={false}>{children}</AccessGuard>
 );

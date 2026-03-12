@@ -8,7 +8,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useSSO } from "@/hooks/useSSO";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -43,24 +42,15 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import PublicRoute from "./components/PublicRoute";
 
-const queryClient = new QueryClient();
-
-function SSOProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, user } = useSSO();
-  const queryClient = useQueryClient();
-
-  React.useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated && user) {
-        queryClient.setQueryData(["user"], user);
-      } else {
-        queryClient.setQueryData(["user"], null);
-      }
-    }
-  }, [isAuthenticated, isLoading, user, queryClient]);
-
-  return <>{children}</>;
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Disable automatic refetch on window focus
+      retry: 1, // Limit retries to prevent flooding the backend on errors
+      staleTime: 30 * 1000, // 30 seconds default stale time
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -68,85 +58,80 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <SSOProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
 
-            {/* Public Auth Routes (Redirect if logged in) */}
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Route>
+          {/* Public Auth Routes (Redirect if logged in) */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
 
-            {/* Email Verification Route */}
-            <Route path="/verify-email" element={<VerifyEmail />} />
+          {/* Email Verification Route */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
-            {/* Payment Success Route */}
-            <Route path="/payment/success" element={<PaymentSuccess />} />
+          {/* Payment Success Route */}
+          <Route path="/payment/success" element={<PaymentSuccess />} />
 
-            {/* Admin Routes */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/applications" element={<AdminDashboard />} />
-              <Route path="/admin/courses" element={<AdminDashboard />} />
-              <Route path="/admin/analytics" element={<AdminDashboard />} />
-              <Route
-                path="/admin/applications/:id"
-                element={<TeacherApplicationDetail />}
-              />
-            </Route>
+          {/* Admin Routes */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/applications" element={<AdminDashboard />} />
+            <Route path="/admin/courses" element={<AdminDashboard />} />
+            <Route path="/admin/analytics" element={<AdminDashboard />} />
+            <Route
+              path="/admin/applications/:id"
+              element={<TeacherApplicationDetail />}
+            />
+          </Route>
 
-            {/* Protected LMS Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/apply-instructor" element={<ApplyInstructor />} />
-              <Route path="/lms" element={<LmsDashboard />} />
-              <Route path="/instructor/lms" element={<InstructorDashboard />} />
-              <Route
-                path="/instructor/lms/courses"
-                element={<InstructorCourses />}
-              />
-              <Route
-                path="/instructor/lms/courses/new"
-                element={<InstructorCreateCourse />}
-              />
-              <Route
-                path="/instructor/lms/courses/:id"
-                element={<InstructorCourseEditor />}
-              />
-              <Route
-                path="/instructor/lms/analytics"
-                element={<InstructorAnalytics />}
-              />
-              <Route
-                path="/instructor/lms/schedules"
-                element={<InstructorSchedules />}
-              />
-              <Route
-                path="/instructor/lms/settings"
-                element={<InstructorSettings />}
-              />
-              <Route path="/lms/explore" element={<LmsExplore />} />
-              <Route path="/lms/my-learning" element={<LmsMyLearning />} />
-              <Route
-                path="/lms/certifications"
-                element={<LmsCertifications />}
-              />
-              <Route path="/lms/profile" element={<LmsProfile />} />
-              <Route path="/lms/photo" element={<LmsPhoto />} />
-              <Route
-                path="/lms/account-security"
-                element={<LmsAccountSecurity />}
-              />
-              <Route path="/lms/subscriptions" element={<LmsSubscriptions />} />
-              <Route path="/lms/notifications" element={<LmsNotifications />} />
-              <Route path="/lms/settings" element={<LmsSettings />} />
-              <Route path="/lms/course/:id" element={<CourseDetails />} />
-              <Route path="/lms/learn/:id" element={<LmsLearn />} />
-            </Route>
-          </Routes>
-        </SSOProvider>
+          {/* Protected LMS Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/apply-instructor" element={<ApplyInstructor />} />
+            <Route path="/lms" element={<LmsDashboard />} />
+            <Route path="/instructor/lms" element={<InstructorDashboard />} />
+            <Route
+              path="/instructor/lms/courses"
+              element={<InstructorCourses />}
+            />
+            <Route
+              path="/instructor/lms/courses/new"
+              element={<InstructorCreateCourse />}
+            />
+            <Route
+              path="/instructor/lms/courses/:id"
+              element={<InstructorCourseEditor />}
+            />
+            <Route
+              path="/instructor/lms/analytics"
+              element={<InstructorAnalytics />}
+            />
+            <Route
+              path="/instructor/lms/schedules"
+              element={<InstructorSchedules />}
+            />
+            <Route
+              path="/instructor/lms/settings"
+              element={<InstructorSettings />}
+            />
+            <Route path="/lms/explore" element={<LmsExplore />} />
+            <Route path="/lms/my-learning" element={<LmsMyLearning />} />
+            <Route path="/lms/certifications" element={<LmsCertifications />} />
+            <Route path="/lms/profile" element={<LmsProfile />} />
+            <Route path="/lms/photo" element={<LmsPhoto />} />
+            <Route
+              path="/lms/account-security"
+              element={<LmsAccountSecurity />}
+            />
+            <Route path="/lms/subscriptions" element={<LmsSubscriptions />} />
+            <Route path="/lms/notifications" element={<LmsNotifications />} />
+            <Route path="/lms/settings" element={<LmsSettings />} />
+            <Route path="/lms/course/:id" element={<CourseDetails />} />
+            <Route path="/lms/learn/:id" element={<LmsLearn />} />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

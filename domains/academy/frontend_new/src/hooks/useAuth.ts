@@ -79,33 +79,43 @@ export const useUser = () => {
     queryKey: ["user"],
     queryFn: async () => {
       const { accessToken, user: localUser } = authService.getSession();
+
       if (!accessToken) return null;
+
+      // If we have a local user, return it immediately to avoid blocking UI
+      // Background revalidation will happen if needed
       try {
         const remoteUser = await authService.getProfile();
 
-        let mergedUser = { ...remoteUser };
-
-        // Fetch academy status to complement profile data, similar to old frontend
+        // Background sync: update academy status if possible
         try {
           const academyStatus = await authService.getUserAcademyStatus(
             remoteUser.id.toString(),
           );
-          mergedUser = { ...mergedUser, ...academyStatus };
-        } catch (statusError) {
-          console.error("Failed to fetch academy status:", statusError);
-        }
+          const mergedUser = { ...remoteUser, ...academyStatus };
 
-        // Sync back to localStorage
-        const refreshToken = localStorage.getItem("refreshToken") || "";
-        authService.setSession(accessToken, refreshToken, mergedUser);
-        return mergedUser;
+          // Sync back to localStorage
+          const refreshToken = localStorage.getItem("refreshToken") || "";
+          authService.setSession(accessToken, refreshToken, mergedUser);
+          return mergedUser;
+        } catch (statusError) {
+          return remoteUser;
+        }
       } catch (e) {
-        console.error("Failed to fetch remote profile:", e);
-        return localUser;
+        console.error(
+          "Failed to fetch remote profile, using local session:",
+          e,
+        );
+        if (localUser) return localUser;
+        throw e; // If no local user exists and remote fails, then we are truly unauthenticated
       }
     },
-    staleTime: 30000, // Trust cache for 30s to prevent 429s on rapid navigation
-    retry: 1,
+    placeholderData: () => {
+      const { user } = authService.getSession();
+      return user || undefined;
+    },
+    staleTime: 60000,
+    retry: false, // Don't retry indefinitely on timeouts
   });
 };
 

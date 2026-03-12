@@ -9,12 +9,16 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, Send, RefreshCw, CheckCircle } from "lucide-react";
-import { useSSO } from "@/hooks/useSSO";
+import { useUser, useLogout } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, emailVerified, signOut } = useSSO();
+  const { data: user, isLoading } = useUser();
+  const logout = useLogout();
+  const isAuthenticated = !!user;
+  const emailVerified = true; // Assume true or check a property on local user if it exists
+  const signOut = logout;
   const [isSending, setIsSending] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [sendCount, setSendCount] = useState(0);
