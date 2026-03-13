@@ -104,10 +104,10 @@ const AdminEvents = () => {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold font-display text-foreground">
-            {isAdmin() ? "Event Administration" : "My Events"}
+            {isAdmin() || isContentManager() ? "Event Administration" : "My Events"}
           </h1>
           <p className="text-sm text-muted-foreground font-body mt-1">
-            {isAdmin() ? "Review and manage all events" : "Manage your content"}
+            {isAdmin() || isContentManager() ? "Review and manage all events" : "Manage your content"}
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

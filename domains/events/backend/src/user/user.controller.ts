@@ -23,7 +23,6 @@ import {
 } from "./user.validation";
 
 @Controller()
-@UseGuards(EventsProfileGuard)
 @UseFilters(RpcExceptionFilter)
 export class UserController {
   private readonly logger = new Logger(UserController.name);
@@ -31,6 +30,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @MessagePattern({ cmd: "get_events_profile" })
+  @UseGuards(EventsProfileGuard)
   @UsePipes(new JoiValidationPipe(GetEventsProfileSchema))
   async getProfile(@Payload() payload: { user: AuthenticatedUser }) {
     this.logger.log(
@@ -48,6 +48,7 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: "update_user_role" })
+  @UseGuards(EventsProfileGuard)
   @UsePipes(new JoiValidationPipe(UpdateUserRoleSchema))
   async updateRole(
     @Payload()
@@ -80,6 +81,7 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: "get_all_profiles" })
+  @UseGuards(EventsProfileGuard)
   @UsePipes(new JoiValidationPipe(EmptyPayloadWithUserSchema))
   async getAllProfiles(@Payload() payload: { user: AuthenticatedUser }) {
     const adminProfile = await this.userService.getProfileAndSync(payload.user);
@@ -90,6 +92,7 @@ export class UserController {
   }
 
   @MessagePattern({ cmd: "delete_profile" })
+  @UseGuards(EventsProfileGuard)
   @UsePipes(new JoiValidationPipe(UserIdSchema))
   async deleteProfile(
     @Payload() payload: { userId: string; user: AuthenticatedUser },

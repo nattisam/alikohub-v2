@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import logoProfessional from "@/assets/logo-professional.png";
 import logoSocial from "@/assets/logo-social.png";
 
@@ -30,6 +31,7 @@ const socialLinks: NavItem[] = [
 
 const Navbar = ({ portal }: NavbarProps) => {
   const [open, setOpen] = useState(false);
+  const { user, isAdmin, isContentManager, signOut } = useAuth();
   const location = useLocation();
   const links = portal === "professional" ? professionalLinks : socialLinks;
   const logo = portal === "professional" ? logoProfessional : logoSocial;
@@ -58,14 +60,35 @@ const Navbar = ({ portal }: NavbarProps) => {
               {l.label}
             </Link>
           ))}
+          {(isAdmin() || isContentManager()) && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-1.5 text-secondary font-semibold hover:text-accent transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </Link>
+          )}
         </div>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link to={`/${portal}/signin`}>
-            <Button variant="ghost" size="sm" className="font-body text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
-              Sign In
+          {user ? (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={signOut}
+              className="font-body text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
             </Button>
-          </Link>
+          ) : (
+            <Link to={`/${portal}/signin`}>
+              <Button variant="ghost" size="sm" className="font-body text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                Sign In
+              </Button>
+            </Link>
+          )}
           <Link to={ctaHref}>
             <Button size="sm" className="font-body bg-accent text-accent-foreground hover:bg-accent/90">
               {ctaText}
@@ -96,12 +119,37 @@ const Navbar = ({ portal }: NavbarProps) => {
               {l.label}
             </Link>
           ))}
+          {/* Mobile Admin Link */}
+          {(isAdmin() || isContentManager()) && (
+            <div className="pt-2 border-t border-primary-foreground/10">
+              <Link
+                to="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/10 text-secondary font-semibold hover:bg-secondary/20 transition-colors"
+              >
+                <LayoutDashboard className="w-5 h-5 text-secondary" />
+                Dashboard
+              </Link>
+            </div>
+          )}
           <div className="pt-2 flex flex-col gap-2">
-            <Link to={`/${portal}/signin`}>
-              <Button variant="outline" size="sm" className="w-full font-body border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                Sign In
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => { setOpen(false); signOut(); }}
+                className="w-full font-body border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
               </Button>
-            </Link>
+            ) : (
+              <Link to={`/${portal}/signin`}>
+                <Button variant="outline" size="sm" className="w-full font-body border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                  Sign In
+                </Button>
+              </Link>
+            )}
             <Link to={ctaHref}>
               <Button size="sm" className="w-full font-body bg-accent text-accent-foreground hover:bg-accent/90">
                 {ctaText}

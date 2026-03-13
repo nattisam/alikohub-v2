@@ -93,7 +93,7 @@ const App = () => (
             <Route path="/social/signin" element={<SignIn />} />
 
             {/* Admin Dashboard (Protected) */}
-            <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+            <Route path="/admin" element={<ProtectedRoute requiredRole="CONTENT_MANAGER"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<AdminOverview />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="attendees" element={<AdminAttendees />} />

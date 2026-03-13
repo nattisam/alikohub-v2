@@ -9,6 +9,7 @@ interface User {
   firstname: string;
   lastname?: string;
   globalRole: string;
+  eventsRole?: string;
 }
 
 interface EventsProfile {
@@ -20,8 +21,8 @@ interface AuthContextType {
   user: User | null;
   eventsProfile: EventsProfile | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: unknown }>;
-  signIn: (email: string, password: string) => Promise<{ error: unknown }>;
+  signUp: (email: string, password: string, fullName: string, captchaToken?: string | null) => Promise<{ error: { message: string } | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: unknown; eventsRole?: string }>;
   signOut: () => Promise<void>;
   isAdmin: () => boolean;
   isContentManager: () => boolean;
@@ -49,9 +50,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = localStorage.getItem("auth_token");
       if (token) {
         try {
-          // In a real app, we'd fetch the current user session/profile
-          await fetchProfile();
+          // Verify token and get user profile
+          const { data } = await api.post("/auth/verify", { type: "jwt", value: token });
+          if (data.user) {
+            await fetchProfile();
+            setUser(data.user);
+          } else {
+            localStorage.removeItem("auth_token");
+          }
         } catch (error) {
+          console.error("Auth initialization failed:", error);
           localStorage.removeItem("auth_token");
         }
       }
@@ -61,28 +69,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initAuth();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, captchaToken?: string | null) => {
     try {
       const [firstname, ...rest] = fullName.split(" ");
       const lastname = rest.join(" ");
-      await api.post("/auth/register", { email, password, firstname, lastname });
+      await api.post("/auth/register", { email, password, firstname, lastname, captchaToken });
       return { error: null };
-    } catch (error) {
-      return { error };
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Registration failed";
+      return { error: { message } };
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
       const { data } = await api.post("/auth/login", { email, password });
-      if (data.token) {
-        localStorage.setItem("auth_token", data.token);
-        if (data.user) setUser(data.user);
+      if (data.accessToken) {
+        localStorage.setItem("auth_token", data.accessToken);
+        // Await profile fetch so eventsProfile state is ready when navigating
         await fetchProfile();
+        if (data.user) setUser(data.user);
+        // Return the eventsRole from the JWT payload so the caller can redirect immediately
+        const eventsRole: string | undefined = data.user?.eventsRole;
+        return { error: null, eventsRole };
       }
-      return { error: null };
-    } catch (error) {
-      return { error };
+      return { error: { message: "Auth failed: No token received" } };
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Invalid credentials or server error";
+      return { error: { message } };
     }
   };
 

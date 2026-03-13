@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,21 +13,38 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn } = useAuth();
+  const { user, signIn, isAdmin, isContentManager } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const redirect = params.get("redirect") || "/";
 
+  useEffect(() => {
+    if (user) {
+      if (isAdmin() || isContentManager()) {
+        navigate("/admin");
+      } else {
+        navigate(redirect);
+      }
+    }
+  }, [user, isAdmin, isContentManager, navigate, redirect]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signIn(email, password);
+    const { error, eventsRole } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error((error as any).message || "Sign in failed");
     } else {
       toast.success("Signed in successfully!");
-      navigate(redirect);
+      // Use the eventsRole returned directly from login response for an immediate redirect
+      if (eventsRole === "ADMIN" || eventsRole === "CONTENT_MANAGER") {
+        navigate("/admin");
+      } else if (params.get("redirect")) {
+        navigate(redirect);
+      } else {
+        navigate("/");
+      }
     }
   };
 

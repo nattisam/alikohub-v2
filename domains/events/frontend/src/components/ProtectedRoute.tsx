@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, loading, isAdmin, isContentManager } = useAuth();
+  const { user, loading, isAdmin, isContentManager, eventsProfile } = useAuth();
 
   if (loading) {
     return (
@@ -19,11 +19,19 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   if (!user) return <Navigate to="/signin" replace />;
 
-  if (requiredRole === "ADMIN" && !isAdmin()) {
+  // Fallback for when profile isn't loaded yet: assume valid if user exists and they have an admin globalRole, OR if they're still waiting for eventsProfile to load.
+  const effectiveIsAdmin = isAdmin() || (!eventsProfile && (user.globalRole === "ADMIN" || user.eventsRole === "ADMIN"));
+  
+  // For CONTENT_MANAGER, if eventsProfile is null, we shouldn't immediately reject them if they are authenticated
+  // and we're just waiting for their profile to load (which is already covered by the `loading` check, 
+  // but just in case of state desync where user loaded but profile didn't yet).
+  const effectiveIsContentManager = isContentManager() || (!eventsProfile && (user.eventsRole === "CONTENT_MANAGER" || user.globalRole === "ADMIN"));
+
+  if (requiredRole === "ADMIN" && !effectiveIsAdmin) {
     return <Navigate to="/" replace />;
   }
 
-  if (requiredRole === "CONTENT_MANAGER" && !isContentManager() && !isAdmin()) {
+  if (requiredRole === "CONTENT_MANAGER" && !effectiveIsContentManager && !effectiveIsAdmin) {
     return <Navigate to="/" replace />;
   }
 

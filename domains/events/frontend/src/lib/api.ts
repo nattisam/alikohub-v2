@@ -25,11 +25,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Do NOT auto-remove the token here — let the auth context and
+    // individual components decide how to handle 401s.
+    // Removing it here was causing legitimate tokens to be wiped when
+    // a sub-request (e.g. events list) briefly returned 401.
     if (error.response?.status === 401) {
-      // Handle unauthorized (e.g., redirect to login or refresh token)
-      console.error('Unauthorized access - please log in again.');
-      localStorage.removeItem('auth_token');
-      // window.location.href = '/signin';
+      console.warn('401 Unauthorized for:', error.config?.url);
     }
     return Promise.reject(error);
   }
