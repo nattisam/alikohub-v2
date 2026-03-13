@@ -1,6 +1,7 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
+  output        = "../src/generated/client"
 }
 
 datasource db {
@@ -49,7 +50,8 @@ model Course {
   targetLevel      String?
   enrolledNum      Int? // Changed from String? to Int?
   rating           Int?
-  price            Int?
+  price            Float?
+  priceInUsd       Float?
   prerequisites    String[]
   languages        String[]
   cohorts          Cohort[]
@@ -109,6 +111,7 @@ enum PaymentStatus {
 // ... existing models ...
 
 enum EnrollmentStatus {
+  PENDING
   ACTIVE
   COMPLETED
   DROPPED

@@ -11,4 +11,4 @@ import { InstructorModuleGuard } from './guards/instructor-module.guard';
   providers: [CourseModulesService, ModuleAccessGuard, InstructorModuleGuard],
   exports: [CourseModulesService],
 })
-export class CourseModulesModule { }
+export class CourseModulesModule {}

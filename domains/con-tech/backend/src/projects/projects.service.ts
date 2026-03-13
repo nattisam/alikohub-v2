@@ -8,7 +8,7 @@ import { RpcException } from '@nestjs/microservices';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { ProjectStatus } from '@prisma/client';
+import { ProjectStatus, Prisma } from '../generated/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 import { winstonLogger } from '../logger';
 
@@ -28,20 +28,26 @@ export class ProjectsService {
   ) {}
 
   async create(dto: CreateProjectDto, user: AuthenticatedUser) {
-    winstonLogger.info(`Creating project: ${dto.name} for user: ${user.firebaseId}`);
+    winstonLogger.info(
+      `Creating project: ${dto.name} for user: ${user.firebaseId}`,
+    );
     try {
       const contechProfile = await this.userService.getOrCreateProfile(user);
       winstonLogger.info(`User profile role: ${contechProfile.role}`);
 
       // Only ADMIN can create projects
       if (contechProfile.role !== 'ADMIN') {
-        winstonLogger.warn(`User ${user.firebaseId} with role ${contechProfile.role} tried to create a project`);
+        winstonLogger.warn(
+          `User ${user.firebaseId} with role ${contechProfile.role} tried to create a project`,
+        );
         throw new RpcException('Only Admins can create projects.');
       }
 
       // Ensure client exists if provided
-      if (dto.clientId) await this.userService.ensureProfileExists(dto.clientId);
-      if (dto.contractorId) await this.userService.ensureProfileExists(dto.contractorId);
+      if (dto.clientId)
+        await this.userService.ensureProfileExists(dto.clientId);
+      if (dto.contractorId)
+        await this.userService.ensureProfileExists(dto.contractorId);
 
       // Check if project with same name exists for this manager
       const result = await this.prisma.project.create({
@@ -53,7 +59,7 @@ export class ProjectsService {
           // Wait, if not provided in DTO, it shouldn't default to Creator unless intended.
           // Reverting to safe logic: usage of spread ...dto takes precedence if verified, but let's be careful.
           // The creation logic seemed to force contractorId = user.firebaseId. I should fix this.
-          contractorId: dto.contractorId, 
+          contractorId: dto.contractorId,
           endDate: dto.endDate ? new Date(dto.endDate) : null,
           startDate: dto.startDate ? new Date(dto.startDate) : null,
           status: 'ACTIVE',
@@ -64,35 +70,42 @@ export class ProjectsService {
       winstonLogger.info(`Project created successfully: ${result.id}`);
       return result;
     } catch (error) {
-      winstonLogger.error(`Failed to create project: ${error.message} - ${error.stack}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      winstonLogger.error(
+        `Failed to create project: ${errorMessage} - ${errorStack}`,
+      );
       throw error;
     }
   }
 
-  async getContracrors(){
+  async getContracrors() {
     return this.prisma.contechProfile.findMany({
-      where: {role: 'CONTRACTOR'},
-      select: {userId: true}
-    })
+      where: { role: 'CONTRACTOR' },
+      select: { userId: true },
+    });
   }
 
-  async getInspectors(){
+  async getInspectors() {
     return this.prisma.contechProfile.findMany({
-      where: {role: 'ADMIN'},
-      select: {userId: true}
-    })
+      where: { role: 'ADMIN' },
+      select: { userId: true },
+    });
   }
 
   async findAll(query: FindAllQuery, user: AuthenticatedUser) {
     const profile = await this.userService.getOrCreateProfile(user);
-    winstonLogger.info(`FindAll Projects for user ${user.firebaseId} with role ${profile.role}`);
+    winstonLogger.info(
+      `FindAll Projects for user ${user.firebaseId} with role ${profile.role}`,
+    );
 
     const page = query.page || 1;
     const pageSize = Math.min(query.pageSize || 10, 50);
     const skip = (page - 1) * pageSize;
 
-    const where: any = {};
-    
+    const where: Record<string, any> = {};
+
     // RBAC Filtering
     if (profile.role === 'CONTRACTOR') {
       where.contractorId = user.firebaseId;
@@ -129,19 +142,25 @@ export class ProjectsService {
     ]);
 
     // Enrich with manager, client, and contractor data
-    const userIds = [...new Set([
-      ...projects.map(p => p.manager),
-      ...projects.map(p => p.clientId).filter(id => id != null),
-      ...projects.map(p => p.contractorId).filter(id => id != null),
-    ])] as string[];
-    
+    const userIds = [
+      ...new Set([
+        ...projects.map((p) => p.manager),
+        ...projects.map((p) => p.clientId).filter((id) => id != null),
+        ...projects.map((p) => p.contractorId).filter((id) => id != null),
+      ]),
+    ] as string[];
+
     const users = await this.userService.getUsersByIds(userIds);
 
     const enrichedProjects = projects.map((project) => ({
       ...project,
       manager: users.find((u) => u.firebaseId === project.manager) || null,
-      client: project.clientId ? users.find((u) => u.firebaseId === project.clientId) || null : null,
-      contractor: project.contractorId ? users.find((u) => u.firebaseId === project.contractorId) || null : null,
+      client: project.clientId
+        ? users.find((u) => u.firebaseId === project.clientId) || null
+        : null,
+      contractor: project.contractorId
+        ? users.find((u) => u.firebaseId === project.contractorId) || null
+        : null,
       taskStats: {
         total: project.tasks.length,
         completed: project.tasks.filter((t) => t.status === 'COMPLETED').length,
@@ -175,17 +194,28 @@ export class ProjectsService {
     // RBAC Check
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view this project.');
+      throw new ForbiddenException(
+        'You do not have permission to view this project.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-       throw new ForbiddenException('You do not have permission to view this project.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view this project.',
+      );
     }
 
     // Enrich with manager, client and contractor data
     const [manager, client, contractor] = await Promise.all([
       this.userService.getUserById(project.manager),
-      project.clientId ? this.userService.getUserById(project.clientId) : Promise.resolve(null),
-      project.contractorId ? this.userService.getUserById(project.contractorId) : Promise.resolve(null),
+      project.clientId
+        ? this.userService.getUserById(project.clientId)
+        : Promise.resolve(null),
+      project.contractorId
+        ? this.userService.getUserById(project.contractorId)
+        : Promise.resolve(null),
     ]);
 
     return {
@@ -213,8 +243,10 @@ export class ProjectsService {
 
     // Ensure newly assigned users have profiles and are synced
     if (dto.manager) await this.userService.ensureProfileExists(dto.manager);
-    if (dto.inspectorId) await this.userService.ensureProfileExists(dto.inspectorId);
-    if (dto.contractorId) await this.userService.ensureProfileExists(dto.contractorId);
+    if (dto.inspectorId)
+      await this.userService.ensureProfileExists(dto.inspectorId);
+    if (dto.contractorId)
+      await this.userService.ensureProfileExists(dto.contractorId);
 
     return await this.prisma.project.update({
       where: { id },
@@ -303,14 +335,14 @@ export class ProjectsService {
     }
 
     return await this.prisma.project.update({
-        where: { id },
-        data: { photos, updatedBy: user.firebaseId }
+      where: { id },
+      data: { photos, updatedBy: user.firebaseId },
     });
   }
 
   async getProjectStats(user: AuthenticatedUser, manager?: string) {
     const profile = await this.userService.getOrCreateProfile(user);
-    const where: any = manager ? { manager } : {};
+    const where: Record<string, any> = manager ? { manager } : {};
 
     // Filter by role if not Admin
     if (profile.role === 'CONTRACTOR') {
@@ -400,6 +432,8 @@ export class ProjectsService {
     text: string,
     user: AuthenticatedUser,
     isVisibleToClient: boolean = false,
+    photos: string[] = [],
+    tags: string[] = [],
   ) {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -432,6 +466,8 @@ export class ProjectsService {
         authorId: user.firebaseId,
         text,
         isVisibleToClient,
+        photos,
+        tags,
       },
     });
   }
@@ -455,10 +491,7 @@ export class ProjectsService {
     const isClient = contechProfile.role === 'CLIENT';
 
     // Check if user can view updates (same access as viewing project)
-    if (
-      isClient &&
-      project.clientId !== user.firebaseId
-    ) {
+    if (isClient && project.clientId !== user.firebaseId) {
       throw new ForbiddenException(
         'You do not have permission to view updates for this project',
       );
@@ -473,11 +506,11 @@ export class ProjectsService {
     }
 
     const skip = (page - 1) * pageSize;
-    
-    const where: any = { projectId };
+
+    const where: Prisma.ProjectUpdateWhereInput = { projectId };
     // Clients only see what is visible to them
     if (isClient) {
-      where.isVisibleToClient = true;
+      where.isVisibleToClient = { equals: true };
     }
 
     const [updates, total] = await Promise.all([
@@ -511,7 +544,12 @@ export class ProjectsService {
   // Document Management
   async addDocument(
     projectId: number,
-    dto: { title: string; url: string; fileType?: string; isVisibleToClient?: boolean },
+    dto: {
+      title: string;
+      url: string;
+      fileType?: string;
+      isVisibleToClient?: boolean;
+    },
     user: AuthenticatedUser,
   ) {
     const project = await this.prisma.project.findUnique({
@@ -569,10 +607,7 @@ export class ProjectsService {
     const isClient = contechProfile.role === 'CLIENT';
 
     // Access check
-    if (
-      isClient &&
-      project.clientId !== user.firebaseId
-    ) {
+    if (isClient && project.clientId !== user.firebaseId) {
       throw new ForbiddenException(
         'You do not have permission to view documents for this project',
       );
@@ -587,11 +622,11 @@ export class ProjectsService {
     }
 
     const skip = (page - 1) * pageSize;
-    
-    const where: any = { projectId };
+
+    const where: Prisma.ProjectDocumentWhereInput = { projectId };
     // Clients only see what is visible to them
     if (isClient) {
-      where.isVisibleToClient = true;
+      where.isVisibleToClient = { equals: true };
     }
 
     const [documents, total] = await Promise.all([
@@ -605,7 +640,9 @@ export class ProjectsService {
     ]);
 
     // Enrich with uploader info
-    const uploaderIds: string[] = [...new Set(documents.map((d) => d.uploadedBy))];
+    const uploaderIds: string[] = [
+      ...new Set(documents.map((d) => d.uploadedBy)),
+    ];
     const uploaders = await this.userService.getUsersByIds(uploaderIds);
 
     const enrichedDocuments = documents.map((doc) => ({

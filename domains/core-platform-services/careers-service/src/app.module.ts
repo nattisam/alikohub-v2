@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { JobsModule } from './jobs/jobs.module';
+import { UserModule } from './user/user.module';
 import * as path from 'path';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import * as path from 'path';
     }),
     PrismaModule,
     JobsModule,
+    UserModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

@@ -1,90 +1,40 @@
-import axios, { AxiosError } from "axios"
+import axios from "axios";
 
-// Base API client for events services
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.consultancy.alikohub.com';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://api.consultancy.alikohub.com/";
 
-// Retry configuration
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // Initial delay in ms
-const MAX_RETRY_DELAY = 10000; // Maximum delay in ms
-
-// Helper function to calculate exponential backoff delay
-const getRetryDelay = (retryCount: number): number => {
-  const delay = Math.min(RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
-  // Add jitter to prevent thundering herd
-  return delay + Math.random() * 1000;
-};
-
-// Helper function to add retry config to request
-const addRetryConfig = (config: any, retryCount: number = 0) => {
-  config.__retryCount = retryCount;
-  return config;
-};
-
-// Response interceptor for handling 429 errors with retry logic
-const createRetryInterceptor = (instance: typeof api | typeof publicApi) => {
-  instance.interceptors.response.use(
-    (response) => response,
-    async (error: AxiosError) => {
-      const config = error.config as (any & { __retryCount?: number }) | undefined;
-      
-      // Only retry on 429 errors
-      if (error.response?.status === 429 && config) {
-        const retryCount = config.__retryCount || 0;
-        
-        if (retryCount < MAX_RETRIES) {
-          const delay = getRetryDelay(retryCount);
-          
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, delay));
-          
-          // Update retry count and retry the request
-          const newConfig = addRetryConfig({ ...config }, retryCount + 1);
-          return instance.request(newConfig);
-        }
-      }
-      
-      return Promise.reject(error);
-    }
-  );
-};
-
-// API client for authenticated requests
-export const api = axios.create({
+const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false,
-})
-
-// API client for public requests (no auth required)
-export const publicApi = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: false,
-})
-
-// Request interceptor for authenticated API client
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Add retry interceptors to both API clients
-createRetryInterceptor(api);
-createRetryInterceptor(publicApi);
+// Add a request interceptor to include the auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
-// Export types
-export type AuthRole = "USER" | "ADMIN" | "CONTENT_MANAGER"
+// Add a response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Do NOT auto-remove the token here — let the auth context and
+    // individual components decide how to handle 401s.
+    // Removing it here was causing legitimate tokens to be wiped when
+    // a sub-request (e.g. events list) briefly returned 401.
+    if (error.response?.status === 401) {
+      console.warn("401 Unauthorized for:", error.config?.url);
+    }
+    return Promise.reject(error);
+  },
+);
 
-export interface AuthUser {
-  id: string
-  email: string
-  role: AuthRole
-}
-
-export interface AuthResponse {
-  accessToken: string
-  user: AuthUser
-}
+export default api;

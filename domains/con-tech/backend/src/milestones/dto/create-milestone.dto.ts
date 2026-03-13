@@ -1,5 +1,11 @@
-import { IsNotEmpty, IsString, IsOptional, IsInt, IsDate, IsEnum } from 'class-validator';
-import { MilestoneStatus } from '@prisma/client';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsInt,
+  IsEnum,
+} from 'class-validator';
+import { MilestoneStatus } from '../../generated/client';
 
 export class CreateMilestoneDto {
   @IsNotEmpty()

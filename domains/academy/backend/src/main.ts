@@ -2,8 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
-import { ConfigService } from '@nestjs/config';
-import { AcademyProfileGuard } from './auth';
 import { ValidationPipe } from '@nestjs/common';
 import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 
@@ -16,9 +14,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,
   });
-
-  // Get ConfigService if needed
-  const configService = app.get(ConfigService);
 
   // Use PORT from env or default 3005
   const PORT = parseInt(process.env.PORT as string) || 3005;
@@ -44,11 +39,24 @@ async function bootstrap() {
           exchange: 'user_events',
           exchangeType: 'fanout',
           queueOptions: {
-            durable: false
+            durable: false,
           },
         },
       });
-      console.log(`Academy: RabbitMQ transport configured for ${rabbitmqUrl}`);
+      // Add connection for Payment Events
+      app.connectMicroservice({
+        transport: Transport.RMQ,
+        options: {
+          urls: [rabbitmqUrl],
+          queue: 'academy_payment_fulfillment',
+          exchange: 'payment_events',
+          exchangeType: 'fanout',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      });
+      console.log(`Academy: RabbitMQ transports configured for ${rabbitmqUrl}`);
     } catch (e) {
       console.warn(`Academy: RabbitMQ transport not available: ${e.message}`);
     }
@@ -58,7 +66,7 @@ async function bootstrap() {
 
   // Centralized Global Error Handling
   app.useGlobalFilters(new RpcExceptionFilter());
-  
+
   // Centralized Validation Handling
   app.useGlobalPipes(
     new ValidationPipe({
@@ -68,12 +76,13 @@ async function bootstrap() {
     }),
   );
 
-  // Apply global guard
-  app.useGlobalGuards(app.get(AcademyProfileGuard));
+  // Note: Guards are applied at controller level, not globally, to allow health checks
 
   // Start microservice listeners
   await app.startAllMicroservices();
+  const HTTP_PORT = 4005; // Separate port for health checks
+  await app.listen(HTTP_PORT, '0.0.0.0');
 
-  console.log(`Academy microservice listening on TCP port ${PORT}`);
+  console.log(`Academy microservice: TCP port ${PORT}, HTTP port ${HTTP_PORT}`);
 }
 bootstrap();

@@ -2,7 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { CoursesModule } from './courses/courses.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { CohortsModule } from './cohorts/cohorts.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { CourseModulesModule } from './course-modules/course-modules.module';
@@ -11,13 +11,14 @@ import { UserModule } from './user/user.module';
 import { ContentModule } from './content/content.module';
 import { ProgressAnalyticsModule } from './progress-and-analytics/progress-analytics.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+// import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UserApplicationModule } from './user-application/user-application.module';
 import { TeachingScheduleModule } from './teaching-schedule/teaching-schedule.module';
 import { AcademyProfileGuard } from './auth/academy-profile.guard';
 import { RoleGuard } from './auth/role-guard/role-guard';
 import { ExercisesModule } from './exercises/exercises.module';
 import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
+import { AppController } from './app.controller';
 
 @Global()
 @Module({
@@ -37,8 +38,9 @@ import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
     NotificationsModule,
     UserApplicationModule,
     TeachingScheduleModule,
-    ExercisesModule
+    ExercisesModule,
   ],
+  controllers: [AppController],
   providers: [
     AcademyProfileGuard,
     RoleGuard,
@@ -46,6 +48,6 @@ import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
       provide: APP_FILTER,
       useClass: RpcExceptionFilter,
     },
-  ]
+  ],
 })
-export class AppModule { }
+export class AppModule {}

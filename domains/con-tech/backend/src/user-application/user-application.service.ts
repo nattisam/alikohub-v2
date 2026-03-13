@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { ContechRole } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { ContechRole } from '../generated/client';
 
 @Injectable()
 export class UserApplicationService {
-    private readonly logger = new Logger(UserApplicationService.name);
+  private readonly logger = new Logger(UserApplicationService.name);
   constructor(private prisma: PrismaService) {}
 
   async updateUserRole(userId: string, role: string) {

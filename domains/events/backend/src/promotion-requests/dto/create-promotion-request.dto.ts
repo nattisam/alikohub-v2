@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail, IsOptional } from "class-validator";
 
 export class CreatePromotionRequestDto {
   @IsString()
@@ -19,5 +19,9 @@ export class CreatePromotionRequestDto {
 
   @IsString()
   @IsNotEmpty()
-  description: string;
+  type: string; // Event / Announcement / News
+
+  @IsString()
+  @IsNotEmpty()
+  message: string;
 }

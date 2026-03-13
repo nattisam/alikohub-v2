@@ -7,6 +7,7 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
+  output        = "../src/generated/client"
 }
 
 datasource db {
@@ -71,6 +72,8 @@ model ProjectUpdate {
   projectId   Int
   authorId    String
   text        String
+  photos      String[]
+  tags        String[]
   isVisibleToClient Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

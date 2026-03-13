@@ -1,5 +1,6 @@
 import { otelSDK } from './common/tracing/tracing';
 import * as dotenv from 'dotenv';
+import * as process from 'process';
 dotenv.config();
 
 // Start OpenTelemetry SDK
@@ -21,16 +22,74 @@ import { RpcExceptionFilter } from './common/filters';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: winstonConfig,
+    rawBody: true,
   });
 
   const logger = new Logger('Bootstrap');
 
   // Enable CORS
+  // Enable CORS
+  // Enable CORS with explicit origins for production
+  const allowedOrigins = [
+    'https://www.academy.alikohub.com',
+    'https://academy.alikohub.com',
+    'http://www.academy.alikohub.com',
+    'http://academy.alikohub.com',
+    'https://www.alikohub.com',
+    'https://alikohub.com',
+    'http://www.alikohub.com',
+    'http://alikohub.com',
+    'https://career.alikohub.com',
+    'https://www.career.alikohub.com',
+    'http://career.alikohub.com',
+    'http://www.career.alikohub.com',
+    'https://event.alikohub.com',
+    'https://www.event.alikohub.com',
+    'http://event.alikohub.com',
+    'http://www.event.alikohub.com',
+    'https://con-tech.alikohub.com',
+    'https://www.con-tech.alikohub.com',
+    'http://con-tech.alikohub.com',
+    'http://www.con-tech.alikohub.com',
+    'https://consultancy.alikohub.com',
+    'https://www.consultancy.alikohub.com',
+    'http://consultancy.alikohub.com',
+    'http://www.consultancy.alikohub.com',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3006',
+    'http://116.203.122.210:8080',
+    'http://116.203.122.210:8081',
+  ];
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:3007', 'http://localhost:3009', 'http://localhost:3003', 'http://localhost:4200'],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        logger.warn(`CORS blocked for origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type', 
+      'Authorization', 
+      'Cookie', 
+      'X-Requested-With', 
+      'Accept', 
+      'Origin',
+      'Access-Control-Allow-Origin',
+      'Access-Control-Allow-Credentials',
+      'x-apollo-operation-name',
+      'apollo-require-preflight'
+    ],
+    exposedHeaders: ['Set-Cookie', 'Authorization'],
+    maxAge: 3600, // 1 hour cache for preflight
   });
 
   // Global validation pipe with detailed error messages

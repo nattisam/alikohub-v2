@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 
@@ -26,7 +30,9 @@ export class CommentsService {
     const isClient = project.clientId === user.firebaseId;
 
     if (!isAdmin && !isContractor && !isClient) {
-      throw new ForbiddenException('You do not have permission to comment on this project');
+      throw new ForbiddenException(
+        'You do not have permission to comment on this project',
+      );
     }
 
     return await this.prisma.comment.create({
@@ -51,10 +57,17 @@ export class CommentsService {
 
     // Access check same as 프로젝트 view
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view comments for this project');
+      throw new ForbiddenException(
+        'You do not have permission to view comments for this project',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view comments for this project');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view comments for this project',
+      );
     }
 
     const comments = await this.prisma.comment.findMany({
@@ -63,8 +76,13 @@ export class CommentsService {
     });
 
     // Enrich with creator info
-    const creatorIds = [...new Set(comments.map((c) => c.createdBy).filter(id => id !== null))] as string[];
-    const creators = creatorIds.length > 0 ? await this.userService.getUsersByIds(creatorIds) : [];
+    const creatorIds = [
+      ...new Set(comments.map((c) => c.createdBy).filter((id) => id !== null)),
+    ] as string[];
+    const creators =
+      creatorIds.length > 0
+        ? await this.userService.getUsersByIds(creatorIds)
+        : [];
 
     return comments.map((comment) => ({
       ...comment,

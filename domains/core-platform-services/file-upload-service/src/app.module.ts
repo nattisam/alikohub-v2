@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FileModule } from './file/file.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -10,10 +11,11 @@ import { FileModule } from './file/file.module';
       isGlobal: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
+      rootPath: process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
     FileModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

@@ -13,12 +13,19 @@ export class LocalDiskProvider implements IStorageProvider {
   private readonly hostUrl: string;
 
   constructor(private configService: ConfigService) {
-    this.uploadDir = path.join(process.cwd(), 'uploads');
+    this.uploadDir = this.configService.get('UPLOAD_PATH') || path.join(process.cwd(), 'uploads');
     this.hostUrl = this.configService.get('HOST_URL') || `http://localhost:${this.configService.get('PORT') || 3009}`;
     
     // Ensure upload directory exists
     if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
+      try {
+        fs.mkdirSync(this.uploadDir, { recursive: true });
+        this.logger.log(`Created upload directory at: ${this.uploadDir}`);
+      } catch (error) {
+        this.logger.error(`Failed to create upload directory at: ${this.uploadDir}`, error);
+      }
+    } else {
+      this.logger.log(`Using upload directory at: ${this.uploadDir}`);
     }
   }
 

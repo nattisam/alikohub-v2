@@ -32,8 +32,8 @@ export class JobsController {
   }
 
   @MessagePattern({ cmd: 'apply_job' })
-  async applyJob(@Payload() data: { jobId: number; userId: string; applicationData: any }) {
-    return this.jobsService.applyToJob(data.jobId, data.userId, data.applicationData);
+  async applyJob(@Payload() data: { jobId: number; user: any; applicationData: any }) {
+    return this.jobsService.applyToJob(data.jobId, data.user, data.applicationData);
   }
 
   @MessagePattern({ cmd: 'get_job_applications' })

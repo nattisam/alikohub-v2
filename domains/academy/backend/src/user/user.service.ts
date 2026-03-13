@@ -1,13 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { AcademyRole } from '@prisma/client';
+import { AcademyRole } from '../generated/client';
 import { firstValueFrom, timeout } from 'rxjs';
-import { PrismaService } from 'src/prisma/prisma.service';
-
-enum GlobalRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-}
+import { PrismaService } from '../prisma/prisma.service';
 
 export type AuthenticatedUser = {
   firebaseId: string;
@@ -17,6 +12,7 @@ export type AuthenticatedUser = {
   role: string;
   globalRole?: string;
   status: string;
+  activeRole?: string;
 };
 
 export type AcademyUserProfile = {
@@ -42,43 +38,51 @@ export class UserService {
   constructor(
     @Inject('AUTH_SERVICE') private authClient: ClientProxy,
     private prisma: PrismaService,
-  ) { }
+  ) {}
 
   // ... (getUserById / getUsersByIds methods remain same) ...
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<AuthenticatedUser | null> {
     try {
       this.logger.log(`Fetching user details for: ${userId} from Auth Service`);
       const payload = {
         firebaseId: userId,
       };
 
-      const user = await firstValueFrom(
+      const user = (await firstValueFrom(
         this.authClient.send({ cmd: 'get_user_profile' }, payload),
+      )) as AuthenticatedUser;
+      this.logger.log(
+        `Received user details for ${userId}: ${JSON.stringify(user)}`,
       );
-      this.logger.log(`Received user details for ${userId}: ${JSON.stringify(user)}`);
       return user;
     } catch (error) {
-      this.logger.error(`Failed to fetch user ${userId}`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch user ${userId}`, errorMessage);
       return null;
     }
   }
 
-  async getUsersByIds(userIds: string[]) {
+  async getUsersByIds(userIds: string[]): Promise<AuthenticatedUser[]> {
     try {
       // The payload is simple: an object with a 'userIds' property
       const payload = { userIds };
 
-      const users = await firstValueFrom(
+      const users = (await firstValueFrom(
         this.authClient.send({ cmd: 'get_users_by_ids' }, payload),
-      );
+      )) as AuthenticatedUser[];
       return users;
     } catch (error) {
-      this.logger.error(`Failed to fetch users`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch users`, errorMessage);
       return []; // Return an empty array on failure
     }
   }
 
-  async getOrCreateProfile(user: AuthenticatedUser): Promise<AcademyUserProfile> {
+  async getOrCreateProfile(
+    user: AuthenticatedUser,
+  ): Promise<AcademyUserProfile> {
     await this.syncFromAuth(user.firebaseId);
 
     // Fetch fresh user data from Auth Service to ensure we have the latest details
@@ -92,9 +96,7 @@ export class UserService {
 
     if (!profile) {
       const roleToAssign =
-        user.globalRole === 'ADMIN'
-          ? AcademyRole.ADMIN
-          : AcademyRole.USER;
+        user.globalRole === 'ADMIN' ? AcademyRole.ADMIN : AcademyRole.USER;
       profile = await this.prisma.academyProfile.create({
         data: {
           userId: user.firebaseId,
@@ -134,24 +136,27 @@ export class UserService {
 
   private async syncFromAuth(userId: string) {
     try {
-      this.logger.log(`[UserService] Syncing user ${userId} from Auth service (TCP 3011)...`);
-      const authRecord = await firstValueFrom(
-        this.authClient.send({ cmd: 'sync_academy_user' }, { userId }).pipe(timeout(5000))
-      ) as any;
+      this.logger.log(
+        `[UserService] Syncing user ${userId} from Auth service (TCP 3011)...`,
+      );
+      const authRecord = (await firstValueFrom(
+        this.authClient
+          .send({ cmd: 'sync_academy_user' }, { userId })
+          .pipe(timeout(5000)),
+      )) as AuthenticatedUser;
 
       if (authRecord) {
-        this.logger.log(`[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`);
-        // Determine effective role: prioritize ADMIN > INSTRUCTOR > STUDENT > USER
+        this.logger.log(
+          `[UserService] Auth record received for ${userId}: ${JSON.stringify(authRecord)}`,
+        );
+        // Determine effective role: prioritize activeRole if present, otherwise base role
         let effectiveRole = authRecord.activeRole || authRecord.role;
-        
-        // If the user is a global admin, they are an admin in Academy too
-        if (authRecord.globalRole === 'ADMIN' || authRecord.role === 'ADMIN') {
+
+        // If the user is a global admin, they are an admin in Academy too regardless of active role
+        if (authRecord.globalRole === 'ADMIN') {
           effectiveRole = 'ADMIN';
-        } else if (authRecord.role === 'INSTRUCTOR') {
-          // If approved as instructor, use it if not already admin
-          effectiveRole = 'INSTRUCTOR';
         }
-        
+
         if (effectiveRole) {
           await this.prisma.academyProfile.upsert({
             where: { userId },
@@ -166,57 +171,58 @@ export class UserService {
               hasSelectedRole: authRecord.activeRole ? true : undefined,
             },
           });
-          this.logger.log(`[UserService] Successfully synced user ${userId}. Academy role set to: ${effectiveRole}`);
+          this.logger.log(
+            `[UserService] Successfully synced user ${userId}. Academy role set to: ${effectiveRole}`,
+          );
         } else {
-          this.logger.warn(`[UserService] No role found in auth record for ${userId}`);
+          this.logger.warn(
+            `[UserService] No role found in auth record for ${userId}`,
+          );
         }
       } else {
         this.logger.warn(`[UserService] No auth record returned for ${userId}`);
       }
-    } catch (error: any) {
-      console.error(`[UserService] FAILED to sync user ${userId} from auth service:`, error);
-      this.logger.error(`[UserService] Failed to sync user ${userId} from auth service:`, error);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `[UserService] Failed to sync user ${userId} from auth service:`,
+        errorMessage,
+      );
       // Don't rethrow yet, we might want to proceed with a default profile
     }
   }
 
   // Add this new method for role selection
   async selectRole(userId: string, role: AcademyRole) {
-    this.logger.log(`selectRole called for userId: ${userId}, role: ${role}`);
     try {
       const existingProfile = await this.prisma.academyProfile.findUnique({
-        where: { userId }
+        where: { userId },
       });
-
-      this.logger.log(`Found existing profile: ${!!existingProfile}`);
 
       if (existingProfile) {
         // Update the profile with the selected role and mark hasSelectedRole as true
-        this.logger.log(`Updating existing profile for user: ${userId}, new role: ${role}`);
-        const result = await this.prisma.academyProfile.update({
+        return await this.prisma.academyProfile.update({
           where: { userId },
           data: {
             role: role,
-            hasSelectedRole: true
+            hasSelectedRole: true,
           },
         });
-        this.logger.log(`Updated profile result: ${JSON.stringify(result)}`);
-        return result;
       } else {
         // Create a new profile with the selected role
-        this.logger.log(`Creating new profile for user: ${userId}, role: ${role}`);
-        const result = await this.prisma.academyProfile.create({
+        return await this.prisma.academyProfile.create({
           data: {
             userId: userId,
             role: role,
-            hasSelectedRole: true
+            hasSelectedRole: true,
           },
         });
-        this.logger.log(`Created profile result: ${JSON.stringify(result)}`);
-        return result;
       }
     } catch (error) {
-      this.logger.error('Error in selectRole:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error('Error in selectRole:', errorMessage);
       throw error;
     }
   }

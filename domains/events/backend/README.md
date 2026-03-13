@@ -5,6 +5,7 @@ This is the backend service for the Aliko Events subdomain, implemented as a Nes
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js (v18 or higher)
 - PostgreSQL database
 - npm or yarn
@@ -61,6 +62,7 @@ EVENTS_SERVICE_PORT=3003
 This service communicates via TCP messages with the following patterns:
 
 ### Events
+
 - `find_all_events` - Get all events
 - `find_event_by_id` - Get event by ID
 - `create_event` - Create a new event
@@ -68,11 +70,13 @@ This service communicates via TCP messages with the following patterns:
 - `remove_event` - Delete an event
 
 ### Registrations
+
 - `create_registration` - Register for an event
 - `find_all_registrations` - Get all registrations for an event
 - `remove_registration` - Remove a registration
 
 ### Updates
+
 - `find_all_updates` - Get all updates
 - `find_update_by_id` - Get update by ID
 - `create_update` - Create a new update
@@ -82,6 +86,7 @@ This service communicates via TCP messages with the following patterns:
 ## Architecture
 
 This service follows the microservices architecture pattern:
+
 - Communicates with the API Gateway via TCP transport
 - Uses Prisma ORM for database operations
 - Integrated with the Auth service for authentication
@@ -90,6 +95,7 @@ This service follows the microservices architecture pattern:
 ## Changes from Academy Pattern
 
 This service has been updated to match the Academy service pattern:
+
 - Removed custom output path from Prisma schema
 - Updated Prisma client imports to use standard `@prisma/client`
 - Made DatabaseModule global for easier service integration

@@ -4,7 +4,7 @@ import * as winston from 'winston';
 const { combine, timestamp, printf, colorize } = winston.format;
 
 const customFormat = printf(({ level, message, timestamp }) => {
-  return `[${timestamp}] ${level}: ${message}`;
+  return `[${String(timestamp)}] ${String(level)}: ${String(message)}`;
 });
 
 export const winstonLogger = winston.createLogger({
@@ -12,11 +12,9 @@ export const winstonLogger = winston.createLogger({
   format: combine(
     colorize(),
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    customFormat
+    customFormat,
   ),
-  transports: [
-    new winston.transports.Console(),
-  ],
+  transports: [new winston.transports.Console()],
 });
 
 export class AppLogger implements LoggerService {

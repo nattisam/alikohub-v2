@@ -52,7 +52,7 @@ import { Argon2Service } from './argon2.service';
           transport: Transport.TCP,
           options: {
             host: configService.get('EVENTS_SERVICE_HOST') || 'localhost',
-            port: parseInt(configService.get('EVENTS_SERVICE_PORT')) || 3003,
+            port: parseInt(configService.get('EVENTS_SERVICE_PORT')) || 3004,
           },
         }),
         inject: [ConfigService],

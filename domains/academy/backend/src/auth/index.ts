@@ -1,1 +1,1 @@
-export * from './academy-profile.guard'
+export * from './academy-profile.guard';

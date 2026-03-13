@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsString, IsOptional } from 'class-validator';
-import { ContentType } from '@prisma/client';
+import { ContentType } from '../../generated/client';
 
 export class UploadContentDto {
   @IsString()

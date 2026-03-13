@@ -156,7 +156,42 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"coverLetter\": \"I am very interested in this role.\",\n    \"resumeUrl\": \"https://example.com/my-resume.pdf\"\n}",
+							"raw": "{\n    \"fullName\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"phone\": \"+1234567890\",\n    \"coverLetter\": \"I am very interested in this role.\",\n    \"resumeUrl\": \"https://example.com/my-resume.pdf\",\n    \"experienceYears\": 5,\n    \"currentTitle\": \"Software Engineer\",\n    \"currentCompany\": \"Tech Corp\",\n    \"industry\": \"Technology\",\n    \"skills\": [\"React\", \"Node.js\", \"Prisma\"],\n    \"linkedInUrl\": \"https://linkedin.com/in/johndoe\",\n    \"portfolioUrl\": \"https://johndoe.dev\",\n    \"additionalInfo\": \"I am available to start immediately.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/careers/jobs/1/apply",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"careers",
+								"jobs",
+								"1",
+								"apply"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply for Job (Using Profile)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"coverLetter\": \"I want to use my profile info.\",\n    \"resumeUrl\": \"https://example.com/my-resume.pdf\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -279,7 +314,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "https://api.consultancy.alikohub.com",
+			"value": "http://localhost:3006",
 			"type": "string"
 		},
 		{

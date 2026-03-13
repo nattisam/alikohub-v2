@@ -4,7 +4,7 @@ export class CreateCourseModuleDto {
   @IsString() title: string;
   @IsString() description: string;
   @IsInt() courseId: number;
-  
+
   @IsOptional()
   @IsInt()
   order?: number;

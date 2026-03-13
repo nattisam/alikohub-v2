@@ -5,11 +5,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
-  "dependencies": {
-    "nodemailer": "^8.0.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "jest": "^29.4.0"
   }

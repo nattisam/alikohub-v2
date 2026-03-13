@@ -1,11 +1,15 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class JobsService {
   private readonly logger = new Logger(JobsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userService: UserService,
+  ) {}
 
   async createJob(data: any, userId: string) {
     this.logger.log(`Creating job: ${data.title} by user: ${userId}`);
@@ -94,12 +98,35 @@ export class JobsService {
     });
   }
 
-  async applyToJob(jobId: number, userId: string, applicationData: { coverLetter?: string; resumeUrl: string }) {
-    // Validate resumeUrl
+  async applyToJob(jobId: number, user: any, applicationData: any) {
+    const userId = user.firebaseId;
+    
+    // 1. Get user data from token first
+    const tokenData = {
+      fullName: user.firstname && user.lastname ? `${user.firstname} ${user.lastname}` : user.firstname || '',
+      email: user.email || '',
+    };
+
+    // 2. Load CareersProfile for additional fields if not in applicationData
+    const profile = await this.userService.getProfile(userId);
+
+    // 3. Prepare application info by merging sources
+    // Precedence: explicit applicationData > saved CareersProfile > Token data
+    const fullName = applicationData.fullName || tokenData.fullName || profile?.fullName;
+    const email = applicationData.email || tokenData.email || profile?.email;
+
+    if (!fullName || !email) {
+      this.logger.warn(`Application failed for user ${userId}: Missing full name or email`);
+      throw new ForbiddenException('Full name and email are required. Please provide them in your application or update your profile.');
+    }
+
+    // 4. Validate resumeUrl
     try {
-      const url = new URL(applicationData.resumeUrl);
-      if (!['http:', 'https:'].includes(url.protocol)) {
-          throw new Error();
+      if (applicationData.resumeUrl) {
+        const url = new URL(applicationData.resumeUrl);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+            throw new Error();
+        }
       }
     } catch (e) {
       throw new ForbiddenException('Invalid resume URL provided. Must be a valid HTTP/HTTPS URL.');
@@ -110,11 +137,38 @@ export class JobsService {
       throw new NotFoundException(`Job with ID ${jobId} is not available for applications`);
     }
 
+    // 5. Update CareersProfile automatically if new info is provided
+    const profileUpdate: any = {};
+    const profileFields = ['phone', 'experienceYears', 'currentTitle', 'currentCompany', 'industry', 'linkedInUrl', 'portfolioUrl'];
+    profileFields.forEach(field => {
+      if (applicationData[field]) profileUpdate[field] = applicationData[field];
+    });
+
+    if (Object.keys(profileUpdate).length > 0 || !profile) {
+      await this.userService.createOrUpdateProfile(userId, {
+        fullName,
+        email,
+        ...profileUpdate
+      });
+    }
+
+    // 6. Create the application snapshot
     return this.prisma.jobApplication.create({
       data: {
         jobId,
         userId,
-        ...applicationData,
+        fullName,
+        email,
+        phone: applicationData.phone || profile?.phone,
+        coverLetter: applicationData.coverLetter,
+        resumeUrl: applicationData.resumeUrl || '',
+        experienceYears: applicationData.experienceYears || profile?.experienceYears,
+        currentTitle: applicationData.currentTitle || profile?.currentTitle,
+        currentCompany: applicationData.currentCompany || profile?.currentCompany,
+        industry: applicationData.industry || profile?.industry,
+        linkedInUrl: applicationData.linkedInUrl || profile?.linkedInUrl,
+        portfolioUrl: applicationData.portfolioUrl || profile?.portfolioUrl,
+        additionalInfo: applicationData.additionalInfo,
       },
     });
   }

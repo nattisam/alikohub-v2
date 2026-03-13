@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 
 // Since we don't have direct access to AcademyService in the API Gateway,
 // we'll implement the guard logic using the microservice client approach
@@ -11,7 +11,7 @@ export class EnrollmentGuard implements CanActivate {
 
     const academyRole = user.academyActiveRole || user.academyRole || user.academyUser?.role;
     if (!user || !academyRole) {
-      throw new ForbiddenException('Access denied: No academy role found');
+      throw new UnauthorizedException('Access denied: No academy role found');
     }
 
     const userRole = academyRole.toUpperCase();
@@ -46,7 +46,7 @@ export class CourseAccessGuard implements CanActivate {
 
     const academyRole = user.academyActiveRole || user.academyRole || user.academyUser?.role;
     if (!user || !academyRole) {
-      throw new ForbiddenException('Access denied: No academy role found');
+      throw new UnauthorizedException('Access denied: No academy role found');
     }
 
     const userRole = academyRole.toUpperCase();

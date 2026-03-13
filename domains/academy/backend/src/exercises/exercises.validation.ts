@@ -3,10 +3,9 @@ import * as Joi from 'joi';
 export const CreateExerciseSchema = Joi.object({
   dto: Joi.object({
     title: Joi.string().required().description('The title of the exercise'),
-    question: Joi.string().required().description('The actual question text'),
     description: Joi.string()
-      .optional()
       .allow('', null)
+      .optional()
       .description('Detailed instructions for the exercise'),
     moduleId: Joi.number()
       .integer()
@@ -15,29 +14,30 @@ export const CreateExerciseSchema = Joi.object({
     lessonId: Joi.number()
       .integer()
       .optional()
-      .description('The optional lesson ID association'),
+      .description('The lesson ID this exercise belongs to'),
     type: Joi.string()
       .valid('MULTIPLE_CHOICE', 'TRUE_FALSE', 'MATCHING', 'SHORT_TEXT')
       .required()
-      .description('The pedagogical type of exercise'),
-    options: Joi.any().optional().description('List of choices (JSON)'),
-    correctAnswer: Joi.any()
+      .description('The type of exercise'),
+    question: Joi.string().required().description('The question text'),
+    options: Joi.any()
       .optional()
-      .description('The correct answer (JSON)'),
+      .description('Options for multiple choice etc.'),
+    correctAnswer: Joi.any().optional().description('The correct answer'),
     hints: Joi.array()
       .items(Joi.string())
       .optional()
-      .description('Array of hints'),
+      .description('Hints for the student'),
     points: Joi.number()
       .integer()
       .optional()
       .default(1)
-      .description('Maximum possible points for this exercise'),
+      .description('Points for this exercise'),
     order: Joi.number()
       .integer()
       .optional()
       .default(0)
-      .description('Display order'),
+      .description('Order of the exercise'),
   })
     .required()
     .description('Exercise creation details'),
@@ -51,10 +51,9 @@ export const UpdateExerciseSchema = Joi.object({
     .description('The unique identifier of the exercise to update'),
   dto: Joi.object({
     title: Joi.string().optional().description('The updated title'),
-    question: Joi.string().optional().description('The updated question text'),
     description: Joi.string()
-      .optional()
       .allow('', null)
+      .optional()
       .description('The updated instructions'),
     moduleId: Joi.number()
       .integer()
@@ -63,23 +62,21 @@ export const UpdateExerciseSchema = Joi.object({
     lessonId: Joi.number()
       .integer()
       .optional()
-      .description('The updated lesson ID association'),
+      .description('The updated lesson ID'),
     type: Joi.string()
       .valid('MULTIPLE_CHOICE', 'TRUE_FALSE', 'MATCHING', 'SHORT_TEXT')
       .optional()
       .description('The updated type'),
-    options: Joi.any().optional().description('The updated options (JSON)'),
+    question: Joi.string().optional().description('The updated question'),
+    options: Joi.any().optional().description('The updated options'),
     correctAnswer: Joi.any()
       .optional()
-      .description('The updated correct answer (JSON)'),
+      .description('The updated correct answer'),
     hints: Joi.array()
       .items(Joi.string())
       .optional()
       .description('The updated hints'),
-    points: Joi.number()
-      .integer()
-      .optional()
-      .description('The updated max score'),
+    points: Joi.number().integer().optional().description('The updated points'),
     order: Joi.number().integer().optional().description('The updated order'),
   })
     .required()

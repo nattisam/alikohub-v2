@@ -1,22 +1,26 @@
 // src/client-reports/client-reports.service.ts
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; // Adjust the path to your Prisma service
 import { CreateClientReportDto } from './dto/create-client-report.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, Project } from '../generated/client';
 import { AuthenticatedUser, UserService } from '../user/user.service';
 
 @Injectable()
 export class ClientReportService {
   constructor(
-     private prisma: PrismaService,
-     private userService: UserService,
+    private prisma: PrismaService,
+    private userService: UserService,
   ) {}
 
   async create(
     createClientReportDto: CreateClientReportDto,
-    user: AuthenticatedUser,
+    _user: AuthenticatedUser,
   ) {
-    const { projectId, summary, KPIs, title } = createClientReportDto;
+    const { projectId, summary, KPIs, title: _title } = createClientReportDto;
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -30,7 +34,7 @@ export class ClientReportService {
       data: {
         projectId,
         summary,
-        KPIs: KPIs as any,
+        KPIs: KPIs as unknown as Prisma.InputJsonValue,
       },
     });
   }
@@ -43,10 +47,17 @@ export class ClientReportService {
 
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-       throw new ForbiddenException('You do not have permission to view reports for this project.');
+      throw new ForbiddenException(
+        'You do not have permission to view reports for this project.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-       throw new ForbiddenException('You do not have permission to view reports for this project.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view reports for this project.',
+      );
     }
 
     return this.prisma.clientReport.findMany({
@@ -64,7 +75,7 @@ export class ClientReportService {
       where: {
         id: reportId,
       },
-      include: { Project: true }
+      include: { Project: true },
     });
 
     if (!report) {
@@ -72,14 +83,21 @@ export class ClientReportService {
         `Client Report with ID ${reportId} not found.`,
       );
     }
-    
-    const project = (report as any).Project;
+
+    const project = (report as unknown as { Project: Project }).Project;
     const profile = await this.userService.getOrCreateProfile(user);
     if (profile.role === 'CLIENT' && project.clientId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view this report.');
+      throw new ForbiddenException(
+        'You do not have permission to view this report.',
+      );
     }
-    if (profile.role === 'CONTRACTOR' && project.contractorId !== user.firebaseId) {
-      throw new ForbiddenException('You do not have permission to view this report.');
+    if (
+      profile.role === 'CONTRACTOR' &&
+      project.contractorId !== user.firebaseId
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view this report.',
+      );
     }
 
     return report;

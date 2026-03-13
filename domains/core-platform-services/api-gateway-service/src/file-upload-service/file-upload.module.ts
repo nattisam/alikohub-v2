@@ -2,8 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { FileUploadController } from './file-upload.controller';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-
+import { FileProxyController } from './file-proxy.controller';
 import { FileUploadService } from './file-upload.service';
 
 @Global()
@@ -12,7 +11,7 @@ import { FileUploadService } from './file-upload.service';
     HttpModule,
     ConfigModule,
   ],
-  controllers: [FileUploadController],
+  controllers: [FileUploadController, FileProxyController],
   providers: [FileUploadService],
   exports: [FileUploadService],
 })

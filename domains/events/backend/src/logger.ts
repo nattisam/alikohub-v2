@@ -1,5 +1,5 @@
-import { LoggerService } from '@nestjs/common';
-import * as winston from 'winston';
+import { LoggerService } from "@nestjs/common";
+import * as winston from "winston";
 
 const { combine, timestamp, printf, colorize } = winston.format;
 
@@ -8,15 +8,13 @@ const customFormat = printf(({ level, message, timestamp }) => {
 });
 
 export const winstonLogger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: combine(
     colorize(),
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    customFormat
+    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+    customFormat,
   ),
-  transports: [
-    new winston.transports.Console(),
-  ],
+  transports: [new winston.transports.Console()],
 });
 
 export class AppLogger implements LoggerService {

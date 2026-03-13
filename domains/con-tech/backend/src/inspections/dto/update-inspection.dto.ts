@@ -1,4 +1,4 @@
-import { InspectionStatus } from '@prisma/client';
+import { InspectionStatus } from '../../generated/client';
 import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class UpdateInspectionDto {
@@ -15,5 +15,4 @@ export class UpdateInspectionDto {
 
   @IsOptional()
   isVisibleToClient?: boolean;
-
 }

@@ -82,6 +82,48 @@ export class EmailService {
 		return this.sendEmail(to, subject, htmlContent);
 	}
 
+	async sendPasswordResetEmail(to: string, firstname: string, resetLink: string): Promise<boolean> {
+		const subject = 'Reset Your Aliko Password';
+		const htmlContent = `
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="utf-8">
+				<title>Reset Your Password</title>
+				<style>
+					body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+					.container { max-width: 600px; margin: 0 auto; padding: 20px; }
+					.header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+					.content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+					.button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+					.footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+				</style>
+			</head>
+			<body>
+				<div class="container">
+					<div class="header">
+						<h1>Reset Your Password</h1>
+					</div>
+					<div class="content">
+						<p>Hi ${firstname || 'there'},</p>
+						<p>We received a request to reset your password. Click the button below to set a new password:</p>
+						<a href="${resetLink}" class="button">Reset Password</a>
+						<p style="margin-top: 20px;">This link will expire in 1 hour.</p>
+						<p>If you didn't request a password reset, you can safely ignore this email.</p>
+						<p>Best regards,</p>
+						<p>The Aliko Team</p>
+					</div>
+					<div class="footer">
+						<p>&copy; ${new Date().getFullYear()} AlikoHub. All rights reserved.</p>
+					</div>
+				</div>
+			</body>
+			</html>
+		`;
+
+		return this.sendEmail(to, subject, htmlContent);
+	}
+
 	async sendVerificationEmail(to: string, firstname: string, verificationLink: string): Promise<boolean> {
 		const subject = 'Verify Your AlikoHub Academy Email';
 		const htmlContent = `
@@ -124,9 +166,9 @@ export class EmailService {
 		return this.sendEmail(to, subject, htmlContent);
 	}
 
-	async sendContactEmail(dto: any): Promise<boolean> {
-		const subject = `New Contact Form Submission - AlikoHub`;
-		const adminEmail = process.env.PARTNERSHIP_ADMIN_EMAIL || process.env.CONTECH_ADMIN_EMAIL || 'info@alikohub.com';
+	async sendContactEmail(dto: { name: string; email: string; phone: string; message: string }): Promise<boolean> {
+		const subject = `New Contact Form Submission - Aliko ConTech`;
+		const adminEmail = process.env.CONTECH_ADMIN_EMAIL || 'admin@alikohub.com';
 		const htmlContent = `
 			<!DOCTYPE html>
 			<html>
@@ -136,63 +178,21 @@ export class EmailService {
 			</head>
 			<body>
 				<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-					<h2 style="color: #667eea;">New Public Inquiry</h2>
-					<p><strong>Name:</strong> ${dto.name || ''}</p>
-					<p><strong>Email:</strong> ${dto.email || ''}</p>
-					${dto.organization ? `<p><strong>Organization:</strong> ${dto.organization}</p>` : ``}
-					${dto.role ? `<p><strong>Role:</strong> ${dto.role}</p>` : ``}
-					${dto.partnershipInterest ? `<p><strong>Interest:</strong> ${dto.partnershipInterest}</p>` : ``}
-					<p><strong>Phone:</strong> ${dto.phone || ''}</p>
+					<h2 style="color: #667eea;">New ConTech Inquiry</h2>
+					<p><strong>Name:</strong> ${dto.name}</p>
+					<p><strong>Email:</strong> ${dto.email}</p>
+					<p><strong>Phone:</strong> ${dto.phone}</p>
 					<p><strong>Message:</strong></p>
 					<div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
-						${(dto.message || '').toString().replace(/\n/g, '<br>')}
+						${dto.message.replace(/\n/g, '<br>')}
 					</div>
-					<p style="margin-top: 20px; font-size: 12px; color: #666;">This message was sent from a public contact form.</p>
+					<p style="margin-top: 20px; font-size: 12px; color: #666;">This message was sent from the Aliko ConTech public contact form.</p>
 				</div>
 			</body>
 			</html>
 		`;
 
-		const adminSent = await this.sendEmail(adminEmail, subject, htmlContent);
-
-		const ackSubject = 'Thanks for your inquiry to AlikoHub Partnerships';
-		const ackHtml = `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<meta charset="utf-8">
-				<title>Inquiry Received</title>
-			</head>
-			<body>
-				<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-					<h2 style="color: #667eea;">We received your inquiry</h2>
-					<p>Your query has been successfully submitted. Thank you for contacting us. A member of our Partnerships Team will review your request and respond within 2 business days.</p>
-					<p>This email acts as a confirmation that the form was received and that the Partnerships Team will respond soon. 📧</p>
-					<div style="margin-top: 16px;">
-						<p><strong>Name:</strong> ${dto.name || ''}</p>
-						<p><strong>Email:</strong> ${dto.email || ''}</p>
-						${dto.organization ? `<p><strong>Organization:</strong> ${dto.organization}</p>` : ``}
-						${dto.role ? `<p><strong>Role:</strong> ${dto.role}</p>` : ``}
-						${dto.partnershipInterest ? `<p><strong>Interest:</strong> ${dto.partnershipInterest}</p>` : ``}
-					</div>
-					${dto.message ? `
-					<div style="margin-top: 12px;">
-						<p><strong>Your message:</strong></p>
-						<div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea;">
-							${dto.message.toString().replace(/\n/g, '<br>')}
-						</div>
-					</div>` : ``}
-					<p style="margin-top: 20px;">If any detail is incorrect, please reply to this email with the correct information.</p>
-					<p style="margin-top: 20px; font-size: 12px; color: #666;">&copy; ${new Date().getFullYear()} AlikoHub</p>
-				</div>
-			</body>
-			</html>
-		`;
-
-		if (dto?.email) {
-			await this.sendEmail(dto.email, ackSubject, ackHtml);
-		}
-		return adminSent;
+		return this.sendEmail(adminEmail, subject, htmlContent);
 	}
 
 	private async sendEmail(to: string, subject: string, htmlContent: string): Promise<boolean> {

@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -23,15 +24,43 @@ model Job {
 }
 
 model JobApplication {
-  id           Int      @id @default(autoincrement())
-  jobId        Int
-  userId       String   // applicant userId from Auth service
-  coverLetter  String?
-  resumeUrl    String
-  createdAt    DateTime @default(now())
-  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id               Int      @id @default(autoincrement())
+  jobId            Int
+  userId           String   // applicant userId from Auth service
+  fullName         String
+  email            String
+  phone            String?
+  coverLetter      String?
+  resumeUrl        String
+  experienceYears  Int?
+  currentTitle     String?
+  currentCompany   String?
+  industry         String?
+  linkedInUrl      String?
+  portfolioUrl     String?
+  additionalInfo   String?
+  status          String   @default("PENDING")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  job              Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([userId, jobId])
+}
+
+model CareersProfile {
+  userId           String   @id
+  fullName         String
+  email            String
+  phone            String?
+  currentTitle     String?
+  currentCompany   String?
+  industry         String?
+  skills           String[]
+  linkedInUrl      String?
+  portfolioUrl     String?
+  experienceYears  Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model RecruiterProfile {

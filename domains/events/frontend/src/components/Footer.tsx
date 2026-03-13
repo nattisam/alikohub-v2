@@ -1,77 +1,76 @@
-import logo from "../assets/AlikoLogo.svg";
-import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter } from 'react-icons/fa';
-import { FaLocationDot } from "react-icons/fa6";
-import { FiMail, FiPhone } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
-const FooterLinks = [
-   {
-      title: "About",
-      links: ["How it works", "Features", "Partnership", "Business Relation"],
-   },
-   {
-      title: "Community",
-      links: ["Events", "Blog", "Podcast", "Invite a friend"],
-   },
-   {
-      title: "Contact",
-      links: ["alikohub@gmail.com", "Bole Dembel, Tigis building 12th floor,", "+2519845976"],
-   },
-];
-const Icons=[
-   <FiMail  className="text-blue-600 drop-shadow-[0px_8px_6px_blue-600]"/>,
-   <FaLocationDot className="text-blue-600 drop-shadow-[0px_8px_6px_rgba(24,119,242,0.4)]"/>,
-   <FiPhone className="text-blue-600 drop-shadow-[0px_8px_6px_rgba(24,119,242,0.4)]"/>
-]
- const Footer = () => {
-   return (
-      <footer className="w-full relative bg-black text-white" id="contact-us">
-         <div className="px-6 py-10 md:p-12 flex flex-col md:flex-row md:justify-between md:items-start gap-10">
-            <div className="flex flex-col items-start">
-               <img src={logo} alt="Aliko's-Logo" className="w-40 md:w-56 object-cover" />
-               <p className="max-w-2xs text-sm mt-1">
-                  Our vision is to provide convenience and help increase your sales business.
-               </p>
-               
-               <div className="flex gap-2 mt-4">
-                  {[FaFacebookF, FaInstagram, FaTwitter, FaLinkedinIn].map((Icon, i) => (
-                     <div key={i}
-                        className="size-7 rounded-full bg-blue-600 flex items-center justify-center drop-shadow-[-4px_14px_6px_rgba(24,119,242,0.3)]"
-                     >
-                        <Icon className="w-4 h-4 text-white" />
-                     </div>
-                  ))}
-               </div>
-            </div>
-            <div className="flex flex-row flex-wrap justify-around items-center sm:gap-10 md:gap-[120px]">
-               {FooterLinks.map((footerLink, index) => (
-                  <div key={index} className="flex flex-col not-md:items-center mt-6 sm:mt-0">
-                     <h3 className="font-extrabold mb-6">{footerLink.title}</h3>
-                     <ul className="flex flex-col not-md:items-center">
-                        {footerLink.links.map((link, linkIndex) => (
-                           <li
-                              key={linkIndex}
-                              className="mb-2 text-gray-300 text-sm flex items-center gap-2"
-                           >
-                              {footerLink.title === "Contact" ? Icons[linkIndex] : null}
-                              <a href="/contact">{link}</a>
-                           </li>
-                        ))}
-                     </ul>
-                  </div>
-               ))}
-            </div>
-         </div>
-         <div className="p-6 md:p-12">
-            <div className="bg-[#E1F1FF] h-[1px]" />
-            <div className="pt-4 flex flex-col md:flex-row justify-between items-center text-sm text-white gap-4 sm:gap-0">
-               <p>&copy;{`${new Date().getFullYear()} AlikoHub. All rights reserved`}</p>
-               <div className="flex gap-16">
-                  <span>Privacy & Policy</span>
-                  <span>Terms & Condition</span>
-               </div>
-            </div>
-         </div>
-      </footer>
-   );
+interface FooterProps {
+  portal: "professional" | "social";
+}
+
+const Footer = ({ portal }: FooterProps) => {
+  const otherPortal = portal === "professional" ? "social" : "professional";
+
+  const portalLinks = portal === "professional"
+    ? [
+        { label: "Home", href: "/professional" },
+        { label: "Services", href: "/professional/services" },
+        { label: "Portfolio", href: "/professional/portfolio" },
+        { label: "Events", href: "/professional/events" },
+        { label: "Request Proposal", href: "/professional/request-proposal" },
+      ]
+    : [
+        { label: "Home", href: "/social" },
+        { label: "Services", href: "/social/services" },
+        { label: "Gallery", href: "/social/gallery" },
+        { label: "Book Consultation", href: "/social/book-consultation" },
+      ];
+
+  return (
+    <footer className="bg-primary text-primary-foreground">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h3 className="font-display text-lg font-semibold mb-2">Aliko Events</h3>
+            <p className="text-sm text-primary-foreground/70 font-body leading-relaxed mb-2">
+              Professional precision. Personal celebration.
+            </p>
+            <p className="text-sm text-primary-foreground/50 font-body">
+              Connect • Inspire • Elevate
+            </p>
+          </div>
+          <div>
+            <h4 className="font-body font-semibold text-sm mb-3 text-gold">Platform</h4>
+            <ul className="space-y-2 font-body text-sm text-primary-foreground/70">
+              {portalLinks.map((l) => (
+                <li key={l.href}>
+                  <Link to={l.href} className="hover:text-primary-foreground transition-colors">{l.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-body font-semibold text-sm mb-3 text-gold">Company</h4>
+            <ul className="space-y-2 font-body text-sm text-primary-foreground/70">
+              <li><Link to={`/about?portal=${portal}`} className="hover:text-primary-foreground transition-colors">About</Link></li>
+              <li><Link to={`/testimonials?portal=${portal}`} className="hover:text-primary-foreground transition-colors">Testimonials</Link></li>
+              <li><Link to={`/contact?portal=${portal}`} className="hover:text-primary-foreground transition-colors">Contact</Link></li>
+              <li><a href="#" className="hover:text-primary-foreground transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-primary-foreground transition-colors">Terms</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-body font-semibold text-sm mb-3 text-gold">Switch Experience</h4>
+            <Link
+              to={`/${otherPortal}`}
+              className="inline-flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-primary-foreground font-body transition-colors"
+            >
+              Go to {otherPortal === "professional" ? "Professional" : "Social"} Portal →
+            </Link>
+          </div>
+        </div>
+        <div className="border-t border-primary-foreground/10 pt-6 text-center text-xs text-primary-foreground/50 font-body">
+          © {new Date().getFullYear()} Aliko Events. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
 };
- export { Footer };
+
+export default Footer;

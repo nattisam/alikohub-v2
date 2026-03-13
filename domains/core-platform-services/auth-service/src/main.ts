@@ -15,7 +15,7 @@ async function bootstrap() {
   const port = parseInt(process.env.AUTH_SERVICE_PORT || '3001', 10);
   
   // Centralized Global Error Handling
-  app.useGlobalFilters(new GlobalExceptionFilter(), new RpcExceptionFilter());
+  app.useGlobalFilters(new RpcExceptionFilter());
   
   // Centralized Validation Handling
   app.useGlobalPipes(

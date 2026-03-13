@@ -9,11 +9,11 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { KpiDto } from './kpi.dto'; 
+import { KpiDto } from './kpi.dto';
 
 export class CreateClientReportDto {
   @IsString()
-  title:string;
+  title: string;
 
   @IsInt()
   @IsPositive()
@@ -24,10 +24,10 @@ export class CreateClientReportDto {
   @IsNotEmpty()
   @MinLength(20)
   @MaxLength(5000)
-  summary: string; 
+  summary: string;
 
   @IsArray()
-  @ValidateNested({ each: true }) 
-  @Type(() => KpiDto) 
+  @ValidateNested({ each: true })
+  @Type(() => KpiDto)
   KPIs: KpiDto[];
 }

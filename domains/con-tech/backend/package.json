@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "con-tech-backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -13,7 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -28,7 +28,7 @@
     "@nestjs/mapped-types": "^1.2.1",
     "@nestjs/microservices": "^9.4.0",
     "@nestjs/platform-express": "^9.4.0",
-    "@prisma/client": "^6.19.1",
+    "@prisma/client": "6.15.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.9",
     "class-transformer": "^0.5.1",
@@ -38,6 +38,7 @@
     "joi": "^18.0.2",
     "nest-winston": "^1.10.2",
     "pg": "^8.16.3",
+    "prisma": "6.15.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "winston": "^3.19.0"
@@ -50,6 +51,7 @@
     "@nestjs/testing": "^9.4.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
     "@types/prismjs": "^1.26.5",
     "@types/supertest": "^6.0.2",
@@ -59,7 +61,6 @@
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "prettier": "^3.4.2",
-    "prisma": "^6.19.1",
     "prismjs": "^1.30.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
@@ -71,6 +72,9 @@
     "typescript-eslint": "^8.20.0"
   },
   "jest": {
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist/"
+    ],
     "moduleFileExtensions": [
       "js",
       "json",

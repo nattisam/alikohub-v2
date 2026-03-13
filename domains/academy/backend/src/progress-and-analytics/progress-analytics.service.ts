@@ -43,12 +43,17 @@ export class ProgressAndAnalyticsService {
       where: { instructorId: user.firebaseId },
     });
 
-    // Get total enrollments across all courses
+    // Get total enrollments across all courses (both direct and cohort-based)
     const courseIds = courses.map((course) => course.id);
     const totalEnrollments =
       courseIds.length > 0
         ? await this.prisma.enrollment.count({
-            where: { cohort: { courseId: { in: courseIds } } },
+            where: {
+              OR: [
+                { courseId: { in: courseIds } },
+                { cohort: { courseId: { in: courseIds } } },
+              ],
+            },
           })
         : 0;
 
@@ -159,7 +164,10 @@ export class ProgressAndAnalyticsService {
     }
 
     const enrollment = await this.prisma.enrollment.findFirst({
-      where: { userId: user.firebaseId, cohort: { courseId } },
+      where: {
+        userId: user.firebaseId,
+        OR: [{ courseId }, { cohort: { courseId } }],
+      },
     });
     if (!enrollment)
       throw new ForbiddenException('Not enrolled in this course.');
@@ -273,7 +281,7 @@ export class ProgressAndAnalyticsService {
     }
 
     const enrollments = await this.prisma.enrollment.findMany({
-      where: { cohort: { courseId } },
+      where: { OR: [{ courseId }, { cohort: { courseId } }] },
     });
     const studentIds = enrollments.map((e) => e.userId);
     const students = await this.userService.getUsersByIds(studentIds);
@@ -285,7 +293,10 @@ export class ProgressAndAnalyticsService {
           courseId,
         );
         return {
-          student: { id: student.firebaseId, name: student.name },
+          student: {
+            id: student.firebaseId,
+            name: `${student.firstname} ${student.lastname}`.trim(),
+          },
           ...progress,
         };
       }),

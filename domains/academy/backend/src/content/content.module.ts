@@ -28,6 +28,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   ],
   controllers: [ContentController],
   providers: [ContentService, ContentAccessGuard, PrismaService],
-  exports: [ClientsModule]
+  exports: [ClientsModule],
 })
 export class ContentModule {}

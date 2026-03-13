@@ -6,17 +6,14 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Response, Request } from 'express';
-import { Prisma } from '@prisma/client';
+import { Response } from 'express';
+import { Prisma } from '../../generated/client';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: any, host: ArgumentsHost) {
-    if (host.getType() !== 'http') {
-      return;
-    }
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -29,8 +26,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception.constructor.name === 'RpcException') {
       const rpcError = exception.getError();
       if (typeof rpcError === 'object' && rpcError !== null) {
-        status =
-          rpcError.statusCode || rpcError.status || HttpStatus.BAD_REQUEST;
+        status = rpcError.statusCode || rpcError.status || HttpStatus.BAD_REQUEST;
         message = rpcError.message || 'RPC Error';
         error = rpcError.error || 'RPC Error';
         details = rpcError.details || null;
@@ -42,9 +38,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const res = exception.getResponse() as any;
       if (typeof res === 'object') {
-        message = Array.isArray(res.message)
-          ? res.message[0]
-          : res.message || exception.message;
+        message = Array.isArray(res.message) ? res.message[0] : res.message || exception.message;
         error = res.error || 'Http Error';
         details = res.details || null;
       } else {
@@ -83,10 +77,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (status >= 500) {
-      this.logger.error(
-        `Fatal Error: ${JSON.stringify(errorResponse)}`,
-        exception.stack,
-      );
+      this.logger.error(`Fatal Error: ${JSON.stringify(errorResponse)}`, exception.stack);
     } else {
       this.logger.warn(`Handled Exception: ${message} (Status: ${status})`);
     }

@@ -29,9 +29,13 @@ export const CreateContechUserSchema = SignUpSchema.keys({
   role: Joi.string().valid('ADMIN', 'CONTRACTOR', 'CLIENT').required().description('Specific role for ConTech domain'),
 }).description('Schema for creating a ConTech domain user');
 
-export const CreateEventsUserSchema = SignUpSchema.keys({
-  role: Joi.string().valid('ADMIN', 'CONTENT_MANAGER', 'USER').required().description('Specific role for Events domain'),
-}).description('Schema for creating an Events domain user');
+export const CreateEventsUserSchema = Joi.object({
+  email: Joi.string().email().required().trim(),
+  password: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required(),
+  firstname: Joi.string().required(),
+  lastname: Joi.string().required(),
+  role: Joi.string().valid('ADMIN', 'CONTENT_MANAGER', 'USER', 'realtor', 'developer').required()
+});
 
 export const SignInSchema = Joi.object({
   email: Joi.string().email().required().description('Authentication email'),
@@ -60,3 +64,16 @@ export const UserStatusUpdateSchema = Joi.object({
 export const UserIdentitySchema = Joi.object({
   firebaseId: Joi.string().required().description('Firebase user ID'),
 }).description('Schema for operations requiring a single user identity');
+
+export const ForgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required().trim().description('User email addressed'),
+}).description('Schema for password reset request');
+
+export const ResetPasswordSchema = Joi.object({
+  email: Joi.string().email().required().trim().description('User email address'),
+  newPassword: Joi.string()
+    .min(8)
+    .regex(passwordRegex)
+    .required()
+    .description('New password'),
+}).description('Schema for confirming password reset');

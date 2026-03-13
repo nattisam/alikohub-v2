@@ -7,7 +7,7 @@ const collection = {
     schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   variable: [
-    { key: "baseUrl", value: "https://api.consultancy.alikohub.com", type: "string" },
+    { key: "baseUrl", value: "http://localhost:3006", type: "string" },
     { key: "token", value: "", type: "string" }
   ],
   item: [

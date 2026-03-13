@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Argon2Service } from './argon2.service';
 import { EmailService } from './email.service';
-import { AcademyRole, ContechRole, EventsRole, GlobalRole, CareersRole } from '@prisma/client';
+import { AcademyRole, ContechRole, EventsRole, GlobalRole, CareersRole, ConsultancyRole } from '../generated/client';
 import { RabbitMQService } from '../rabbitmq.service';
 
 @Injectable()
@@ -94,6 +94,15 @@ export class AuthService {
                 data: {
                     userId: userRecord.uid,
                     role: EventsRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
+            // Create local ConsultancyUser record with default USER role
+            await this.prisma.consultancyUser.create({
+                data: {
+                    userId: userRecord.uid,
+                    role: ConsultancyRole.USER,
                     status: 'ACTIVE',
                 }
             });
@@ -226,6 +235,9 @@ export class AuthService {
 				await tx.eventsUser.create({
 					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
 				});
+				await tx.consultancyUser.create({
+					data: { userId: userRecord.uid, role: ConsultancyRole.USER, status: 'ACTIVE' }
+				});
 
 				this.logger.log(`Recruiter successfully created in database with ID: ${newUser.id}`);
 				
@@ -315,6 +327,9 @@ export class AuthService {
 				await tx.eventsUser.create({
 					data: { userId: userRecord.uid, role: EventsRole.USER, status: 'ACTIVE' }
 				});
+				await tx.consultancyUser.create({
+					data: { userId: userRecord.uid, role: ConsultancyRole.USER, status: 'ACTIVE' }
+				});
 
 				this.logger.log(`ConTech user successfully created in database with ID: ${newUser.id}`);
 				
@@ -398,6 +413,9 @@ export class AuthService {
 				});
 				await tx.contechUser.create({
 					data: { userId: userRecord.uid, role: ContechRole.CLIENT, status: 'ACTIVE' }
+				});
+				await tx.consultancyUser.create({
+					data: { userId: userRecord.uid, role: ConsultancyRole.USER, status: 'ACTIVE' }
 				});
 
 				this.logger.log(`Events user successfully created in database with ID: ${newUser.id}`);
@@ -589,6 +607,15 @@ export class AuthService {
                 data: {
                     userId: decoded.uid,
                     role: EventsRole.USER,
+                    status: 'ACTIVE',
+                }
+            });
+
+            // Create local ConsultancyUser record with default USER role
+            await this.prisma.consultancyUser.create({
+                data: {
+                    userId: decoded.uid,
+                    role: ConsultancyRole.USER,
                     status: 'ACTIVE',
                 }
             });
@@ -1018,6 +1045,71 @@ export class AuthService {
 			canEnrollCourses: currentRole === 'STUDENT' && user.academyUser?.status === 'ACTIVE',
 			canCreateCourses: currentRole === 'INSTRUCTOR' && user.academyUser?.status === 'ACTIVE'
 		};
+	}
+
+	async forgotPassword(email: string) {
+		this.logger.log(`Password reset request for email: ${email}`);
+		const user = await this.userService.findByEmail(email);
+		if (!user) {
+			// Don't reveal if user exists for security
+			return { message: 'If an account exists with this email, a reset link has been sent.' };
+		}
+
+		try {
+			const firebase = this.firebaseService.getAuth();
+			// FRONTEND_URL should be defined in your environment
+			const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+			const actionCodeSettings = {
+				url: `${frontendUrl}/reset-password`,
+				handleCodeInApp: true,
+			};
+			const resetLink = await firebase.generatePasswordResetLink(email, actionCodeSettings);
+			
+			await this.emailService.sendPasswordResetEmail(email, user.firstname, resetLink);
+			
+			return { message: 'If an account exists with this email, a reset link has been sent.' };
+		} catch (error: any) {
+			this.logger.error(`Failed to generate password reset link for ${email}: ${error.message}`);
+			throw new RpcException({
+				statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+				message: 'Failed to process password reset request',
+				error: 'Internal Server Error',
+			});
+		}
+	}
+
+	async resetPassword(payload: { email: string; newPassword: string }) {
+		this.logger.log(`Processing password reset for: ${payload.email}`);
+		try {
+			const user = await this.userService.findByEmail(payload.email);
+			if (!user) {
+				throw new RpcException({
+					statusCode: HttpStatus.NOT_FOUND,
+					message: 'User not found',
+					error: 'Not Found',
+				});
+			}
+
+			// Update password in Firebase using Admin SDK
+			const firebase = this.firebaseService.getAuth();
+			await firebase.updateUser(user.firebaseId, {
+				password: payload.newPassword,
+			});
+			
+			// Sync with local DB
+			const hashedPassword = await this.argon2Service.hash(payload.newPassword);
+			await this.userService.updateProfile(user.firebaseId, { password: hashedPassword });
+			
+			return { message: 'Password reset successfully' };
+		} catch (error: any) {
+			this.logger.error(`Password reset failed: ${error.message}`);
+			if (error instanceof RpcException) throw error;
+			throw new RpcException({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: error.message || 'Failed to reset password',
+				error: 'Bad Request',
+			});
+		}
 	}
 
 	async logout(userId: string) {

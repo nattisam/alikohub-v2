@@ -1,4 +1,10 @@
-import { Controller, UseGuards, UsePipes, Logger, UseFilters } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  UsePipes,
+  Logger,
+  UseFilters,
+} from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { InspectionsService } from './inspections.service';
 import { CreateInspectionDto } from './dto/create-inspection.dto';
@@ -11,7 +17,7 @@ import {
   CreateInspectionSchema,
   UpdateInspectionSchema,
   InspectionIdSchema,
-  GetInspectionsByProjectSchema
+  GetInspectionsByProjectSchema,
 } from './inspections.validation';
 
 @Controller()
@@ -21,30 +27,58 @@ export class InspectionsController {
   private readonly logger = new Logger(InspectionsController.name);
   constructor(private readonly inspectionsService: InspectionsService) {}
 
-  @MessagePattern({cmd: 'create_Inspection'})
+  @MessagePattern({ cmd: 'create_Inspection' })
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
   @UsePipes(new JoiValidationPipe(CreateInspectionSchema))
-  async create(@Payload() payload: { dto: CreateInspectionDto; files: any[]; user: AuthenticatedUser }) {
-    const {dto, files, user} = payload;
-    this.logger.log(`Creating inspection for project ID: ${dto.projectId} by user: ${user.firebaseId}`);
+  async create(
+    @Payload()
+    payload: {
+      dto: CreateInspectionDto;
+      files: any[];
+      user: AuthenticatedUser;
+    },
+  ) {
+    const { dto, files, user } = payload;
+    this.logger.log(
+      `Creating inspection for project ID: ${dto.projectId} by user: ${user.firebaseId}`,
+    );
     try {
       return await this.inspectionsService.create(dto, files);
     } catch (error) {
-      this.logger.error(`Failed to create inspection for project ID ${dto.projectId} by user ${user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to create inspection for project ID ${dto.projectId} by user ${user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }
 
-  @MessagePattern({cmd: 'findAllInspections'})
+  @MessagePattern({ cmd: 'findAllInspections' })
   @UsePipes(new JoiValidationPipe(GetInspectionsByProjectSchema))
-  async findAll(@Payload() data: { projectId: number; pagination?: { skip?: number; take?: number }; user: AuthenticatedUser }) {
+  async findAll(
+    @Payload()
+    data: {
+      projectId: number;
+      pagination?: { skip?: number; take?: number };
+      user: AuthenticatedUser;
+    },
+  ) {
     const { projectId, pagination = {}, user } = data;
-    this.logger.log(`Fetching inspections for project ID: ${projectId} (requested by: ${user.firebaseId})`);
+    this.logger.log(
+      `Fetching inspections for project ID: ${projectId} (requested by: ${user.firebaseId})`,
+    );
     try {
-      return await this.inspectionsService.findAllForProject(projectId, pagination, user);
+      return await this.inspectionsService.findAllForProject(
+        projectId,
+        pagination,
+        user,
+      );
     } catch (error) {
-      this.logger.error(`Failed to fetch inspections for project ID ${projectId} by user ${user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch inspections for project ID ${projectId} by user ${user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }
@@ -52,11 +86,16 @@ export class InspectionsController {
   @MessagePattern('findOneInspection')
   @UsePipes(new JoiValidationPipe(InspectionIdSchema))
   async findOne(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    this.logger.log(`Fetching inspection ID: ${payload.id} by user: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Fetching inspection ID: ${payload.id} by user: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.inspectionsService.findOne(payload.id, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to fetch inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to fetch inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }
@@ -65,13 +104,25 @@ export class InspectionsController {
   @UseGuards(RoleGuard)
   @Roles('ADMIN')
   @UsePipes(new JoiValidationPipe(UpdateInspectionSchema))
-  async update(@Payload() payload: { id: number; updateInspectionDto: UpdateInspectionDto; user: AuthenticatedUser }) {
-    this.logger.log(`Updating inspection ID: ${payload.id} by user: ${payload.user.firebaseId}`);
+  async update(
+    @Payload()
+    payload: {
+      id: number;
+      updateInspectionDto: UpdateInspectionDto;
+      user: AuthenticatedUser;
+    },
+  ) {
+    this.logger.log(
+      `Updating inspection ID: ${payload.id} by user: ${payload.user.firebaseId}`,
+    );
     try {
       const dto = { ...payload.updateInspectionDto, id: payload.id };
       return await this.inspectionsService.update(dto.id, dto, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to update inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }
@@ -81,11 +132,16 @@ export class InspectionsController {
   @Roles('ADMIN')
   @UsePipes(new JoiValidationPipe(InspectionIdSchema))
   async remove(@Payload() payload: { id: number; user: AuthenticatedUser }) {
-    this.logger.log(`Removing inspection ID: ${payload.id} by user: ${payload.user.firebaseId}`);
+    this.logger.log(
+      `Removing inspection ID: ${payload.id} by user: ${payload.user.firebaseId}`,
+    );
     try {
       return await this.inspectionsService.remove(payload.id, payload.user);
     } catch (error) {
-      this.logger.error(`Failed to remove inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to remove inspection ID ${payload.id} by user ${payload.user.firebaseId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }

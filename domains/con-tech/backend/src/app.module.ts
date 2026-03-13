@@ -14,6 +14,7 @@ import { ContractModule } from './contract/contract.module';
 import { ContactModule } from './contact/contact.module';
 import { MilestonesModule } from './milestones/milestones.module';
 import { AdminModule } from './admin/admin.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -34,8 +35,8 @@ import { AdminModule } from './admin/admin.module';
     ContractModule,
     MilestonesModule,
     ContactModule,
-    AdminModule
   ],
+  controllers: [AppController],
   providers: [CloudinaryService],
 })
-export class AppModule { }
+export class AppModule {}

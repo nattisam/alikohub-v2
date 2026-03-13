@@ -44,50 +44,81 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<Request>();
 
-    // 1. Extract the session cookie or Bearer token
+    // 1. Extract the session cookie and/or Bearer token
     const sessionCookie = request.cookies?.session;
     const authHeader = request.headers.authorization;
-    
-    let type: 'cookie' | 'jwt' = 'cookie';
-    let value: string | null = sessionCookie;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
-    if (!sessionCookie && authHeader && authHeader.startsWith('Bearer ')) {
-      type = 'jwt';
-      value = authHeader.split(' ')[1];
+    // 2. Perform authentication
+    let lastError: any = null;
+
+    if (bearerToken) {
+      // First try AlikoHub JWT
+      try {
+        const authResponse = await firstValueFrom(
+          this.authClient
+            .send({ cmd: 'verify' }, { type: 'jwt', value: bearerToken })
+            .pipe(timeout(5000)),
+        );
+        
+        if (authResponse?.user) {
+          request.user = authResponse.user;
+          return true;
+        }
+      } catch (err) {
+        lastError = err;
+        
+        // If JWT fails, try Firebase ID token as fallback
+        try {
+          const authResponse = await firstValueFrom(
+            this.authClient
+              .send({ cmd: 'verify' }, { type: 'token', value: bearerToken })
+              .pipe(timeout(5000)),
+          );
+          
+          if (authResponse?.user) {
+            request.user = authResponse.user;
+            return true;
+          }
+        } catch (innerErr) {
+          lastError = innerErr;
+        }
+      }
     }
 
-    if (!value) {
-      throw new UnauthorizedException('No authentication provided (cookie or token)');
+    if (sessionCookie && !request.user) {
+      try {
+        const authResponse = await firstValueFrom(
+          this.authClient
+            .send({ cmd: 'verify' }, { type: 'cookie', value: sessionCookie })
+            .pipe(timeout(5000)),
+        );
+        
+        if (authResponse?.user) {
+          request.user = authResponse.user;
+          return true;
+        }
+      } catch (err) {
+        lastError = err;
+      }
     }
 
-    try {
-      // 2. Delegate verification to the auth-service
-      const authResponse = await firstValueFrom(
-        this.authClient
-          .send(
-            { cmd: 'verify' },
-            { type, value },
-          )
-          .pipe(
-            timeout(5000), // Timeout after 5 seconds
-            catchError(() => {
-              // If the auth-service throws an error, catch it
-              throw new UnauthorizedException('Session is invalid or expired');
-            }),
-          ),
-      );
-      
-      if (!authResponse?.user) {
-        throw new UnauthorizedException('Invalid session');
+    // 3. Handle failure
+    if (!request.user) {
+      if (!bearerToken && !sessionCookie) {
+        throw new UnauthorizedException('Authentication required: Please provide a valid token or session.');
       }
 
-      // 3. Attach the full user object (returned from auth-service) to the request
-      request.user = authResponse.user;
+      const errorMessage = lastError?.message || 'Authentication failed: Your session may have expired or is invalid.';
       
-      return true;
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      // TEST-08 Check: Avoid generic exhausted message
+      if (errorMessage.includes('exhausted') || errorMessage === 'TimeoutError') {
+         throw new UnauthorizedException('Authentication service unreachable or session expired. Please log in again.');
+      }
+
       throw new UnauthorizedException(errorMessage);
     }
+
+    return true;
   }
 }

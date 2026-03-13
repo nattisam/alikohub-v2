@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class AdminAccessGuard implements CanActivate {
@@ -7,7 +7,7 @@ export class AdminAccessGuard implements CanActivate {
     const user = request.user;
 
     if (!user || user.globalRole !== 'ADMIN') {
-      throw new ForbiddenException('Only administrators can access this resource');
+      throw new UnauthorizedException('Only administrators can access this resource');
     }
 
     return true;

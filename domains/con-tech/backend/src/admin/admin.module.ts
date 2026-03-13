@@ -4,10 +4,7 @@ import { ProjectsModule } from '../projects/projects.module';
 import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [
-    forwardRef(() => ProjectsModule),
-    forwardRef(() => UserModule),
-  ],
+  imports: [forwardRef(() => ProjectsModule), forwardRef(() => UserModule)],
   controllers: [AdminController],
 })
 export class AdminModule {}

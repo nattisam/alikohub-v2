@@ -1,20 +1,11 @@
 import { fork, execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
-let dotenvLoaded = false;
-try {
-  const dotenv = await import('dotenv');
-  dotenv.default.config();
-  dotenvLoaded = true;
-} catch {
-  // dotenv is optional; proceed without it
-}
+// import dotenv from 'dotenv';
 import fs from 'fs';
 
-// Load global environment variables from root .env (best-effort)
-if (dotenvLoaded) {
-  // already loaded above
-}
+// Load global environment variables from root .env
+// dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +61,11 @@ const services = [
     portVar: 'EVENTS_SERVICE_PORT',
     hasPrisma: true
   },
+  { 
+    name: 'home-backend', 
+    path: './domains/Home/backend/dist/main.js', 
+    portVar: 'HOME_SERVICE_PORT' 
+  },
 ];
 
 console.log('--- AlikoHub Microservices Orchestrator ---');
@@ -90,16 +86,32 @@ async function start() {
           dbEnv.DATABASE_URL = process.env[service.dbVar];
         }
         
-        execSync('npx prisma db push --accept-data-loss', { 
-          cwd: serviceRoot, 
-          env: dbEnv, 
-          stdio: 'inherit' 
-        });
-        execSync('npx prisma generate', { 
-          cwd: serviceRoot, 
-          env: dbEnv, 
-          stdio: 'inherit' 
-        });
+        const prismaPath = path.join(serviceRoot, 'node_modules/prisma/build/index.js');
+        if (fs.existsSync(prismaPath)) {
+          console.log(`[${service.name}] Using local Prisma binary...`);
+          execSync(`node "${prismaPath}" db push --accept-data-loss`, { 
+            cwd: serviceRoot, 
+            env: dbEnv, 
+            stdio: 'inherit' 
+          });
+          execSync(`node "${prismaPath}" generate`, { 
+            cwd: serviceRoot, 
+            env: dbEnv, 
+            stdio: 'inherit' 
+          });
+        } else {
+          console.log(`[${service.name}] Prisma binary not found at ${prismaPath}. Trying npx...`);
+          execSync('npx -y prisma@6 db push --accept-data-loss', { 
+            cwd: serviceRoot, 
+            env: dbEnv, 
+            stdio: 'inherit' 
+          });
+          execSync('npx -y prisma@6 generate', { 
+            cwd: serviceRoot, 
+            env: dbEnv, 
+            stdio: 'inherit' 
+          });
+        }
       } catch (err) {
         console.error(`[${service.name}] ERROR during database sync. Skipping startup.`);
         continue;

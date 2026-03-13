@@ -9,20 +9,22 @@ export class RoleGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Get the required roles from the @Roles() decorator
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredRoles) {
       // If no roles are specified, allow access.
       return true;
     }
 
-    const data = context.switchToRpc().getData();
-    
+    const data = context.switchToRpc().getData<{
+      contechProfile?: { role?: string };
+    }>();
+
     // Get the contechProfile attached by the ConTechProfileGuard
-    const { contechProfile } = data;
+    const contechProfile = data.contechProfile;
 
     if (!contechProfile || !contechProfile.role) {
       // This should ideally never happen if the ConTechProfileGuard ran first
@@ -30,10 +32,14 @@ export class RoleGuard implements CanActivate {
     }
 
     // Check if the user's role is included in the list of required roles.
-    const hasRequiredRole = requiredRoles.some((role) => contechProfile.role === role);
+    const hasRequiredRole = requiredRoles.some(
+      (role) => contechProfile.role === role,
+    );
 
     if (!hasRequiredRole) {
-      throw new RpcException('You do not have the required permissions to perform this action.');
+      throw new RpcException(
+        'You do not have the required permissions to perform this action.',
+      );
     }
 
     return true;

@@ -11,4 +11,4 @@ import { InstructorCohortGuard } from './guards/instructor-cohort.guard';
   providers: [CohortsService, CohortAccessGuard, InstructorCohortGuard],
   exports: [CohortsService],
 })
-export class CohortsModule { }
+export class CohortsModule {}

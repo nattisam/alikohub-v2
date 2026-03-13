@@ -1,140 +1,165 @@
-import { Link, NavLink } from "react-router-dom";
-import { LogIn, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useAuth, useHasRole } from "../context/auth-context";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X, LayoutDashboard, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import logoProfessional from "@/assets/logo-professional.png";
+import logoSocial from "@/assets/logo-social.png";
 
-export default function Navbar() {
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+interface NavbarProps {
+  portal: "professional" | "social";
+}
+
+const professionalLinks: NavItem[] = [
+  { label: "Home", href: "/professional" },
+  { label: "Services", href: "/professional/services" },
+  { label: "Portfolio", href: "/professional/portfolio" },
+  { label: "Events", href: "/professional/events" },
+];
+
+const socialLinks: NavItem[] = [
+  { label: "Home", href: "/social" },
+  { label: "Services", href: "/social/services" },
+  { label: "Gallery", href: "/social/gallery" },
+  { label: "Templates", href: "/social/templates" },
+];
+
+const Navbar = ({ portal }: NavbarProps) => {
   const [open, setOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
-  const isAdmin = useHasRole("ADMIN");
-  const isCM = useHasRole("CONTENT_MANAGER");
-
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-2 rounded-md text-sm transition ${
-      isActive ? "text-blue-500" : "text-gray-300 hover:text-white"
-    }`;
-
-  const dashboardPath = isAdmin ? "/admin" : isCM ? "/content-manager" : "/";
+  const { user, isAdmin, isContentManager, signOut } = useAuth();
+  const location = useLocation();
+  const links = portal === "professional" ? professionalLinks : socialLinks;
+  const logo = portal === "professional" ? logoProfessional : logoSocial;
+  const ctaText = portal === "professional" ? "Request Proposal" : "Book Consultation";
+  const ctaHref = portal === "professional" ? "/professional/request-proposal" : "/social/book-consultation";
 
   return (
-    <nav className="bg-[#0b1620] text-white px-6 py-4">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <Link to="/" className="font-semibold text-lg">
-          AlikoHub
+    <nav className="sticky top-0 z-40 bg-primary border-b border-primary/80 shadow-md">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+        <Link to={`/${portal}`} className="flex items-center gap-2">
+          <img src={logo} alt={`Aliko Events ${portal}`} className="h-9 w-auto" />
         </Link>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6">
-          <NavLink to="/" className={linkClass}>
-            Home
-          </NavLink>
-          <NavLink to="/events" className={linkClass}>
-            Events
-          </NavLink>
-          <NavLink to="/news" className={linkClass}>
-            News & Announcements
-          </NavLink>
-          <NavLink to="/promotion-request" className={linkClass}>
-            Promotion Request
-          </NavLink>
-        </div>
-
-        {/* Desktop Actions */}
-        <div className="hidden md:flex gap-3 items-center">
-          {isAuthenticated ? (
-            <>
-              <Link
-                to={dashboardPath}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-blue-600 hover:bg-blue-700 transition font-bold"
-              >
-                <LayoutDashboard size={16} />{" "}
-                {isAdmin ? "Admin Panel" : "Dashboard"}
-              </Link>
-              <button
-                onClick={logout}
-                className="text-gray-400 hover:text-white transition p-2"
-                title="Logout"
-              >
-                <LogOut size={18} />
-              </button>
-            </>
-          ) : (
+        {/* Desktop links */}
+        <div className="hidden lg:flex items-center gap-6 font-body text-sm">
+          {links.map((l) => (
             <Link
-              to="/login"
-              className="flex items-center gap-2 px-4 py-2 text-sm rounded-full border border-gray-600 hover:border-white transition"
+              key={l.href}
+              to={l.href}
+              className={`transition-colors hover:text-accent ${
+                location.pathname === l.href
+                  ? "text-accent font-semibold"
+                  : "text-primary-foreground/80"
+              }`}
             >
-              <LogIn size={16} /> Sign In
+              {l.label}
+            </Link>
+          ))}
+          {(isAdmin() || isContentManager()) && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-1.5 text-secondary font-semibold hover:text-accent transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
             </Link>
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button onClick={() => setOpen(!open)} className="md:hidden">
-          {open ? <X /> : <Menu />}
+        <div className="hidden lg:flex items-center gap-3">
+          {user ? (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={signOut}
+              className="font-body text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          ) : (
+            <Link to={`/${portal}/signin`}>
+              <Button variant="ghost" size="sm" className="font-body text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                Sign In
+              </Button>
+            </Link>
+          )}
+          <Link to={ctaHref}>
+            <Button size="sm" className="font-body bg-accent text-accent-foreground hover:bg-accent/90">
+              {ctaText}
+            </Button>
+          </Link>
+        </div>
+
+        {/* Mobile toggle */}
+        <button
+          className="lg:hidden p-2 text-primary-foreground"
+          onClick={() => setOpen(!open)}
+          aria-label="Toggle menu"
+        >
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       {open && (
-        <div className="md:hidden mt-4 space-y-2 bg-[#02080f] rounded-xl p-4 border border-white/5 shadow-2xl">
-          <NavLink onClick={() => setOpen(false)} to="/" className={linkClass}>
-            Home
-          </NavLink>
-          <NavLink
-            onClick={() => setOpen(false)}
-            to="/events"
-            className={linkClass}
-          >
-            Events
-          </NavLink>
-          <NavLink
-            onClick={() => setOpen(false)}
-            to="/news"
-            className={linkClass}
-          >
-            News & Announcements
-          </NavLink>
-          <NavLink
-            onClick={() => setOpen(false)}
-            to="/promotion-request"
-            className={linkClass}
-          >
-            Promotion Request
-          </NavLink>
-
-          <div className="pt-4 mt-4 border-t border-white/10 flex flex-col gap-3">
-            {isAuthenticated ? (
-              <>
-                <Link
-                  onClick={() => setOpen(false)}
-                  to={dashboardPath}
-                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm rounded-xl bg-blue-600 text-white font-bold"
-                >
-                  <LayoutDashboard size={18} />{" "}
-                  {isAdmin ? "Admin Panel" : "Dashboard"}
-                </Link>
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    logout();
-                  }}
-                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm rounded-xl border border-gray-800 text-gray-400"
-                >
-                  <LogOut size={18} /> Log Out
-                </button>
-              </>
-            ) : (
+        <div className="lg:hidden border-t border-primary-foreground/20 bg-primary px-4 pb-4 pt-2 space-y-2 font-body">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              to={l.href}
+              onClick={() => setOpen(false)}
+              className="block py-2 text-sm text-primary-foreground/90 hover:text-accent"
+            >
+              {l.label}
+            </Link>
+          ))}
+          {/* Mobile Admin Link */}
+          {(isAdmin() || isContentManager()) && (
+            <div className="pt-2 border-t border-primary-foreground/10">
               <Link
+                to="/admin"
                 onClick={() => setOpen(false)}
-                to="/login"
-                className="flex items-center justify-center gap-2 px-4 py-3 text-sm rounded-xl bg-white text-black font-bold"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/10 text-secondary font-semibold hover:bg-secondary/20 transition-colors"
               >
-                <LogIn size={18} /> Sign In
+                <LayoutDashboard className="w-5 h-5 text-secondary" />
+                Dashboard
+              </Link>
+            </div>
+          )}
+          <div className="pt-2 flex flex-col gap-2">
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => { setOpen(false); signOut(); }}
+                className="w-full font-body border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            ) : (
+              <Link to={`/${portal}/signin`}>
+                <Button variant="outline" size="sm" className="w-full font-body border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                  Sign In
+                </Button>
               </Link>
             )}
+            <Link to={ctaHref}>
+              <Button size="sm" className="w-full font-body bg-accent text-accent-foreground hover:bg-accent/90">
+                {ctaText}
+              </Button>
+            </Link>
           </div>
         </div>
       )}
     </nav>
   );
-}
+};
+
+export default Navbar;

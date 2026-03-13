@@ -127,7 +127,7 @@ export class CareersController {
     return firstValueFrom(
       this.careersClient.send({ cmd: 'apply_job' }, { 
         jobId: parseInt(id), 
-        userId: req.user.firebaseId,
+        user: req.user,
         applicationData: applyJobDto
       })
     );

@@ -1,11 +1,13 @@
+
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 // Extend Express Request type to include 'user'
-// @ts-ignore
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: any;
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
   }
 }
 
@@ -14,23 +16,23 @@ export class TestAuthMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     // For testing purposes, simulate authenticated users based on headers
     const testUserHeader = req.headers['x-test-user'];
-
+    
     if (testUserHeader === 'admin') {
       req.user = {
         id: 9,
         email: 'admin@example.com',
         globalRole: 'ADMIN',
-        firebaseId: 'mock-uid-admin',
+        firebaseId: 'mock-uid-admin'
       };
     } else if (testUserHeader === 'user') {
       req.user = {
         id: 1,
         email: 'test@example.com',
         globalRole: 'USER',
-        firebaseId: 'mock-uid-user',
+        firebaseId: 'mock-uid-user'
       };
     }
-
+    
     next();
   }
 }

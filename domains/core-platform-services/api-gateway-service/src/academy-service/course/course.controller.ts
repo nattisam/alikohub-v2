@@ -177,8 +177,8 @@ export class CourseController {
   }
 
   // Get a course by ID
+  @Public()
   @Get(':id')
-  // @UseGuards(AuthGuard, CourseAccessGuard)
   @ApiOperation({ summary: 'Get a course by ID' })
   @ApiResponse({ status: 200, description: 'Course found' })
   @ApiResponse({ status: 404, description: 'Course not found' })
@@ -217,7 +217,6 @@ export class CourseController {
     };
     return this.academyClient.send({ cmd: 'update_course' }, payload);
   }
-
 
   // Remove a course
   @Delete(':id')
@@ -315,6 +314,7 @@ export class CourseController {
   }
 
   // Get courses by category
+  @Public()
   @Get('category/:category')
   @ApiOperation({ summary: 'Get courses by category' })
   @ApiResponse({ status: 200, description: 'List of courses by category' })
@@ -328,6 +328,7 @@ export class CourseController {
   }
 
   // Get courses by difficulty
+  @Public()
   @Get('difficulty/:difficulty')
   @ApiOperation({ summary: 'Get courses by difficulty' })
   @ApiResponse({ status: 200, description: 'List of courses by difficulty' })

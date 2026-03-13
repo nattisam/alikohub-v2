@@ -24,4 +24,12 @@ export class CreateEnrollmentDto {
   })
   @IsInt()
   courseId!: number;
+
+  @ApiPropertyOptional({
+    description: 'Payment Gateway (CHAPA or STRIPE)',
+    example: 'CHAPA',
+  })
+  @IsString()
+  @IsOptional()
+  paymentGateway?: string;
 }

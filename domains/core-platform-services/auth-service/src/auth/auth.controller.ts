@@ -15,7 +15,9 @@ import {
 	UserStatusUpdateSchema,
 	UserIdentitySchema,
 	CreateContechUserSchema,
-	CreateEventsUserSchema
+	CreateEventsUserSchema,
+	ForgotPasswordSchema,
+	ResetPasswordSchema
 } from './auth.validation';
 
 @Controller()
@@ -285,6 +287,34 @@ export class AuthController {
 			return await this.authService.syncAcademyUser(data.userId);
 		} catch (error) {
 			this.logger.error(`Academy sync failed for user ${data.userId}: ${error.message}`, error.stack);
+			throw error;
+		}
+	}
+
+	@Post('forgot-password')
+	@MessagePattern({ cmd: 'forgot_password' })
+	@UsePipes(new JoiValidationPipe(ForgotPasswordSchema))
+	async forgotPassword(@Body() body: { email: string }, @Payload() payload: { email: string }) {
+		const email = body?.email || payload?.email;
+		this.logger.log(`Password reset requested for: ${email}`);
+		try {
+			return await this.authService.forgotPassword(email);
+		} catch (error) {
+			this.logger.error(`Forgot password failed for ${email}: ${error.message}`, error.stack);
+			throw error;
+		}
+	}
+
+	@Post('reset-password')
+	@MessagePattern({ cmd: 'reset_password' })
+	@UsePipes(new JoiValidationPipe(ResetPasswordSchema))
+	async resetPassword(@Body() body: any, @Payload() payload: any) {
+		const data = body || payload;
+		this.logger.log(`Processing password reset`);
+		try {
+			return await this.authService.resetPassword(data);
+		} catch (error) {
+			this.logger.error(`Reset password failed: ${error.message}`, error.stack);
 			throw error;
 		}
 	}

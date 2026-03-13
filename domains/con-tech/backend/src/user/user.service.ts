@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { PrismaService } from '../prisma/prisma.service';
-import { ContechRole } from '@prisma/client';
+import { ContechRole } from '../generated/client';
 import { firstValueFrom } from 'rxjs';
 
 export type AuthenticatedUser = {
@@ -12,6 +12,7 @@ export type AuthenticatedUser = {
   role: string;
   globalRole?: string;
   status: string;
+  activeRole?: string;
 };
 
 export type ConTechUserProfile = {
@@ -47,7 +48,7 @@ export class UserService {
     const authUser = await this.getUserById(user.firebaseId);
     // Fallback to the provided user object if fetch fails
     const effectiveUser = authUser || user;
-    
+
     let profile = await this.prisma.contechProfile.findUnique({
       where: { userId: user.firebaseId },
     });
@@ -96,9 +97,8 @@ export class UserService {
         where: { userId },
       });
 
-      // Fetch the user's full profile from Auth Service to get globalRole
-      const authUser: any = await this.getUserById(userId);
-      
+      const authUser = await this.getUserById(userId);
+
       // If the user has globalRole = ADMIN in Auth Service, sync as ADMIN in ConTech
       if (authUser?.globalRole === 'ADMIN') {
         await this.prisma.contechProfile.upsert({
@@ -113,24 +113,28 @@ export class UserService {
             hasSelectedRole: true,
           },
         });
-        this.logger.log(`User ${userId} is a Global ADMIN. Synced as ConTech ADMIN.`);
+        this.logger.log(
+          `User ${userId} is a Global ADMIN. Synced as ConTech ADMIN.`,
+        );
         return;
       }
 
       // If user has selected a role locally, don't overwrite it with Auth service data
       if (existingProfile?.hasSelectedRole) {
-        this.logger.log(`User ${userId} has a locally selected role. Skipping sync from auth.`);
+        this.logger.log(
+          `User ${userId} has a locally selected role. Skipping sync from auth.`,
+        );
         return;
       }
 
-      const authRecord: any = await firstValueFrom(
-        this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
-      );
+      const authRecord: { activeRole?: string; role?: string } | null =
+        await firstValueFrom(
+          this.authClient.send({ cmd: 'sync_contech_user' }, { userId }),
+        );
 
       if (authRecord) {
         // Priority: 1. activeRole (if switched), 2. role (base role)
         const effectiveRole = authRecord.activeRole || authRecord.role;
-
 
         if (effectiveRole) {
           await this.prisma.contechProfile.upsert({
@@ -146,37 +150,54 @@ export class UserService {
               hasSelectedRole: authRecord.activeRole ? true : undefined,
             },
           });
-          this.logger.log(`Synced user ${userId} from auth service. Role: ${effectiveRole}`);
+          this.logger.log(
+            `Synced user ${userId} from auth service. Role: ${effectiveRole}`,
+          );
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to sync user ${userId} from auth service`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to sync user ${userId} from auth service`,
+        errorMessage,
+      );
     }
   }
 
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<AuthenticatedUser | null> {
     try {
       return await firstValueFrom(
-        this.authClient.send({ cmd: 'get_user_profile' }, { firebaseId: userId }),
+        this.authClient.send(
+          { cmd: 'get_user_profile' },
+          { firebaseId: userId },
+        ),
       );
     } catch (error) {
-      this.logger.error(`Failed to fetch user ${userId}`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch user ${userId}`, errorMessage);
       return null;
     }
   }
 
-  async getUsersByIds(userIds: string[]) {
+  async getUsersByIds(userIds: string[]): Promise<AuthenticatedUser[]> {
     try {
       return await firstValueFrom(
         this.authClient.send({ cmd: 'get_users_by_ids' }, { userIds }),
       );
     } catch (error) {
-      this.logger.error('Failed to fetch multiple users', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error('Failed to fetch multiple users', errorMessage);
       return [];
     }
   }
 
-  async updateProfile(user: AuthenticatedUser, updateData: any) {
+  async updateProfile(
+    user: AuthenticatedUser,
+    updateData: Partial<ConTechUserProfile>,
+  ) {
     const profile = await this.prisma.contechProfile.update({
       where: { userId: user.firebaseId },
       data: updateData,
@@ -198,7 +219,7 @@ export class UserService {
         where: { userId },
       });
 
-      let updatedProfile;
+      let updatedProfile: import('../generated/client').ContechProfile;
       if (existingProfile) {
         updatedProfile = await this.prisma.contechProfile.update({
           where: { userId },
@@ -215,18 +236,27 @@ export class UserService {
         await firstValueFrom(
           this.authClient.send(
             { cmd: 'update_contech_role' },
-            { userId, role }
-          )
+            { userId, role },
+          ),
         );
-        this.logger.log(`Notified Auth service of role change for user ${userId}`);
+        this.logger.log(
+          `Notified Auth service of role change for user ${userId}`,
+        );
       } catch (error) {
-        this.logger.error(`Failed to notify Auth service of role change for user ${userId}`, error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          `Failed to notify Auth service of role change for user ${userId}`,
+          errorMessage,
+        );
         // Don't fail the operation if Auth service notification fails
       }
 
       return updatedProfile;
     } catch (error) {
-      this.logger.error('Error in selectRole', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error('Error in selectRole', errorMessage);
       throw error;
     }
   }
@@ -239,7 +269,7 @@ export class UserService {
 
   async findProfilesByRole(role: ContechRole, page = 1, pageSize = 20) {
     const skip = (page - 1) * pageSize;
-    
+
     const [profiles, total] = await Promise.all([
       this.prisma.contechProfile.findMany({
         where: { role },
@@ -249,11 +279,11 @@ export class UserService {
       this.prisma.contechProfile.count({ where: { role } }),
     ]);
 
-    const userIds = profiles.map(p => p.userId);
+    const userIds = profiles.map((p) => p.userId);
     const authUsers = await this.getUsersByIds(userIds);
 
-    const enrichedProfiles = profiles.map(profile => {
-      const authUser = authUsers.find(au => au.firebaseId === profile.userId);
+    const enrichedProfiles = profiles.map((profile) => {
+      const authUser = authUsers.find((au) => au.firebaseId === profile.userId);
       return {
         ...profile,
         email: authUser?.email,
@@ -270,5 +300,43 @@ export class UserService {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     };
+  }
+
+  async createContechUser(data: {
+    email: string;
+    firstname: string;
+    lastname?: string;
+    password?: string;
+    role: ContechRole;
+  }) {
+    this.logger.log(`Requesting user creation from Auth Service: ${data.email}`);
+    try {
+      const authUser: AuthenticatedUser = await firstValueFrom(
+        this.authClient.send({ cmd: 'create_contech_user' }, data),
+      );
+
+      // Create the local profile as well
+      await this.prisma.contechProfile.upsert({
+        where: { userId: authUser.firebaseId },
+        create: {
+          userId: authUser.firebaseId,
+          role: data.role,
+          hasSelectedRole: true,
+        },
+        update: {
+          role: data.role,
+          hasSelectedRole: true,
+        },
+      });
+
+      return authUser;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to create ConTech user via Auth Service: ${errorMessage}`,
+      );
+      throw error;
+    }
   }
 }

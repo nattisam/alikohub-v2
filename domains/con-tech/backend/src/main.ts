@@ -1,9 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
-import { ConTechProfileGuard } from './auth';
 import { RpcExceptionFilter } from './common/filters/rpc-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 
@@ -16,9 +15,8 @@ async function bootstrap() {
     logger: winstonConfig,
   });
   const PORT = parseInt(process.env.PORT || '3002', 10);
-  const configService = app.get(ConfigService);
-
-  const microservice = app.connectMicroservice({
+  const _configService = app.get(ConfigService); // Renamed to _configService as it's unused
+  app.connectMicroservice({
     transport: Transport.TCP,
     options: {
       host: '0.0.0.0',
@@ -38,16 +36,19 @@ async function bootstrap() {
           exchange: 'user_events',
           exchangeType: 'fanout',
           queueOptions: {
-            durable: false
+            durable: false,
           },
           socketOptions: {
-            noDelay: true
-          }
+            noDelay: true,
+          },
         },
       });
       console.log(`ConTech: RabbitMQ transport configured for ${rabbitmqUrl}`);
     } catch (e) {
-      console.warn(`ConTech: RabbitMQ transport not available: ${e.message}`);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      console.warn(
+        `ConTech: RabbitMQ transport not available: ${errorMessage}`,
+      );
     }
   } else {
     console.log('ConTech: RabbitMQ disabled via RABBITMQ_ENABLED=false');
@@ -55,7 +56,7 @@ async function bootstrap() {
 
   // Centralized Global Error Handling
   app.useGlobalFilters(new RpcExceptionFilter());
-  
+
   // centralized Validation Handling
   app.useGlobalPipes(
     new ValidationPipe({
@@ -65,12 +66,12 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalGuards(app.get(ConTechProfileGuard));
+  // Note: Guards are applied at controller level, not globally, to allow health checks
 
   await app.startAllMicroservices();
+  const HTTP_PORT = 4002; // Separate port for health checks
+  await app.listen(HTTP_PORT, '0.0.0.0');
 
-  console.log(
-    `ConTech microservice listening on TCP running on PORT:${PORT}`,
-  );
+  console.log(`ConTech microservice: TCP port ${PORT}, HTTP port ${HTTP_PORT}`);
 }
 bootstrap();

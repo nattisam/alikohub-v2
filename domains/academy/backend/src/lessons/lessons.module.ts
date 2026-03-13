@@ -11,4 +11,4 @@ import { InstructorLessonGuard } from './guards/instructor-lesson.guard';
   providers: [LessonsService, LessonAccessGuard, InstructorLessonGuard],
   exports: [LessonsService],
 })
-export class LessonsModule { }
+export class LessonsModule {}

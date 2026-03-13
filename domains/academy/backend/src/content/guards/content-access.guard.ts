@@ -1,9 +1,14 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ContentAccessGuard implements CanActivate {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
@@ -19,7 +24,8 @@ export class ContentAccessGuard implements CanActivate {
     }
 
     // Get content/course/lesson IDs from params or body
-    const contentId = req.params.contentId || req.params.id || req.body.contentId;
+    const contentId =
+      req.params.contentId || req.params.id || req.body.contentId;
     const lessonId = req.params.lessonId || req.body.lessonId;
     const courseId = req.params.courseId || req.body.courseId;
 
@@ -52,7 +58,10 @@ export class ContentAccessGuard implements CanActivate {
     return false;
   }
 
-  private async checkContentOwnership(instructorId: number, contentId: number): Promise<boolean> {
+  private async checkContentOwnership(
+    instructorId: number,
+    contentId: number,
+  ): Promise<boolean> {
     const content = await this.prisma.content.findUnique({
       where: { id: contentId },
       include: {
@@ -60,38 +69,49 @@ export class ContentAccessGuard implements CanActivate {
           include: {
             module: {
               include: {
-                course: true
-              }
-            }
-          }
-        }
-      }
+                course: true,
+              },
+            },
+          },
+        },
+      },
     });
     if (!content) return false;
     return content.lesson.module.course.instructorId === String(instructorId);
   }
 
-  private async checkLessonOwnership(instructorId: number, lessonId: number): Promise<boolean> {
+  private async checkLessonOwnership(
+    instructorId: number,
+    lessonId: number,
+  ): Promise<boolean> {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
         module: {
           include: {
-            course: true
-          }
-        }
-      }
+            course: true,
+          },
+        },
+      },
     });
     if (!lesson) return false;
     return lesson.module.course.instructorId === String(instructorId);
   }
 
-  private async checkInstructorCourse(instructorId: number, courseId: number): Promise<boolean> {
-    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+  private async checkInstructorCourse(
+    instructorId: number,
+    courseId: number,
+  ): Promise<boolean> {
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+    });
     return !!course && course.instructorId === String(instructorId);
   }
 
-  private async checkContentAccess(userId: number, contentId: number): Promise<boolean> {
+  private async checkContentAccess(
+    userId: number,
+    contentId: number,
+  ): Promise<boolean> {
     const content = await this.prisma.content.findUnique({
       where: { id: contentId },
       include: {
@@ -99,29 +119,35 @@ export class ContentAccessGuard implements CanActivate {
           include: {
             module: {
               include: {
-                course: true
-              }
-            }
-          }
-        }
-      }
+                course: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!content) return false;
 
-    return await this.checkCourseAccess(userId, content.lesson.module.course.id);
+    return await this.checkCourseAccess(
+      userId,
+      content.lesson.module.course.id,
+    );
   }
 
-  private async checkLessonAccess(userId: number, lessonId: number): Promise<boolean> {
+  private async checkLessonAccess(
+    userId: number,
+    lessonId: number,
+  ): Promise<boolean> {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
         module: {
           include: {
-            course: true
-          }
-        }
-      }
+            course: true,
+          },
+        },
+      },
     });
 
     if (!lesson) return false;
@@ -129,15 +155,15 @@ export class ContentAccessGuard implements CanActivate {
     return await this.checkCourseAccess(userId, lesson.module.course.id);
   }
 
-  private async checkCourseAccess(userId: number, courseId: number): Promise<boolean> {
+  private async checkCourseAccess(
+    userId: number,
+    courseId: number,
+  ): Promise<boolean> {
     const enrollment = await this.prisma.enrollment.findFirst({
       where: {
         userId: String(userId),
-        OR: [
-          { courseId: courseId },
-          { cohort: { courseId: courseId } }
-        ]
-      }
+        OR: [{ courseId: courseId }, { cohort: { courseId: courseId } }],
+      },
     });
 
     return !!enrollment;

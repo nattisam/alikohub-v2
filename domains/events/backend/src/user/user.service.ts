@@ -1,8 +1,8 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { EventsProfile, EventsRole } from '@prisma/client';
-import { firstValueFrom } from 'rxjs';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { ClientProxy } from "@nestjs/microservices";
+import { EventsProfile, EventsRole } from "../generated/client";
+import { firstValueFrom } from "rxjs";
+import { PrismaService } from "../database/prisma.service";
 
 export type AuthenticatedUser = {
   firebaseId: string;
@@ -12,6 +12,7 @@ export type AuthenticatedUser = {
   role: string;
   globalRole?: string;
   status: string;
+  activeRole?: string;
 };
 
 @Injectable()
@@ -19,15 +20,15 @@ export class UserService {
   private readonly logger = new Logger(UserService.name);
 
   constructor(
-    @Inject('AUTH_SERVICE') private authClient: ClientProxy,
+    @Inject("AUTH_SERVICE") private authClient: ClientProxy,
     private prisma: PrismaService,
-  ) { }
+  ) {}
 
   async getUserById(userId: string) {
     try {
       const payload = { firebaseId: userId };
       const user = await firstValueFrom(
-        this.authClient.send({ cmd: 'get_user_profile' }, payload),
+        this.authClient.send({ cmd: "get_user_profile" }, payload),
       );
       return user;
     } catch (error) {
@@ -36,19 +37,21 @@ export class UserService {
     }
   }
 
-  async getOrCreateProfile(user: AuthenticatedUser): Promise<EventsProfile> {
+  async getProfileAndSync(
+    user: AuthenticatedUser,
+  ): Promise<EventsProfile | null> {
     await this.syncFromAuth(user.firebaseId);
 
     let profile = await this.prisma.eventsProfile.findUnique({
       where: { id: user.firebaseId },
     });
 
+    // If no profile exists, create a basic USER profile (or ADMIN if globalRole matches)
     if (!profile) {
-      const roleToAssign = user.globalRole === 'ADMIN' ? EventsRole.ADMIN : EventsRole.USER;
       profile = await this.prisma.eventsProfile.create({
         data: {
           id: user.firebaseId,
-          role: roleToAssign,
+          role: user.globalRole === "ADMIN" ? EventsRole.ADMIN : EventsRole.USER,
         },
       });
     }
@@ -57,9 +60,25 @@ export class UserService {
   }
 
   async updateRole(userId: string, role: EventsRole) {
-    return this.prisma.eventsProfile.update({
+    return this.prisma.eventsProfile.upsert({
       where: { id: userId },
-      data: { role },
+      update: { role },
+      create: {
+        id: userId,
+        role,
+      },
+    });
+  }
+
+  async findAllProfiles() {
+    return this.prisma.eventsProfile.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async removeProfile(userId: string) {
+    return this.prisma.eventsProfile.delete({
+      where: { id: userId },
     });
   }
 
@@ -67,9 +86,9 @@ export class UserService {
     try {
       // Fetch the user's full profile from Auth Service to get globalRole
       const authUser: any = await this.getUserById(userId);
-      
+
       // If the user has globalRole = ADMIN in Auth Service, sync as ADMIN in Events
-      if (authUser?.globalRole === 'ADMIN') {
+      if (authUser?.globalRole === "ADMIN") {
         await this.prisma.eventsProfile.upsert({
           where: { id: userId },
           create: {
@@ -80,12 +99,14 @@ export class UserService {
             role: EventsRole.ADMIN,
           },
         });
-        this.logger.log(`User ${userId} is a Global ADMIN. Synced as Events ADMIN.`);
+        this.logger.log(
+          `User ${userId} is a Global ADMIN. Synced as Events ADMIN.`,
+        );
         return;
       }
 
       const authRecord: any = await firstValueFrom(
-        this.authClient.send({ cmd: 'sync_events_user' }, { userId }),
+        this.authClient.send({ cmd: "sync_events_user" }, { userId }),
       );
 
       if (authRecord) {
@@ -102,10 +123,12 @@ export class UserService {
               role: effectiveRole as EventsRole,
             },
           });
-          this.logger.log(`Synced user ${userId} from auth service. Role: ${effectiveRole}`);
+          this.logger.log(
+            `Synced user ${userId} from auth service. Role: ${effectiveRole}`,
+          );
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to sync user ${userId} from auth service`);
     }
   }

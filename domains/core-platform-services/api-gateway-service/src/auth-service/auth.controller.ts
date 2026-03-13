@@ -98,10 +98,10 @@ export class AuthController {
     this.logger.log(`Registration attempt for: ${registerDto.email}`);
     
     // TEST-04 Fix: Validate CAPTCHA if configured
-    // const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
-    // if (captchaValid === false) {
-    //   throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
-    // }
+    const captchaValid = await this.captchaService.verifyCaptcha(registerDto.captchaToken);
+    if (captchaValid === false) {
+      throw new BadRequestException('CAPTCHA validation failed. Please complete the CAPTCHA challenge.');
+    }
 
     // Remove captchaToken before sending to auth service
     const { captchaToken, ...authPayload } = registerDto;
@@ -117,29 +117,13 @@ export class AuthController {
     );
   }
 
-  @Post('contact/email')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Submit partnership/contact inquiry email' })
-  @ApiResponse({ status: 201, description: 'Email accepted for delivery' })
-  async submitContact(@Body() body: any) {
-    return firstValueFrom(
-      this.authClient.send({ cmd: 'send_contact_email' }, body).pipe(
-        timeout(15000),
-        catchError(error => {
-          this.handleError(error, 'Submit Contact Email');
-          return throwError(() => error);
-        }),
-      )
-    );
-  }
-
 
   @Post('academy/select-role')
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Select academy role' })
   @UsePipes(new JoiValidationPipe(Joi.object({
-    role: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+    role: Joi.string().required().lowercase().valid('student', 'teacher', 'instructor').messages({
       'any.only': 'Role must be one of: student, teacher, instructor'
     })
   })))
@@ -163,7 +147,7 @@ export class AuthController {
 
   @Post('academy/apply-teacher')
   @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('resume'))
+  @UseInterceptors(FileInterceptor('resume', { limits: { fileSize: 50 * 1024 * 1024 } }))
   @ApiConsumes('multipart/form-data')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Apply for teacher role' })
@@ -195,7 +179,7 @@ export class AuthController {
 
   @Post('academy/apply-instructor')
   @UseGuards(AuthGuard)
-  @UseInterceptors(FileInterceptor('resume'))
+  @UseInterceptors(FileInterceptor('resume', { limits: { fileSize: 50 * 1024 * 1024 } }))
   @ApiConsumes('multipart/form-data')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Apply for instructor role (FormData friendly)' })
@@ -337,7 +321,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Switch user role' })
   @UsePipes(new JoiValidationPipe(Joi.object({
-    newRole: Joi.string().valid('student', 'teacher', 'instructor').required().lowercase().messages({
+    newRole: Joi.string().required().lowercase().valid('student', 'teacher', 'instructor').messages({
       'any.only': 'newRole must be one of: student, teacher, instructor'
     }),
     userId: Joi.string().optional()
@@ -420,9 +404,10 @@ export class AuthController {
     response.cookie('session', sessionCookie, {
       maxAge: expiresIn,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Always secure for SameSite=None
+      sameSite: 'none', // Allow cross-site/cross-subdomain
       path: '/',
+      domain: '.alikohub.com', // Share across all subdomains
     });
 
     return { status: 'success', message: 'Session cookie set' };
@@ -445,6 +430,43 @@ export class AuthController {
         timeout(10000),
         catchError(error => {
           this.handleError(error, 'Verify Auth');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset email' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim()
+  })))
+  async forgotPassword(@Body() body: { email: string }) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'forgot_password' }, body).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Forgot Password');
+          return throwError(() => error);
+        }),
+      )
+    );
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update password using reset link' })
+  @UsePipes(new JoiValidationPipe(Joi.object({
+    email: Joi.string().email().required().trim(),
+    newPassword: Joi.string().min(8).regex(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/).required()
+  })))
+  async resetPassword(@Body() body: any) {
+    return firstValueFrom(
+      this.authClient.send({ cmd: 'reset_password' }, body).pipe(
+        timeout(10000),
+        catchError(error => {
+          this.handleError(error, 'Reset Password');
           return throwError(() => error);
         }),
       )

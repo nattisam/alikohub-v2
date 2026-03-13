@@ -1,57 +1,81 @@
-name: Deploy to cPanel
+name: Monorepo CD
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [ main, from-vps ]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  REGISTRY: ghcr.io
 
 jobs:
-  build-and-deploy:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - path: domains/academy/backend
+            image: alikohub-academy-service
+          - path: domains/con-tech/backend
+            image: alikohub-con-tech-service
+          - path: domains/core-platform-services/api-gateway-service
+            image: alikohub-api-gateway
+          - path: domains/core-platform-services/auth-service
+            image: alikohub-auth-service
+          - path: domains/core-platform-services/careers-service
+            image: alikohub-careers-service
+          - path: domains/core-platform-services/file-upload-service
+            image: alikohub-file-upload-service
+          - path: domains/events/backend
+            image: alikohub-events-service
+          - path: domains/Home/backend
+            image: alikohub-home-service
+          - path: domains/Home/frontend
+            image: alikohub-home-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.path }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service.image }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service.image }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to VPS
+    needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm install
-
-      # Example: Build API Gateway. Repeat for other services or use nx run-many
-      - name: Build API Gateway
-        run: npx nx build api-gateway-service
-
-      - name: Build File Upload Service
-        run: npx nx build file-upload-service
-      
-      # Add other build steps as needed...
-
-      - name: Deploy to cPanel via Rsync
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.CPANEL_PORT }}
-          source: "dist/,package.json,package-lock.json"
-          target: "~/public_html/api-backend" # Customize this path
-          strip_components: 0
-
-      - name: Install Production Deps & Restart on Server
+      - name: Execute deployment script via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.CPANEL_PORT }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd ~/public_html/api-backend
-            npm install --production
-            # Restart via PM2 or touch tmp/restart.txt if using cPanel Node App
-            # pm2 restart ecosystem.config.js
-            mkdir -p tmp
-            touch tmp/restart.txt
+            cd /root/Home-Project
+            git pull origin ${{ github.ref_name }}
+            export GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker image prune -f
+

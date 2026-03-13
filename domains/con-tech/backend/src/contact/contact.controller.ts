@@ -13,12 +13,24 @@ export class ContactController {
 
   @MessagePattern({ cmd: 'send_contact_inquiry' })
   @UsePipes(new JoiValidationPipe(ContactInquirySchema))
-  async handleContactInquiry(@Payload() dto: { name: string; email: string; phone: string; message: string }) {
+  async handleContactInquiry(
+    @Payload()
+    dto: {
+      name: string;
+      email: string;
+      phone: string;
+      message: string;
+    },
+  ) {
     this.logger.log(`Received contact inquiry from: ${dto.email}`);
     try {
-      return await this.contactService.sendContactEmail(dto);
+      const result: unknown = await this.contactService.sendContactEmail(dto);
+      return result;
     } catch (error) {
-      this.logger.error(`Failed to handle contact inquiry from ${dto.email}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to handle contact inquiry from ${dto.email}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       throw error;
     }
   }

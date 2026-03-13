@@ -1,7 +1,14 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateTaskDto } from './create-task.dto';
-import { IsOptional, IsEnum, IsNumber, IsString, IsDateString, IsArray } from 'class-validator';
-import { TaskStatus } from '@prisma/client';
+import {
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsString,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
+import { TaskStatus } from '../../generated/client';
 
 export class UpdateTaskDto extends PartialType(CreateTaskDto) {
   @IsOptional()

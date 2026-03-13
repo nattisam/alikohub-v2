@@ -1,6 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+export interface UserData {
+	email: string;
+	firebaseId: string;
+	firstname: string;
+	lastname: string;
+	globalRole?: string;
+	status?: string;
+	profilePicture?: string;
+	bio?: string;
+	password?: string;
+}
+
+export interface ApplicationData {
+	userId: string;
+	domain?: string;
+	requestedRole?: string;
+	formData?: object;
+	resumeUrl?: string;
+	personalDetails?: any;
+	teachingCategories?: string[];
+	interviewResponses?: any;
+	documents?: any[];
+	status?: string;
+	submittedAt?: Date;
+}
+
 @Injectable()
 export class UserService {
 	private readonly logger = new Logger(UserService.name);
@@ -56,24 +82,25 @@ export class UserService {
 		return user;
 	}
 
-	async createUser(data: any) {
+	async createUser(data: UserData) {
 		this.logger.log(`Creating user with email: ${data.email}`);
 		try {
-			const user = await this.prisma.user.create({ data });
+			const user = await this.prisma.user.create({ data: data as any });
 			this.logger.log(`Successfully created user with ID: ${user.id}`);
 			return user;
-		} catch (error: any) {
-			this.logger.error(`Failed to create user with email: ${data.email}`, error);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			this.logger.error(`Failed to create user with email: ${data.email}`, errorMessage);
 			throw error;
 		}
 	}
 
-	async createOrUpdateUser(data: any) {
+	async createOrUpdateUser(data: UserData) {
 		this.logger.log(`Upserting user with email: ${data.email}`);
 		const user = await this.prisma.user.upsert({
 			where: { email: data.email },
-			update: data,
-			create: data,
+			update: data as any,
+			create: data as any,
 		});
 		this.logger.log(`Successfully upserted user with ID: ${user.id}`);
 		return user;
@@ -97,7 +124,7 @@ export class UserService {
 		});
 	}
 
-	async createTeacherApplication(applicationData: any) {
+	async createTeacherApplication(applicationData: ApplicationData & { resumeUrl?: string }) {
 		const { userId, ...formData } = applicationData;
 		
 		// Validate resumeUrl if present
@@ -201,7 +228,7 @@ export class UserService {
 
 		if (status === 'APPROVED') {
 			const app = await this.prisma.application.findUnique({ where: { id: parseInt(applicationId) } });
-			const formData: any = app?.formData;
+			const formData = app?.formData as Record<string, any>;
 			
 			if (!formData?.resumeUrl) throw new Error('Cannot approve application without a resume');
 		}
@@ -248,7 +275,7 @@ export class UserService {
 		});
 	}
 
-	async updateProfile(firebaseId: string, data: any) {
+	async updateProfile(firebaseId: string, data: Partial<UserData>) {
 		this.logger.log(`Updating profile for user: ${firebaseId}`);
 		const user = await this.prisma.user.update({
 			where: { firebaseId },

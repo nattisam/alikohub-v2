@@ -4,9 +4,9 @@ import { ContentController } from './content.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule],
-    controllers: [ContentController],
-    providers: [ContentService],
-    exports: [ContentService],
+  imports: [PrismaModule],
+  controllers: [ContentController],
+  providers: [ContentService],
+  exports: [ContentService],
 })
-export class ContentDeliveryModule { }
+export class ContentDeliveryModule {}

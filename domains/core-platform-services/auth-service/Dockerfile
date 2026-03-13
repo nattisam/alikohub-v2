@@ -25,7 +25,7 @@ RUN npm run build
 # Stage 2: Create the production image
 FROM node:22-slim
 
-RUN apt-get update -y && apt-get install -y openssl
+RUN apt-get update -y && apt-get install -y openssl curl
 
 WORKDIR /usr/src/app
 
@@ -38,10 +38,11 @@ RUN npm install --omit=dev
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/src/generated ./dist/generated
 
 # Expose the port
 EXPOSE 3001
 
 # Command to run the application
 # Using sh -c to ensure prisma migration runs if needed, similar to other services
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["node", "dist/main"]

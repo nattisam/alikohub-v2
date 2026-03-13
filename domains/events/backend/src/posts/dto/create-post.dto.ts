@@ -1,5 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { PostType } from '@prisma/client';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+} from "class-validator";
+import { PostType } from "../../generated/client";
 
 export class CreatePostDto {
   @IsEnum(PostType)
@@ -41,4 +47,20 @@ export class CreatePostDto {
   @IsString()
   @IsOptional()
   externalLink?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endEventDate?: string;
+
+  @IsString()
+  @IsOptional()
+  hostName?: string;
+
+  @IsString()
+  @IsOptional()
+  privacy?: string;
+
+  @IsString()
+  @IsOptional()
+  templateId?: string;
 }

@@ -1,44 +1,52 @@
-import { Calendar, User } from 'lucide-react';
-import type { Event } from './data/events';
+import { CalendarDays, MapPin } from "lucide-react";
 
-export default function EventCard({ event }: { event: Event }) {
-  const badgeColors = {
-    UPCOMING: 'bg-blue-00 text-blue-600',
-    ONGOING: 'bg-green-100 text-green-600',
-    PAST: 'bg-gray-200 text-gray-600',
-  };
+interface EventCardProps {
+  title: string;
+  date: string;
+  location: string;
+  image: string;
+  price?: string;
+  category?: string;
+}
 
+const EventCard = ({ title, date, location, image, price, category }: EventCardProps) => {
   return (
-    <div className="bg-black rounded-xl shadow-sm border overflow-hidden">
-      <div className="relative">
-        <img src={event.image} className="h-40 w-full object-cover" />
-        <span
-          className={`absolute top-3 right-3 px-3 py-1 text-xs rounded-full font-medium ${badgeColors[event.status]}`}
-        >
-          {event.status}
-        </span>
+    <div className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 border border-border hover:border-primary/20 cursor-pointer">
+      <div className="relative overflow-hidden aspect-[16/10]">
+        <img
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
+        {category && (
+          <span className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold font-body rounded-full bg-primary text-primary-foreground">
+            {category}
+          </span>
+        )}
       </div>
-
-      <div className="p-4 space-y-3">
-        <h3 className="font-semibold text-white-600 leading-snug">
-          {event.title}
+      <div className="p-5">
+        <h3 className="font-display text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+          {title}
         </h3>
-
-        <p className="text-sm text-white-600 line-clamp-2">
-          {event.description}
-        </p>
-
-        <div className="text-xs text-white-500 flex flex-col gap-2">
-          <span className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            {event.date}
-          </span>
-          <span className="flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Manager: {event.manager}
-          </span>
+        <div className="space-y-1.5 font-body text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-3.5 h-3.5 text-accent" />
+            <span>{date}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPin className="w-3.5 h-3.5 text-accent" />
+            <span>{location}</span>
+          </div>
         </div>
+        {price && (
+          <p className="mt-3 text-sm font-semibold font-body text-primary">
+            From {price}
+          </p>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default EventCard;

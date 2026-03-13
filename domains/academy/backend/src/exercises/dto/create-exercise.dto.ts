@@ -1,6 +1,14 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsArray, ValidateIf } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateIf,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { ExerciseType } from '@prisma/client';
+import { ExerciseType } from '../../generated/client';
 
 export class CreateExerciseDto {
   @IsInt()
@@ -31,8 +39,10 @@ export class CreateExerciseDto {
   @IsOptional()
   options?: any; // JSON
 
-  @ValidateIf(o => o.type !== 'SHORT_TEXT')
-  @IsNotEmpty({ message: 'Correct answer is required for auto-graded exercises' })
+  @ValidateIf((o) => o.type !== 'SHORT_TEXT')
+  @IsNotEmpty({
+    message: 'Correct answer is required for auto-graded exercises',
+  })
   correctAnswer?: any; // JSON
 
   @IsOptional()
