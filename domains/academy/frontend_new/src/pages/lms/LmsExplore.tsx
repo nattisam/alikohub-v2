@@ -10,7 +10,7 @@ import {
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const streams = ["All", "Health", "Tech", "STEM"];
+const streams = ["All", "Health", "Technology", "STEM"];
 const levels = ["All Levels", "Beginner", "Intermediate", "Advanced"];
 
 const LmsExplore = () => {

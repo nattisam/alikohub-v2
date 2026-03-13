@@ -41,6 +41,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import PublicRoute from "./components/PublicRoute";
+import InstructorRoute from "./components/InstructorRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +92,11 @@ const App = () => (
           <Route element={<ProtectedRoute />}>
             <Route path="/apply-instructor" element={<ApplyInstructor />} />
             <Route path="/lms" element={<LmsDashboard />} />
+            <Route path="/lms/explore" element={<LmsExplore />} />
+          </Route>
+
+          {/* Protected Instructor Routes */}
+          <Route element={<InstructorRoute />}>
             <Route path="/instructor/lms" element={<InstructorDashboard />} />
             <Route
               path="/instructor/lms/courses"
@@ -116,7 +122,9 @@ const App = () => (
               path="/instructor/lms/settings"
               element={<InstructorSettings />}
             />
-            <Route path="/lms/explore" element={<LmsExplore />} />
+          </Route>
+
+          <Route element={<ProtectedRoute />}>
             <Route path="/lms/my-learning" element={<LmsMyLearning />} />
             <Route path="/lms/certifications" element={<LmsCertifications />} />
             <Route path="/lms/profile" element={<LmsProfile />} />

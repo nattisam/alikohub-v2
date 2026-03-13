@@ -5,7 +5,7 @@ const ProtectedRoute = () => {
   const { data: user, isLoading } = useUser();
 
   if (isLoading) {
-    return null; 
+    return null;
   }
 
   if (!user) {
@@ -15,4 +15,4 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
-export default ProtectedRoute
+export default ProtectedRoute;

@@ -48,7 +48,9 @@ const LmsLearn = () => {
     (d: any) => d.courseId === Number(id),
   );
 
-  const progress = courseProgressData?.percentage || enrollment?.progress || 0;
+  const progress = Math.round(
+    courseProgressData?.percentage || enrollment?.progress || 0,
+  );
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

@@ -45,7 +45,7 @@ export const ContentModal = ({
       const formData = new FormData();
       formData.append("lessonId", lessonId);
       formData.append("title", title);
-      formData.append("type", type);
+      formData.append("contentType", type);
       formData.append("file", file);
       onAdd(formData);
     } else {

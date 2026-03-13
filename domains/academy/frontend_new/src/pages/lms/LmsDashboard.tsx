@@ -182,8 +182,9 @@ const LmsDashboard = () => {
                             d.courseId === Number(enrollment.courseId),
                         )
                       : null;
-                  const currentProgress =
-                    pData?.percentage || enrollment.progress || 0;
+                  const currentProgress = Math.round(
+                    pData?.percentage || enrollment.progress || 0,
+                  );
 
                   return (
                     <div

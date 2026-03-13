@@ -235,7 +235,11 @@ export const academyService = {
       title: string;
       description?: string;
     }) => {
-      const response = await api.post<Module>("/academy/modules", data);
+      const response = await api.post<Module>("/academy/modules", {
+        ...data,
+        courseId: Number(data.courseId),
+        description: data.description || "",
+      });
       return response.data;
     },
 
@@ -261,7 +265,10 @@ export const academyService = {
       title: string;
       type: string;
     }) => {
-      const response = await api.post<Lesson>("/academy/lessons", data);
+      const response = await api.post<Lesson>("/academy/lessons", {
+        ...data,
+        moduleId: Number(data.moduleId),
+      });
       return response.data;
     },
 
@@ -299,7 +306,10 @@ export const academyService = {
       type: string;
       url?: string;
     }) => {
-      const response = await api.post<Content>("/academy/content", data);
+      const response = await api.post<Content>("/academy/content", {
+        ...data,
+        lessonId: Number(data.lessonId),
+      });
       return response.data;
     },
 

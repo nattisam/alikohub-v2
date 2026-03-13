@@ -1,46 +1,152 @@
 import { Link } from "react-router-dom";
+import { Mail, Phone, MapPin, Globe } from "lucide-react";
 
-const Footer = () => (
-  <footer className="nav-solid">
-    <div className="section-container py-12 md:py-16">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="md:col-span-1">
-          <Link to="/" className="font-heading font-bold text-lg text-white">
-            Aliko Academy
-          </Link>
-          <p className="mt-3 text-sm text-white/60 leading-relaxed">
-            Building Africa's workforce ecosystem, connecting learning, mentorship, and opportunity.
-          </p>
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  const footerLinks = [
+    {
+      title: "Learning Pathways",
+      links: [
+        {
+          name: "Aliko Academy Health",
+          href: "https://aliko-academy-health.lovable.app/",
+        },
+        {
+          name: "Aliko Academy Tech",
+          href: "https://aliko-academy-tech.lovable.app/",
+        },
+        {
+          name: "Aliko Academy STEM",
+          href: "https://aliko-academy-stem.lovable.app/",
+        },
+      ],
+    },
+    {
+      title: "Resources",
+      links: [
+        { name: "Course Catalog", href: "#" },
+        { name: "Student Portal", href: "/lms" },
+        { name: "Instructor Console", href: "#" },
+        { name: "Scholarships", href: "#" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { name: "About Us", href: "/about" },
+        { name: "Careers", href: "https://career.alikohub.com/" },
+        { name: "Contact Us", href: "/contact" },
+      ],
+    },
+  ];
+
+  const socialLinks = [
+    { icon: Mail, href: "mailto:info@alikohub.com", name: "Email" },
+    { icon: Phone, href: "tel:+1234567890", name: "Phone" },
+  ];
+
+  return (
+    <footer className="bg-[#0f172a] text-white pt-12 pb-10 border-t border-white/5 relative overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent/20 rounded-full blur-[100px] translate-y-1/2 -z-10" />
+
+      <div className="section-container">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 py-8">
+          <div className="lg:col-span-2">
+            <Link to="/" className="inline-block group mb-2">
+              <img
+                src="/AlikoLogo.svg"
+                alt="AlikoHub Academy"
+                className="h-20 w-auto"
+              />
+            </Link>
+            <p className="mt-4 text-slate-400 leading-relaxed max-w-sm">
+              Honoring youth potential where opportunity meets dignity,
+              transforming Africa's future through Digital Health, STEM, and
+              innovation pathways.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors cursor-default">
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+                  <MapPin className="w-4 h-4 text-accent" />
+                </div>
+                <span className="text-sm font-medium">
+                  Seattle, Washington, USA
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors cursor-default">
+                <a
+                  href="mailto:info@alikohub.com"
+                  className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+                    <Mail className="w-4 h-4 text-accent" />
+                  </div>
+                  <span className="text-sm font-medium">info@alikohub.com</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {footerLinks.map(
+            (section) =>
+              section.title && (
+                <div key={section.title}>
+                  <h4 className="font-heading font-bold text-sm uppercase tracking-widest text-white mb-6">
+                    {section.title}
+                  </h4>
+                  <ul className="space-y-3">
+                    {section.links.map((link) => (
+                      <li key={link.name}>
+                        <Link
+                          to={link.href}
+                          className="text-slate-500 hover:text-accent transition-all hover:translate-x-1 inline-block text-sm font-medium"
+                        >
+                          {link.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ),
+          )}
         </div>
 
-        <div>
-          <h4 className="font-heading font-semibold text-sm mb-4 text-white/80">Pathways</h4>
-          <ul className="space-y-2 text-sm text-white/60">
-            <li>Aliko Academy Health</li>
-            <li>Aliko Academy Tech</li>
-            <li>Aliko Academy STEM</li>
-          </ul>
-        </div>
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+            <p className="text-xs text-slate-500 font-medium">
+              © {currentYear} AlikoHub Academy. All rights reserved.
+            </p>
+          </div>
 
-        <div>
-          <h4 className="font-heading font-semibold text-sm mb-4 text-white/80">Company</h4>
-          <ul className="space-y-2 text-sm text-white/60">
-            <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-            <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-heading font-semibold text-sm mb-4 text-white/80">Connect</h4>
-          <p className="text-sm text-white/60">Hybrid learning, mentorship, career support, employer alignment</p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 mr-4 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+              <Globe className="w-3 h-3 text-slate-400" />
+              <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                English (US)
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:bg-accent hover:border-accent hover:text-white hover:-translate-y-1 transition-all duration-300"
+                  aria-label={social.name}
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="border-t border-white/10 mt-10 pt-6 text-center text-xs text-white/40">
-        © {new Date().getFullYear()} AlikoHub Academy. All rights reserved.
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 export default Footer;
