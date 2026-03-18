@@ -137,9 +137,14 @@ export const submitForReview = async (postId: string): Promise<Post> => {
   }
 };
 
-export const getMyPosts = async (status?: string): Promise<Post[]> => {
+export const getMyPosts = async (
+  userId: string,
+  status?: string,
+): Promise<Post[]> => {
   try {
-    const url = status ? `/manage/events?status=${status}` : "/manage/events";
+    const url = status
+      ? `/manage/events/user/${userId}?status=${status}`
+      : `/manage/events/user/${userId}`;
     const response = await api.get(url);
     return extractPosts(response.data);
   } catch (error) {

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/auth-context";
 import {
   getMyPosts,
   submitForReview,
@@ -13,6 +14,7 @@ import { EmptyState } from "../../components/states/EmptyState";
 export default function ContentManagerDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const {
     data: posts = [],
@@ -21,8 +23,9 @@ export default function ContentManagerDashboard() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["my-posts"],
-    queryFn: () => getMyPosts(),
+    queryKey: ["my-posts", user?.id],
+    queryFn: () => getMyPosts(user!.id),
+    enabled: !!user?.id,
   });
 
   const submitMutation = useMutation({
