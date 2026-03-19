@@ -41,8 +41,7 @@ export function PolicyAlignmentSection() {
           {alignments.map((item, i) => (
             <motion.div
               key={item.title}
-              className="group rounded-2xl border border-border/50 p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)]"
-              style={{ background: "var(--gradient-card)" }}
+              className="group rounded-2xl border border-border/50 bg-[#F6F5F2] dark:bg-[hsl(220,30%,12%)] p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -56,9 +55,9 @@ export function PolicyAlignmentSection() {
                   {item.badge}
                 </div>
               </div>
-              <h3 className="font-heading text-xl font-bold text-foreground">{item.title}</h3>
-              <p className="mt-1 text-sm font-medium text-primary">{item.subtitle}</p>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+              <h3 className="font-heading text-xl font-bold text-foreground dark:text-white">{item.title}</h3>
+              <p className="mt-1 text-sm font-medium text-primary dark:text-primary/90">{item.subtitle}</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground dark:text-white/80">{item.text}</p>
               {item.sdgs && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {item.sdgs.map((sdg) => (

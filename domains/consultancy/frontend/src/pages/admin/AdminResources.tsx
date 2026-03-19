@@ -56,7 +56,7 @@ const AdminResources = () => {
 
   useEffect(() => { fetchResources(); }, []);
 
-  const uploadFile = async (file: File): Promise<string | null> => {
+  const uploadFile = async (file: File, type: "image" | "document" = "document"): Promise<string | null> => {
     setUploading(true);
     setUploadProgress(30);
 
@@ -64,7 +64,7 @@ const AdminResources = () => {
     formData.append("file", file);
 
     try {
-      const { data } = await api.post("/upload/document", formData, {
+      const { data } = await api.post(`/upload/${type}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -93,7 +93,8 @@ const AdminResources = () => {
       return;
     }
 
-    const url = await uploadFile(file);
+    const uploadType = type === "thumbnail" ? "image" : "document";
+    const url = await uploadFile(file, uploadType);
     if (url) {
       if (type === "file") {
         setEditing({ ...editing, fileUrl: url });
@@ -104,6 +105,7 @@ const AdminResources = () => {
     }
     if (e.target) e.target.value = "";
   };
+
 
   const save = async () => {
     if (!editing) return;
@@ -189,6 +191,7 @@ const AdminResources = () => {
         {resources.length === 0 && <p className="text-muted-foreground col-span-full text-center py-12">No resources yet.</p>}
       </div>
 
+
       <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>{isNew ? "New Resource" : "Edit Resource"}</DialogTitle></DialogHeader>
@@ -244,6 +247,7 @@ const AdminResources = () => {
                   </div>
                 )}
               </div>
+
 
               {/* File Upload */}
               <div className="space-y-2">

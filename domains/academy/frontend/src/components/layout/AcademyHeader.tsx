@@ -123,11 +123,10 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`text-[16px] font-semibold transition-colors uppercase tracking-tight ${
-                    isActive
+                  className={`text-[16px] font-semibold transition-colors uppercase tracking-tight ${isActive
                       ? "text-[#F0802D]"
                       : "text-slate-600 hover:text-[#17469E]"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </Link>
@@ -183,17 +182,17 @@ const AcademyHeader: React.FC<AcademyHeaderProps> = ({
                       {/* Dashboard Logic */}
                       {(currentUser.hasSelectedRole ||
                         currentUser.globalRole === "ADMIN") && (
-                        <Link
-                          to={dashboardPath}
-                          className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition"
-                        >
-                          <LayoutDashboard
-                            size={16}
-                            className="text-[#17469E]"
-                          />{" "}
-                          Dashboard
-                        </Link>
-                      )}
+                          <Link
+                            to={dashboardPath}
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition"
+                          >
+                            <LayoutDashboard
+                              size={16}
+                              className="text-[#17469E]"
+                            />{" "}
+                            Dashboard
+                          </Link>
+                        )}
 
                       <Link
                         to="/profile"

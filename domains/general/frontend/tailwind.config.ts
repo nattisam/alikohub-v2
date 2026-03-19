@@ -65,6 +65,10 @@ export default {
           DEFAULT: "hsl(var(--sky))",
           light: "hsl(var(--sky-light))",
         },
+        header: {
+          DEFAULT: "hsl(var(--header))",
+          foreground: "hsl(var(--header-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

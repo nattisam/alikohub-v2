@@ -34,7 +34,7 @@ const steps = [
 
 export function EcosystemFlow() {
   return (
-    <section className="py-24 lg:py-32 bg-card/30">
+    <section className="py-24 lg:py-32 bg-white dark:bg-background transition-colors duration-300">
       <div className="container mx-auto px-6">
         <motion.div
           className="mx-auto mb-16 max-w-2xl text-center"
@@ -46,7 +46,7 @@ export function EcosystemFlow() {
             Our Model
           </span>
           <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">
-            The Resourcefulness <span className="text-gradient-amber">Ecosystem</span>
+            The Resourcefulness <span className="text-amber">Ecosystem</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             A four-part journey from learning to leadership, integrated, human-centered, and designed for scale.

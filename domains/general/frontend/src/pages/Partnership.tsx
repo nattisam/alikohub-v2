@@ -54,7 +54,6 @@ const options = [
     icon: Briefcase,
     title: "Partner as Our Next Venture",
     image: partnerVentureBg,
-    learnMoreUrl: "https://academy.alikohub.com/",
   },
 ];
 
@@ -97,8 +96,8 @@ const Partnership = () => {
 
     // Read EmailJS credentials from environment variables
     const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || "";
-    const TEMPLATE_USER = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || ""; // User confirmation
-    const TEMPLATE_ORG = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ORG || ""; // Org admin notification
+    const TEMPLATE_USER = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || ""; // User confirmation email
+    const TEMPLATE_ORG = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ORG || ""; // Org admin notification email
     const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "";
 
     // Shared template variables — cover all common EmailJS variable name conventions
@@ -116,16 +115,17 @@ const Partnership = () => {
       role: formData.role || "N/A",
       partnership_interest: formData.partnershipInterest,
       message: formData.message || "No message provided.",
+      submission_time: new Date().toLocaleString(),
     };
 
     setIsLoading(true);
 
     try {
       // --- Email 1: User confirmation ---
-      const userRes = await emailjs.send(SERVICE_ID, TEMPLATE_USER, templateParams, PUBLIC_KEY);
+      await emailjs.send(SERVICE_ID, TEMPLATE_USER, templateParams, PUBLIC_KEY);
 
       // --- Email 2: Organization admin notification ---
-      const orgRes = await emailjs.send(SERVICE_ID, TEMPLATE_ORG, templateParams, PUBLIC_KEY);
+      await emailjs.send(SERVICE_ID, TEMPLATE_ORG, templateParams, PUBLIC_KEY);
 
       setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
       toast({
@@ -136,11 +136,13 @@ const Partnership = () => {
     } catch (error: any) {
       console.error("EmailJS error:", error);
       const errorMsg = error?.text ?? "Please check your EmailJS credentials.";
-      // Form data is already saved locally — let the user know
+      
+      // Still clear the form if it was partially successful or locally saved
       setFormData({ fullName: "", email: "", organization: "", role: "", partnershipInterest: "", message: "" });
+      
       toast({
         title: "Inquiry received",
-        description: `Your submission was saved, but the email notification failed: ${errorMsg}`,
+        description: `Your submission was saved locally, but error sending notifications: ${errorMsg}`,
         variant: "destructive",
       });
     } finally {
@@ -265,7 +267,7 @@ const Partnership = () => {
       </section>
 
       {/* Partnership Form */}
-      <section className="bg-muted/30 py-20 lg:py-28">
+      <section className="bg-white dark:bg-background/50 py-20 lg:py-28">
         <div className="container mx-auto px-6">
           <motion.div
             className="mx-auto max-w-3xl"

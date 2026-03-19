@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,7 +9,10 @@ import {
   X,
   ExternalLink,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,6 +34,34 @@ const navLinks = [
   { label: "Career", href: "https://career.alikohub.com/", external: true },
 ];
 
+function ThemeSwitcher() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return <div className="w-[120px] h-10" />;
+
+  const isDark = theme === "dark";
+
+  return (
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-border/50 bg-card/80 backdrop-blur-sm shadow-sm transition-all hover:border-primary/50 hover:scale-105 active:scale-95"
+    >
+      <div className="flex items-center justify-center text-primary">
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </div>
+      <span className="text-sm font-bold text-foreground whitespace-nowrap">
+        {isDark ? "Light Mode" : "Dark Mode"}
+      </span>
+    </button>
+  );
+}
+
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -44,19 +75,19 @@ export function Navbar() {
   return (
     <>
       {/* Top bar */}
-      <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between px-6 py-2 text-sm text-muted-foreground">
+      <div className="border-b border-white/5 bg-header transition-colors duration-300">
+        <div className="container mx-auto flex items-center justify-between px-6 py-2 text-sm text-header-foreground/70">
           <div className="flex items-center gap-6">
             <a
               href="mailto:info@alikohub.com"
-              className="flex items-center gap-1.5 hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 hover:text-white transition-colors"
             >
               <Mail className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">info@alikohub.com</span>
             </a>
             <a
               href="tel:+12063535373"
-              className="flex items-center gap-1.5 hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 hover:text-white transition-colors"
             >
               <Phone className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">+1 206 353 5373</span>
@@ -70,7 +101,7 @@ export function Navbar() {
       </div>
 
       {/* Main nav */}
-      <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <nav className="sticky top-0 z-50 border-b border-white/5 bg-header backdrop-blur-xl transition-colors duration-300">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           {/* Logo */}
           <Link to="/" className="flex items-center">
@@ -86,7 +117,7 @@ export function Navbar() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  className="flex items-center gap-1 text-sm font-medium text-header-foreground/80 transition-colors hover:text-header-foreground"
                 >
                   {link.label}
                   <ExternalLink className="h-3 w-3" />
@@ -98,7 +129,7 @@ export function Navbar() {
                   className={`text-sm font-medium transition-colors hover:text-primary ${
                     location.pathname === link.href
                       ? "text-primary"
-                      : "text-muted-foreground"
+                      : "text-header-foreground/80 hover:text-header-foreground"
                   }`}
                 >
                   {link.label}
@@ -108,7 +139,9 @@ export function Navbar() {
           </div>
 
           {/* Desktop CTA / User Profile */}
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden items-center gap-6 lg:flex">
+            <ThemeSwitcher />
+            <div className="flex items-center gap-3">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -150,7 +183,7 @@ export function Navbar() {
               </DropdownMenu>
             ) : (
               <>
-                {/* <Button
+                <Button
                   asChild
                   variant="ghost"
                   size="sm"
@@ -164,14 +197,15 @@ export function Navbar() {
                   className="bg-primary text-primary-foreground hover:bg-amber-light shadow-[var(--shadow-amber)]"
                 >
                   <Link to="/register">Sign Up</Link>
-                </Button> */}
+                </Button>
               </>
             )}
           </div>
+        </div>
 
           {/* Mobile toggle */}
           <button
-            className="lg:hidden text-foreground"
+            className="lg:hidden text-header-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? (
@@ -221,7 +255,7 @@ export function Navbar() {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                      className="flex items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-medium text-header-foreground/80 hover:text-header-foreground transition-colors"
                       onClick={() => setMobileOpen(false)}
                     >
                       {link.label}
@@ -234,7 +268,7 @@ export function Navbar() {
                       className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:text-primary ${
                         location.pathname === link.href
                           ? "text-primary bg-primary/10"
-                          : "text-muted-foreground"
+                          : "text-header-foreground/80"
                       }`}
                       onClick={() => setMobileOpen(false)}
                     >
@@ -244,6 +278,9 @@ export function Navbar() {
                 )}
 
                 <div className="flex flex-col gap-3 pt-4 border-t border-border/50 mt-2">
+                  <div className="px-3 pb-2">
+                    <ThemeSwitcher />
+                  </div>
                   {user ? (
                     <>
                       <Button
@@ -259,7 +296,7 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      {/* <Button
+                      <Button
                         variant="ghost"
                         size="sm"
                         asChild
@@ -275,7 +312,7 @@ export function Navbar() {
                         onClick={() => setMobileOpen(false)}
                       >
                         <Link to="/register">Sign Up</Link>
-                      </Button> */}
+                      </Button>
                     </>
                   )}
                 </div>

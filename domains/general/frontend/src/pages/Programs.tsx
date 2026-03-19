@@ -52,7 +52,7 @@ const pillars = [
       "Government and private sector partnership spaces",
       "Career pathways planning",
     ],
-    link: "https://consultancy.alikohub.com/",
+    link: "http://localhost:3007/",
   },
   {
     icon: CalendarDays,
@@ -108,8 +108,7 @@ const Programs = () => {
             {pillars.map((pillar, i) => (
               <motion.div
                 key={pillar.title}
-                className="group rounded-2xl border border-border/50 p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.02]"
-                style={{ background: "var(--gradient-card)" }}
+                className="group rounded-2xl border border-border/50 bg-[hsl(45,18%,96%)] dark:bg-card p-8 transition-all duration-300 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.02]"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

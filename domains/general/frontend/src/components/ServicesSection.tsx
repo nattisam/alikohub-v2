@@ -25,7 +25,7 @@ const services = [
       "Career advisory, professional development, and global mentorship services.",
     icon: Globe2,
     image: serviceConsultancy,
-    link: "https://consultancy.alikohub.com/",
+    link: "http://localhost:3007/",
     external: true,
   },
   {
@@ -52,9 +52,9 @@ const services = [
       "Water, sanitation, and hygiene solutions driving public health impact and community resilience across Africa.",
     icon: Droplets,
     image: serviceAlikowash,
-    link: "/ventures/digital-health",
+    link: "https://alikowash.lovable.app/",
     darkOverlay: true,
-    external: false,
+    external: true,
   },
 ];
 
@@ -89,8 +89,15 @@ export function ServicesSection() {
   // Duplicate services for infinite scroll effect
   const displayServices = [...services, ...services];
 
+  const scroll = (dir: "left" | "right") => {
+    if (scrollRef.current) {
+      // 300px card width + 24px gap = 324px
+      scrollRef.current.scrollBy({ left: dir === "left" ? -324 : 324, behavior: "smooth" });
+    }
+  };
+
   return (
-    <section id="ventures" className="relative py-24 lg:py-32">
+    <section id="ventures" className="relative py-24 lg:py-32 bg-background">
       <div className="container mx-auto px-6">
         {/* Heading */}
         <motion.div
@@ -104,24 +111,32 @@ export function ServicesSection() {
             AlikoHub Ventures
           </span>
           <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">
-            Our <span className="text-gradient-amber">Ventures</span>
+            Our <span className="text-amber">Ventures</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             Independent operating companies powering the AlikoHub ecosystem and driving sustainable impact across Digital Health, STEM, innovation, and enterprise.
           </p>
         </motion.div>
 
-        <div className="relative">
+        <div className="relative group">
+          <button onClick={() => { setIsPaused(true); scroll("left"); }} className="absolute -left-5 top-1/2 z-10 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-card shadow-md border border-border text-foreground hover:bg-[#E58E3C] hover:text-white hover:border-[#E58E3C] transition-all duration-300" aria-label="Scroll left">
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button onClick={() => { setIsPaused(true); scroll("right"); }} className="absolute -right-5 top-1/2 z-10 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-card shadow-md border border-border text-foreground hover:bg-[#E58E3C] hover:text-white hover:border-[#E58E3C] transition-all duration-300" aria-label="Scroll right">
+            <ChevronRight className="h-6 w-6" />
+          </button>
+          {/* overflow-hidden wrapper clips the scroll area visually */}
+          <div className="overflow-hidden">
           <div
             ref={scrollRef}
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className="flex gap-6 overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none touch-none"
+            className="flex gap-6 overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] select-none touch-none"
           >
             {displayServices.map((service, i) => (
               <div
                 key={`${service.title}-${i}`}
-                className="group relative w-[300px] shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-500 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)]"
+                className="group relative w-[300px] shrink-0 overflow-hidden rounded-2xl border border-border/50 bg-[hsl(45,18%,96%)] dark:bg-card transition-all duration-500 hover:border-primary/30"
               >
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
@@ -131,7 +146,7 @@ export function ServicesSection() {
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
-                  <div className={`absolute inset-0 ${(service as any).darkOverlay ? 'bg-gradient-to-t from-card via-card/70 to-card/40' : 'bg-gradient-to-t from-card via-card/50 to-transparent'}`} />
+                  <div className={`absolute inset-0 ${(service as any).darkOverlay ? 'bg-gradient-to-t from-white/40 dark:from-card via-white/20 dark:via-card/70 to-transparent' : 'bg-gradient-to-t from-white/30 dark:from-card via-transparent to-transparent'}`} />
                   <div className="absolute bottom-4 left-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 backdrop-blur-sm">
                     <service.icon className="h-5 w-5 text-primary" />
                   </div>
@@ -150,7 +165,7 @@ export function ServicesSection() {
                       href={service.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110 hover:gap-2"
                     >
                       View Site
                       <ArrowUpRight className="h-4 w-4" />
@@ -158,7 +173,7 @@ export function ServicesSection() {
                   ) : (
                     <Link
                       to={service.link}
-                      className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-all hover:gap-2"
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110 hover:gap-2"
                     >
                       Learn More
                       <ArrowUpRight className="h-4 w-4" />
@@ -167,6 +182,7 @@ export function ServicesSection() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         </div>
       </div>

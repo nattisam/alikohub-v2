@@ -2,9 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "../../assets/logo.png";
 
 const navItems = [
-  { label: "Home", href: "/" },
   { label: "Business Consulting", href: "/business-consulting" },
   { label: "Career Guidance", href: "/career-guidance" },
   {
@@ -30,11 +30,13 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-navy backdrop-blur-md border-b border-border">
-      <div className="container-wide flex items-center justify-between h-16 px-4 lg:px-8">
+      <div className="container-wide flex items-center justify-between h-24 px-4 lg:px-8">
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-serif text-xl font-bold text-primary-foreground tracking-tight">
-            Aliko <span className="text-gradient-gold">Consultancy</span>
-          </span>
+          <img 
+            src={logo} 
+            alt="Aliko Consultancy Logo" 
+            className="h-20 w-auto object-contain"
+          />
         </Link>
 
         {/* Desktop Nav */}

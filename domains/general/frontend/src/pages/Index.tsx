@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { Link } from "react-router-dom";
 import { HeroSection } from "@/components/HeroSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { EcosystemFlow } from "@/components/EcosystemFlow";
@@ -21,7 +22,7 @@ const Index = () => {
       <StatsSection />
 
       {/* Simple bold CTA */}
-      <section className="py-16 lg:py-20">
+      <section className="py-16 lg:py-20 bg-white dark:bg-transparent">
         <div className="container mx-auto px-6 text-center">
           <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">
             Ready to <span className="text-gradient-amber">Partner?</span>
@@ -29,11 +30,11 @@ const Index = () => {
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
             Join us in building Africa's largest youth empowerment ecosystem.
           </p>
-          <Button size="lg" className="mt-6 group bg-primary px-8 text-primary-foreground shadow-[var(--shadow-amber)] hover:brightness-110" asChild>
-            <a href="/partnership">
+          <Button size="lg" className="mt-6 group bg-primary px-8 text-primary-foreground hover:brightness-110" asChild>
+            <Link to="/partnership">
               Become a Partner
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </a>
+            </Link>
           </Button>
         </div>
       </section>

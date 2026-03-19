@@ -1,4 +1,4 @@
-/*import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
 import { Button } from "@/components/ui/button";
@@ -110,4 +110,5 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;*/
+export default LoginPage;
+

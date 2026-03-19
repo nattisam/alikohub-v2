@@ -36,7 +36,7 @@ export function TeamSection() {
           {team.map((member, i) => (
             <motion.div
               key={i}
-              className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)]"
+              className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card dark:bg-[hsl(220,30%,12%)] transition-all duration-300 hover:border-primary/30 hover:shadow-[var(--shadow-card-hover)]"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -52,8 +52,8 @@ export function TeamSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
               </div>
               <div className="p-5">
-                <h3 className="font-heading text-lg font-semibold text-foreground">{member.name}</h3>
-                <p className="text-sm text-primary">{member.role}</p>
+                <h3 className="font-heading text-lg font-semibold text-foreground dark:text-white">{member.name}</h3>
+                <p className="text-sm text-primary dark:text-primary/90">{member.role}</p>
               </div>
             </motion.div>
           ))}

@@ -14,10 +14,11 @@ import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Programs from "./pages/Programs";
 import Partnership from "./pages/Partnership";
-// import LoginPage from "./pages/LoginPage";
-// import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import VerifyEmail from "./pages/VerifyEmail";
+import AdminSubmissions from "./pages/AdminSubmissions";
 
 import PublicRoute from "./components/PublicRoute";
 
@@ -40,39 +41,45 @@ function SSOProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import { ThemeProvider } from "next-themes";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <SSOProvider>
-          <Suspense fallback={<div className="min-h-screen bg-background" />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/programs" element={<Programs />} />
-              <Route path="/partnership" element={<Partnership />} />
-              {/* 
-              <Route element={<PublicRoute />}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-              </Route> */}
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="alikohub-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <SSOProvider>
+            <Suspense fallback={<div className="min-h-screen bg-background" />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/programs" element={<Programs />} />
+                <Route path="/partnership" element={<Partnership />} />
+                <Route element={<PublicRoute />}>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                </Route>
 
-              {/* Email Verification Route */}
-              <Route path="/verify-email" element={<VerifyEmail />} />
+                {/* Email Verification Route */}
+                <Route path="/verify-email" element={<VerifyEmail />} />
 
-              {/* Payment Success Route */}
-              <Route path="/payment/success" element={<PaymentSuccess />} />
+                {/* Payment Success Route */}
+                <Route path="/payment/success" element={<PaymentSuccess />} />
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </SSOProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+                <Route path="/admin/submissions" element={<AdminSubmissions />} />
+
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </SSOProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
+
 
 export default App;

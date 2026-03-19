@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
+import { Link } from "react-router-dom";
 import { Footer } from "@/components/Footer";
 import { MissionSection } from "@/components/MissionSection";
 import { TeamSection } from "@/components/TeamSection";
@@ -10,12 +11,12 @@ import { useRef, useState } from "react";
 import aboutHeroBg from "@/assets/about-hero-bg.jpg";
 
 const cardColors = [
-  { bg: "bg-[hsl(210,40%,88%)]", text: "text-[hsl(210,60%,25%)]", iconBg: "bg-[hsl(210,50%,78%)]" },
-  { bg: "bg-[hsl(20,80%,75%)]", text: "text-[hsl(20,60%,20%)]", iconBg: "bg-[hsl(20,70%,65%)]" },
-  { bg: "bg-[hsl(190,60%,78%)]", text: "text-[hsl(190,70%,20%)]", iconBg: "bg-[hsl(190,50%,68%)]" },
-  { bg: "bg-[hsl(40,85%,75%)]", text: "text-[hsl(30,70%,20%)]", iconBg: "bg-[hsl(40,75%,65%)]" },
-  { bg: "bg-[hsl(25,70%,82%)]", text: "text-[hsl(25,60%,22%)]", iconBg: "bg-[hsl(25,60%,72%)]" },
-  { bg: "bg-[hsl(210,50%,82%)]", text: "text-[hsl(210,60%,22%)]", iconBg: "bg-[hsl(210,45%,72%)]" },
+  { bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]", text: "text-[hsl(20,60%,20%)] dark:text-white", iconBg: "bg-[hsl(37,78%,50%)]" },
+  { bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]", text: "text-[hsl(20,60%,20%)] dark:text-white", iconBg: "bg-[hsl(37,78%,50%)]" },
+  { bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]", text: "text-[hsl(20,60%,20%)] dark:text-white", iconBg: "bg-[hsl(37,78%,50%)]" },
+  { bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]", text: "text-[hsl(20,60%,20%)] dark:text-white", iconBg: "bg-[hsl(37,78%,50%)]" },
+  { bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]", text: "text-[hsl(20,60%,20%)] dark:text-white", iconBg: "bg-[hsl(37,78%,50%)]" },
+  { bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]", text: "text-[hsl(20,60%,20%)] dark:text-white", iconBg: "bg-[hsl(37,78%,50%)]" },
 ];
 
 const differentiators = [
@@ -47,7 +48,7 @@ const pillars = [
     icon: GraduationCap, title: "Aliko Academy",
     description: "Career-driven courses powered by our purpose-built LMS, delivering market-aligned training across Technology, Health, and STEM.",
     bullets: ["Custom-designed LMS with 30+ structured courses", "AI, Machine Learning, Data Analytics, Cloud Computing", "Software Development, Databases, Testing", "Finance, Accounting, Design, Marketing"],
-    link: "https://academy.alikohub.com/",
+    
   },
   {
     icon: Heart, title: "Digital Health & One Health",
@@ -68,7 +69,7 @@ const pillars = [
     icon: Droplets, title: "Aliko WASH",
     description: "Advancing water, sanitation, and hygiene solutions through technology-driven community impact programs.",
     bullets: ["Community WASH infrastructure assessment", "Hygiene behavior change and education", "Water quality monitoring and data systems", "Sustainable sanitation technology deployment"],
-    link: "https://alikowash.lovable.app/",
+    
   },
 ];
 
@@ -102,13 +103,13 @@ function HorizontalScroller({ children }: { children: React.ReactNode }) {
   };
   return (
     <div className="relative">
-      <button onClick={() => scroll("left")} className="absolute -left-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 border border-border/50 text-foreground backdrop-blur-sm hover:bg-primary/20" aria-label="Scroll left">
+      <button onClick={() => scroll("left")} className="absolute -left-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 dark:bg-[hsl(220,30%,12%)]/80 border border-border/50 text-foreground dark:text-white backdrop-blur-sm hover:bg-[#E58E3C] hover:text-white hover:border-[#E58E3C] transition-all duration-300" aria-label="Scroll left">
         <ChevronLeft className="h-5 w-5" />
       </button>
-      <button onClick={() => scroll("right")} className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 border border-border/50 text-foreground backdrop-blur-sm hover:bg-primary/20" aria-label="Scroll right">
+      <button onClick={() => scroll("right")} className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-card/80 dark:bg-[hsl(220,30%,12%)]/80 border border-border/50 text-foreground dark:text-white backdrop-blur-sm hover:bg-[#E58E3C] hover:text-white hover:border-[#E58E3C] transition-all duration-300" aria-label="Scroll right">
         <ChevronRight className="h-5 w-5" />
       </button>
-      <div ref={ref} className="flex gap-5 overflow-x-auto scroll-smooth pb-4 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+      <div ref={ref} className="flex gap-5 overflow-x-auto scroll-smooth pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" style={{ scrollbarWidth: "none" }}>
         {children}
       </div>
     </div>
@@ -124,8 +125,8 @@ const About = () => {
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={aboutHeroBg} alt="" className="h-full w-full object-cover scale-105" />
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         </div>
         <div className="container relative mx-auto px-6 py-32 lg:py-40">
           <motion.div className="mx-auto max-w-3xl text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -133,10 +134,10 @@ const About = () => {
             <h1 className="font-heading text-5xl font-extrabold text-white sm:text-6xl lg:text-7xl drop-shadow-lg">
               Youth <span className="text-gradient-amber">Resourcefulness Ecosystem</span>
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-white/85">
+            <p className="mt-6 text-lg leading-relaxed text-white">
               We <strong className="text-white">Train</strong> through Aliko Academy, <strong className="text-white">Guide</strong> through Aliko Consultancy, <strong className="text-white">Connect</strong> through Aliko Events, and <strong className="text-white">Scale</strong> through our partners' support.
             </p>
-            <p className="mt-4 text-lg leading-relaxed text-white/75">
+            <p className="mt-4 text-lg leading-relaxed text-white/95">
               Rooted in dignity, compassion, and systems thinking, AlikoHub brings together education, innovation, employment pathways, and partnerships to enable young people to thrive as contributors, leaders, and problem solvers. Established in 2025 as a sister company to Genshifter Technologies, we operate at the intersection of Digital Health, One Health, STEM, and entrepreneurship.
             </p>
           </motion.div>
@@ -160,11 +161,13 @@ const About = () => {
             {differentiators.map((item, i) => {
               const color = cardColors[i % cardColors.length];
               return (
-                <motion.div key={i} className={`w-[280px] shrink-0 rounded-2xl ${color.bg} p-6 hover:scale-[1.02] transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
-                  <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${color.iconBg}`}>
-                    <item.icon className={`h-6 w-6 ${color.text}`} />
+                <motion.div key={i} className={`w-[280px] shrink-0 rounded-2xl ${color.bg} p-6 transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
+                  <div className="relative z-10">
+                    <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${color.iconBg}`}>
+                      <item.icon className={`h-6 w-6 ${color.text}`} />
+                    </div>
+                    <p className={`text-sm md:text-base leading-relaxed ${color.text} opacity-80`}>{item.text}</p>
                   </div>
-                  <p className={`text-sm leading-relaxed ${color.text} opacity-80`}>{item.text}</p>
                 </motion.div>
               );
             })}
@@ -188,12 +191,14 @@ const About = () => {
               { icon: Building2, title: "Physical + Digital", description: "10 regional hubs provide physical presence while digital platforms enable continental scale.", color: cardColors[3] },
               { icon: CheckCircle2, title: "Outcome-Linked Design", description: "Every component designed backward from employment and enterprise outcomes.", color: cardColors[2] },
             ].map((item, i) => (
-              <motion.div key={item.title} className={`rounded-2xl ${item.color.bg} p-8 hover:scale-[1.02] transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-                <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${item.color.iconBg}`}>
-                  <item.icon className={`h-7 w-7 ${item.color.text}`} />
+              <motion.div key={item.title} className={`rounded-2xl ${item.color.bg} p-8 transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                <div className="relative z-10">
+                  <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${item.color.iconBg}`}>
+                    <item.icon className={`h-7 w-7 ${item.color.text}`} />
+                  </div>
+                  <h3 className={`font-heading text-xl md:text-2xl font-extrabold ${item.color.text} mb-3 leading-tight`}>{item.title}</h3>
+                  <p className={`text-sm md:text-base leading-relaxed ${item.color.text} opacity-80`}>{item.description}</p>
                 </div>
-                <h3 className={`font-heading text-xl font-bold ${item.color.text} mb-2`}>{item.title}</h3>
-                <p className={`text-sm leading-relaxed ${item.color.text} opacity-75`}>{item.description}</p>
               </motion.div>
             ))}
           </div>
@@ -214,32 +219,31 @@ const About = () => {
             {pillars.map((pillar, i) => {
               const color = cardColors[i % cardColors.length];
               return (
-                <motion.div key={pillar.title} className={`w-[320px] shrink-0 rounded-2xl ${color.bg} p-7 hover:scale-[1.02] transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
-                  <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${color.iconBg}`}>
-                    <pillar.icon className={`h-6 w-6 ${color.text}`} />
+                <motion.div key={pillar.title} className={`w-[320px] shrink-0 rounded-2xl ${color.bg} p-7 transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
+                  <div className="relative z-10">
+                    <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${color.iconBg}`}>
+                      <pillar.icon className={`h-6 w-6 ${color.text}`} />
+                    </div>
+                    <h3 className={`font-heading text-xl md:text-2xl font-extrabold ${color.text} mb-3 leading-tight`}>{pillar.title}</h3>
+                    <p className={`text-sm md:text-base leading-relaxed ${color.text} opacity-80`}>{pillar.description}</p>
+                    <ul className="mt-4 space-y-2">
+                      {pillar.bullets.map((b, j) => (
+                        <li key={j} className={`flex items-start gap-2 text-sm ${color.text} opacity-80`}>
+                          <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${color.iconBg}`} />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className={`font-heading text-xl font-bold ${color.text}`}>{pillar.title}</h3>
-                  <p className={`mt-2 text-sm leading-relaxed ${color.text} opacity-75`}>{pillar.description}</p>
-                  <ul className="mt-4 space-y-1.5">
-                    {pillar.bullets.map((b, j) => (
-                      <li key={j} className={`flex items-start gap-2 text-xs ${color.text} opacity-70`}>
-                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${color.iconBg}`} />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                  {pillar.link && (
-                    <a href={pillar.link} target="_blank" rel="noopener noreferrer" className={`mt-4 inline-flex items-center gap-1.5 text-xs font-semibold ${color.text} opacity-80 hover:opacity-100 transition-opacity`}>
-                      Visit {pillar.title} <ArrowRight className="h-3.5 w-3.5" />
-                    </a>
-                  )}
+
+
                 </motion.div>
               );
             })}
           </HorizontalScroller>
 
           <motion.div className="mt-8 text-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            <Button variant="outline" className="group" asChild>
+            <Button className="group bg-[#E58E3C] hover:bg-[#d47f33] text-white border-none" asChild>
               <a href="/programs">View All Ventures <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></a>
             </Button>
           </motion.div>
@@ -260,19 +264,21 @@ const About = () => {
             {timeline.map((phase, i) => {
               const color = cardColors[i % cardColors.length];
               return (
-                <motion.div key={phase.phase} className={`rounded-2xl ${color.bg} p-7 hover:scale-[1.02] transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
-                  <div className={`mb-2 inline-flex rounded-full ${color.iconBg} px-3 py-1 text-xs font-semibold ${color.text}`}>
-                    {phase.phase} · {phase.years}
+                <motion.div key={phase.phase} className={`rounded-2xl ${color.bg} p-7 transition-all duration-300`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
+                  <div className="relative z-10">
+                    <div className={`mb-2 inline-flex rounded-full ${color.iconBg} px-3 py-1 text-xs font-semibold ${color.text}`}>
+                      {phase.phase} · {phase.years}
+                    </div>
+                    <h3 className={`font-heading text-xl md:text-2xl font-extrabold ${color.text} mb-3 leading-tight`}>{phase.title}</h3>
+                    <ul className="space-y-2">
+                      {phase.items.map((item, j) => (
+                        <li key={j} className={`flex items-start gap-2 text-sm md:text-base ${color.text} opacity-80`}>
+                          <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${color.iconBg}`} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className={`font-heading text-lg font-bold ${color.text} mb-3`}>{phase.title}</h3>
-                  <ul className="space-y-1.5">
-                    {phase.items.map((item, j) => (
-                      <li key={j} className={`flex items-start gap-2 text-sm ${color.text} opacity-75`}>
-                        <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${color.iconBg}`} />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
                 </motion.div>
               );
             })}
@@ -299,12 +305,14 @@ const About = () => {
                 {partnerCategories.map((cat, i) => {
                   const color = cardColors[i % cardColors.length];
                   return (
-                    <motion.div key={cat.title} className={`rounded-xl ${color.bg} p-5 hover:scale-[1.02] transition-all duration-300`} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
-                      <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${color.iconBg}`}>
-                        <cat.icon className={`h-5 w-5 ${color.text}`} />
+                    <motion.div key={cat.title} className={`rounded-xl ${color.bg} p-5 transition-all duration-300`} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
+                      <div className="relative z-10">
+                        <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${color.iconBg}`}>
+                          <cat.icon className={`h-5 w-5 ${color.text}`} />
+                        </div>
+                        <h3 className={`font-heading text-lg md:text-xl font-extrabold ${color.text} mb-2 leading-tight`}>{cat.title}</h3>
+                        <p className={`text-sm md:text-base leading-relaxed ${color.text} opacity-80`}>{cat.text}</p>
                       </div>
-                      <h3 className={`font-heading text-sm font-semibold ${color.text}`}>{cat.title}</h3>
-                      <p className={`mt-1 text-xs leading-relaxed ${color.text} opacity-75`}>{cat.text}</p>
                     </motion.div>
                   );
                 })}
@@ -331,8 +339,8 @@ const About = () => {
                         <item.icon className={`h-4 w-4 ${color.text}`} />
                       </div>
                       <div>
-                        <h3 className="font-heading text-sm font-bold text-foreground">{item.title}</h3>
-                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.text}</p>
+                        <h3 className="font-heading text-sm font-bold text-foreground dark:text-white">{item.title}</h3>
+                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground dark:text-white/70">{item.text}</p>
                       </div>
                     </motion.div>
                   );
@@ -373,14 +381,14 @@ const About = () => {
       {/* 11. CTA */}
       <section className="py-20 lg:py-28">
         <div className="container mx-auto px-6">
-          <motion.div className="rounded-3xl bg-[hsl(40,85%,75%)] p-12 lg:p-16 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="font-heading text-3xl font-bold text-[hsl(30,70%,20%)] sm:text-4xl">Ready to Partner?</h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-[hsl(30,70%,20%)] opacity-80">Join us in building Africa's largest youth empowerment ecosystem.</p>
+          <motion.div className="rounded-3xl p-12 lg:p-16 text-center" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl">Ready to <span className="text-gradient-amber">Partner?</span></h2>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground text-center">Join us in building Africa's largest youth empowerment ecosystem.</p>
             <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="group bg-primary px-8 text-primary-foreground shadow-[var(--shadow-amber)] hover:bg-amber-light" asChild>
-                <a href="mailto:info@alikohub.com">Contact Us <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></a>
+              <Button size="lg" className="group bg-primary px-8 text-primary-foreground shadow-[var(--shadow-amber)] hover:brightness-110" asChild>
+                <Link to="/partnership">Contact Us <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-[hsl(30,70%,20%)]/30 text-[hsl(30,70%,20%)] hover:bg-[hsl(40,85%,70%)]" asChild>
+              <Button size="lg" variant="outline" className="border-border/50 hover:bg-primary/10" asChild>
                 <a href="https://alikohub-pitch.lovable.app/" target="_blank" rel="noopener noreferrer">View Full Pitch</a>
               </Button>
             </div>

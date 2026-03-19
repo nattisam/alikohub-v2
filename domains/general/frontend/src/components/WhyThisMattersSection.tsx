@@ -6,31 +6,31 @@ const reasons = [
     icon: Users,
     title: "Youth Demographics",
     text: "Africa's population exceeds 1.55 billion with 73% under age 35, while youth in North America face growing challenges navigating competitive job markets.",
-    bg: "bg-[hsl(210,40%,88%)]",
-    textColor: "text-[hsl(210,60%,25%)]",
-    iconBg: "bg-[hsl(210,50%,78%)]",
+    bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]",
+    textColor: "text-[hsl(20,60%,20%)] dark:text-[hsl(210,40%,90%)]",
+    iconBg: "bg-[hsl(37_78%_50%)] dark:bg-[hsl(37_78%_50%)]",
   },
   {
     icon: Zap,
     title: "Systemic Gap, Not Talent Gap",
     text: "Young people are not held back by lack of ambition, but by systems that haven't kept pace. The education-to-employment pipeline needs structural transformation.",
-    bg: "bg-[hsl(20,80%,75%)]",
-    textColor: "text-[hsl(20,60%,20%)]",
-    iconBg: "bg-[hsl(20,70%,65%)]",
+    bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,14%)]",
+    textColor: "text-[hsl(20,60%,20%)] dark:text-[hsl(20,40%,90%)]",
+    iconBg: "bg-[hsl(37_78%_50%)] dark:bg-[hsl(37_78%_50%)]",
   },
   {
     icon: TrendingUp,
     title: "The Opportunity Window",
     text: "With expanding digital connectivity, remote work trends, and growing investment in tech and health, the structural conditions now exist to unlock new trajectories.",
-    bg: "bg-[hsl(40,85%,75%)]",
-    textColor: "text-[hsl(30,70%,20%)]",
-    iconBg: "bg-[hsl(40,75%,65%)]",
+    bg: "bg-[hsl(45,18%,96%)] dark:bg-[hsl(220,30%,12%)]",
+    textColor: "text-[hsl(30,70%,20%)] dark:text-[hsl(40,40%,90%)]",
+    iconBg: "bg-[hsl(37_78%_50%)] dark:bg-[hsl(37_78%_50%)]",
   },
 ];
 
 export function WhyThisMattersSection() {
   return (
-    <section className="py-24 lg:py-32 bg-card/30">
+    <section className="py-24 lg:py-32 bg-white dark:bg-background">
       <div className="container mx-auto px-6">
         <motion.div
           className="mx-auto mb-16 max-w-2xl text-center"
@@ -42,7 +42,7 @@ export function WhyThisMattersSection() {
             Strategic Rationale
           </span>
           <h2 className="font-heading text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">
-            Why This <span className="text-gradient-amber">Matters</span>
+            Why This <span className="text-amber">Matters</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             Africa stands at a defining moment with the world's youngest population, and the structural conditions now exist to turn that into a global advantage.
@@ -53,7 +53,7 @@ export function WhyThisMattersSection() {
           {reasons.map((reason, i) => (
             <motion.div
               key={reason.title}
-              className={`group rounded-2xl ${reason.bg} p-8 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
+              className={`group rounded-2xl ${reason.bg} p-8 transition-all duration-300`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

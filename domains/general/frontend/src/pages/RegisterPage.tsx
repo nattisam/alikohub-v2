@@ -1,4 +1,4 @@
-/*import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRegister } from "@/hooks/useAuth";
+import { useRegister, useUser } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useState } from "react";
@@ -160,4 +160,5 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;*/
+export default RegisterPage;
+

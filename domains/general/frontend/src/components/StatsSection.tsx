@@ -10,7 +10,7 @@ const stats = [
 
 export function StatsSection() {
   return (
-    <section id="impact" className="py-16 lg:py-20">
+    <section id="impact" className="py-16 lg:py-20 bg-background">
       <div className="container mx-auto px-6">
         <motion.div
           className="mx-auto mb-10 max-w-2xl text-center"
@@ -27,7 +27,7 @@ export function StatsSection() {
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              className="group flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/30"
+              className="group flex items-center gap-4 rounded-2xl border border-transparent bg-[#F6F5F2] dark:bg-[hsl(220,30%,12%)] p-5 transition-all duration-300 shadow-sm"
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

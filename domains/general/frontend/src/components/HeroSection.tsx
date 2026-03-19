@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-student.png";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
+    <section className="relative min-h-[90vh] overflow-hidden bg-background transition-colors duration-300">
       {/* Grid overlay */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-30" />
+      <div className="absolute inset-0 bg-grid-pattern opacity-30 hidden dark:block" />
 
       {/* Glow effect */}
       <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
@@ -21,7 +22,7 @@ export function HeroSection() {
           transition={{ duration: 0.7 }}
         >
           <motion.div
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-light/30 bg-sky-light/10 text-sky dark:border-primary/30 dark:bg-primary/10 dark:text-primary px-4 py-1.5 text-sm font-semibold"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
@@ -31,8 +32,8 @@ export function HeroSection() {
           </motion.div>
 
           <h1 className="font-heading text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
-            Honoring Youth Potential Where Opportunity Meets{" "}
-            <span className="text-gradient-amber">Dignity</span>
+             Honoring Youth Potential Where Opportunity Meets{" "}
+            <span className="text-amber">Dignity</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
@@ -44,10 +45,13 @@ export function HeroSection() {
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
             <Button
               size="lg"
-              className="group bg-primary px-8 text-primary-foreground shadow-[var(--shadow-amber)] hover:bg-amber-light"
+              className="group bg-primary px-8 text-primary-foreground hover:bg-amber-light"
+              asChild
             >
-              Partner With Us
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Link to="/partnership">
+                Partner With Us
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
             <Button
               size="lg"

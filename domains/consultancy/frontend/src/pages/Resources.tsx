@@ -465,7 +465,7 @@ const Resources = () => {
                   <div key={r.id} className="group bg-card rounded-xl overflow-hidden border border-border card-hover">
                     <div className="aspect-[16/10] overflow-hidden bg-muted">
                       <img
-                        src={r.thumbnail_url || fallbackThumbs[index % fallbackThumbs.length]}
+                        src={(r.thumbnail_url || fallbackThumbs[index % fallbackThumbs.length]).replace("http://", "https://")}
                         alt={r.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
@@ -484,7 +484,7 @@ const Resources = () => {
                       <h3 className="font-serif text-xl font-semibold text-primary mb-3">{r.title}</h3>
                       {r.description && <p className="text-muted-foreground text-sm leading-relaxed mb-5">{r.description}</p>}
                       {r.file_url ? (
-                        <a href={r.file_url} target="_blank" rel="noopener noreferrer">
+                        <a href={r.file_url.replace("http://", "https://")} target="_blank" rel="noopener noreferrer">
                           <Button className="bg-gold text-navy hover:bg-gold/90 font-semibold px-6 py-5 w-full">
                             <Download className="w-4 h-4 mr-2" /> Access Material
                           </Button>
