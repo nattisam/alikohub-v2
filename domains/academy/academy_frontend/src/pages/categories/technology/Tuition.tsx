@@ -86,7 +86,7 @@ const Tuition = () => {
                   </li>
                 ))}
               </ul>
-              <Link to="/programs?type=career-track">
+              <Link to="/technology/programs?type=career-track">
                 <Button className="w-full h-14 bg-secondary hover:bg-secondary/90 text-white font-bold rounded-xl shadow-orange">
                   View Career Tracks
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -115,7 +115,7 @@ const Tuition = () => {
                   </li>
                 ))}
               </ul>
-              <Link to="/programs?type=short-course">
+              <Link to="/technology/programs?type=short-course">
                 <Button variant="outline" className="w-full h-14 border-accent text-accent hover:bg-accent hover:text-white font-bold rounded-xl">
                   View Short Courses
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -198,13 +198,13 @@ const Tuition = () => {
             Contact our admissions team to discuss payment options.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/admissions">
+            <Link to="/technology/admissions">
               <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white font-bold h-14 px-8 rounded-xl shadow-orange">
                 Start Application
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/contact">
+            <Link to="/technology/contact">
               <Button size="lg" className="bg-white text-accent hover:bg-white/90 font-bold h-14 px-8 rounded-xl shadow-lg">
                 Contact Admissions
               </Button>

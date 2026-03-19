@@ -16,16 +16,16 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
-import { useCoursesByCategory, useEnrollInCourse } from "@/hooks/useAcademy";
+import { useCourseBySlug, useEnrollInCourse } from "@/hooks/useAcademy";
 
 const ProgramDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { data: apiData, isLoading } = useCoursesByCategory("Tech");
+  const { data: apiProgram, isLoading } = useCourseBySlug(slug || "");
   const enrollMutation = useEnrollInCourse();
 
-  // Prefer API data over static if available
-  const programData = apiData?.courses?.find((c: any) => c.slug === slug);
+  // Prefer API data
+  const programData = apiProgram;
 
   // Transform to a consistent structure like Health
   const program = programData
@@ -67,6 +67,7 @@ const ProgramDetail = () => {
         certification:
           (programData as any).certification ||
           "Aliko Academy Professional Certification",
+        featured: (programData as any).featured || false,
       }
     : null;
 

@@ -93,8 +93,8 @@ interface ProgramCardProps {
 
 const ProgramCard = ({ program, className }: ProgramCardProps) => {
   const detailPath = program.type === 'career-track'
-    ? `/programs/career-tracks/${program.slug}`
-    : `/programs/short-courses/${program.slug}`;
+    ? `/technology/programs/career-tracks/${program.slug}`
+    : `/technology/programs/short-courses/${program.slug}`;
 
   const thumbnail = slugThumbnails[program.slug] || categoryFallback[program.category] || heroSoftwareEngineering;
 

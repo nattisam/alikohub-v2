@@ -1,4 +1,5 @@
-import { ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Carousel,
   CarouselContent,
@@ -17,7 +18,7 @@ const categories = [
       "Clinical and digital health pathways including CNA, medical coding, CPR/BLS, and advanced health analytics for resilient healthcare systems.",
     courses: "2 Courses",
     logo: logoHealth,
-    url: "https://aliko-academy-health.lovable.app/",
+    url: "/health",
     streamClass: "stream-health",
     borderColor: "border-l-health",
   },
@@ -27,7 +28,7 @@ const categories = [
       "Career-ready programs in software engineering, data, AI, and cloud systems aligned with modern digital workforce demands.",
     courses: "2 Courses",
     logo: logoTech,
-    url: "https://aliko-academy-tech.lovable.app/",
+    url: "/technology",
     streamClass: "stream-tech",
     borderColor: "border-l-tech",
   },
@@ -37,7 +38,7 @@ const categories = [
       "Applied engineering and design software training across civil, electrical, mechanical, aviation, and BIM systems.",
     courses: "2 Courses",
     logo: logoStem,
-    url: "https://aliko-academy-stem.lovable.app/",
+    url: "/stem",
     streamClass: "stream-stem",
     borderColor: "border-l-stem",
   },
@@ -89,15 +90,13 @@ const CategoryCarousel = () => {
                       <span className="text-xs text-muted-foreground font-medium">
                         {cat.courses}
                       </span>
-                      <a
-                        href={cat.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        to={cat.url}
                         className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
                       >
                         Visit Stream Website{" "}
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
                   </div>
                 </div>

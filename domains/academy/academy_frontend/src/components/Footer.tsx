@@ -10,15 +10,15 @@ const Footer = () => {
       links: [
         {
           name: "Aliko Academy Health",
-          href: "https://aliko-academy-health.lovable.app/",
+          href: "/health",
         },
         {
           name: "Aliko Academy Tech",
-          href: "https://aliko-academy-tech.lovable.app/",
+          href: "/technology",
         },
         {
           name: "Aliko Academy STEM",
-          href: "https://aliko-academy-stem.lovable.app/",
+          href: "/stem",
         },
       ],
     },

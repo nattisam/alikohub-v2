@@ -104,6 +104,9 @@ export const useSSO = () => {
                 // Set session in our auth service
                 authService.setSession(idToken, "", userData);
 
+                // Mark as SSO session so it can be managed by this hook
+                localStorage.setItem("auth_provider", "sso");
+
                 setState({
                   isAuthenticated: true,
                   isLoading: false,
@@ -120,8 +123,14 @@ export const useSSO = () => {
                 });
               }
             } else {
-              // User is signed out
-              authService.logout();
+              // User is signed out from Firebase
+              // Only call logout if this was previously an SSO session
+              const authProvider = localStorage.getItem("auth_provider");
+              if (authProvider === "sso") {
+                authService.logout();
+                localStorage.removeItem("auth_provider");
+              }
+
               setState({
                 isAuthenticated: false,
                 isLoading: false,

@@ -72,7 +72,7 @@ const Programs = () => {
             Looking for customized training?
           </h3>
           <Button asChild variant="hero" size="lg">
-            <Link to="/enterprise">
+            <Link to="/stem/enterprise">
               Request Enterprise Training
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>

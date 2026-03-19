@@ -1,44 +1,76 @@
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Linkedin, Twitter, Youtube, Github } from 'lucide-react';
-import { isFeatureEnabled } from '@/lib/categories/technology/featureFlags';
-import logo from '@/assets/categories/technology/logo-full.png';
+import { Link } from "react-router-dom";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Linkedin,
+  Twitter,
+  Youtube,
+  Github,
+} from "lucide-react";
+import { isFeatureEnabled } from "@/lib/categories/technology/featureFlags";
+import logo from "@/assets/categories/technology/logo-full.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const programLinks = [
-    { title: 'All Programs', href: '/programs' },
-    { title: 'Software Engineering', href: '/programs?category=Software+Engineering' },
-    { title: 'Data & Analytics', href: '/programs?category=Data+%26+Analytics' },
-    { title: 'AI & Machine Learning', href: '/programs?category=AI+%26+Machine+Learning' },
-    { title: 'UX/UI & Product', href: '/programs?category=UX%2FUI+%26+Product' },
-    { title: 'Cloud & DevOps', href: '/programs?category=Cloud+%26+DevOps' },
-    { title: 'Cybersecurity', href: '/programs?category=Cybersecurity' },
+    { title: "All Programs", href: "/technology/programs" },
+    {
+      title: "Software Engineering",
+      href: "/technology/programs?category=Software+Engineering",
+    },
+    {
+      title: "Data & Analytics",
+      href: "/technology/programs?category=Data+%26+Analytics",
+    },
+    {
+      title: "AI & Machine Learning",
+      href: "/technology/programs?category=AI+%26+Machine+Learning",
+    },
+    {
+      title: "UX/UI & Product",
+      href: "/technology/programs?category=UX%2FUI+%26+Product",
+    },
+    {
+      title: "Cloud & DevOps",
+      href: "/technology/programs?category=Cloud+%26+DevOps",
+    },
+    {
+      title: "Cybersecurity",
+      href: "/technology/programs?category=Cybersecurity",
+    },
   ];
 
   const resourceLinks = [
-    { title: 'Career Services', href: '/career-services' },
-    { title: 'Projects & Portfolio', href: '/projects' },
-    { title: 'Mentors & Instructors', href: '/mentors' },
-    { title: 'Outcomes & Impact', href: '/outcomes' },
-    ...(isFeatureEnabled('learningPaths') ? [{ title: 'Learning Paths', href: '/learning-paths' }] : []),
-    ...(isFeatureEnabled('skillAssessment') ? [{ title: 'Skill Assessment', href: '/skill-assessment' }] : []),
+    { title: "Career Services", href: "/technology/career-services" },
+    { title: "Projects & Portfolio", href: "/technology/projects" },
+    { title: "Mentors & Instructors", href: "/technology/mentors" },
+    { title: "Outcomes & Impact", href: "/technology/outcomes" },
+    ...(isFeatureEnabled("learningPaths")
+      ? [{ title: "Learning Paths", href: "/technology/learning-paths" }]
+      : []),
+    ...(isFeatureEnabled("skillAssessment")
+      ? [{ title: "Skill Assessment", href: "/technology/skill-assessment" }]
+      : []),
   ];
 
   const companyLinks = [
-    { title: 'Admissions', href: '/admissions' },
-    { title: 'Tuition & Payment', href: '/tuition' },
-    { title: 'Enterprise Training', href: '/enterprise' },
-    { title: 'Partners', href: '/partners' },
-    { title: 'Hire Graduates', href: '/hire-graduates' },
-    { title: 'Contact', href: '/contact' },
+    { title: "Admissions", href: "/technology/admissions" },
+    { title: "Tuition & Payment", href: "/technology/tuition" },
+    { title: "Enterprise Training", href: "/technology/enterprise" },
+    { title: "Partners", href: "/technology/partners" },
+    { title: "Hire Graduates", href: "/technology/hire-graduates" },
+    { title: "Contact", href: "/technology/contact" },
   ];
 
   const legalLinks = [
-    { title: 'Privacy Policy', href: '/policies/privacy' },
-    { title: 'Terms of Service', href: '/policies/terms' },
-    { title: 'Refund Policy', href: '/policies/refund' },
-    ...(isFeatureEnabled('credentialVerification') ? [{ title: 'Verify Credential', href: '/verify-credential' }] : []),
+    { title: "Privacy Policy", href: "/technology/policies/privacy" },
+    { title: "Terms of Service", href: "/technology/policies/terms" },
+    { title: "Refund Policy", href: "/technology/policies/refund" },
+    ...(isFeatureEnabled("credentialVerification")
+      ? [{ title: "Verify Credential", href: "/technology/verify-credential" }]
+      : []),
   ];
 
   return (
@@ -54,36 +86,41 @@ const Footer = () => {
         <div className="grid grid-cols-2 gap-12 md:grid-cols-4 lg:grid-cols-5">
           <div className="col-span-2 md:col-span-4 lg:col-span-1 lg:pr-8">
             <Link to="/" className="inline-flex items-center group">
-              <img src={logo} alt="Aliko Academy Tech" className="h-14 w-auto" />
+              <img
+                src={logo}
+                alt="Aliko Academy Tech"
+                className="h-14 w-auto"
+              />
             </Link>
             <p className="mt-6 text-sm text-white/60 max-w-xs leading-relaxed">
-              Build job-ready tech skills with mentor-guided programs and real-world projects.
+              Build job-ready tech skills with mentor-guided programs and
+              real-world projects.
             </p>
             <div className="mt-8 flex gap-3">
-              <a 
-                href="#" 
-                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group" 
+              <a
+                href="#"
+                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="h-5 w-5 text-white/60 group-hover:text-white transition-colors" />
               </a>
-              <a 
-                href="#" 
-                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group" 
+              <a
+                href="#"
+                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group"
                 aria-label="Twitter"
               >
                 <Twitter className="h-5 w-5 text-white/60 group-hover:text-white transition-colors" />
               </a>
-              <a 
-                href="#" 
-                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group" 
+              <a
+                href="#"
+                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group"
                 aria-label="YouTube"
               >
                 <Youtube className="h-5 w-5 text-white/60 group-hover:text-white transition-colors" />
               </a>
-              <a 
-                href="#" 
-                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group" 
+              <a
+                href="#"
+                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-secondary/40 flex items-center justify-center transition-all duration-300 group"
                 aria-label="GitHub"
               >
                 <Github className="h-5 w-5 text-white/60 group-hover:text-white transition-colors" />
@@ -93,7 +130,9 @@ const Footer = () => {
 
           {/* Programs */}
           <div>
-            <h3 className="text-sm font-semibold text-white/80 mb-6">Programs</h3>
+            <h3 className="text-sm font-semibold text-white/80 mb-6">
+              Programs
+            </h3>
             <ul className="space-y-3.5">
               {programLinks.map((link) => (
                 <li key={link.href}>
@@ -110,7 +149,9 @@ const Footer = () => {
 
           {/* Resources */}
           <div>
-            <h3 className="text-sm font-semibold text-white/80 mb-6">Resources</h3>
+            <h3 className="text-sm font-semibold text-white/80 mb-6">
+              Resources
+            </h3>
             <ul className="space-y-3.5">
               {resourceLinks.map((link) => (
                 <li key={link.href}>
@@ -127,7 +168,9 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <h3 className="text-sm font-semibold text-white/80 mb-6">Company</h3>
+            <h3 className="text-sm font-semibold text-white/80 mb-6">
+              Company
+            </h3>
             <ul className="space-y-3.5">
               {companyLinks.map((link) => (
                 <li key={link.href}>
@@ -144,13 +187,18 @@ const Footer = () => {
 
           {/* Contact */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-sm font-semibold text-white/80 mb-6">Contact</h3>
+            <h3 className="text-sm font-semibold text-white/80 mb-6">
+              Contact
+            </h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
                   <Mail className="h-4 w-4 text-secondary" />
                 </div>
-                <a href="mailto:hello@alikoacademy.tech" className="text-sm text-white/60 hover:text-white transition-colors pt-2">
+                <a
+                  href="mailto:hello@alikoacademy.tech"
+                  className="text-sm text-white/60 hover:text-white transition-colors pt-2"
+                >
                   hello@alikoacademy.tech
                 </a>
               </li>
@@ -158,7 +206,10 @@ const Footer = () => {
                 <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
                   <Phone className="h-4 w-4 text-secondary" />
                 </div>
-                <a href="tel:+1234567890" className="text-sm text-white/60 hover:text-white transition-colors pt-2">
+                <a
+                  href="tel:+1234567890"
+                  className="text-sm text-white/60 hover:text-white transition-colors pt-2"
+                >
                   +1 (234) 567-890
                 </a>
               </li>

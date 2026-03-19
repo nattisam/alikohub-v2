@@ -4,20 +4,20 @@ import logoImg from "@/assets/categories/stem/aliko-stem-logo.png";
 
 const footerLinks = {
   programs: [
-    { name: "All Programs", href: "/programs" },
-    { name: "Enterprise Training", href: "/enterprise" },
-    { name: "Industry Curriculum", href: "/curriculum" },
-    { name: "Licensure & Exams", href: "/certifications" },
+    { name: "All Programs", href: "/stem/programs" },
+    { name: "Enterprise Training", href: "/stem/enterprise" },
+    { name: "Industry Curriculum", href: "/stem/curriculum" },
+    { name: "Licensure & Exams", href: "/stem/certifications" },
   ],
   company: [
-    { name: "About Us", href: "/about" },
-    { name: "Partners", href: "/partners" },
-    { name: "Contact", href: "/contact" },
+    { name: "About Us", href: "/stem/about" },
+    { name: "Partners", href: "/stem/partners" },
+    { name: "Contact", href: "/stem/contact" },
   ],
   legal: [
-    { name: "Privacy Policy", href: "/policies#privacy" },
-    { name: "Terms of Use", href: "/policies#terms" },
-    { name: "Training Disclaimer", href: "/policies#disclaimer" },
+    { name: "Privacy Policy", href: "/stem/policies#privacy" },
+    { name: "Terms of Use", href: "/stem/policies#terms" },
+    { name: "Training Disclaimer", href: "/stem/policies#disclaimer" },
   ],
 };
 

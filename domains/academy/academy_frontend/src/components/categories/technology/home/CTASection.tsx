@@ -31,13 +31,13 @@ const CTASection = () => {
               Take the first step today. Explore our programs, book an advising call, or apply to an upcoming cohort.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/programs">
+              <Link to="/technology/programs">
                 <Button size="lg" className="w-full sm:w-auto h-14 px-8 bg-secondary hover:bg-secondary/90 text-white font-semibold shadow-orange hover:shadow-orange-lg transition-all duration-300 group rounded-xl">
                   Explore Programs
                   <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/contact">
+              <Link to="/technology/contact">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 backdrop-blur-sm rounded-xl">
                   <Calendar className="mr-2 h-5 w-5" />
                   Book Advising Call
@@ -56,7 +56,7 @@ const CTASection = () => {
               <p className="text-white/60 mb-6 leading-relaxed">
                 Our admissions team is here to help you find the right program.
               </p>
-              <Link to="/contact" className="inline-flex items-center text-sm font-bold text-secondary hover:text-secondary/80 transition-colors group/link">
+              <Link to="/technology/contact" className="inline-flex items-center text-sm font-bold text-secondary hover:text-secondary/80 transition-colors group/link">
                 Contact Us 
                 <ArrowRight className="ml-2 h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
               </Link>
@@ -70,7 +70,7 @@ const CTASection = () => {
               <p className="text-white/60 mb-6 leading-relaxed">
                 New cohorts starting every month. Apply early to secure your spot.
               </p>
-              <Link to="/admissions" className="inline-flex items-center text-sm font-bold text-accent hover:text-accent/80 transition-colors group/link">
+              <Link to="/technology/admissions" className="inline-flex items-center text-sm font-bold text-accent hover:text-accent/80 transition-colors group/link">
                 View Schedule 
                 <ArrowRight className="ml-2 h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
               </Link>

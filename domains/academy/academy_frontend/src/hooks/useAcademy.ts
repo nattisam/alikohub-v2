@@ -74,7 +74,19 @@ export const useCourseDetails = (courseId: string) => {
 export const useCourseBySlug = (slug: string) => {
   return useQuery({
     queryKey: ["course", "slug", slug],
-    queryFn: () => academyService.getCourseBySlug(slug),
+    queryFn: async () => {
+      try {
+        // Try slug first
+        return await academyService.getCourseBySlug(slug);
+      } catch (error) {
+        try {
+          // If slug fails, it might be an ID
+          return await academyService.getCourseDetails(slug);
+        } catch (idError) {
+          throw error; // Throw original error if both fail
+        }
+      }
+    },
     enabled: !!slug,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

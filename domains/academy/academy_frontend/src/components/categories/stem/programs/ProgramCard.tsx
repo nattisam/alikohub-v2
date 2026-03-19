@@ -47,7 +47,7 @@ export function ProgramCard({
   // Thumbnail variant - image-focused card
   if (variant === "thumbnail") {
     return (
-      <Link to={`/programs/${program.slug}`} className="group">
+      <Link to={`/stem/programs/${program.slug}`} className="group">
         <Card className="border border-divider overflow-hidden h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-card">
           <div className="aspect-square overflow-hidden">
             {thumbnail ? (
@@ -92,7 +92,7 @@ export function ProgramCard({
   // Visual variant - icon-focused with minimal text
   if (variant === "visual") {
     return (
-      <Link to={`/programs/${program.slug}`} className="group">
+      <Link to={`/stem/programs/${program.slug}`} className="group">
         <Card
           className={cn(
             "border transition-all duration-200 overflow-hidden h-full",
@@ -177,7 +177,7 @@ export function ProgramCard({
             size="sm"
             className="w-full justify-between font-bold"
           >
-            <Link to={`/programs/${program.slug}`}>
+            <Link to={`/stem/programs/${program.slug}`}>
               View Program
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -258,7 +258,7 @@ export function ProgramCard({
       </CardContent>
       <CardFooter className="p-7 pt-0">
         <Button asChild variant="outline" className="w-full group font-bold">
-          <Link to={`/programs/${program.slug}`}>
+          <Link to={`/stem/programs/${program.slug}`}>
             View Program
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>

@@ -99,7 +99,7 @@ export function EnhancedDomainCard({
 
   return (
     <Link
-      to="/programs"
+      to="/stem/programs"
       className={cn(
         "group relative block overflow-hidden rounded-2xl aspect-[4/3]",
         "transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl",

@@ -1,10 +1,12 @@
 import { ArrowRight, Shield, Monitor, Briefcase, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LearnerJourney from "@/components/LearnerJourney";
 import TrustStrip from "@/components/TrustStrip";
 import CategoryCarousel from "@/components/CategoryCarousel";
+import CTASection from "@/components/CTASection";
 import heroImage from "@/assets/hero-home.jpg";
 
 const differentiators = [
@@ -49,6 +51,10 @@ const impactMetrics = [
 ];
 
 const Index = () => {
+  const scrollToStreams = () => {
+    document.getElementById("streams")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -59,28 +65,42 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
             <div className="animate-fade-in-up">
               <h1 className="text-4xl md:text-5xl lg:text-[3.75rem] font-heading font-bold leading-tight text-foreground">
-                Build <span className="text-accent">In-Demand Skills</span> for <span className="text-primary">Real Opportunities</span>
+                Build <span className="text-accent">In-Demand Skills</span> for{" "}
+                <span className="text-primary">Real Opportunities</span>
               </h1>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Aliko Academy delivers market-aligned pathways across Health, Technology, and Engineering, designed to move learners from training to sustainable livelihoods.
+                Aliko Academy delivers market-aligned pathways across Health,
+                Technology, and Engineering, designed to move learners from
+                training to sustainable livelihoods.
               </p>
               <div className="flex flex-wrap gap-4 mt-10">
-                <Button size="lg" className="gap-2">
+                <Button size="lg" className="gap-2" onClick={scrollToStreams}>
                   Explore Pathways <ArrowRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline">
-                  Apply Now
+                <Button size="lg" variant="outline" asChild>
+                  <Link to="/register">Apply Now</Link>
                 </Button>
               </div>
             </div>
 
-            <div className="relative animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+            <div
+              className="relative animate-fade-in-up"
+              style={{ animationDelay: "0.15s" }}
+            >
               <div className="rounded-lg overflow-hidden">
-                <img src={heroImage} alt="Students learning in a modern classroom" className="w-full h-auto object-cover min-h-[320px] md:min-h-[420px]" />
+                <img
+                  src={heroImage}
+                  alt="Students learning in a modern classroom"
+                  className="w-full h-auto object-cover min-h-[320px] md:min-h-[420px]"
+                />
               </div>
               <div className="absolute -bottom-4 -left-4 bg-card rounded-lg shadow-lg p-4 border">
-                <p className="text-2xl font-heading font-bold text-foreground">1000+</p>
-                <p className="text-xs text-muted-foreground">Learners Enrolled</p>
+                <p className="text-2xl font-heading font-bold text-foreground">
+                  1000+
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Learners Enrolled
+                </p>
               </div>
             </div>
           </div>
@@ -99,18 +119,28 @@ const Index = () => {
               Why Aliko Academy Is Different
             </h2>
             <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              We design for outcomes, not just enrollment. Every element of our model is built to create lasting impact.
+              We design for outcomes, not just enrollment. Every element of our
+              model is built to create lasting impact.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {differentiators.map((d) => (
-              <div key={d.title} className={`${d.bg} rounded-lg border p-6 text-center hover:shadow-md transition-shadow duration-200`}>
-                <div className={`w-12 h-12 rounded-lg ${d.iconBg} flex items-center justify-center mx-auto mb-4`}>
+              <div
+                key={d.title}
+                className={`${d.bg} rounded-lg border p-6 text-center hover:shadow-md transition-shadow duration-200`}
+              >
+                <div
+                  className={`w-12 h-12 rounded-lg ${d.iconBg} flex items-center justify-center mx-auto mb-4`}
+                >
                   <d.icon className={`w-5 h-5 ${d.iconColor}`} />
                 </div>
-                <h3 className="font-heading font-semibold text-foreground mb-2">{d.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{d.desc}</p>
+                <h3 className="font-heading font-semibold text-foreground mb-2">
+                  {d.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {d.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -128,7 +158,9 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {impactMetrics.map((m) => (
               <div key={m.label}>
-                <p className="text-4xl md:text-5xl font-heading font-bold text-white">{m.value}</p>
+                <p className="text-4xl md:text-5xl font-heading font-bold text-white">
+                  {m.value}
+                </p>
                 <p className="text-sm text-white/70 mt-2">{m.label}</p>
               </div>
             ))}
@@ -151,7 +183,9 @@ const Index = () => {
                 Training for Organizations
               </h3>
               <p className="text-muted-foreground leading-relaxed text-lg mb-6">
-                Upskill your workforce with customized training programs designed for enterprises, universities, and government organizations.
+                Upskill your workforce with customized training programs
+                designed for enterprises, universities, and government
+                organizations.
               </p>
               <div className="space-y-3">
                 {[
@@ -167,24 +201,63 @@ const Index = () => {
                 ))}
               </div>
               <div className="mt-10">
-                <Button size="lg" className="gap-2">
-                  Request a Demo <ArrowRight className="w-4 h-4" />
+                <Button size="lg" className="gap-2" asChild>
+                  <Link to="/contact?subject=Enterprise%20Training">
+                    Request a Demo <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </Button>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: Shield, title: "Enterprise Training", desc: "Tailored programs for teams of any size", bg: "bg-gradient-to-br from-blue-50 to-blue-100/40", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-                { icon: Monitor, title: "University Partnerships", desc: "Accredited pathways for institutions", bg: "bg-gradient-to-br from-amber-50 to-orange-100/40", iconBg: "bg-amber-100", iconColor: "text-amber-600" },
-                { icon: Briefcase, title: "Government Programs", desc: "Workforce development at national scale", bg: "bg-gradient-to-br from-emerald-50 to-green-100/40", iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
-                { icon: Heart, title: "Impact Reporting", desc: "Measurable outcomes & ROI tracking", bg: "bg-gradient-to-br from-purple-50 to-purple-100/40", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+                {
+                  icon: Shield,
+                  title: "Enterprise Training",
+                  desc: "Tailored programs for teams of any size",
+                  bg: "bg-gradient-to-br from-blue-50 to-blue-100/40",
+                  iconBg: "bg-blue-100",
+                  iconColor: "text-blue-600",
+                },
+                {
+                  icon: Monitor,
+                  title: "University Partnerships",
+                  desc: "Accredited pathways for institutions",
+                  bg: "bg-gradient-to-br from-amber-50 to-orange-100/40",
+                  iconBg: "bg-amber-100",
+                  iconColor: "text-amber-600",
+                },
+                {
+                  icon: Briefcase,
+                  title: "Government Programs",
+                  desc: "Workforce development at national scale",
+                  bg: "bg-gradient-to-br from-emerald-50 to-green-100/40",
+                  iconBg: "bg-emerald-100",
+                  iconColor: "text-emerald-600",
+                },
+                {
+                  icon: Heart,
+                  title: "Impact Reporting",
+                  desc: "Measurable outcomes & ROI tracking",
+                  bg: "bg-gradient-to-br from-purple-50 to-purple-100/40",
+                  iconBg: "bg-purple-100",
+                  iconColor: "text-purple-600",
+                },
               ].map((card) => (
-                <div key={card.title} className={`${card.bg} rounded-lg border p-5 hover:shadow-md transition-shadow duration-200`}>
-                  <div className={`w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center mb-3`}>
+                <div
+                  key={card.title}
+                  className={`${card.bg} rounded-lg border p-5 hover:shadow-md transition-shadow duration-200`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center mb-3`}
+                  >
                     <card.icon className={`w-5 h-5 ${card.iconColor}`} />
                   </div>
-                  <h4 className="font-heading font-semibold text-sm text-foreground mb-1">{card.title}</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{card.desc}</p>
+                  <h4 className="font-heading font-semibold text-sm text-foreground mb-1">
+                    {card.title}
+                  </h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {card.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -193,24 +266,7 @@ const Index = () => {
       </section>
 
       {/* CTA */}
-      <section className="section-padding">
-        <div className="section-container text-center">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-4">
-            Ready to Start Your Journey?
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto mb-10">
-            Join thousands of learners building in-demand skills for real-world careers.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="gap-2">
-              Explore Pathways <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button size="lg" variant="outline">
-              Apply Now
-            </Button>
-          </div>
-        </div>
-      </section>
+      <CTASection onSecondaryClick={scrollToStreams} />
 
       <Footer />
     </div>

@@ -16,7 +16,7 @@ const ComparePrograms = () => {
         <div className="container-padding mx-auto max-w-7xl py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">Coming Soon</h1>
           <p className="text-muted-foreground mb-6">Program Comparison will be available soon.</p>
-          <Link to="/programs">
+          <Link to="/technology/programs">
             <Button>Explore Programs</Button>
           </Link>
         </div>
@@ -139,7 +139,7 @@ const ComparePrograms = () => {
           {selectedCount < 2 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">Select at least 2 programs to compare.</p>
-              <Link to="/programs">
+              <Link to="/technology/programs">
                 <Button>Browse Programs</Button>
               </Link>
             </div>

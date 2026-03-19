@@ -163,7 +163,7 @@ const LearningPaths = () => {
                   </ul>
                 </div>
 
-                <Link to="/programs">
+                <Link to="/technology/programs">
                   <Button className="w-full bg-accent hover:bg-accent/90 text-white">
                     Start This Path
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -181,10 +181,10 @@ const LearningPaths = () => {
           <h2 className="text-2xl font-bold text-white mb-4">Not Sure Which Path is Right for You?</h2>
           <p className="text-white/60 mb-6">Take our skill assessment to get personalized recommendations.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/skill-assessment">
+            <Link to="/technology/skill-assessment">
               <Button size="lg" className="bg-accent hover:bg-accent/90 text-white">Take Skill Assessment</Button>
             </Link>
-            <Link to="/contact">
+            <Link to="/technology/contact">
               <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">Talk to an Advisor</Button>
             </Link>
           </div>

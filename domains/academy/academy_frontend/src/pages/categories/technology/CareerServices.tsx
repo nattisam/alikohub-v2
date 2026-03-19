@@ -112,7 +112,7 @@ const CareerServices = () => {
           <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
             Enroll in a program today and get access to our full suite of career services.
           </p>
-          <Link to="/programs">
+          <Link to="/technology/programs">
             <Button size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold h-14 px-8 rounded-xl shadow-lg">
               Explore Programs
               <ArrowRight className="ml-2 h-5 w-5" />

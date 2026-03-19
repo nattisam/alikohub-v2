@@ -42,13 +42,13 @@ const Index = () => {
             </p>
             <div className="mt-12 flex flex-col sm:flex-row gap-4">
               <Button asChild size="xl" variant="hero">
-                <Link to="/programs">
+                <Link to="/stem/programs">
                   Explore Programs
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button asChild size="xl" variant="heroOutline">
-                <Link to="/enterprise">Request Enterprise Training</Link>
+                <Link to="/stem/enterprise">Request Enterprise Training</Link>
               </Button>
             </div>
           </div>
@@ -71,7 +71,7 @@ const Index = () => {
               </p>
             </div>
             <Button asChild variant="outline" size="lg">
-              <Link to="/programs">
+              <Link to="/stem/programs">
                 Explore All Programs
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -114,7 +114,7 @@ const Index = () => {
           </div>
           <div className="mt-12 text-center">
             <Button asChild variant="outline" size="lg">
-              <Link to="/programs">
+              <Link to="/stem/programs">
                 View All Programs
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -150,7 +150,7 @@ const Index = () => {
                 </ul>
                 <div className="mt-10">
                   <Button asChild size="lg" variant="hero">
-                    <Link to="/enterprise">
+                    <Link to="/stem/enterprise">
                       Request Training Proposal
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>

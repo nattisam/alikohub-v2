@@ -6,7 +6,7 @@ export const useTechCourses = (params?: any) => {
     queryKey: ["tech-courses", params],
     queryFn: async () => {
       const response = await techService.getTechCourses(params);
-      return response.data;
+      return (response.data as any).items || response.data.courses || [];
     },
   });
 };

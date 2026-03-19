@@ -164,7 +164,7 @@ const Mentors = () => {
           <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
             Our mentors are ready to guide you on your tech career journey.
           </p>
-          <Link to="/programs">
+          <Link to="/technology/programs">
             <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white font-bold h-14 px-8 rounded-xl shadow-orange">
               Explore Programs
               <ArrowRight className="ml-2 h-5 w-5" />

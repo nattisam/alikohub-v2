@@ -40,7 +40,7 @@ const ProgramsPreview = () => {
 
         {/* View All Programs */}
         <div className="text-center mt-8 pt-8 border-t border-white/10">
-          <Link to="/programs">
+          <Link to="/technology/programs">
             <Button size="lg" className="group h-14 px-10 rounded-xl font-bold text-base">
               View All Programs
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />

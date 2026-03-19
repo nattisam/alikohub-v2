@@ -56,7 +56,7 @@ const About = () => {
             Ready to get started?
           </h2>
           <Button asChild variant="hero" size="lg">
-            <Link to="/programs">Explore Programs <ArrowRight className="ml-2 h-5 w-5" /></Link>
+            <Link to="/stem/programs">Explore Programs <ArrowRight className="ml-2 h-5 w-5" /></Link>
           </Button>
         </div>
       </section>

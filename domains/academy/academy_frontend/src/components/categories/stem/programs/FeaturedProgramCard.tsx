@@ -53,7 +53,7 @@ export function FeaturedProgramCard({ program }: FeaturedProgramCardProps) {
 
   return (
     <Link
-      to={`/programs/${program.slug}`}
+      to={`/stem/programs/${program.slug}`}
       className="group block rounded-2xl overflow-hidden border border-divider bg-card h-full flex flex-col transition-all duration-200 hover:shadow-xl hover:-translate-y-1"
     >
       {/* Thumbnail */}

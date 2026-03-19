@@ -62,14 +62,14 @@ export function Header() {
             size="sm"
             className="font-extrabold bg-accent-green text-background hover:bg-accent-green/85 shadow-lg shadow-accent-green/30 hover:-translate-y-0.5 transition-all duration-200 px-6 tracking-wide uppercase text-xs"
           >
-            <Link to="/apply">Apply Now</Link>
+            <Link to="/stem/apply">Apply Now</Link>
           </Button>
           <Button
             asChild
             size="sm"
             className="font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 px-5"
           >
-            <Link to="/login">
+            <Link to="/stem/login">
               <LogIn className="h-4 w-4 mr-1.5" />
               Sign In
             </Link>
@@ -125,7 +125,7 @@ export function Header() {
                   className="w-full font-bold bg-primary text-white"
                 >
                   <Link
-                    to="/my-applications"
+                    to="/stem/my-applications"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     My Applications
@@ -136,7 +136,7 @@ export function Header() {
                   asChild
                   className="w-full font-bold bg-primary text-white"
                 >
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/stem/login" onClick={() => setMobileMenuOpen(false)}>
                     Sign In
                   </Link>
                 </Button>

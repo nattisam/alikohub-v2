@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Stethoscope, Clock, Heart, Sparkles } from 'lucide-react';
-import { Button } from '@/components/categories/technology/ui/button';
-import heroVideo from '@/assets/categories/technology/hero-video.mp4';
-import heroPoster from '@/assets/categories/technology/hero-poster.jpg';
+import { Link } from "react-router-dom";
+import { ArrowRight, Stethoscope, Clock, Heart, Sparkles } from "lucide-react";
+import { Button } from "@/components/categories/technology/ui/button";
+import heroVideo from "@/assets/categories/technology/hero-video.mp4";
+import heroPoster from "@/assets/categories/technology/hero-poster.jpg";
 
 const HeroSection = () => {
   return (
@@ -30,23 +30,30 @@ const HeroSection = () => {
         </div>
 
         <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white mb-6 leading-[1.05] tracking-tight max-w-4xl">
-          Build Your Future in <span className="text-secondary">Tech</span> with{' '}
+          Build Your Future in <span className="text-secondary">Tech</span> with{" "}
           <span className="text-accent">Confidence</span>
         </h1>
 
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl leading-relaxed">
-          Industry-aligned tech training with clear cohort start dates. Join thousands of graduates building rewarding careers in technology.
+          Industry-aligned tech training with clear cohort start dates. Join
+          thousands of graduates building rewarding careers in technology.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link to="/programs">
-            <Button size="lg" className="w-full sm:w-auto h-16 px-10 bg-accent hover:bg-accent/90 text-white font-bold text-lg shadow-blue hover:shadow-blue-lg transition-all duration-300 group rounded-xl">
+          <Link to="/technology/programs">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto h-16 px-10 bg-accent hover:bg-accent/90 text-white font-bold text-lg shadow-blue hover:shadow-blue-lg transition-all duration-300 group rounded-xl"
+            >
               View Programs
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-          <Link to="/apply">
-            <Button size="lg" className="w-full sm:w-auto h-16 px-10 bg-secondary hover:bg-secondary/90 text-white font-bold text-lg transition-all rounded-xl shadow-orange hover:shadow-orange-lg">
+          <Link to="/technology/apply">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto h-16 px-10 bg-secondary hover:bg-secondary/90 text-white font-bold text-lg transition-all rounded-xl shadow-orange hover:shadow-orange-lg"
+            >
               Apply Now
             </Button>
           </Link>

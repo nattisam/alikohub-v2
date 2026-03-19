@@ -53,7 +53,7 @@ const DomainSection = ({ category, programs, limit, showViewAll = true, compact 
       {/* View All */}
       {showViewAll && limit && programs.length > limit && (
         <div className="text-center mt-8">
-          <Link to={`/programs?category=${encodeURIComponent(category)}`}>
+          <Link to={`/technology/programs?category=${encodeURIComponent(category)}`}>
             <Button variant="outline" size="lg" className="group border-white/15 text-white/80 hover:border-secondary hover:text-secondary h-12 px-8 rounded-xl font-semibold">
               View All {category}
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

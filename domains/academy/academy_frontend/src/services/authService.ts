@@ -36,6 +36,7 @@ export const authService = {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("auth_provider");
   },
 
   setSession: (accessToken: string, refreshToken: string, user: any) => {

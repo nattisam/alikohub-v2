@@ -203,7 +203,7 @@ const Projects = () => {
           <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
             Every program includes multiple projects designed to showcase your skills to employers.
           </p>
-          <Link to="/programs">
+          <Link to="/technology/programs">
             <Button size="lg" className="bg-white text-secondary hover:bg-white/90 font-bold h-14 px-8 rounded-xl shadow-lg">
               Explore Programs
               <ArrowRight className="ml-2 h-5 w-5" />
