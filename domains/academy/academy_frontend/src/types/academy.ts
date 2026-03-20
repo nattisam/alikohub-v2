@@ -13,15 +13,17 @@ export interface Course {
   title: string;
   slug: string;
   shortDescription?: string;
+  longDescription?: string;
   description?: string;
   thumbnail?: string;
   videoUrl?: string;
-  price?: number;
-  isFree: boolean;
+  price?: number | null;
+  priceInUsd?: number | null;
+  isFree?: boolean;
   status: CourseStatus;
-  difficulty: Difficulty;
-  category: string;
-  instructorId: string;
+  difficulty?: Difficulty;
+  category?: string;
+  instructorId?: string;
   instructor?: {
     firstname: string;
     lastname: string;
@@ -29,21 +31,23 @@ export interface Course {
   };
   modulesCount?: number;
   lessonsCount?: number;
+  enrolledNum?: number;
   enrolledCount?: number;
   enrollmentCount?: number;
-  estimatedTime?: string;
-  rating?: number;
+  estimatedTime?: string | null;
+  rating?: number | null;
+  featured?: boolean;
   createdAt: string;
   updatedAt: string;
   modules?: Module[];
 }
 
 export interface Module {
-  id: string;
-  courseId: string;
+  id: string | number;
+  courseId: string | number;
   title: string;
   description?: string;
-  order: number;
+  order?: number;
   lessons?: Lesson[];
   createdAt: string;
   updatedAt: string;

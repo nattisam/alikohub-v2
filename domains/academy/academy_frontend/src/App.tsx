@@ -38,6 +38,7 @@ import CourseDetails from "./pages/lms/CourseDetails";
 import LmsLearn from "./pages/lms/LmsLearn";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import VerifyEmail from "./pages/VerifyEmail";
+import InstructorSubmissions from "./pages/lms/InstructorSubmissions";
 
 // STEM Category Pages
 import StemIndex from "./pages/categories/stem/Index";
@@ -193,6 +194,7 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/applications" element={<AdminDashboard />} />
               <Route path="/admin/courses" element={<AdminDashboard />} />
+              <Route path="/admin/analytics" element={<AdminDashboard />} />
               <Route
                 path="/admin/applications/:id"
                 element={<TeacherApplicationDetail />}
@@ -227,6 +229,10 @@ const App = () => (
               <Route
                 path="/instructor/lms/settings"
                 element={<InstructorSettings />}
+              />
+              <Route
+                path="/instructor/lms/submissions"
+                element={<InstructorSubmissions />}
               />
               <Route path="/lms/explore" element={<LmsExplore />} />
               <Route path="/lms/my-learning" element={<LmsMyLearning />} />

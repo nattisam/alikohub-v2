@@ -30,45 +30,51 @@ const ProgramDetail = () => {
   // Use API data
   const programData = apiProgram;
 
-  // Transform to a consistent structure
+  // Transform to a consistent structure like Health
   const program = programData
     ? {
         ...programData,
-        name: (programData as any).title || (programData as any).name,
+        name: programData.title || (programData as any).name,
         description:
-          (programData as any).longDescription ||
+          programData.longDescription ||
+          programData.shortDescription ||
           (programData as any).description ||
-          (programData as any).shortDescription,
+          "A comprehensive health program.",
         tuition:
-          (programData as any).price || (programData as any).tuition || 1200,
-        duration: (programData as any).duration || "12 Weeks",
+          programData.price ||
+          programData.priceInUsd ||
+          (programData as any).tuition ||
+          1200,
+        duration:
+          programData.estimatedTime ||
+          (programData as any).duration ||
+          "12 Weeks",
         hours: (programData as any).hours || {
           total: 120,
           theory: 60,
           lab: 40,
           clinical: 20,
         },
-        modality: (programData as any).modality || "Hybrid",
+        modality: (programData as any).deliveryMode || "Online",
         location: (programData as any).location || "Global Learning Center",
         enrollmentStatus:
           (programData as any).enrollmentStatus ||
-          (programData as any).status === "PUBLISHED"
-            ? "open"
-            : "closed",
+          (programData.status === "PUBLISHED" ? "open" : "closed"),
         startDate: (programData as any).startDate || "Check Cohort Schedule",
         careerPathways: (programData as any).careerPathways || [
           "Clinical Research",
           "Healthcare Administration",
-          "Public Health Specialist",
+          "Public Health Policy",
         ],
         requirements: (programData as any).requirements || [
           "High school diploma or equivalent",
-          "Basic science prerequisite",
-          "English proficiency",
+          "Background check",
+          "Interest in healthcare",
         ],
         certification:
           (programData as any).certification ||
           "Aliko Academy Professional Certification",
+        modules: programData.modules || [],
       }
     : null;
 
@@ -266,51 +272,117 @@ const ProgramDetail = () => {
               </Card>
 
               {/* Curriculum */}
-              <Card className="border-l-4 border-l-accent">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <BookOpen className="h-5 w-5 text-accent" />
+              {program.modules && program.modules.length > 0 ? (
+                <Card className="border-l-4 border-l-accent overflow-hidden">
+                  <CardHeader className="bg-muted/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <BookOpen className="h-5 w-5 text-accent" />
+                      </div>
+                      <CardTitle className="text-xl">
+                        Program Curriculum
+                      </CardTitle>
                     </div>
-                    <CardTitle className="text-xl">
-                      Curriculum Overview
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    This program provides comprehensive training through a
-                    combination of theory, hands-on lab practice, and clinical
-                    experience.
-                  </p>
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                      <p className="text-3xl font-bold text-primary">
-                        {program.hours.theory}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Theory Hours
-                      </p>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
+                      {program.modules.map((module: any, idx: number) => (
+                        <div
+                          key={module.id}
+                          className="p-6 hover:bg-muted/20 transition-colors"
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <span className="text-xs font-bold text-accent uppercase tracking-wider mb-1 block">
+                                Module {idx + 1}
+                              </span>
+                              <h3 className="text-lg font-bold text-foreground">
+                                {module.title}
+                              </h3>
+                              {module.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {module.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="ml-2 whitespace-nowrap"
+                            >
+                              {module.lessons?.length || 0} Lessons
+                            </Badge>
+                          </div>
+                          {module.lessons && module.lessons.length > 0 && (
+                            <div className="space-y-2">
+                              {module.lessons.map((lesson: any) => (
+                                <div
+                                  key={lesson.id}
+                                  className="flex items-center gap-3 text-sm text-muted-foreground bg-background/50 p-2 rounded border border-border/50"
+                                >
+                                  <div className="w-1.5 h-1.5 rounded-full bg-accent/50" />
+                                  <span>{lesson.title}</span>
+                                  <Badge
+                                    variant="secondary"
+                                    className="ml-auto text-[10px] px-1 h-4"
+                                  >
+                                    {lesson.type}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5">
-                      <p className="text-3xl font-bold text-accent">
-                        {program.hours.lab}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Lab Hours
-                      </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="border-l-4 border-l-accent">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <BookOpen className="h-5 w-5 text-accent" />
+                      </div>
+                      <CardTitle className="text-xl">
+                        Curriculum Overview
+                      </CardTitle>
                     </div>
-                    <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                      <p className="text-3xl font-bold text-primary">
-                        {program.hours.clinical}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Clinical Hours
-                      </p>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-6">
+                      This program provides comprehensive training through a
+                      combination of theory, hands-on lab practice, and clinical
+                      experience.
+                    </p>
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
+                        <p className="text-3xl font-bold text-primary">
+                          {program.hours.theory}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Theory Hours
+                        </p>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5">
+                        <p className="text-3xl font-bold text-accent">
+                          {program.hours.lab}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Lab Hours
+                        </p>
+                      </div>
+                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
+                        <p className="text-3xl font-bold text-primary">
+                          {program.hours.clinical}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Clinical Hours
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Admission Requirements */}
               <Card className="border-l-4 border-l-primary">
