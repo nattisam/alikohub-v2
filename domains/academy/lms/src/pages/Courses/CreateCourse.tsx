@@ -143,7 +143,7 @@ const InstructorCreateCourse = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/instructor/lms/courses")}
+              onClick={() => navigate("/instructor/courses")}
               className="rounded-full"
             >
               <ChevronLeft className="w-5 h-5" />

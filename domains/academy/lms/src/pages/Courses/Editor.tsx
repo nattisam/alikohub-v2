@@ -400,7 +400,7 @@ const InstructorCourseEditor = () => {
       <aside className="w-80 bg-white border-r border-slate-200 flex flex-col h-full z-30 flex-shrink-0">
         <div className="p-6 border-b border-slate-50 space-y-4">
           <Link
-            to="/instructor/lms/courses"
+            to="/instructor/courses"
             className="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-bold"
           >
             <ArrowLeft className="w-4 h-4" /> Back to My Courses
