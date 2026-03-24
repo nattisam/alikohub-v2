@@ -3,23 +3,95 @@ import { useNavigate } from "react-router-dom";
 import InstructorNavbar from "@/components/InstructorNavbar";
 import {
   Check,
-  ChevronRight,
-  ChevronLeft,
   Upload,
-  Layout,
   DollarSign,
-  Clock,
   X,
   AlertCircle,
   PlusCircle,
+  ArrowLeft,
+  ArrowRight,
+  Rocket,
+  Target,
+  Lightbulb,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useCreateCourse } from "@/hooks/useAcademy";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const COURSE_CATEGORIES = ["Health", "Technology", "STEM"];
+
+// ─── Step Indicator ────────────────────────────────────────────────────────────
+
+const STEPS = [
+  { number: 1, title: "Foundation", subtitle: "Basics & Details" },
+  { number: 2, title: "Outcomes", subtitle: "Skills & Goals" },
+  { number: 3, title: "Investment", subtitle: "Pricing & Launch" },
+];
+
+function StepIndicator({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="flex items-center justify-center gap-0 w-full max-w-2xl mx-auto mb-10">
+      {STEPS.map((step, i) => {
+        const isComplete = currentStep > step.number;
+        const isActive = currentStep === step.number;
+        return (
+          <div
+            key={step.number}
+            className="flex items-center flex-1 last:flex-none"
+          >
+            <div className="flex flex-col items-center gap-1.5">
+              <motion.div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors ${
+                  isComplete
+                    ? "bg-primary/15 border-primary text-primary"
+                    : isActive
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "bg-muted border-border text-muted-foreground"
+                }`}
+                animate={{ scale: isActive ? 1.1 : 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {isComplete ? <Check className="w-4 h-4" /> : step.number}
+              </motion.div>
+              <div className="text-center">
+                <p
+                  className={`text-xs font-semibold ${isActive ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  {step.title}
+                </p>
+                <p className="text-[10px] text-muted-foreground hidden sm:block">
+                  {step.subtitle}
+                </p>
+              </div>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className="flex-1 mx-3 mt-[-18px]">
+                <div
+                  className={`h-0.5 rounded ${isComplete ? "bg-primary/40" : "bg-border"}`}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 
 const InstructorCreateCourse = () => {
   const navigate = useNavigate();
@@ -78,7 +150,7 @@ const InstructorCreateCourse = () => {
 
   const handleRemoveSkill = (skillToRemove: string) => {
     handleUpdateField({
-      skills: formData.skills.filter((skill) => skill !== skillToRemove),
+      skills: formData.skills.filter((s) => s !== skillToRemove),
     });
   };
 
@@ -86,7 +158,7 @@ const InstructorCreateCourse = () => {
     if (activeStep === 1) {
       if (!formData.title || !formData.shortDescription) {
         setError(
-          "Please fill in all required fields (Title, Short Summary, Full Description).",
+          "Please fill in all required fields (Title and Short Summary).",
         );
         return;
       }
@@ -94,6 +166,7 @@ const InstructorCreateCourse = () => {
     setError(null);
     if (activeStep < 3) {
       setActiveStep(activeStep + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       handleFinalCreate();
     }
@@ -103,6 +176,7 @@ const InstructorCreateCourse = () => {
     setError(null);
     if (activeStep > 1) {
       setActiveStep(activeStep - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -121,7 +195,6 @@ const InstructorCreateCourse = () => {
     createCourseMutation.mutate(data, {
       onSuccess: (newCourse) => {
         toast.success("Course shell created successfully!");
-        // Navigate to the full editor to add modules/lessons and refine details
         navigate(`/instructor/courses/${newCourse.id}`);
       },
       onError: (err: any) => {
@@ -134,164 +207,166 @@ const InstructorCreateCourse = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       <InstructorNavbar />
 
-      <div className="bg-white border-b border-border sticky top-[64px] md:top-[80px] z-40">
-        <div className="section-container py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
+      {/* Sticky header */}
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-[64px] md:top-[80px] z-40">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
               onClick={() => navigate("/instructor/courses")}
-              className="rounded-full"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 leading-none">
-                Create New Course
-              </h1>
-              <div className="flex items-center gap-3 mt-2">
-                {[1, 2, 3].map((s) => (
-                  <div key={s} className="flex items-center gap-2">
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${activeStep >= s ? "bg-accent text-slate-900" : "bg-slate-100 text-slate-400"}`}
-                    >
-                      {s}
-                    </div>
-                    {s < 3 && (
-                      <div
-                        className={`w-6 h-0.5 rounded-full ${activeStep > s ? "bg-accent" : "bg-slate-100"}`}
-                      />
-                    )}
-                  </div>
-                ))}
-                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">
-                  {activeStep === 1
-                    ? "Course Basics"
-                    : activeStep === 2
-                      ? "Outcomes"
-                      : "Investment"}
-                </span>
-              </div>
-            </div>
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h1 className="text-base font-bold text-foreground">
+              Create Course
+            </h1>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/instructor/lms/courses")}
-              className="text-slate-500 hover:text-slate-900"
-            >
-              Exit
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleNext}
-              disabled={createCourseMutation.isPending}
-              className="bg-accent hover:bg-amber-light text-slate-900 font-bold px-6"
-            >
-              {activeStep === 3
-                ? createCourseMutation.isPending
-                  ? "Creating..."
-                  : "Finish"
-                : "Next Step"}
-            </Button>
-          </div>
+          <span className="text-xs text-muted-foreground">
+            Step {activeStep} of 3 · Draft
+          </span>
         </div>
-      </div>
+      </header>
 
-      <main className="flex-1 section-container py-12 max-w-4xl mx-auto w-full">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center gap-3 text-sm font-medium animate-in fade-in duration-300">
-            <AlertCircle className="w-5 h-5" />
-            {error}
-          </div>
-        )}
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
+        {/* Step Indicator */}
+        <StepIndicator currentStep={activeStep} />
 
-        {activeStep === 1 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
-                <h2 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-2">
-                  <Layout className="w-5 h-5 text-accent" /> Course Identity
-                </h2>
-                <div className="space-y-6">
+        {/* Error banner */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mb-6 p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl flex items-center gap-3 text-sm font-medium"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Steps */}
+        <AnimatePresence mode="wait">
+          {/* ── Step 1: Foundation ── */}
+          {activeStep === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.22 }}
+              className="space-y-8"
+            >
+              {/* Course Basics */}
+              <section className="space-y-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <Lightbulb className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Course Basics
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Give your course a clear identity. A strong title and summary
+                  help students decide to enroll.
+                </p>
+
+                <div className="space-y-4">
+                  {/* Title */}
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                      Primary Title
-                    </label>
+                    <Label htmlFor="title">
+                      Course Title <span className="text-destructive">*</span>
+                    </Label>
                     <Input
+                      id="title"
                       value={formData.title}
                       onChange={(e) =>
                         handleUpdateField({ title: e.target.value })
                       }
                       placeholder="e.g. Mastering Advanced React Patterns"
-                      className="h-12 border-slate-200 focus:ring-accent text-slate-900 font-medium"
+                      className="mt-1.5"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                        Field/Category
-                      </label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) =>
-                          handleUpdateField({ category: e.target.value })
-                        }
-                        className="flex h-11 w-full rounded-lg border border-slate-200 bg-background px-3 py-2 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-accent outline-none appearance-none cursor-pointer"
-                      >
+                  {/* Category */}
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(v) => handleUpdateField({ category: v })}
+                    >
+                      <SelectTrigger id="category" className="mt-1.5">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {COURSE_CATEGORIES.map((cat) => (
-                          <option key={cat} value={cat}>
+                          <SelectItem key={cat} value={cat}>
                             {cat}
-                          </option>
+                          </SelectItem>
                         ))}
-                      </select>
-                    </div>
+                      </SelectContent>
+                    </Select>
                   </div>
 
+                  {/* Short Description */}
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                      Short Summary
-                    </label>
+                    <Label htmlFor="shortDescription">
+                      Short Summary <span className="text-destructive">*</span>
+                    </Label>
                     <Textarea
+                      id="shortDescription"
                       value={formData.shortDescription}
                       onChange={(e) =>
-                        handleUpdateField({ shortDescription: e.target.value })
+                        handleUpdateField({
+                          shortDescription: e.target.value,
+                        })
                       }
                       placeholder="Describe your course in 1-2 powerful sentences."
-                      className="resize-none h-20 border-slate-200 focus:ring-accent"
+                      className="mt-1.5 min-h-[100px] resize-none"
                     />
                   </div>
                 </div>
-              </div>
-            </div>
+              </section>
 
-            <div className="space-y-6">
-              <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-accent" /> Media Cover
-                </h2>
+              {/* Thumbnail */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Upload className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Cover Image
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Upload a high-quality thumbnail. Recommended: 1280×720px,
+                  JPG/PNG/WebP, max 5MB.
+                </p>
+
                 <div
-                  className="relative aspect-video rounded-xl bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden hover:border-accent group cursor-pointer transition-all"
+                  className="relative aspect-video rounded-xl bg-muted border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden hover:border-primary group cursor-pointer transition-all"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {formData.thumbnailPreview ? (
-                    <img
-                      src={formData.thumbnailPreview}
-                      className="w-full h-full object-cover"
-                      alt="Preview"
-                    />
+                    <>
+                      <img
+                        src={formData.thumbnailPreview}
+                        className="w-full h-full object-cover"
+                        alt="Preview"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <p className="text-white text-xs font-semibold uppercase tracking-widest">
+                          Change Image
+                        </p>
+                      </div>
+                    </>
                   ) : (
                     <>
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-3 border border-slate-100">
-                        <Upload className="w-5 h-5 text-slate-300 group-hover:text-accent transition-colors" />
+                      <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform mb-3 border border-border">
+                        <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
-                      <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                         Click to upload
                       </p>
                     </>
@@ -304,175 +379,242 @@ const InstructorCreateCourse = () => {
                     onChange={handleImageUpload}
                   />
                 </div>
-                <div className="mt-6 flex flex-col gap-2">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                    Requirements
-                  </p>
-                  <ul className="text-[10px] text-slate-400 space-y-1">
-                    <li>• Dimension: 1280x720 px</li>
-                    <li>• Format: JPG, PNG, WebP</li>
-                    <li>• File size: Max 5MB</li>
-                  </ul>
+              </section>
+            </motion.div>
+          )}
+
+          {/* ── Step 2: Learning Outcomes ── */}
+          {activeStep === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.22 }}
+              className="space-y-8"
+            >
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Target className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Learning Outcomes
+                  </h3>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+                <p className="text-sm text-muted-foreground">
+                  Identify the core competencies students will gain. Start with
+                  action verbs (Build, Apply, Analyze...). These appear
+                  prominently on your course landing page.
+                </p>
 
-        {activeStep === 2 && (
-          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white p-10 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50">
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                Learning Outcomes
-              </h2>
-              <p className="text-slate-500 mb-10 leading-relaxed font-medium">
-                Identify the core competencies students will gain. These will be
-                displayed prominently on your course landing page.
-              </p>
-
-              <div className="space-y-8">
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <Input
-                      value={formData.newSkill}
-                      onChange={(e) =>
-                        handleUpdateField({ newSkill: e.target.value })
-                      }
-                      onKeyDown={handleAddSkill}
-                      placeholder="e.g. Build Production-ready GraphQL APIs"
-                      className="h-14 border-slate-200 focus:ring-accent text-slate-900 font-semibold"
-                    />
-                  </div>
+                {/* Input row */}
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.newSkill}
+                    onChange={(e) =>
+                      handleUpdateField({ newSkill: e.target.value })
+                    }
+                    onKeyDown={handleAddSkill}
+                    placeholder="e.g. Build production-ready GraphQL APIs"
+                    className="flex-1"
+                  />
                   <Button
                     onClick={handleAddSkill}
-                    className="h-14 w-14 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-all"
+                    variant="outline"
+                    className="gap-1.5 shrink-0"
                   >
-                    <PlusCircle className="w-6 h-6" />
+                    <PlusCircle className="w-4 h-4" /> Add
                   </Button>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {formData.skills.map((skill) => (
-                    <div
-                      key={skill}
-                      className="bg-slate-50 border border-slate-200 text-slate-800 px-5 py-3 rounded-xl text-sm font-bold flex items-center gap-4 animate-in zoom-in duration-300"
-                    >
-                      {skill}
-                      <button
-                        onClick={() => handleRemoveSkill(skill)}
-                        className="text-slate-300 hover:text-red-500 transition-colors"
+                {/* Skills list */}
+                <div className="flex flex-wrap gap-2 min-h-[48px]">
+                  <AnimatePresence>
+                    {formData.skills.map((skill) => (
+                      <motion.div
+                        key={skill}
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.85 }}
+                        transition={{ duration: 0.15 }}
                       >
-                        <X className="w-4 h-4" />
-                      </button>
+                        <Badge
+                          variant="secondary"
+                          className="text-sm font-medium px-3 py-1.5 flex items-center gap-2"
+                        >
+                          <Check className="w-3 h-3 text-primary" />
+                          {skill}
+                          <button
+                            onClick={() => handleRemoveSkill(skill)}
+                            className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                {/* Empty state */}
+                {formData.skills.length === 0 && (
+                  <div className="py-14 w-full text-center border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <Target className="w-5 h-5 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                      Add at least 3 outcomes
+                    </p>
+                  </div>
+                )}
+              </section>
+            </motion.div>
+          )}
+
+          {/* ── Step 3: Pricing ── */}
+          {activeStep === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.22 }}
+              className="space-y-8"
+            >
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Pricing & Launch
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Set your enrollment fee. You can change this anytime before
+                  publishing. Set to 0 for a free course.
+                </p>
+
+                {/* Price input */}
+                <div className="border border-border rounded-xl p-6 bg-card space-y-2">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    Market Price (USD)
+                  </Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-3xl font-bold text-muted-foreground">
+                      $
+                    </span>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={formData.price}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                          handleUpdateField({ price: val });
+                        }
+                      }}
+                      placeholder="0.00"
+                      className="border-none bg-transparent text-4xl font-black text-foreground focus-visible:ring-0 shadow-none h-auto p-0 w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Students will see this as the enrollment fee.
+                  </p>
+                </div>
+
+                {/* Launch info box */}
+                <div className="border border-primary/20 bg-primary/5 rounded-xl p-5 flex gap-4 items-center">
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-foreground mb-0.5">
+                      Ready to create?
+                    </h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Your course will be created in{" "}
+                      <span className="font-semibold text-foreground">
+                        Draft
+                      </span>{" "}
+                      mode. You can then add modules, video lessons, and your
+                      full curriculum in the Course Manager.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Checklist */}
+                <div className="border border-border rounded-xl p-5 space-y-3 bg-card">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
+                    Pre-launch Checklist
+                  </h4>
+                  {[
+                    {
+                      done: !!formData.title,
+                      label: "Course title is set",
+                    },
+                    {
+                      done: !!formData.shortDescription,
+                      label: "Short summary written",
+                    },
+                    {
+                      done: !!formData.thumbnail,
+                      label: "Cover image uploaded",
+                    },
+                    {
+                      done: formData.skills.length >= 1,
+                      label: "At least one learning outcome added",
+                    },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                          item.done
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {item.done && <Check className="w-3 h-3" />}
+                      </div>
+                      <span
+                        className={
+                          item.done
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {item.label}
+                      </span>
                     </div>
                   ))}
-                  {formData.skills.length === 0 && (
-                    <div className="py-20 w-full text-center border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
-                        <Check className="w-6 h-6 text-slate-200" />
-                      </div>
-                      <p className="text-xs font-bold text-slate-300 uppercase tracking-[0.2em]">
-                        Add at least 3 outcomes
-                      </p>
-                    </div>
-                  )}
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {activeStep === 3 && (
-          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white p-10 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-bl-full -z-0" />
-              <h2 className="text-2xl font-bold text-slate-900 mb-10 relative z-10">
-                Pricing & Delivery
-              </h2>
-
-              <div className="space-y-10 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-100 md:col-span-2">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-accent/10 rounded-lg text-accent">
-                        <DollarSign className="w-5 h-5" />
-                      </div>
-                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                        Market Price
-                      </label>
-                    </div>
-                    <div className="relative">
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">
-                        $
-                      </span>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={formData.price}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                            handleUpdateField({
-                              price: val,
-                            });
-                          }
-                        }}
-                        placeholder="0.00"
-                        className="pl-6 h-14 border-none bg-transparent text-3xl font-black text-slate-900 focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
-                      Students will see this as the enrollment fee. Set to 0 for
-                      free.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-8 border-2 border-slate-900 bg-slate-900 rounded-3xl text-white flex gap-6 items-center">
-                  <div className="flex-1">
-                    <h3 className="text-base font-bold mb-1 flex items-center gap-2">
-                      Ready to launch?
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed font-semibold">
-                      Your course will be created in DRAFT mode. You can then
-                      add your modules, video lessons, and curriculum in the
-                      Course Manager.
-                    </p>
-                  </div>
-                  <Check className="w-10 h-10 text-accent opacity-50" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-16 flex items-center justify-between">
+        {/* Navigation */}
+        <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
           <Button
             variant="ghost"
             onClick={handleBack}
             disabled={activeStep === 1 || createCourseMutation.isPending}
-            className="flex items-center gap-2 text-slate-400 font-bold hover:bg-slate-100 transition-all rounded-full px-8 h-12"
+            className="gap-2 text-muted-foreground"
           >
-            <ChevronLeft className="w-4 h-4" /> Step back
+            <ArrowLeft className="w-4 h-4" /> Back
           </Button>
 
-          <Button
-            onClick={handleNext}
-            disabled={createCourseMutation.isPending}
-            className="flex items-center gap-3 bg-slate-900 text-white font-bold h-14 px-10 rounded-full shadow-2xl shadow-slate-400 hover:shadow-slate-500 hover:translate-y-[-2px] active:translate-y-[0px] transition-all disabled:opacity-50"
-          >
-            {activeStep === 3 ? (
-              createCourseMutation.isPending ? (
-                "Creating Course..."
-              ) : (
-                "Finalize & Continue"
-              )
-            ) : (
-              <>
-                Next: {activeStep === 1 ? "Learning Outcomes" : "Pricing"}{" "}
-                <ChevronRight className="w-5 h-5" />
-              </>
-            )}
-          </Button>
+          {activeStep < 3 ? (
+            <Button onClick={handleNext} className="gap-2">
+              Next <ArrowRight className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              disabled={createCourseMutation.isPending}
+              className="gap-2"
+            >
+              <Rocket className="w-4 h-4" />
+              {createCourseMutation.isPending ? "Creating..." : "Create Course"}
+            </Button>
+          )}
         </div>
       </main>
     </div>

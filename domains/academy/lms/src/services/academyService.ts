@@ -7,6 +7,7 @@ import type {
   InstructorStats,
   TeacherApplication,
   Enrollment,
+  Cohort,
 } from "@/types/academy";
 
 export const academyService = {
@@ -74,15 +75,48 @@ export const academyService = {
     return response.data;
   },
 
+  getCohorts: async (
+    courseId: string | number,
+    params?: { page?: number; pageSize?: number },
+  ) => {
+    const response = await api.get<{ items: Cohort[]; total: number }>(
+      `/academy/cohorts`,
+      {
+        params: { courseId, ...params },
+      },
+    );
+    return {
+      cohorts: response.data.items || (response.data as any).cohorts || [],
+      total: response.data.total || 0,
+    };
+  },
+
   // Student Endpoints
   enrollInCourse: async (
     courseId: string | number,
     paymentGateway: string = "CHAPA",
   ) => {
-    const response = await api.post<Enrollment>("/academy/enrollment", {
-      courseId: Number(courseId),
-      paymentGateway,
-    });
+    const response = await api.post<Enrollment>(
+      `/academy/enrollment/course/${courseId}`,
+      {
+        paymentGateway,
+      },
+    );
+    return response.data;
+  },
+
+  enrollInCohort: async (
+    cohortId: string | number,
+    courseId: string | number,
+    paymentGateway: string = "CHAPA",
+  ) => {
+    const response = await api.post<Enrollment>(
+      `/academy/enrollment/cohort/${cohortId}`,
+      {
+        courseId: Number(courseId),
+        paymentGateway,
+      },
+    );
     return response.data;
   },
 
@@ -233,6 +267,19 @@ export const academyService = {
     // New: Create a teaching schedule
     createTeachingSchedule: async (data: any) => {
       const response = await api.post(`/academy/teaching-schedules`, data);
+      return response.data;
+    },
+
+    createCohort: async (data: {
+      name: string;
+      courseId: string | number;
+      startDate: string;
+      endDate: string;
+    }) => {
+      const response = await api.post<Cohort>("/academy/cohorts", {
+        ...data,
+        courseId: Number(data.courseId),
+      });
       return response.data;
     },
 

@@ -157,13 +157,27 @@ export interface TeacherApplication {
   updatedAt: string;
 }
 
+export interface Cohort {
+  id: number | string;
+  name: string;
+  courseId: number | string;
+  startDate: string;
+  endDate: string;
+  createdAt?: string;
+}
+
 export interface Enrollment {
   id: string;
   userId: string;
   courseId: string;
-  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+  cohortId?: string | number | null;
+  context?: "COURSE_ONLY" | "COHORT_BASED";
+  cohortRole?: "STUDENT" | "TEACHING_ASSISTANT";
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED" | "DROPPED";
   progress: number;
   course?: Course;
+  cohort?: Cohort;
   user?: {
     firstname: string;
     lastname: string;

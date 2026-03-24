@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import InstructorNavbar from "@/components/InstructorNavbar";
-import { PlusCircle, Search, Filter } from "lucide-react";
+import { PlusCircle, Search, Filter, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInstructorCourses, useDeleteCourse } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { academyService } from "@/services/academyService";
 import { toast } from "sonner";
 import { DeleteConfirmationModal } from "@/components/DeleteConfirmationModal.tsx";
+import { CreateCohortModal } from "@/pages/Courses/components/CreateCohortModal.tsx";
 
 const InstructorCourses = () => {
   const {
@@ -18,6 +19,7 @@ const InstructorCourses = () => {
 
   const deleteCourseMutation = useDeleteCourse();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isCohortModalOpen, setIsCohortModalOpen] = useState(false);
 
   const handleSubmitForApproval = async (courseId: string) => {
     try {
@@ -54,14 +56,22 @@ const InstructorCourses = () => {
               Manage and monitor your curriculum content.
             </p>
           </div>
-          <Button
-            asChild
-            className="gap-2 bg-accent hover:bg-amber-light text-slate-900"
-          >
-            <Link to="/instructor/courses/new">
-              <PlusCircle className="w-4 h-4" /> Create Course
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="gap-2 bg-white hover:bg-slate-50 text-slate-900 shadow-sm border border-slate-200 font-bold"
+              onClick={() => setIsCohortModalOpen(true)}
+            >
+              <Users className="w-4 h-4 text-accent" /> Create Cohort
+            </Button>
+            <Button
+              asChild
+              className="gap-2 bg-accent hover:bg-amber-light text-slate-900 shadow-sm font-bold"
+            >
+              <Link to="/instructor/courses/new">
+                <PlusCircle className="w-4 h-4" /> Create Course
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Search */}
@@ -226,6 +236,10 @@ const InstructorCourses = () => {
         title="Delete Course?"
         description="Are you sure you want to delete this course? This action cannot be undone and all modules, lessons, and student progress will be permanently removed."
         isDeleting={deleteCourseMutation.isPending}
+      />
+      <CreateCohortModal
+        isOpen={isCohortModalOpen}
+        onClose={() => setIsCohortModalOpen(false)}
       />
     </div>
   );

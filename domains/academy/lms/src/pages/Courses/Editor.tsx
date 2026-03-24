@@ -16,6 +16,7 @@ import {
   FileText,
   Plus,
   PlusSquare,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ import { CurriculumTab } from "@/pages/Courses/components/CurriculumTab.tsx";
 import { SettingsTab } from "@/pages/Courses/components/SettingsTab.tsx";
 import { AnalyticsTab } from "@/pages/Courses/components/AnalyticsTab.tsx";
 import { ScheduleTab } from "@/pages/Courses/components/ScheduleTab.tsx";
+import { CohortsTab } from "@/pages/Courses/components/CohortsTab.tsx";
 import { ModuleModal } from "@/pages/Courses/components/ModuleModal.tsx";
 import { LessonModal } from "@/pages/Courses/components/LessonModal.tsx";
 import { ContentModal } from "@/pages/Courses/components/ContentModal.tsx";
@@ -378,6 +380,10 @@ const InstructorCourseEditor = () => {
       return <ScheduleTab courseId={id!} />;
     }
 
+    if (activeTab === "cohorts" && isEdit) {
+      return <CohortsTab courseId={id!} />;
+    }
+
     return null;
   };
 
@@ -424,6 +430,7 @@ const InstructorCourseEditor = () => {
               ...(isEdit
                 ? [
                     { id: "analytics", label: "Analytics", icon: BarChart3 },
+                    { id: "cohorts", label: "Cohorts", icon: Users },
                     { id: "schedule", label: "Schedule", icon: Calendar },
                   ]
                 : []),
@@ -487,7 +494,7 @@ const InstructorCourseEditor = () => {
                   <div key={module.id} className="space-y-1">
                     <div
                       onClick={() => {
-                        toggleModule(module.id);
+                        toggleModule(module.id.toString());
                         if (activeTab !== "curriculum")
                           setActiveTab("curriculum");
                       }}
@@ -514,7 +521,7 @@ const InstructorCourseEditor = () => {
                           <div
                             key={lesson.id}
                             onClick={() =>
-                              handleLessonSelect(lesson, module.id)
+                              handleLessonSelect(lesson, module.id.toString())
                             }
                             className={`p-2 rounded-lg text-[13px] font-medium transition-all cursor-pointer flex items-center justify-between group/lesson ${
                               selectedCurriculumItem?.lessonId === lesson.id
@@ -533,7 +540,7 @@ const InstructorCourseEditor = () => {
                           </div>
                         ))}
                         <button
-                          onClick={() => handleAddLesson(module.id)}
+                          onClick={() => handleAddLesson(module.id.toString())}
                           className="flex items-center gap-2 p-2 px-3 text-[11px] font-bold text-slate-400 hover:text-primary transition-colors w-full"
                         >
                           <Plus className="w-3 h-3" /> Add Lesson

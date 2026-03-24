@@ -93,6 +93,19 @@ export const useCourseBySlug = (slug: string) => {
   });
 };
 
+export const useCohorts = (
+  courseId: string,
+  params?: { page?: number; pageSize?: number },
+  options?: any,
+) => {
+  return useQuery({
+    queryKey: ["cohorts", courseId, params],
+    queryFn: () => academyService.getCohorts(courseId, params),
+    enabled: !!courseId,
+    ...options,
+  });
+};
+
 export const useEnrollInCourse = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -113,6 +126,34 @@ export const useEnrollInCourse = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to enroll");
+    },
+  });
+};
+
+export const useEnrollInCohort = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      cohortId,
+      courseId,
+      paymentGateway = "CHAPA",
+    }: {
+      cohortId: string | number;
+      courseId: string | number;
+      paymentGateway?: string;
+    }) => academyService.enrollInCohort(cohortId, courseId, paymentGateway),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+      if (data?.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast.success("Enrolled in cohort successfully!");
+      }
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to enroll in cohort",
+      );
     },
   });
 };
@@ -403,6 +444,26 @@ export const useCreateCourse = () => {
     },
   });
 };
+
+export const useCreateCohort = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      name: string;
+      courseId: string | number;
+      startDate: string;
+      endDate: string;
+    }) => academyService.instructor.createCohort(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cohorts"] });
+      toast.success("Cohort created successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create cohort");
+    },
+  });
+};
+
 export const useUpdateCourse = () => {
   const queryClient = useQueryClient();
   return useMutation({
