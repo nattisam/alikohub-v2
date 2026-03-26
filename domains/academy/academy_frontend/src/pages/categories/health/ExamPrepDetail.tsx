@@ -274,16 +274,14 @@ const ExamPrepDetail = () => {
                   </div>
 
                   <Button
-                    asChild
                     className="w-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
                     size="lg"
                     disabled={program.enrollmentStatus !== "open"}
+                    onClick={() =>
+                      (window.location.href = "https://lms.alikohub.com")
+                    }
                   >
-                    <Link to="/health/apply">
-                      {program.enrollmentStatus === "open"
-                        ? "Enroll Now"
-                        : "Join Waitlist"}
-                    </Link>
+                    Access LMS
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">

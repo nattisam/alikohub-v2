@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, List, CheckSquare, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -155,9 +156,9 @@ export const ExerciseModal = ({
             <DialogTitle className="text-xl font-bold text-slate-900">
               Add Exercise
             </DialogTitle>
-            <p className="text-sm text-slate-500">
-              Create a multiple-choice question.
-            </p>
+            <DialogDescription className="text-sm text-slate-500">
+              Create a multiple-choice question for this lesson.
+            </DialogDescription>
           </div>
         </div>
 

@@ -66,7 +66,10 @@ const Webinars = () => {
     setForm({ name: "", email: "" });
   };
 
-  const getThumb = (w: Webinar, index: number) => w.thumbnailUrl || fallbackThumbnails[index % fallbackThumbnails.length];
+  const getThumb = (w: Webinar, index: number) => {
+    const url = w.thumbnailUrl || fallbackThumbnails[index % fallbackThumbnails.length];
+    return url.replace("http://", "https://");
+  };
 
   return (
     <div>

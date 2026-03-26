@@ -173,11 +173,15 @@ const Schedule = () => {
                         {program.startDate}
                       </span>
                     </div>
-                    <Button asChild size="sm" className="w-full shadow-sm">
-                      <Link to="/health/apply">
-                        Apply Now
-                        <ArrowRight className="ml-1 h-3 w-3" />
-                      </Link>
+                    <Button
+                      size="sm"
+                      className="w-full shadow-sm"
+                      onClick={() =>
+                        (window.location.href = "https://lms.alikohub.com")
+                      }
+                    >
+                      Access LMS
+                      <ArrowRight className="ml-1 h-3 w-3" />
                     </Button>
                   </div>
                 ))}
@@ -236,11 +240,16 @@ const Schedule = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild size="sm" className="shadow-sm">
-                            <Link to="/health/apply">
-                              Apply Now
-                              <ArrowRight className="ml-1 h-3 w-3" />
-                            </Link>
+                          <Button
+                            size="sm"
+                            className="shadow-sm"
+                            onClick={() =>
+                              (window.location.href =
+                                "https://lms.alikohub.com")
+                            }
+                          >
+                            Access LMS
+                            <ArrowRight className="ml-1 h-3 w-3" />
                           </Button>
                         </TableCell>
                       </TableRow>

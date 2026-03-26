@@ -82,14 +82,14 @@ const Admissions = () => {
           </p>
           <div className="mt-8">
             <Button
-              asChild
               size="lg"
               className="shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
+              onClick={() =>
+                (window.location.href = "https://lms.alikohub.com")
+              }
             >
-              <Link to="/health/apply">
-                Start Your Application
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              Access LMS
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -280,11 +280,13 @@ const Admissions = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Button
-                  asChild
                   size="lg"
                   className="shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={() =>
+                    (window.location.href = "https://lms.alikohub.com")
+                  }
                 >
-                  <Link to="/health/apply">Start Your Application</Link>
+                  Access LMS
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/health/contact">Contact Admissions</Link>

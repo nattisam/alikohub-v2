@@ -69,21 +69,9 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const handleAccessLms = () => {
+    window.location.href = "https://lms.alikohub.com";
+  };
 
   return (
     <header className="bg-[hsl(216,50%,16%)] border-b border-border/50 sticky top-0 z-50 backdrop-blur-sm">
@@ -175,18 +163,12 @@ export function Header() {
 
         {/* Desktop CTA */}
         <div className="hidden lg:flex lg:items-center lg:gap-3 flex-shrink-0">
-          <Link
-            to="/health/student-login"
-            className="px-3 py-1.5 rounded-md bg-accent text-white font-semibold text-sm hover:bg-accent/90 transition-colors whitespace-nowrap"
-          >
-            Student Login
-          </Link>
           <Button
-            asChild
+            onClick={handleAccessLms}
             size="sm"
-            className="bg-[hsl(0,72%,45%)] text-white hover:bg-[hsl(0,72%,38%)] text-sm whitespace-nowrap"
+            className="bg-accent text-white hover:bg-accent/90 text-sm whitespace-nowrap"
           >
-            <Link to="/health/apply">Apply Now</Link>
+            Access LMS
           </Button>
         </div>
 
@@ -261,17 +243,14 @@ export function Header() {
             ),
           )}
           <div className="pt-4 border-t border-border space-y-3">
-            <Link
-              to="/health/student-login"
-              className="block text-base font-bold text-accent hover:text-accent/80"
-              onClick={() => setMobileMenuOpen(false)}
+            <Button
+              onClick={() => {
+                handleAccessLms();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full"
             >
-              Student Login
-            </Link>
-            <Button asChild className="w-full">
-              <Link to="/health/apply" onClick={() => setMobileMenuOpen(false)}>
-                Apply Now
-              </Link>
+              Access LMS
             </Button>
           </div>
         </div>

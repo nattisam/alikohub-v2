@@ -45,24 +45,149 @@ const App = () => (
           <ScrollToTop />
           <Routes>
             {/* Public routes */}
-            <Route element={<Layout><></></Layout>} />
-            <Route path="/" element={<Layout><Index /></Layout>} />
-            <Route path="/business-consulting" element={<Layout><BusinessConsulting /></Layout>} />
-            <Route path="/career-guidance" element={<Layout><CareerGuidance /></Layout>} />
-            <Route path="/travel-advisory" element={<Layout><TravelAdvisory /></Layout>} />
-            <Route path="/travel-advisory/:level" element={<Layout><StudentLevelPage /></Layout>} />
-            <Route path="/resources" element={<Layout><Resources /></Layout>} />
-            <Route path="/webinars" element={<Layout><Webinars /></Layout>} />
-            <Route path="/about" element={<Layout><About /></Layout>} />
-            <Route path="/contact" element={<Layout><Contact /></Layout>} />
-            <Route path="/book" element={<Layout><BookConsultation /></Layout>} />
-            <Route path="/apply" element={<Layout><Apply /></Layout>} />
-            <Route path="/application-status" element={<Layout><ApplicationStatus /></Layout>} />
-            <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-            <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
-            <Route path="/terms" element={<Layout><Terms /></Layout>} />
-            <Route path="/refund" element={<Layout><Refund /></Layout>} />
-            <Route path="/cookies" element={<Layout><Cookies /></Layout>} />
+            <Route
+              element={
+                <Layout>
+                  <></>
+                </Layout>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <Layout>
+                  <Index />
+                </Layout>
+              }
+            />
+            <Route
+              path="/business-consulting"
+              element={
+                <Layout>
+                  <BusinessConsulting />
+                </Layout>
+              }
+            />
+            <Route
+              path="/career-guidance"
+              element={
+                <Layout>
+                  <CareerGuidance />
+                </Layout>
+              }
+            />
+            <Route
+              path="/travel-advisory"
+              element={
+                <Layout>
+                  <TravelAdvisory />
+                </Layout>
+              }
+            />
+            <Route
+              path="/travel-advisory/:level"
+              element={
+                <Layout>
+                  <StudentLevelPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/resources"
+              element={
+                <Layout>
+                  <Resources />
+                </Layout>
+              }
+            />
+            <Route
+              path="/webinars"
+              element={
+                <Layout>
+                  <Webinars />
+                </Layout>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <Layout>
+                  <About />
+                </Layout>
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <Layout>
+                  <Contact />
+                </Layout>
+              }
+            />
+            <Route
+              path="/book"
+              element={
+                <Layout>
+                  <BookConsultation />
+                </Layout>
+              }
+            />
+            <Route
+              path="/apply"
+              element={
+                <Layout>
+                  <Apply />
+                </Layout>
+              }
+            />
+            <Route
+              path="/application-status/:code"
+              element={
+                <Layout>
+                  <ApplicationStatus />
+                </Layout>
+              }
+            />
+            <Route
+              path="/faq"
+              element={
+                <Layout>
+                  <FAQ />
+                </Layout>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <Layout>
+                  <Privacy />
+                </Layout>
+              }
+            />
+            <Route
+              path="/terms"
+              element={
+                <Layout>
+                  <Terms />
+                </Layout>
+              }
+            />
+            <Route
+              path="/refund"
+              element={
+                <Layout>
+                  <Refund />
+                </Layout>
+              }
+            />
+            <Route
+              path="/cookies"
+              element={
+                <Layout>
+                  <Cookies />
+                </Layout>
+              }
+            />
 
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
@@ -78,7 +203,14 @@ const App = () => (
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 
-            <Route path="*" element={<Layout><NotFound /></Layout>} />
+            <Route
+              path="*"
+              element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              }
+            />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

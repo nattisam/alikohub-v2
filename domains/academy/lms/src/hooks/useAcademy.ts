@@ -335,12 +335,12 @@ export const useInstructorCourses = (params?: any) => {
       const uniqueCourses = new Map();
 
       // First, add all the instructor's private work (Drafts/Pending)
-      (instructorResult.courses || []).forEach((course) => {
+      (instructorResult.courses || []).forEach((course: any) => {
         uniqueCourses.set(String(course.id), course);
       });
 
       // Second, find and add their published courses from the general catalog
-      (publicResult.courses || []).forEach((course) => {
+      (publicResult.courses || []).forEach((course: any) => {
         const courseInstructorId = String(
           course.instructorId || course.instructor?.id || "",
         );

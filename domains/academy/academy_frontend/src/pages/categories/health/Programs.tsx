@@ -321,9 +321,7 @@ const Programs = () => {
                           }
                         >
                           <Link to={`/health/programs/${program.id}`}>
-                            {program.enrollmentStatus === "open"
-                              ? "Apply Now"
-                              : "View Details"}
+                            View Details
                           </Link>
                         </Button>
                       </CardFooter>
@@ -422,9 +420,7 @@ const Programs = () => {
                         }
                       >
                         <Link to={`/health/exam-prep/${program.id}`}>
-                          {program.enrollmentStatus === "open"
-                            ? "Enroll Now"
-                            : "View Details"}
+                          View Details
                         </Link>
                       </Button>
                     </CardFooter>

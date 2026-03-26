@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,7 +46,8 @@ export const ContentModal = ({
       const formData = new FormData();
       formData.append("lessonId", lessonId);
       formData.append("title", title);
-      formData.append("contentType", type);
+      formData.append("type", type);
+      formData.append("description", title);
       formData.append("file", file);
       onAdd(formData);
     } else {
@@ -70,6 +72,9 @@ export const ContentModal = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Content to Lesson</DialogTitle>
+          <DialogDescription>
+            Upload files or add external links to your lesson.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

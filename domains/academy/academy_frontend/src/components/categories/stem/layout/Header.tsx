@@ -25,6 +25,10 @@ export function Header() {
     return location.pathname.startsWith(path);
   };
 
+  const handleAccessLms = () => {
+    window.location.href = "https://lms.alikohub.com";
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-navbar border-b border-border/50 shadow-xl shadow-black/30 backdrop-blur-xl">
       <nav className="container-content flex h-18 items-center justify-between lg:h-20">
@@ -58,21 +62,11 @@ export function Header() {
         {/* Desktop CTA */}
         <div className="hidden lg:flex lg:items-center lg:gap-3">
           <Button
-            asChild
-            size="sm"
-            className="font-extrabold bg-accent-green text-background hover:bg-accent-green/85 shadow-lg shadow-accent-green/30 hover:-translate-y-0.5 transition-all duration-200 px-6 tracking-wide uppercase text-xs"
-          >
-            <Link to="/stem/apply">Apply Now</Link>
-          </Button>
-          <Button
-            asChild
+            onClick={handleAccessLms}
             size="sm"
             className="font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 px-5"
           >
-            <Link to="/stem/login">
-              <LogIn className="h-4 w-4 mr-1.5" />
-              Sign In
-            </Link>
+            Access LMS
           </Button>
         </div>
 
@@ -110,37 +104,16 @@ export function Header() {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-4 px-4 space-y-2">
+            <div className="pt-4 px-4">
               <Button
-                asChild
-                className="w-full font-extrabold bg-accent-green text-background hover:bg-accent-green/85 shadow-lg shadow-accent-green/30 tracking-wide uppercase text-xs"
+                onClick={() => {
+                  handleAccessLms();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full font-bold bg-primary text-white"
               >
-                <Link to="/apply" onClick={() => setMobileMenuOpen(false)}>
-                  Apply Now
-                </Link>
+                Access LMS
               </Button>
-              {!true ? (
-                <Button
-                  asChild
-                  className="w-full font-bold bg-primary text-white"
-                >
-                  <Link
-                    to="/stem/my-applications"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Applications
-                  </Link>
-                </Button>
-              ) : (
-                <Button
-                  asChild
-                  className="w-full font-bold bg-primary text-white"
-                >
-                  <Link to="/stem/login" onClick={() => setMobileMenuOpen(false)}>
-                    Sign In
-                  </Link>
-                </Button>
-              )}
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { FileText, Video, Link as LinkIcon, HelpCircle } from "lucide-react";
 
@@ -230,6 +231,9 @@ export const PreviewModal = ({
             </div>
             {content.title}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Preview of {content.title} ({content.type})
+          </DialogDescription>
         </DialogHeader>
         <div className="p-6 pt-2">{renderPreview()}</div>
         <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest px-8">

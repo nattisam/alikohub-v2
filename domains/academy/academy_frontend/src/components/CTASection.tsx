@@ -15,8 +15,8 @@ interface CTASectionProps {
 const CTASection = ({
   title = "Ready to Start Your Journey?",
   description = "Join thousands of learners building in-demand skills for real-world careers.",
-  primaryLink = "/register",
-  primaryText = "Apply Now",
+  primaryLink = "https://lms.alikohub.com",
+  primaryText = "Access LMS",
   secondaryLink = "/#streams",
   secondaryText = "Explore Pathways",
   onSecondaryClick,
@@ -47,8 +47,16 @@ const CTASection = ({
               </Link>
             )}
           </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link to={primaryLink}>{primaryText}</Link>
+          <Button
+            size="lg"
+            variant="outline"
+            asChild={primaryLink.startsWith("/")}
+          >
+            {primaryLink.startsWith("http") ? (
+              <a href={primaryLink}>{primaryText}</a>
+            ) : (
+              <Link to={primaryLink}>{primaryText}</Link>
+            )}
           </Button>
         </div>
       </div>

@@ -63,7 +63,7 @@ const LoginPage = () => {
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-5"
+          className="space-y-4 sm:space-y-5 lg:space-y-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
@@ -72,14 +72,17 @@ const LoginPage = () => {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem className="space-y-1.5">
-                <FormLabel>Email address</FormLabel>
+              <FormItem className="space-y-2">
+                <FormLabel className="text-sm font-semibold">
+                  Email address
+                </FormLabel>
                 <FormControl>
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     autoComplete="email"
+                    className="h-11 sm:h-12 bg-white/50 backdrop-blur-sm transition-all focus:bg-white"
                     {...field}
                   />
                 </FormControl>
@@ -92,15 +95,24 @@ const LoginPage = () => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="space-y-1.5">
+              <FormItem className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="text-sm font-semibold">
+                    Password
+                  </FormLabel>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-medium text-primary hover:text-primary-foreground/80 hover:underline transition-all"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
                 <FormControl>
                   <PasswordInput
                     id="password"
                     placeholder="Enter your password"
                     autoComplete="current-password"
+                    className="h-11 sm:h-12 bg-white/50 backdrop-blur-sm transition-all focus:bg-white"
                     {...field}
                   />
                 </FormControl>
@@ -109,27 +121,31 @@ const LoginPage = () => {
             )}
           />
 
-          <Button
-            type="submit"
-            className="w-full h-11 font-semibold"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="text-primary font-semibold hover:underline"
+          <div className="pt-2">
+            <Button
+              type="submit"
+              className="w-full h-11 sm:h-12 text-base font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+              disabled={isPending}
             >
-              Create one
-            </Link>
-          </p>
+              {isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                "Sign in"
+              )}
+            </Button>
+          </div>
+
+          <div className="text-center pt-2">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-primary font-bold hover:text-primary/80 transition-colors"
+              >
+                Create one
+              </Link>
+            </p>
+          </div>
         </motion.form>
       </Form>
     </AuthLayout>

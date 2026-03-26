@@ -26,8 +26,7 @@ const Footer = () => {
       title: "Resources",
       links: [
         { name: "Course Catalog", href: "#" },
-        { name: "Student Portal", href: "/lms" },
-        { name: "Instructor Console", href: "#" },
+        { name: "Student Portal", href: "https://lms.alikohub.com" },
         { name: "Scholarships", href: "#" },
       ],
     },
@@ -100,12 +99,21 @@ const Footer = () => {
                   <ul className="space-y-3">
                     {section.links.map((link) => (
                       <li key={link.name}>
-                        <Link
-                          to={link.href}
-                          className="text-slate-500 hover:text-accent transition-all hover:translate-x-1 inline-block text-sm font-medium"
-                        >
-                          {link.name}
-                        </Link>
+                        {link.href.startsWith("http") ? (
+                          <a
+                            href={link.href}
+                            className="text-slate-500 hover:text-accent transition-all hover:translate-x-1 inline-block text-sm font-medium"
+                          >
+                            {link.name}
+                          </a>
+                        ) : (
+                          <Link
+                            to={link.href}
+                            className="text-slate-500 hover:text-accent transition-all hover:translate-x-1 inline-block text-sm font-medium"
+                          >
+                            {link.name}
+                          </Link>
+                        )}
                       </li>
                     ))}
                   </ul>

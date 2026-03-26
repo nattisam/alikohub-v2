@@ -112,12 +112,14 @@ export function HeroSection() {
               </Link>
             </Button>
             <Button
-              asChild
               size="lg"
               variant="outline"
               className="text-base bg-[hsl(0,72%,50%)] border-[hsl(0,72%,50%)] text-white hover:bg-[hsl(0,72%,42%)] shadow-lg hover:shadow-xl transition-all"
+              onClick={() =>
+                (window.location.href = "https://lms.alikohub.com")
+              }
             >
-              <Link to="/health/apply">Apply Now</Link>
+              Access LMS
             </Button>
           </div>
 

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logo from "@/assets/Aliko Consultancy - tbg (V).png";
 
 const Footer = () => {
   return (
@@ -7,9 +8,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <h3 className="font-serif text-xl font-bold mb-4">
-              Aliko <span className="text-gold">Consultancy</span>
-            </h3>
+            <Link to="/" className="inline-block mb-6">
+              <img src={logo} alt="Aliko Consultancy Logo" className="h-16 md:h-20 w-auto object-contain" />
+            </Link>
             <p className="text-sm text-primary-foreground/70 leading-relaxed">
               Premium consultancy services in Business, Study Abroad & Travel Advisory, and Career Guidance & Mentorship.
               Guiding your next chapter with expertise and care.

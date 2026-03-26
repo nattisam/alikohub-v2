@@ -101,6 +101,10 @@ const Header = () => {
       : []),
   ];
 
+  const handleAccessLms = () => {
+    window.location.href = "https://lms.alikohub.com";
+  };
+
   return (
     <header className="sticky top-0 z-[999] w-full bg-[hsl(210,30%,16%)] backdrop-blur-xl shadow-lg">
       <nav className="container-padding mx-auto flex h-20 max-w-7xl items-center justify-between">
@@ -240,24 +244,13 @@ const Header = () => {
 
         {/* Desktop CTA */}
         <div className="hidden lg:flex lg:items-center lg:gap-3">
-          <Link to="/technology/student-login">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-accent border-accent/60 bg-accent/10 hover:bg-accent/30 hover:text-white h-10 transition-colors rounded-lg"
-            >
-              Student Login
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Button>
-          </Link>
-          <Link to="/technology/apply">
-            <Button
-              size="sm"
-              className="bg-secondary hover:bg-secondary/90 text-white font-semibold shadow-md hover:shadow-orange transition-all h-10 px-5 rounded-lg"
-            >
-              Apply Now
-            </Button>
-          </Link>
+          <Button
+            onClick={handleAccessLms}
+            size="sm"
+            className="bg-secondary hover:bg-secondary/90 text-white font-semibold shadow-md hover:shadow-orange transition-all h-10 px-5 rounded-lg"
+          >
+            Access LMS
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -355,23 +348,15 @@ const Header = () => {
             </div>
 
             <div className="pt-4 border-t border-border space-y-3">
-              <Link
-                to="/student-login"
-                onClick={() => setMobileMenuOpen(false)}
+              <Button
+                onClick={() => {
+                  handleAccessLms();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full bg-secondary hover:bg-secondary/90 text-white font-semibold h-12 rounded-xl shadow-orange mt-3"
               >
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 h-12 rounded-xl font-medium border-border text-foreground"
-                >
-                  Student Login
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/apply" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full bg-secondary hover:bg-secondary/90 text-white font-semibold h-12 rounded-xl shadow-orange mt-3">
-                  Apply Now
-                </Button>
-              </Link>
+                Access LMS
+              </Button>
             </div>
           </div>
         </div>

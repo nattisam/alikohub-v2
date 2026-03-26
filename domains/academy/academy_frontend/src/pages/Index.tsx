@@ -77,8 +77,14 @@ const Index = () => {
                 <Button size="lg" className="gap-2" onClick={scrollToStreams}>
                   Explore Pathways <ArrowRight className="w-4 h-4" />
                 </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link to="/register">Apply Now</Link>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() =>
+                    (window.location.href = "https://lms.alikohub.com")
+                  }
+                >
+                  Access LMS
                 </Button>
               </div>
             </div>

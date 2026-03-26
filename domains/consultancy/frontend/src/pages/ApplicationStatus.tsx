@@ -1,94 +1,205 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
-import { Search, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import api from "@/lib/api";
 
 const ApplicationStatus = () => {
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { code: urlCode } = useParams<{ code: string }>();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(!!urlCode);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const requestRef = useRef(0);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = async (searchCode: string) => {
+    const requestId = ++requestRef.current;
     setLoading(true);
     setError("");
     setResult(null);
     try {
-      const { data } = await api.get(`/consultancy/applications/status/${code.trim()}`);
-      setResult(data);
+      const { data } = await api.get(
+        `/consultancy/applications/status/${searchCode.trim()}`,
+      );
+      if (requestId === requestRef.current) {
+        setResult(data);
+      }
     } catch (err: any) {
-      if (err.response?.status === 404) {
-        setError("Application not found. Please check your code.");
-      } else {
-        setError("Something went wrong. Please try again.");
+      if (requestId === requestRef.current) {
+        if (err.response?.status === 404) {
+          setError("Application not found. Please check your code.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
       }
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) {
+        setLoading(false);
+      }
     }
   };
 
-  const statusConfig: Record<string, { icon: typeof CheckCircle2; label: string; color: string }> = {
-    SUBMITTED: { icon: Clock, label: "Submitted - Under Initial Review", color: "text-blue-500" },
-    UNDER_REVIEW: { icon: Clock, label: "Under Review", color: "text-yellow-500" },
-    APPROVED: { icon: CheckCircle2, label: "Approved", color: "text-green-500" },
-    REJECTED: { icon: AlertCircle, label: "Not Approved", color: "text-red-500" },
+  useEffect(() => {
+    if (urlCode) {
+      handleSearch(urlCode);
+    } else {
+      // Automatically redirect home if no code is present in the path
+      navigate("/");
+    }
+  }, [urlCode, navigate]);
+
+  const statusConfig: Record<
+    string,
+    { icon: typeof CheckCircle2; label: string; color: string }
+  > = {
+    SUBMITTED: {
+      icon: Clock,
+      label: "Submitted - Under Initial Review",
+      color: "text-blue-500",
+    },
+    UNDER_REVIEW: {
+      icon: Clock,
+      label: "Under Review",
+      color: "text-yellow-500",
+    },
+    APPROVED: {
+      icon: CheckCircle2,
+      label: "Approved",
+      color: "text-green-500",
+    },
+    REJECTED: {
+      icon: AlertCircle,
+      label: "Not Approved",
+      color: "text-red-500",
+    },
     WAITLISTED: { icon: Clock, label: "Waitlisted", color: "text-orange-500" },
     DRAFT: { icon: Clock, label: "Draft", color: "text-muted-foreground" },
   };
 
+  // If no code is present, we don't render anything while redirecting
+  if (!urlCode) return null;
+
   return (
-    <div>
-      <section className="bg-navy section-padding">
-        <div className="container-wide">
-          <div className="max-w-3xl">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gold mb-4 block">Application Status</span>
-            <h1 className="font-serif text-4xl md:text-5xl font-bold text-primary-foreground mb-6">Track Your Application</h1>
-            <p className="text-primary-foreground/70 text-lg">Enter your application code to check the current status.</p>
+    <div className="min-h-screen bg-off-white flex items-center justify-center px-4">
+      <div className="relative z-10 w-full max-w-md">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
+          {/* HEADER */}
+          <div className="space-y-2">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-gray-400 font-semibold">
+              Application Status
+            </p>
+            <p className="text-xs text-navy font-mono font-bold tracking-widest opacity-60">
+              REF: {result?.applicationCode || urlCode}
+            </p>
           </div>
-        </div>
-      </section>
-      <section className="section-padding">
-        <div className="container-narrow">
-          <form onSubmit={handleSearch} className="max-w-md mx-auto flex gap-3 mb-12">
-            <Input placeholder="Enter application code (e.g. APP-ALC-XXXXX)" value={code} onChange={(e) => { setCode(e.target.value); setResult(null); setError(""); }} className="bg-card" />
-            <Button type="submit" className="bg-gold text-navy hover:bg-gold/90 font-semibold" disabled={!code.trim() || loading}>
-              <Search className="w-4 h-4" />
-            </Button>
-          </form>
-          {error && (
-            <div className="max-w-md mx-auto text-center">
-              <div className="bg-destructive/10 rounded-xl p-8">
-                <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-                <p className="text-sm text-destructive">{error}</p>
+
+          {/* ERROR */}
+          {error ? (
+            <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+              <div className="w-20 h-20 mx-auto rounded-full bg-red-50 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-red-500" />
+              </div>
+              <p className="text-gray-600 text-sm font-medium">{error}</p>
+              <div className="pt-2 flex flex-col gap-3">
+                <Button
+                  onClick={() => {
+                    if (urlCode) handleSearch(urlCode);
+                  }}
+                  className="w-full rounded-xl bg-navy text-white hover:bg-gold hover:text-navy font-bold h-12"
+                >
+                  Try Again
+                </Button>
+                <Link to="/">
+                  <Button
+                    variant="ghost"
+                    className="w-full text-gray-400 text-xs uppercase font-black tracking-widest"
+                  >
+                    Back to Home Search
+                  </Button>
+                </Link>
               </div>
             </div>
-          )}
-          {result && (
-            <div className="max-w-md mx-auto text-center">
-              <div className="card-gold-subtle rounded-xl p-8">
-                {(() => { const cfg = statusConfig[result.status] || statusConfig.submitted; const Icon = cfg.icon; return (
-                  <>
-                    <div className={`w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center mx-auto mb-4`}>
-                      <Icon className={`w-7 h-7 ${cfg.color}`} />
+          ) : (
+            (() => {
+              const cfg = result
+                ? statusConfig[result.status] || statusConfig.SUBMITTED
+                : statusConfig.SUBMITTED;
+              const Icon = cfg.icon;
+
+              return (
+                <div className="space-y-6">
+                  {/* STATUS ICON */}
+                  <div className="w-20 h-20 mx-auto rounded-full bg-accent/5 flex items-center justify-center shadow-inner">
+                    {loading ? (
+                      <Clock className="w-10 h-10 text-gray-400 animate-pulse" />
+                    ) : (
+                      <Icon
+                        className={`w-10 h-10 ${cfg.color} animate-in zoom-in duration-500`}
+                      />
+                    )}
+                  </div>
+
+                  {/* STATUS TEXT */}
+                  <div>
+                    <h3 className="text-3xl font-bold text-gray-800 font-serif">
+                      {loading ? "Checking Status..." : cfg.label}
+                    </h3>
+                  </div>
+
+                  {/* DETAILS */}
+                  {!loading && result && (
+                    <div className="grid grid-cols-2 bg-off-white rounded-2xl overflow-hidden border border-gray-100">
+                      <div className="p-4 border-r border-gray-100 text-left">
+                        <p className="text-[9px] uppercase font-black text-gray-400 mb-1">
+                          Service
+                        </p>
+                        <p className="text-sm font-bold text-navy truncate capitalize">
+                          {result.consultationType
+                            ?.replace("_", " ")
+                            .toLowerCase()}
+                        </p>
+                      </div>
+                      <div className="p-4 text-left">
+                        <p className="text-[9px] uppercase font-black text-gray-400 mb-1">
+                          Updated
+                        </p>
+                        <p className="text-sm font-bold text-navy">
+                          {new Date(result.updatedAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="font-serif text-lg font-semibold text-primary mb-2">{cfg.label}</h3>
-                    <p className="text-muted-foreground text-sm mb-1">Code: <span className="font-mono font-bold">{result.applicationCode}</span></p>
-                    <p className="text-muted-foreground text-sm mb-1 capitalize">Type: {result.consultationType}</p>
-                    <p className="text-muted-foreground text-sm mb-6">Last updated: {new Date(result.updatedAt).toLocaleDateString()}</p>
-                    <div className="flex flex-wrap justify-center gap-3">
-                      <Link to="/book"><Button className="bg-gold text-navy hover:bg-gold/90 text-sm font-semibold">Book Consultation</Button></Link>
-                      <Link to="/contact"><Button variant="outline" className="text-sm">Contact Us</Button></Link>
+                  )}
+
+                  {/* ACTIONS */}
+                  {!loading && (
+                    <div className="flex flex-col gap-3 pt-4">
+                      <Link to="/book">
+                        <Button className="w-full rounded-xl bg-gold text-navy hover:bg-navy hover:text-white font-bold h-14 shadow-lg">
+                          Book Now
+                        </Button>
+                      </Link>
+                      <Link to="/contact">
+                        <Button
+                          variant="outline"
+                          className="w-full h-14 rounded-xl border-2 font-bold hover:bg-off-white text-gray-500"
+                        >
+                          Get Help
+                        </Button>
+                      </Link>
+                      <Link
+                        to="/"
+                        className="text-[10px] text-gray-400 hover:text-gold transition-colors pt-4 uppercase tracking-[0.2em] font-black underline-offset-8 hover:underline"
+                      >
+                        Track Another ID
+                      </Link>
                     </div>
-                  </>
-                ); })()}
-              </div>
-            </div>
+                  )}
+                </div>
+              );
+            })()
           )}
         </div>
-      </section>
+      </div>
     </div>
   );
 };

@@ -19,6 +19,7 @@ export const useLogin = () => {
     onSuccess: (data: AuthResponse) => {
       authService.setSession(data.accessToken, data.refreshToken, data.user);
       queryClient.setQueryData(["user"], data.user);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success("Successfully logged in!");
 
       // If user is admin, redirect to /admin
@@ -114,7 +115,7 @@ export const useUser = () => {
       const { user } = authService.getSession();
       return user || undefined;
     },
-    staleTime: 60000,
+    staleTime: 5000,
     retry: false, // Don't retry indefinitely on timeouts
   });
 };
@@ -205,7 +206,6 @@ export const useSwitchAcademyRole = () => {
 
 export const useApplyInstructor = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   return useMutation({
     mutationFn: (applicationData: InstructorApplicationRequest) =>
@@ -214,7 +214,6 @@ export const useApplyInstructor = () => {
       toast.success("Application submitted successfully!");
       // Invalidate the user query to re-fetch and see the new status
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      navigate("/");
     },
     onError: (error: any) => {
       const message =

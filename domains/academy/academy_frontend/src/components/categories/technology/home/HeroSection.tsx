@@ -49,14 +49,13 @@ const HeroSection = () => {
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-          <Link to="/technology/apply">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto h-16 px-10 bg-secondary hover:bg-secondary/90 text-white font-bold text-lg transition-all rounded-xl shadow-orange hover:shadow-orange-lg"
-            >
-              Apply Now
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="w-full sm:w-auto h-16 px-10 bg-secondary hover:bg-secondary/90 text-white font-bold text-lg transition-all rounded-xl shadow-orange hover:shadow-orange-lg"
+            onClick={() => (window.location.href = "https://lms.alikohub.com")}
+          >
+            Access LMS
+          </Button>
         </div>
 
         {/* Stats Bar */}

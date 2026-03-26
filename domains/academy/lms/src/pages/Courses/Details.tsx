@@ -45,19 +45,39 @@ const CourseDetails = () => {
     (c: any) => c.courseId === Number(id),
   );
 
-  const isEnrolledInCourse = enrollments?.some(
+  const courseEnrollment = enrollments?.find(
     (e: any) =>
       (e.course?.id === Number(id) || e.courseId === Number(id)) && !e.cohortId,
   );
+
+  const isEnrolledInCourse =
+    courseEnrollment &&
+    (courseEnrollment.status === "ACTIVE" ||
+      courseEnrollment.status === "COMPLETED");
+
+  const isPendingPayment =
+    courseEnrollment &&
+    (courseEnrollment.status === "PENDING" ||
+      courseEnrollment.paymentStatus === "PENDING");
 
   const enrolledCohortIds =
     enrollments
       ?.filter(
         (e: any) =>
-          (e.course?.id === Number(id) || e.courseId === Number(id)) &&
-          e.cohortId,
+          ((e.course?.id === Number(id) || e.courseId === Number(id)) &&
+            e.cohortId &&
+            (e.status === "ACTIVE" || e.status === "COMPLETED")) ||
+          (e.status === "PENDING" && e.paymentStatus === "PENDING" && false), // PENDING cohorts shouldn't show as fully enrolled yet
       )
       .map((e: any) => e.cohortId) || [];
+
+  const pendingCohortEnrollments =
+    enrollments?.filter(
+      (e: any) =>
+        (e.course?.id === Number(id) || e.courseId === Number(id)) &&
+        e.cohortId &&
+        (e.status === "PENDING" || e.paymentStatus === "PENDING"),
+    ) || [];
 
   const enrollMutation = useEnrollInCourse();
   const enrollInCohortMutation = useEnrollInCohort();
@@ -256,6 +276,17 @@ const CourseDetails = () => {
                     >
                       Go to Course
                     </Button>
+                  ) : isPendingPayment ? (
+                    <Button
+                      size="lg"
+                      className="w-full bg-[#E6A337] hover:bg-[#d4922b] text-white font-bold gap-2 h-12 rounded-xl"
+                      onClick={handleEnrollCourse}
+                      disabled={enrollMutation.isPending || enrollmentsLoading}
+                    >
+                      {enrollMutation.isPending
+                        ? "Processing..."
+                        : "Complete Payment"}
+                    </Button>
                   ) : (
                     <Button
                       size="lg"
@@ -387,7 +418,10 @@ const CourseDetails = () => {
                         </div>
                         <Button
                           variant={
-                            enrolledCohortIds.includes(cohort.id)
+                            enrolledCohortIds.includes(cohort.id) ||
+                            pendingCohortEnrollments.some(
+                              (e) => e.cohortId === cohort.id,
+                            )
                               ? "outline"
                               : "ghost"
                           }
@@ -395,10 +429,20 @@ const CourseDetails = () => {
                           className={`font-black text-[11px] uppercase tracking-widest rounded-xl px-4 ${
                             enrolledCohortIds.includes(cohort.id)
                               ? "bg-slate-100 text-slate-500 border-slate-200 cursor-default"
-                              : "text-[#1C2840] hover:text-[#E6A337] hover:bg-[#E6A337]/5 border border-slate-200 hover:border-[#E6A337]/40"
+                              : pendingCohortEnrollments.some(
+                                    (e) => e.cohortId === cohort.id,
+                                  )
+                                ? "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100"
+                                : "text-[#1C2840] hover:text-[#E6A337] hover:bg-[#E6A337]/5 border border-slate-200 hover:border-[#E6A337]/40"
                           }`}
                           onClick={() => {
-                            if (!enrolledCohortIds.includes(cohort.id)) {
+                            if (
+                              pendingCohortEnrollments.some(
+                                (e) => e.cohortId === cohort.id,
+                              )
+                            ) {
+                              handleEnrollCohort(cohort.id);
+                            } else if (!enrolledCohortIds.includes(cohort.id)) {
                               setSelectedEnrollmentType(cohort.id);
                               setShowEnrollModal(true);
                             }
@@ -406,7 +450,11 @@ const CourseDetails = () => {
                         >
                           {enrolledCohortIds.includes(cohort.id)
                             ? "Enrolled"
-                            : "Select Cohort"}
+                            : pendingCohortEnrollments.some(
+                                  (e) => e.cohortId === cohort.id,
+                                )
+                              ? "Complete Payment"
+                              : "Select Cohort"}
                         </Button>
                       </div>
                     </div>
@@ -592,73 +640,87 @@ const CourseDetails = () => {
 
             {/* Cohort Options */}
             {cohorts.length > 0 &&
-              cohorts.map((cohort: any) => (
-                <button
-                  key={cohort.id}
-                  type="button"
-                  onClick={() => {
-                    if (!enrolledCohortIds.includes(cohort.id)) {
-                      setSelectedEnrollmentType(cohort.id);
-                    }
-                  }}
-                  className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
-                    selectedEnrollmentType === cohort.id
-                      ? "border-[#E6A337] bg-[#E6A337]/5 shadow-sm"
-                      : enrolledCohortIds.includes(cohort.id)
-                        ? "border-slate-100 bg-slate-50 opacity-60 cursor-default"
-                        : "border-gray-100 bg-white hover:border-[#E6A337]/40"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm leading-none font-roboto">
-                        {cohort.name}
-                      </h4>
-                      <p className="text-[10px] text-slate-500 mt-1.5 font-bold uppercase tracking-wider">
-                        {enrolledCohortIds.includes(cohort.id)
-                          ? "Already Member"
-                          : "Instructor-Led Cohort"}
-                      </p>
-                    </div>
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                        selectedEnrollmentType === cohort.id
-                          ? "border-[#E6A337]"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {selectedEnrollmentType === cohort.id && (
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#E6A337]" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-y-2 text-[11px] text-slate-500 font-medium">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      <span>
-                        {new Date(cohort.startDate).toLocaleDateString(
-                          undefined,
-                          { month: "short", day: "numeric" },
-                        )}{" "}
-                        –{" "}
-                        {new Date(cohort.endDate).toLocaleDateString(
-                          undefined,
-                          { month: "short", day: "numeric", year: "numeric" },
+              cohorts.map((cohort: any) => {
+                const isEnrolled = enrolledCohortIds.includes(cohort.id);
+                const isPending = pendingCohortEnrollments.some(
+                  (e) => e.cohortId === cohort.id,
+                );
+                return (
+                  <button
+                    key={cohort.id}
+                    type="button"
+                    onClick={() => {
+                      if (!isEnrolled) {
+                        setSelectedEnrollmentType(cohort.id);
+                      }
+                    }}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
+                      selectedEnrollmentType === cohort.id
+                        ? "border-[#E6A337] bg-[#E6A337]/5 shadow-sm"
+                        : isEnrolled
+                          ? "border-slate-100 bg-slate-50 opacity-60 cursor-default"
+                          : isPending
+                            ? "border-amber-200 bg-amber-50"
+                            : "border-gray-100 bg-white hover:border-[#E6A337]/40"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm leading-none font-roboto">
+                          {cohort.name}
+                        </h4>
+                        <p className="text-[10px] text-slate-500 mt-1.5 font-bold uppercase tracking-wider">
+                          {isEnrolled
+                            ? "Already Member"
+                            : isPending
+                              ? "Payment Pending"
+                              : "Instructor-Led Cohort"}
+                        </p>
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                          selectedEnrollmentType === cohort.id
+                            ? "border-[#E6A337]"
+                            : isPending
+                              ? "border-amber-400"
+                              : "border-gray-300"
+                        }`}
+                      >
+                        {selectedEnrollmentType === cohort.id && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#E6A337]" />
                         )}
-                      </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5 text-slate-400" />
-                      <span>Limited Seats</span>
+
+                    <div className="grid grid-cols-2 gap-y-2 text-[11px] text-slate-500 font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <span>
+                          {new Date(cohort.startDate).toLocaleDateString(
+                            undefined,
+                            { month: "short", day: "numeric" },
+                          )}{" "}
+                          –{" "}
+                          {new Date(cohort.endDate).toLocaleDateString(
+                            undefined,
+                            { month: "short", day: "numeric", year: "numeric" },
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-slate-400" />
+                        <span>Limited Seats</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 col-span-2">
+                        <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
+                        <span>
+                          Includes live sessions & instructor feedback
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 col-span-2">
-                      <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
-                      <span>Includes live sessions & instructor feedback</span>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
           </div>
 
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
@@ -689,7 +751,14 @@ const CourseDetails = () => {
                     (typeof selectedEnrollmentType === "number" &&
                       enrolledCohortIds.includes(selectedEnrollmentType))
                   ? "Already Enrolled"
-                  : "Secure My Spot"}
+                  : selectedEnrollmentType === "self-paced" && isPendingPayment
+                    ? "Resume Payment"
+                    : typeof selectedEnrollmentType === "number" &&
+                        pendingCohortEnrollments.some(
+                          (e) => e.cohortId === selectedEnrollmentType,
+                        )
+                      ? "Complete Payment"
+                      : "Secure My Spot"}
             </Button>
           </div>
 

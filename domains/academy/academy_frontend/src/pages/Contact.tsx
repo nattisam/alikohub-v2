@@ -241,7 +241,7 @@ const Contact = () => {
       <CTASection
         title="Still Have Questions?"
         description="Our team is here to help you find the right pathway for your career goals."
-        primaryText="Apply Now"
+        primaryText="Access LMS"
         secondaryText="Explore Pathways"
       />
 

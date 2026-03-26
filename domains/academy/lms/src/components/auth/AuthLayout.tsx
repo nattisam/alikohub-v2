@@ -112,32 +112,42 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-background">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 md:p-16 lg:p-20 bg-background/50 backdrop-blur-sm">
+        <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           {/* Mobile logo */}
-          <div className="lg:hidden flex flex-col items-center gap-4">
-            <img
-              src={alikoLogo}
-              alt="Aliko Academy"
-              width={100}
-              height={100}
-              className="block"
-            />
-            <span className="text-xl font-bold text-foreground tracking-tight">
-              Aliko Academy
-            </span>
+          <div className="lg:hidden flex flex-col items-center gap-4 mb-8">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+              <img
+                src={alikoLogo}
+                alt="Aliko Academy"
+                width={120}
+                height={120}
+                className="relative block h-auto w-auto drop-shadow-xl transform hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            <div className="text-center">
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent tracking-tight">
+                Aliko Academy
+              </span>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60 mt-1">
+                Learn · Grow · Succeed
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-1.5 transition-all duration-300">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+          <div className="space-y-2 transition-all duration-300 text-center lg:text-left">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
               {heading}
             </h2>
             {subheading && (
-              <p className="text-muted-foreground">{subheading}</p>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                {subheading}
+              </p>
             )}
           </div>
 
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="bg-card/50 backdrop-blur-md sm:bg-card sm:p-8 sm:rounded-3xl sm:border sm:border-border/50 sm:shadow-2xl sm:shadow-primary/5">
             {children}
           </div>
         </div>

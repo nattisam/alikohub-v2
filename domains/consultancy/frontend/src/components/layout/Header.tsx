@@ -1,10 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import logo from "@/assets/Aliko Consultancy - tbg (V).png";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { label: "Home", href: "/" },
   { label: "Business Consulting", href: "/business-consulting" },
   { label: "Career Guidance", href: "/career-guidance" },
   {
@@ -31,14 +31,13 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 bg-navy backdrop-blur-md border-b border-border">
       <div className="container-wide flex items-center justify-between h-16 px-4 lg:px-8">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="font-serif text-xl font-bold text-primary-foreground tracking-tight">
-            Aliko <span className="text-gradient-gold">Consultancy</span>
-          </span>
-        </Link>
+        <div className="flex items-center gap-2 lg:gap-6">
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt="Aliko Consultancy Logo" className="h-14 md:h-16 w-auto object-contain" />
+          </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-2">
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-2">
           {navItems.map((item) =>
             item.children ? (
               <div key={item.label} className="relative group">
@@ -82,6 +81,7 @@ const Header = () => {
             )
           )}
         </nav>
+        </div>
 
         <div className="flex items-center gap-3">
           <Link to="/book">

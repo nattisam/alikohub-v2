@@ -57,7 +57,7 @@ const formSchema = z.object({
     .array(
       z.object({
         question: z.string(),
-        answer: z.string().min(20, "Please provide more details"),
+        answer: z.string().min(1, "Please provide an answer"),
       }),
     )
     .length(3),
@@ -73,7 +73,7 @@ const ApplyInstructor = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema as any),
     defaultValues: {
       personalDetails: {
         firstname: user?.firstname || "",
@@ -96,7 +96,12 @@ const ApplyInstructor = () => {
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "teachingCategories" as any, // Type cast to avoid deep type issues
+    name: "teachingCategories",
+  });
+
+  const { fields: interviewFields } = useFieldArray({
+    control: form.control,
+    name: "interviewResponses",
   });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +115,10 @@ const ApplyInstructor = () => {
 
     try {
       const result = await uploadMutation.mutateAsync(file);
-      form.setValue("resumeUrl", result.url, { shouldValidate: true });
+      form.setValue("resumeUrl", result.url, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
       toast.success("Resume uploaded successfully");
     } catch (error) {
       console.error("Upload failed", error);
@@ -212,6 +220,45 @@ const ApplyInstructor = () => {
             </p>
             <div className="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 italic text-sm text-slate-400">
               Estimated review time: 2-3 business days
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  const isRejected =
+    user?.roleStatus?.instructor?.toUpperCase() === "REJECTED" ||
+    instructorStatus === "REJECTED";
+
+  if (isRejected && !form.formState.isDirty && !form.formState.isSubmitted) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50">
+        <Navbar />
+        <main className="flex-grow container max-w-4xl mx-auto px-4 py-20 flex items-center justify-center">
+          <Card className="w-full border-none shadow-2xl text-center p-12 bg-white rounded-3xl relative">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-400 to-rose-500" />
+            <div className="mb-6 inline-flex p-4 rounded-3xl bg-red-50 text-red-600">
+              <AlertCircle size={48} />
+            </div>
+            <h1 className="text-4xl font-heading font-bold mb-4 text-slate-900">
+              Application Not Accepted
+            </h1>
+            <p className="text-slate-500 text-lg max-w-md mx-auto leading-relaxed">
+              Unfortunately, your application was not accepted at this time.
+              Don't worry, you can refine your profile and re-apply anytime!
+            </p>
+            <div className="mt-8">
+              <Button
+                onClick={() => {
+                  // This is a trick to reset the rejected view and show the form
+                  form.reset();
+                  // Force a re-render by setting a bit of state if needed or just let it be
+                }}
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 px-8 text-lg shadow-xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Start New Application
+              </Button>
             </div>
           </Card>
         </main>
@@ -478,30 +525,30 @@ const ApplyInstructor = () => {
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-900 uppercase tracking-widest border-l-4 border-slate-900 pl-4 py-1">
                       4. Self-Assessment
                     </div>
-                    {form
-                      .getValues("interviewResponses")
-                      .map((response, index) => (
-                        <FormField
-                          key={index}
-                          control={form.control}
-                          name={`interviewResponses.${index}.answer` as any}
-                          render={({ field }) => (
-                            <FormItem className="space-y-3">
-                              <FormLabel className="text-slate-800 font-bold leading-relaxed">
-                                {response.question}
-                              </FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Share your experience and thoughts..."
-                                  className="min-h-[120px] rounded-2xl p-4 focus-visible:ring-slate-900 resize-none border-slate-200"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      ))}
+                    {interviewFields.map((field, index) => (
+                      <FormField
+                        key={field.id}
+                        control={form.control}
+                        name={`interviewResponses.${index}.answer` as any}
+                        render={({ field: inputField }) => (
+                          <FormItem className="space-y-3">
+                            <FormLabel className="text-slate-800 font-bold leading-relaxed">
+                              {form.getValues(
+                                `interviewResponses.${index}.question` as any,
+                              )}
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Share your experience and thoughts..."
+                                className="min-h-[120px] rounded-2xl p-4 focus-visible:ring-slate-900 resize-none border-slate-200"
+                                {...inputField}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ))}
                   </div>
 
                   <div className="pt-6">

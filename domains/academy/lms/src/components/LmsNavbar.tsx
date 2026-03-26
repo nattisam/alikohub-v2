@@ -12,6 +12,8 @@ import {
   Settings,
   Camera,
   Repeat,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,6 +76,11 @@ const LmsNavbar = () => {
     instructorStatus === "ACTIVE" ||
     user?.roleStatus?.instructor === "ACTIVE" ||
     user?.roleStatus?.instructor?.toUpperCase() === "ACTIVE";
+  const isPending =
+    user?.hasTeacherApplication ||
+    instructorStatus === "PENDING" ||
+    user?.roleStatus?.instructor === "pending" ||
+    user?.roleStatus?.instructor?.toUpperCase() === "PENDING";
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
@@ -116,16 +123,37 @@ const LmsNavbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          {isInstructor && (
+          {isInstructor ? (
             <Button
               variant="outline"
               size="sm"
               onClick={handleSwitchRole}
               disabled={isSwitching}
-              className="gap-2"
+              className="gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             >
               <Repeat className="w-4 h-4" />
               Switch to Instructor
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="gap-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+            >
+              <Link to="/instructor/apply">
+                {isPending ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    Application Pending
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Become an Instructor
+                  </>
+                )}
+              </Link>
             </Button>
           )}
 
@@ -276,12 +304,12 @@ const LmsNavbar = () => {
               </Link>
             ),
           )}
-          {isInstructor && (
+          {isInstructor ? (
             <div className="pt-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start gap-2"
+                className="w-full justify-start gap-2 border-emerald-500/20 text-emerald-600"
                 onClick={() => {
                   handleSwitchRole();
                   setOpen(false);
@@ -290,6 +318,30 @@ const LmsNavbar = () => {
               >
                 <Repeat className="w-4 h-4" />
                 Switch to Instructor
+              </Button>
+            </div>
+          ) : (
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 border-primary/20 text-primary"
+                asChild
+                onClick={() => setOpen(false)}
+              >
+                <Link to="/instructor/apply">
+                  {isPending ? (
+                    <>
+                      <Clock className="w-4 h-4" />
+                      Application Pending
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Become an Instructor
+                    </>
+                  )}
+                </Link>
               </Button>
             </div>
           )}

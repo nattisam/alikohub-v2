@@ -150,20 +150,12 @@ function SSOProvider({ children }: { children: React.ReactNode }) {
     if (!isLoading) {
       if (isAuthenticated && user) {
         queryClient.setQueryData(["user"], user);
-      } else if (!isAuthenticated && !user) {
-        // Only clear the query data if we were previously using SSO
-        // This prevents wiping manual login sessions
-        const authProvider = localStorage.getItem("auth_provider");
-        if (authProvider === "sso" || !localStorage.getItem("accessToken")) {
-          queryClient.setQueryData(["user"], null);
-        }
       }
     }
   }, [isAuthenticated, isLoading, user, queryClient]);
 
   return <>{children}</>;
 }
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -177,14 +169,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
 
-            {/* Public Auth Routes (Redirect if logged in) */}
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-            </Route>
-
-            {/* Email Verification Route */}
-            <Route path="/verify-email" element={<VerifyEmail />} />
+            {/* Public Auth Routes Removed */}
 
             {/* Payment Success Route */}
             <Route path="/payment/success" element={<PaymentSuccess />} />
@@ -203,7 +188,6 @@ const App = () => (
 
             {/* Protected LMS Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/apply-instructor" element={<ApplyInstructor />} />
               <Route path="/lms" element={<LmsDashboard />} />
               <Route path="/instructor/lms" element={<InstructorDashboard />} />
               <Route
@@ -270,8 +254,7 @@ const App = () => (
               path="/stem/certifications"
               element={<StemCertifications />}
             />
-            <Route path="/stem/student-login" element={<StemStudentLogin />} />
-            <Route path="/stem/apply" element={<StemApply />} />
+            {/* STEM Student Login and Apply Removed */}
             <Route
               path="/stem/my-applications"
               element={<StemMyApplications />}
@@ -289,11 +272,7 @@ const App = () => (
             <Route path="/health/about" element={<HealthAbout />} />
             <Route path="/health/contact" element={<HealthContact />} />
             <Route path="/health/policies" element={<HealthPolicies />} />
-            <Route
-              path="/health/student-login"
-              element={<HealthStudentLogin />}
-            />
-            <Route path="/health/apply" element={<HealthApply />} />
+            {/* Health Student Login and Apply Removed */}
             <Route path="/health/admissions" element={<HealthAdmissions />} />
             <Route path="/health/exam-prep" element={<HealthExamPrep />} />
             <Route
@@ -400,7 +379,7 @@ const App = () => (
             <Route path="/technology/outcomes" element={<TechOutcomes />} />
             <Route path="/technology/tuition" element={<TechTuition />} />
             <Route path="/technology/admissions" element={<TechAdmissions />} />
-            <Route path="/technology/apply" element={<TechApply />} />
+            {/* Technology Apply Removed */}
             <Route path="/technology/mentors" element={<TechMentors />} />
             <Route path="/technology/partners" element={<TechPartners />} />
             <Route
@@ -420,10 +399,7 @@ const App = () => (
               path="/technology/policies/:policy"
               element={<TechPolicies />}
             />
-            <Route
-              path="/technology/student-login"
-              element={<TechStudentLogin />}
-            />
+            {/* Technology Student Login Removed */}
             <Route path="/technology/enterprise" element={<TechEnterprise />} />
 
             {/* Technology Admin Routes */}

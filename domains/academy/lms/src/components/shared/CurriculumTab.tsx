@@ -480,7 +480,7 @@ export const CurriculumTab = ({
                         data:
                           course?.modules
                             ?.flatMap((m) => m.lessons)
-                            ?.find((l) => l.id === selectedItem.lessonId)
+                            ?.find((l) => l?.id === selectedItem.lessonId)
                             ?.exercises || [],
                         moduleId: selectedItem.moduleId,
                         lessonId: selectedItem.lessonId,

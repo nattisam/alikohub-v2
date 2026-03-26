@@ -16,13 +16,12 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
-import { useCourseBySlug, useEnrollInCourse } from "@/hooks/useAcademy";
+import { useCourseBySlug } from "@/hooks/useAcademy";
 
 const ProgramDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { data: apiProgram, isLoading } = useCourseBySlug(slug || "");
-  const enrollMutation = useEnrollInCourse();
 
   // Prefer API data
   const programData = apiProgram;
@@ -77,17 +76,7 @@ const ProgramDetail = () => {
     : null;
 
   const handleEnroll = () => {
-    if (!program) return;
-    enrollMutation.mutate(
-      { courseId: program.id.toString(), paymentGateway: "CHAPA" },
-      {
-        onSuccess: (responseData: any) => {
-          if (!responseData?.checkoutUrl) {
-            navigate(`/lms/learn/${program.id}`);
-          }
-        },
-      },
-    );
+    window.location.href = "https://lms.alikohub.com";
   };
 
   if (isLoading) {
@@ -216,18 +205,11 @@ const ProgramDetail = () => {
                 </div>
                 <Button
                   onClick={handleEnroll}
-                  disabled={
-                    enrollMutation.isPending ||
-                    program.enrollmentStatus !== "open"
-                  }
+                  disabled={program.enrollmentStatus !== "open"}
                   className="w-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
                   size="lg"
                 >
-                  {enrollMutation.isPending
-                    ? "Enrolling..."
-                    : program.enrollmentStatus === "open"
-                      ? "Enroll Now"
-                      : "Join Waitlist"}
+                  Access LMS
                 </Button>
               </CardContent>
             </Card>
@@ -500,13 +482,10 @@ const ProgramDetail = () => {
                   </Badge>
                   <Button
                     onClick={handleEnroll}
-                    disabled={
-                      enrollMutation.isPending ||
-                      program.enrollmentStatus !== "open"
-                    }
+                    disabled={program.enrollmentStatus !== "open"}
                     className="w-full mt-4 shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
                   >
-                    {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
+                    Access LMS
                   </Button>
                 </CardContent>
               </Card>

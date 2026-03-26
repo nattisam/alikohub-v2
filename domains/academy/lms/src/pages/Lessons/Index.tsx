@@ -34,12 +34,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import PdfViewer from "./components/PdfViewer";
 
 const LmsLearn = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: course, isLoading } = useCourseDetails(id || "");
-  const { data: enrollments } = useEnrollments();
+  const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
   const { data: analytics } = useStudentAnalytics();
   const markCompleteMutation = useMarkLessonComplete();
   const submitExerciseMutation = useSubmitExercise();
@@ -48,7 +49,14 @@ const LmsLearn = () => {
     id || "",
   );
 
-  const enrollment = enrollments?.find((e) => e.courseId === id);
+  const enrollment = enrollments?.find(
+    (e) =>
+      String(e.courseId) === String(id) || String(e.course?.id) === String(id),
+  );
+
+  const isEnrolled =
+    enrollment &&
+    (enrollment.status === "ACTIVE" || enrollment.status === "COMPLETED");
 
   // Find progress from dashboard data
   const courseProgressData = dashboardData?.find(
@@ -71,6 +79,10 @@ const LmsLearn = () => {
   const [isAnswered, setIsAnswered] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
 
   // Find active data
   const flatLessons = course?.modules?.flatMap((m) => m.lessons || []) || [];
@@ -206,11 +218,46 @@ const LmsLearn = () => {
         </h2>
         <p className="text-slate-500 mb-6 text-center max-w-md">
           We couldn't find the course you're looking for. It might have been
-          removed or you don't have access.
+          removed.
         </p>
         <Button onClick={() => navigate("/dashboard")} className="rounded-xl">
           Return to My Learning
         </Button>
+      </div>
+    );
+  }
+
+  if (!enrollmentsLoading && !isEnrolled) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+        <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mb-6 border border-amber-100 shadow-sm">
+          <Lock className="w-10 h-10 text-amber-500" />
+        </div>
+        <h2 className="text-3xl font-black font-heading text-slate-900 mb-3 tracking-tight">
+          Access Restricted
+        </h2>
+        <p className="text-slate-500 mb-8 text-center max-w-md font-medium leading-relaxed">
+          {enrollment?.status === "PENDING"
+            ? "Your enrollment is currently pending. This usually means payment is required or approval is in progress."
+            : "You are not enrolled in this course yet. Enroll now to get instant access to all learning materials."}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button
+            onClick={() => navigate(`/courses/${id}`)}
+            className="rounded-2xl h-12 px-8 bg-slate-900 hover:bg-slate-800 font-bold shadow-lg shadow-slate-900/10 active:scale-95 transition-all"
+          >
+            {enrollment?.status === "PENDING"
+              ? "View Enrollment Status"
+              : "Go to Enrollment Page"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/dashboard")}
+            className="rounded-2xl h-12 px-8 border-slate-200 hover:bg-slate-50 font-bold active:scale-95 transition-all"
+          >
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -679,18 +726,23 @@ const LmsLearn = () => {
                         </div>
                       </div>
                       <Button
-                        asChild
                         size="sm"
                         variant="outline"
                         className="bg-white rounded-xl px-5 h-10 font-bold border-slate-200 hover:border-primary hover:text-primary shadow-sm"
+                        onClick={() => {
+                          if (content.type === "PDF") {
+                            setSelectedPdf({
+                              url: getFullUrl(content.url),
+                              title: content.title,
+                            });
+                          } else {
+                            window.open(getFullUrl(content.url), "_blank");
+                          }
+                        }}
                       >
-                        <a
-                          href={getFullUrl(content.url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          View Resource
-                        </a>
+                        {content.type === "PDF"
+                          ? "Open Viewer"
+                          : "View Resource"}
                       </Button>
                     </div>
                   )}
@@ -788,7 +840,7 @@ const LmsLearn = () => {
               </h2>
 
               <div className="flex flex-col gap-4">
-                {activeLesson?.exercises?.length > 0 && (
+                {(activeLesson?.exercises?.length ?? 0) > 0 && (
                   <button
                     onClick={() => setViewMode("quizzes")}
                     className="flex items-center gap-4 rounded-3xl border border-slate-100 p-5 text-left bg-white shadow-inset hover:bg-slate-50 transition-all hover:shadow-card-hover relative overflow-hidden group"
@@ -803,7 +855,7 @@ const LmsLearn = () => {
                         Lesson Assessment
                       </span>
                       <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
-                        {activeLesson.exercises.length} Questions • Start Quiz
+                        {activeLesson?.exercises?.length} Questions • Start Quiz
                       </span>
                     </div>
                   </button>
@@ -1001,6 +1053,14 @@ const LmsLearn = () => {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
       `}</style>
+      {/* PDF Viewer Overlay */}
+      {selectedPdf && (
+        <PdfViewer
+          url={selectedPdf.url}
+          title={selectedPdf.title}
+          onClose={() => setSelectedPdf(null)}
+        />
+      )}
     </div>
   );
 };

@@ -39,9 +39,11 @@ const About = () => {
               <Button
                 size="lg"
                 className="bg-white text-slate-900 hover:bg-white/90"
-                asChild
+                onClick={() =>
+                  (window.location.href = "https://lms.alikohub.com")
+                }
               >
-                <Link to="/register">Apply Now</Link>
+                Access LMS
               </Button>
             </div>
           </div>

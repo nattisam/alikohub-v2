@@ -9,6 +9,7 @@ import {
   Radio,
   PlayCircle,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -100,6 +101,22 @@ const StudentDashboard = () => {
     dashboard && Array.isArray(dashboard) && dashboard.length > 0
       ? sumPercentage
       : calculatedProgress || 0;
+
+  const instructorStatus = user?.instructorStatus?.toUpperCase();
+  const isInstructor =
+    user?.globalRole === "ADMIN" ||
+    user?.academyUser?.role === "INSTRUCTOR" ||
+    instructorStatus === "ACCEPTED" ||
+    instructorStatus === "APPROVED" ||
+    instructorStatus === "ACTIVE" ||
+    user?.roleStatus?.instructor === "ACTIVE" ||
+    user?.roleStatus?.instructor?.toUpperCase() === "ACTIVE";
+
+  const isPending =
+    user?.hasTeacherApplication ||
+    instructorStatus === "PENDING" ||
+    user?.roleStatus?.instructor === "pending" ||
+    user?.roleStatus?.instructor?.toUpperCase() === "PENDING";
 
   return (
     <div className="min-h-screen bg-background">
@@ -372,6 +389,30 @@ const StudentDashboard = () => {
                 ))}
               </div>
             </div>
+
+            {/* INSTRUCTOR CTA */}
+            {!isInstructor && (
+              <div className="bg-slate-900 rounded-lg p-6 text-white text-center shadow-lg shadow-slate-200/20">
+                <Sparkles className="w-8 h-8 text-accent mx-auto mb-3" />
+                <h3 className="text-lg font-heading font-bold mb-2">
+                  {isPending ? "Application Pending" : "Share your Knowledge"}
+                </h3>
+                <p className="text-white/60 text-xs mb-4 leading-relaxed">
+                  {isPending
+                    ? "Our team is currently reviewing your instructor profile. We'll be in touch soon!"
+                    : "Become an instructor and share your expertise with thousands of students globally."}
+                </p>
+                <Button
+                  asChild
+                  className="w-full bg-white text-slate-900 hover:bg-white/90 font-bold"
+                  size="sm"
+                >
+                  <Link to="/instructor/apply">
+                    {isPending ? "View Application" : "Apply as Instructor"}
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

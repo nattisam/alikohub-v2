@@ -56,13 +56,15 @@ export function Footer() {
                   rewarding future.
                 </p>
               </div>
-              <Link
-                to="/health/apply"
+              <button
+                onClick={() =>
+                  (window.location.href = "https://lms.alikohub.com")
+                }
                 className="group flex items-center gap-2 px-6 py-3 bg-teal text-teal-foreground font-semibold rounded-lg hover:bg-teal/90 transition-all duration-300 shadow-lg whitespace-nowrap"
               >
-                Apply Now
+                Access LMS
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
             </div>
           </div>
 

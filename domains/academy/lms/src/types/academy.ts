@@ -174,7 +174,9 @@ export interface Enrollment {
   context?: "COURSE_ONLY" | "COHORT_BASED";
   cohortRole?: "STUDENT" | "TEACHING_ASSISTANT";
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED";
-  status: "ACTIVE" | "COMPLETED" | "CANCELLED" | "DROPPED";
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED" | "DROPPED" | "PENDING";
+  paymentStatus?: "PENDING" | "PAID" | "FAILED" | "REFUNDED" | null;
+  checkoutUrl?: string | null;
   progress: number;
   course?: Course;
   cohort?: Cohort;

@@ -99,11 +99,14 @@ export function HowItWorks() {
 
         {/* CTA */}
         <div className="mt-12 text-center">
-          <Button asChild size="lg" variant="outline" className="group">
-            <Link to="/health/apply">
-              Start Your Journey Today
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+          <Button
+            size="lg"
+            variant="outline"
+            className="group"
+            onClick={() => (window.location.href = "https://lms.alikohub.com")}
+          >
+            Start Your Journey Today
+            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
       </div>

@@ -442,8 +442,14 @@ const Tuition = () => {
                 <Button asChild size="lg" className="shadow-lg">
                   <Link to="/health/contact">Contact Admissions</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link to="/health/apply">Apply Now</Link>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() =>
+                    (window.location.href = "https://lms.alikohub.com")
+                  }
+                >
+                  Access LMS
                 </Button>
               </div>
             </div>
