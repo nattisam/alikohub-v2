@@ -81,8 +81,11 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
                 key={label}
                 className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 bg-white/5 border border-white/10 backdrop-blur-md"
               >
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 bg-blue-500/20">
-                  <Icon size={14} className="text-blue-300" />
+                <div
+                  className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0"
+                  style={{ backgroundColor: "rgba(227, 151, 28, 0.2)" }}
+                >
+                  <Icon size={14} style={{ color: "#E3971C" }} />
                 </div>
                 <span className="text-xs font-medium text-white/80">
                   {label}

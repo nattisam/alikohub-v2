@@ -131,7 +131,7 @@ export const academyService = {
   },
 
   updateProfile: async (data: any) => {
-    const response = await api.post("/academy/profile", data);
+    const response = await api.post("/users/profile", data);
     return response.data;
   },
 

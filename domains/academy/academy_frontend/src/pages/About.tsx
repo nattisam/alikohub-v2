@@ -53,25 +53,55 @@ const About = () => {
       {/* Why We Exist */}
       <section className="section-padding">
         <div className="section-container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+            {/* Left */}
             <div>
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-6">
                 Why We Exist
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+
+              <p className="text-lg text-muted-foreground leading-relaxed mb-6">
                 Talent is universal, but opportunity is not.
               </p>
+
+              <p className="text-muted-foreground leading-relaxed">
+                Aliko Academy exists to close this gap by aligning in-demand
+                skills with real labor market needs across public health
+                systems, infrastructure development, and emerging digital
+                industries.
+              </p>
             </div>
-            <div className="space-y-4">
-              <p className="text-muted-foreground leading-relaxed">
-                Aliko Academy bridges that gap by aligning in-demand skills with
-                labor markets, public health systems, infrastructure
-                development, and emerging digital industries.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                We prepare learners not just for employment, but for leadership
-                and contribution.
-              </p>
+
+            {/* Right */}
+            <div className="space-y-6">
+              {/* Card 1 */}
+              <div className="flex gap-4 items-start p-5 rounded-lg border bg-background/50 hover:shadow-sm transition">
+                <div className="w-2 h-10 bg-blue-500 rounded-full mt-1" />
+                <p className="text-muted-foreground leading-relaxed">
+                  We connect learning directly to workforce demand, ensuring
+                  skills translate into real economic opportunity.
+                </p>
+              </div>
+
+              {/* Card 2 */}
+              <div className="flex gap-4 items-start p-5 rounded-lg border bg-background/50 hover:shadow-sm transition">
+                <div className="w-2 h-10 bg-emerald-500 rounded-full mt-1" />
+                <p className="text-muted-foreground leading-relaxed">
+                  We support critical sectors including healthcare,
+                  infrastructure, and digital ecosystems shaping future
+                  economies.
+                </p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="flex gap-4 items-start p-5 rounded-lg border bg-background/50 hover:shadow-sm transition">
+                <div className="w-2 h-10 bg-amber-500 rounded-full mt-1" />
+                <p className="text-muted-foreground leading-relaxed">
+                  We prepare individuals for leadership, enabling them to
+                  contribute meaningfully within systems—not just participate in
+                  them.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -7,6 +7,11 @@ import {
   Youtube,
   FileText,
   ChevronRight,
+  ChevronLeft,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
   HelpCircle,
   Eye,
   PlayCircle,
@@ -423,31 +428,126 @@ export const CurriculumTab = ({
       }
 
       if (data.type === "PDF") {
+        const pdfUrl = getFullUrl(data.url);
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="w-full h-[600px] rounded-[32px] overflow-hidden border border-slate-200 bg-white shadow-lg">
-              {data.url ? (
-                <iframe
-                  src={`${getFullUrl(data.url)}#toolbar=0`}
-                  className="w-full h-full"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-300">
-                  <FileText className="w-12 h-12 mb-2" />
-                  <p>No PDF available</p>
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500 max-w-5xl mx-auto">
+            <div className="overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-xl flex flex-col h-[750px]">
+              {/* Header inspired by LearnWise */}
+              <div className="flex flex-col gap-3 border-b border-slate-100 px-8 py-6 sm:flex-row sm:items-center sm:justify-between bg-slate-50/30">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">
+                    <FileText size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 font-heading">
+                      {data.title}
+                    </h3>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Badge className="bg-blue-100 text-blue-700 border-none font-bold text-[10px] px-2 py-0.5">
+                        PDF DOCUMENT
+                      </Badge>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        Instructor View
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-              <Badge
-                variant="secondary"
-                className="bg-blue-50 text-blue-600 border-none font-bold mb-3"
-              >
-                Document
-              </Badge>
-              <h3 className="text-2xl font-bold text-slate-900 leading-tight">
-                {data.title}
-              </h3>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 rounded-xl px-4 font-bold border-slate-200 hover:bg-slate-50 gap-2"
+                    asChild
+                  >
+                    <a
+                      href={pdfUrl}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Download size={16} />
+                      Download
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
+              {/* PDF toolbar */}
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-2">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 disabled:opacity-30"
+                    disabled
+                  >
+                    <ChevronLeft size={16} />
+                  </Button>
+                  <span className="text-xs font-bold text-slate-500">
+                    Page 1
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 disabled:opacity-30"
+                    disabled
+                  >
+                    <ChevronRight size={16} />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <ZoomOut size={16} />
+                  </Button>
+                  <span className="text-xs font-bold text-slate-500">100%</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <ZoomIn size={16} />
+                  </Button>
+                  <div className="mx-2 h-4 w-px bg-slate-200" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Maximize2 size={16} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Document Area */}
+              <div className="flex-1 bg-slate-100/30 relative">
+                {data.url ? (
+                  <iframe
+                    src={`${pdfUrl}#toolbar=0`}
+                    className="w-full h-full border-0"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
+                    <FileText className="w-16 h-16 mb-2" />
+                    <p className="font-bold uppercase tracking-widest text-xs">
+                      No PDF Loaded
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-slate-100 px-8 py-4 bg-white flex items-center justify-between">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Select a document from your curriculum to update the preview
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:bg-red-50 font-bold h-8"
+                    onClick={() => {
+                      onDeleteContent(data.id);
+                      onSetSelectedItem(null);
+                    }}
+                  >
+                    Delete Content
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         );

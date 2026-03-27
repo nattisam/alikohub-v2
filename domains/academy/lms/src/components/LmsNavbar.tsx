@@ -211,7 +211,7 @@ const LmsNavbar = () => {
                   >
                     <User className="w-4 h-4" /> Profile
                   </Link>
-                  <Link
+                  {/* <Link
                     to="/photo"
                     onClick={() => setProfileOpen(false)}
                     className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
@@ -245,7 +245,7 @@ const LmsNavbar = () => {
                     className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                   >
                     <Settings className="w-4 h-4" /> Settings
-                  </Link>
+                  </Link> */}
                 </div>
 
                 <div className="border-t py-1">

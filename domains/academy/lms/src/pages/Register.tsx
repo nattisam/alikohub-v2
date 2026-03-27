@@ -174,7 +174,7 @@ const RegisterPage = () => {
                         <CheckCircle2
                           className={`h-3.5 w-3.5 transition-colors ${
                             c.test(passwordValue)
-                              ? "text-primary"
+                              ? "text-[#E3971C]"
                               : "text-muted-foreground/40"
                           }`}
                         />
