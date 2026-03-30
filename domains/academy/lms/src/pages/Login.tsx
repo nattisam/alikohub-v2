@@ -100,12 +100,6 @@ const LoginPage = () => {
                   <FormLabel className="text-sm font-semibold">
                     Password
                   </FormLabel>
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs font-medium text-primary hover:text-primary-foreground/80 hover:underline transition-all"
-                  >
-                    Forgot password?
-                  </Link>
                 </div>
                 <FormControl>
                   <PasswordInput
