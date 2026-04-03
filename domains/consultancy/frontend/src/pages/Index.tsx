@@ -26,7 +26,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 import heroVideo from "@/assets/hero-video.mp4";
 import pillarBusiness from "@/assets/pillar-business.jpg";
 import pillarCareer from "@/assets/pillar-career.jpg";
-import pillarTravel from "@/assets/pillar-travel.jpg";
+import pillarTravel from "@/assets/hero.jpg";
 
 const pillars = [
   {
@@ -147,7 +147,7 @@ const Index = () => {
     if (!api || isPaused) return;
     const interval = setInterval(() => {
       api.scrollNext();
-    }, 5000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [api, isPaused]);
 
@@ -163,7 +163,7 @@ const Index = () => {
           <CarouselContent className="ml-0">
             {/* Slide 1: Original Hero */}
             <CarouselItem className="pl-0">
-              <div className="relative min-h-[100vh] flex items-center">
+              <div className="relative h-screen flex items-center">
                 <img
                   src={heroBg}
                   alt=""
@@ -215,7 +215,7 @@ const Index = () => {
 
             {/* Slide 2: Application Search (FedEx Style) */}
             <CarouselItem className="pl-0">
-              <div className="relative min-h-[100vh] flex items-center">
+              <div className="relative h-screen flex items-center">
                 <img
                   src={pillarTravel}
                   alt="Track Application"
@@ -286,15 +286,23 @@ const Index = () => {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-card border-b border-border">
-        <div className="container-wide py-8 md:py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+      <section className="bg-[#081830] border-b border-white/10">
+        <div className="container-wide py-10 md:py-14">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
             {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-serif text-3xl md:text-4xl font-bold text-accent mb-1">
+              <div
+                key={stat.label}
+                className="group rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 md:p-7 text-center transition-all duration-300 hover:bg-white/10 hover:-translate-y-1"
+              >
+                <p className="font-serif text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
                   {stat.value}
                 </p>
-                <p className="text-muted-foreground text-sm">{stat.label}</p>
+
+                <div className="w-8 h-[2px] bg-gold/70 mx-auto mb-3 group-hover:bg-gold transition-all" />
+
+                <p className="text-white/70 text-sm md:text-[15px] tracking-wide">
+                  {stat.label}
+                </p>
               </div>
             ))}
           </div>

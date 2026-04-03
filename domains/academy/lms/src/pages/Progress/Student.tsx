@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { ArrowRight, Award, Clock } from "lucide-react";
+import { Award, CheckCircle2, MoreHorizontal, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import LmsNavbar from "@/components/LmsNavbar";
-import { useEnrollments, useStudentDashboard } from "@/hooks/useAcademy";
+import {
+  useEnrollments,
+  useStudentDashboard,
+  useStudentAnalytics,
+} from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -13,10 +17,13 @@ const LmsMyLearning = () => {
   const [activeTab, setActiveTab] = useState("In Progress");
   const { data: enrollments, isLoading: isEnrollmentsLoading } =
     useEnrollments();
+  const { data: analytics, isLoading: isAnalyticsLoading } =
+    useStudentAnalytics();
   const { data: dashboard, isLoading: isDashboardLoading } =
     useStudentDashboard();
 
-  const isLoading = isEnrollmentsLoading || isDashboardLoading;
+  const isLoading =
+    isEnrollmentsLoading || isAnalyticsLoading || isDashboardLoading;
 
   const filteredEnrollments = enrollments?.filter((enrollment) => {
     if (activeTab === "In Progress") return enrollment.status === "ACTIVE";
@@ -24,24 +31,73 @@ const LmsMyLearning = () => {
     return false;
   });
 
+  const totalLessonsAll =
+    enrollments?.reduce((acc, e) => acc + (e.course?.lessonsCount || 0), 0) ||
+    1;
+  const calculatedProgress = analytics
+    ? Math.min(
+        Math.round((analytics.lessonsViewed / totalLessonsAll) * 100),
+        100,
+      )
+    : 0;
+
+  let sumPercentage = 0;
+  if (dashboard && Array.isArray(dashboard) && dashboard.length > 0) {
+    const validProgresses = dashboard.filter(
+      (d: any) => typeof d.percentage === "number",
+    );
+    if (validProgresses.length > 0) {
+      sumPercentage = validProgresses.reduce(
+        (sum: number, d: any) => sum + d.percentage,
+        0,
+      );
+      sumPercentage = Math.round(sumPercentage / validProgresses.length);
+    }
+  }
+
+  const overallProgress =
+    dashboard && Array.isArray(dashboard) && dashboard.length > 0
+      ? sumPercentage
+      : calculatedProgress || 0;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <LmsNavbar />
 
-      <div className="section-container py-8 md:py-12">
-        <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground mb-6">
-          My Learning
-        </h1>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Stats Header - Overall Progress */}
+        <div className="mb-8 border rounded-lg p-6 bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 mb-1">
+              Overall Progress
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Average completion across all courses
+            </p>
+          </div>
+          <div className="flex-1 max-w-md">
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-slate-600 font-medium">
+                Learning Progress
+              </span>
+              <span className="font-bold text-slate-900">
+                {overallProgress}%
+              </span>
+            </div>
+            <Progress value={overallProgress} className="h-2.5 bg-slate-100" />
+          </div>
+        </div>
 
-        <div className="flex gap-1 mb-8 border-b">
+        {/* Navigation Tabs */}
+        <div className="flex gap-4 mb-6">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
                 activeTab === tab
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               {tab}
@@ -52,13 +108,13 @@ const LmsMyLearning = () => {
         {isLoading && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              <Skeleton key={i} className="h-24 w-full rounded-md" />
             ))}
           </div>
         )}
 
         {!isLoading && filteredEnrollments?.length === 0 && (
-          <div className="text-center py-16">
+          <div className="text-center py-16 border rounded-xl bg-slate-50">
             <p className="text-muted-foreground mb-4">
               {activeTab === "In Progress" &&
                 "You don't have any active courses yet."}
@@ -66,8 +122,7 @@ const LmsMyLearning = () => {
                 "You haven't completed any courses yet."}
               {activeTab === "Saved" && "You haven't saved any courses yet."}
             </p>
-
-            <Button asChild>
+            <Button asChild variant="outline">
               <Link to="/explore">Browse Courses</Link>
             </Button>
           </div>
@@ -76,106 +131,134 @@ const LmsMyLearning = () => {
         {!isLoading &&
           filteredEnrollments &&
           filteredEnrollments.length > 0 && (
-            <div className="space-y-4">
-              {filteredEnrollments.map((enrollment) => {
+            <div className="space-y-1 border rounded-lg overflow-hidden">
+              {filteredEnrollments.map((enrollment, index) => {
                 const pData =
                   dashboard && Array.isArray(dashboard)
                     ? dashboard.find(
-                        (d: any) => d.courseId === Number(enrollment.courseId),
+                        (d) => d.courseId === Number(enrollment.courseId),
                       )
                     : null;
+
                 const currentProgress = Math.round(
                   pData?.percentage || enrollment.progress || 0,
                 );
+                const isCompleted = enrollment.status === "COMPLETED";
 
                 return (
                   <div
                     key={enrollment.id}
-                    className="bg-card rounded-lg border overflow-hidden hover:shadow-md transition-shadow duration-200 flex"
+                    className={`p-4 bg-white flex flex-col gap-3 ${
+                      index !== filteredEnrollments.length - 1 ? "border-b" : ""
+                    }`}
                   >
-                    <div className="w-32 md:w-48 shrink-0">
-                      {enrollment.course?.thumbnail ? (
-                        <img
-                          src={enrollment.course.thumbnail}
-                          alt={enrollment.course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-muted">
-                          <span className="text-xs text-muted-foreground">
-                            No Image
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-5 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <span className="text-xs font-medium px-2.5 py-1 rounded-full stream-tech">
-                          {enrollment.course?.category || "General"}
-                        </span>
-
-                        <h3 className="font-heading font-semibold text-foreground mt-2">
-                          {enrollment.course?.title}
-                        </h3>
-
-                        {enrollment.status === "ACTIVE" && (
-                          <>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                              <Clock className="w-3 h-3" />
-                              In progress
-                            </div>
-
-                            <div className="mt-3 max-w-sm">
-                              <div className="flex justify-between text-xs mb-1">
-                                <span className="text-muted-foreground">
-                                  Progress
-                                </span>
-                                <span className="font-medium">
-                                  {currentProgress}%
-                                </span>
-                              </div>
-
-                              <Progress
-                                value={currentProgress}
-                                className="h-2"
-                              />
-                            </div>
-                          </>
+                    <div className="flex items-start justify-between">
+                      <div className="flex gap-3">
+                        {isCompleted ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-600 mt-1 shrink-0" />
+                        ) : (
+                          <div className="w-5 h-5 mt-1" /> // Spacer for alignment
                         )}
 
-                        {enrollment.status === "COMPLETED" && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Course completed
+                        <div>
+                          <h3 className="text-[15px] font-semibold text-slate-900 leading-snug">
+                            {enrollment.course?.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Course {index + 1} of {filteredEnrollments.length} •{" "}
+                            {isCompleted ? "Complete" : "In Progress"}
                           </p>
-                        )}
+
+                          <div className="flex items-center gap-4 mt-2">
+                            {isCompleted ? (
+                              <button className="text-[13px] font-medium text-blue-700 hover:underline">
+                                View certificate
+                              </button>
+                            ) : (
+                              <Link
+                                to={`/courses/${enrollment.courseId}`}
+                                className="text-[13px] font-medium text-blue-700 hover:underline"
+                              >
+                                View details
+                              </Link>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        {enrollment.status === "COMPLETED" && (
-                          <div className="flex items-center gap-2 text-accent">
-                            <Award className="w-5 h-5" />
-                            <span className="text-sm font-medium">
-                              Certificate Earned
+                      <button className="text-slate-400 hover:text-slate-600">
+                        <MoreHorizontal className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Progress Section - Shows only for active courses */}
+                    {!isCompleted && (
+                      <div className="pl-8 pr-2 py-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-200 overflow-hidden">
+                              {enrollment.course?.instructor?.profilePicture ? (
+                                <img
+                                  src={
+                                    enrollment.course.instructor.profilePicture
+                                  }
+                                  alt="Instructor"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white text-[10px] font-bold">
+                                  {enrollment.course?.instructor
+                                    ?.firstname?.[0] || "I"}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-sm font-medium text-slate-700">
+                              {enrollment.course?.instructor?.firstname}{" "}
+                              {enrollment.course?.instructor?.lastname}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Instructor
                             </span>
                           </div>
-                        )}
+                          <Button
+                            size="sm"
+                            asChild
+                            className="bg-blue-600 hover:bg-blue-700 px-6 rounded-md"
+                          >
+                            <Link to={`/learn/${enrollment.courseId}`}>
+                              Resume
+                            </Link>
+                          </Button>
+                        </div>
 
-                        <Button size="sm" asChild className="gap-1">
-                          <Link to={`/learn/${enrollment.courseId}`}>
-                            {enrollment.status === "COMPLETED"
-                              ? "Review"
-                              : "Continue"}
-                            <ArrowRight className="w-3 h-3" />
-                          </Link>
-                        </Button>
+                        <div className="space-y-1">
+                          <Progress
+                            value={currentProgress}
+                            className="h-1.5 bg-slate-100"
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            {currentProgress}% complete • Estimated completion:
+                            Apr 8, 2026
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
+
+        {/* Footer Credit - Coursera Style */}
+        <div className="mt-8 p-4 bg-blue-50/50 rounded-lg flex items-center gap-3 border border-blue-100">
+          <Award className="w-5 h-5 text-blue-600" />
+          <p className="text-sm text-slate-700">
+            Earn a career certificate and{" "}
+            <span className="text-blue-700 font-medium underline cursor-pointer">
+              build toward a degree
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

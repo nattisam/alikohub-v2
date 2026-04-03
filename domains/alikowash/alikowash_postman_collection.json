@@ -1,0 +1,193 @@
+{
+	"info": {
+		"_postman_id": "alikowash-api-collection",
+		"name": "Alikowash API",
+		"description": "API collection for Alikowash microservice integrated via API Gateway.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alikowash/projects",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "projects"]
+						}
+					}
+				},
+				{
+					"name": "Get Project By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alikowash/projects/:id",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "projects", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "project-id"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Project (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Village Borehole #1\",\n    \"location\": \"Rural Central\",\n    \"yearGc\": \"2024\",\n    \"systemType\": \"Borehole\",\n    \"capacityM3\": 500,\n    \"tags\": [\"water\", \"rural\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/alikowash/projects",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "projects"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Public Submissions",
+			"item": [
+				{
+					"name": "Submit Contact Inquiry",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"message\": \"I'm interested in partnership.\",\n    \"service_interest\": \"partnership\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/alikowash/contacts",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "contacts"]
+						}
+					}
+				},
+				{
+					"name": "Submit Donation Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"donorName\": \"Alice Smith\",\n    \"email\": \"alice@example.com\",\n    \"amount\": 100,\n    \"currency\": \"USD\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/alikowash/donations",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "donations"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Staff and CMS",
+			"item": [
+				{
+					"name": "Get Stories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alikowash/stories",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "stories"]
+						}
+					}
+				},
+				{
+					"name": "Get Team Members",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alikowash/team",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "team"]
+						}
+					}
+				},
+				{
+					"name": "Upsert Site Setting (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key\": \"homepage_hero\",\n    \"value\": {\n        \"title\": \"Clean Water Everywhere\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/alikowash/settings",
+							"host": ["{{base_url}}"],
+							"path": ["alikowash", "settings"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.alikohub_api_gateway.com"
+		},
+		{
+			"key": "token",
+			"value": "Bearer Token Here"
+		}
+	]
+}

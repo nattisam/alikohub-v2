@@ -1,4 +1,4 @@
-import alikoLogo from "@/assets/Aliko Academy - LMS 1.png";
+import alikoLogo from "@/assets/Aliko Academy LMS Icon.png";
 import { BookOpen, Award, Users, Zap } from "lucide-react";
 
 interface AuthLayoutProps {
@@ -27,8 +27,7 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
       <div
         className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-center justify-center p-4"
         style={{
-          background:
-            "linear-gradient(135deg, #15284a 0%, #223d6b 45%, #2f5591 100%)",
+          background: "#081830",
         }}
       >
         {/* Grid overlay */}
@@ -44,24 +43,23 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
         {/* Content */}
         <div className="relative z-10 text-center space-y-10 max-w-sm w-full">
           <div className="flex flex-col items-center">
-            {/* LOGO AREA (reserves space properly) */}
-            <div className="relative w-full h-32 flex items-center justify-center mb-4">
-              {/* Glow */}
-              <div className="absolute flex items-center justify-center">
-                <div className="w-72 h-36 bg-white/30 blur-[80px] rounded-full" />
-              </div>
-
+            <div className="relative w-full h-32 flex items-center justify-center">
               {/* Logo */}
               <img
                 src={alikoLogo}
                 alt="Aliko Academy"
-                className="relative z-10 h-32 w-auto object-contain
-                 drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]"
+                fetchPriority="high"
+                loading="eager"
+                className="relative z-10 h-24 w-auto object-contain translate-x-6
+                 drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]"
               />
             </div>
 
-            {/* Tagline (now safe, no overlap) */}
-            <div className="mt-2">
+            <div className="text-center">
+              <span className="text-3xl font-bold tracking-tight block mb-4">
+                <span style={{ color: "#0095DA" }}>Aliko</span>{" "}
+                <span style={{ color: "#F37E28" }}>Academy</span>
+              </span>
               <p
                 className="text-sm font-medium tracking-widest uppercase"
                 style={{
@@ -124,15 +122,16 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
         <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center gap-4 mb-8">
-            <div className="relative w-full h-20">
+            <div className="relative w-full h-20 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-40 h-20 bg-white/30 blur-2xl rounded-full" />
               </div>
               <img
                 src={alikoLogo}
                 alt="Aliko Academy"
-                className="absolute top-1/2 left-1/2 h-20 w-auto object-contain
-                           -translate-x-1/2 -translate-y-1/2"
+                fetchPriority="high"
+                loading="eager"
+                className="relative z-10 h-20 w-auto object-contain translate-x-4"
               />
             </div>
 

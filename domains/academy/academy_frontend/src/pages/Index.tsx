@@ -84,7 +84,7 @@ const Index = () => {
                     (window.location.href = "https://lms.alikohub.com")
                   }
                 >
-                  Access LMS
+                  Register
                 </Button>
               </div>
             </div>

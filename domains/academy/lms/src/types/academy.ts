@@ -40,6 +40,8 @@ export interface Course {
   createdAt: string;
   updatedAt: string;
   modules?: Module[];
+  skills?: string[];
+  outcomes?: string[];
 }
 
 export interface Module {

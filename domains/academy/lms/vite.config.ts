@@ -15,4 +15,25 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("lucide-react")) {
+              return "lucide-icons";
+            }
+            if (id.includes("@radix-ui")) {
+              return "radix-ui";
+            }
+            if (id.includes("framer-motion")) {
+              return "framer-motion";
+            }
+            return "vendor";
+          }
+        },
+      },
+    },
+  },
 });

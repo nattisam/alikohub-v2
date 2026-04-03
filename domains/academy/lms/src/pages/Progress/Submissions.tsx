@@ -123,8 +123,8 @@ const InstructorSubmissions = () => {
       </div>
 
       {/* ── Table Content ── */}
-      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div className="max-w-7xl mx-auto bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+        <div className="max-w-7xl mx-auto bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-0">
           <div className="overflow-auto flex-1">
             <Table>
               <TableHeader className="bg-slate-50/50">
@@ -290,15 +290,15 @@ const InstructorSubmissions = () => {
         open={!!selectedSubmission}
         onOpenChange={(open) => !open && setSelectedSubmission(null)}
       >
-        <DialogContent className="max-w-2xl bg-white rounded-[40px] border-none shadow-2xl p-0 overflow-hidden">
-          <div className="bg-slate-900 p-8 text-white relative">
+        <DialogContent className="sm:max-w-[500px] bg-white rounded-2xl border-none shadow-2xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-slate-900 p-6 text-white relative shrink-0">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -mr-32 -mt-32" />
             <div className="relative z-10 flex justify-between items-start">
               <div>
                 <Badge className="bg-primary/20 text-accent border-none font-black text-[10px] tracking-[0.2em] mb-4">
                   MANUAL GRADING
                 </Badge>
-                <DialogTitle className="text-3xl font-bold font-heading mb-2">
+                <DialogTitle className="text-2xl font-bold font-heading mb-2">
                   Grade Exercise
                 </DialogTitle>
                 <div className="flex items-center gap-2 text-slate-400 flex-wrap">
@@ -315,20 +315,20 @@ const InstructorSubmissions = () => {
               </div>
               <button
                 onClick={() => setSelectedSubmission(null)}
-                className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
+          <div className="py-6 pl-6 pr-4 mr-1 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
             {/* Student's Answer */}
-            <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">
+            <div>
+              <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 block">
                 Student's Answer
               </label>
-              <p className="text-slate-900 font-bold text-lg bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+              <p className="text-slate-900 font-bold text-lg bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
                 {selectedSubmission?.answer}
               </p>
               {selectedSubmission?.exercise?.correctAnswer && (
@@ -339,10 +339,10 @@ const InstructorSubmissions = () => {
             </div>
 
             {/* Grading controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-4">
               {/* Score */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">
+                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 block">
                   Score (Max {selectedSubmission?.exercise?.points})
                 </label>
                 <div className="relative">
@@ -357,9 +357,9 @@ const InstructorSubmissions = () => {
                         score: parseInt(e.target.value) || 0,
                       })
                     }
-                    className="h-14 rounded-2xl border-slate-200 bg-white shadow-sm focus:ring-primary pl-6 text-xl font-black"
+                    className="h-12 rounded-xl border-slate-200 bg-white shadow-sm focus:ring-primary pl-4 text-xl font-black"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
                     Pts
                   </div>
                 </div>
@@ -367,42 +367,42 @@ const InstructorSubmissions = () => {
 
               {/* Correctness */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">
+                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 block">
                   Verdict
                 </label>
-                <div className="flex gap-3 h-14">
+                <div className="flex gap-2 h-12">
                   <button
                     onClick={() =>
                       setGradingForm({ ...gradingForm, isCorrect: true })
                     }
                     className={cn(
-                      "flex-1 rounded-2xl border flex items-center justify-center gap-2 font-bold transition-all text-sm",
+                      "flex-1 rounded-xl border flex items-center justify-center gap-1.5 font-bold transition-all text-sm",
                       gradingForm.isCorrect
                         ? "bg-emerald-50 border-emerald-500 text-emerald-700 ring-1 ring-emerald-100 shadow-sm"
                         : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50",
                     )}
                   >
-                    <CheckCircle size={17} /> Correct
+                    <CheckCircle size={16} /> Correct
                   </button>
                   <button
                     onClick={() =>
                       setGradingForm({ ...gradingForm, isCorrect: false })
                     }
                     className={cn(
-                      "flex-1 rounded-2xl border flex items-center justify-center gap-2 font-bold transition-all text-sm",
+                      "flex-1 rounded-xl border flex items-center justify-center gap-1.5 font-bold transition-all text-sm",
                       gradingForm.isCorrect === false
                         ? "bg-red-50 border-red-500 text-red-700 ring-1 ring-red-100 shadow-sm"
                         : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50",
                     )}
                   >
-                    <AlertCircle size={17} /> Incorrect
+                    <AlertCircle size={16} /> Incorrect
                   </button>
                 </div>
               </div>
 
               {/* Feedback */}
-              <div className="md:col-span-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">
+              <div className="col-span-2">
+                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-3 block">
                   Feedback & Comments
                 </label>
                 <Textarea
@@ -411,27 +411,27 @@ const InstructorSubmissions = () => {
                     setGradingForm({ ...gradingForm, feedback: e.target.value })
                   }
                   placeholder="Tell the student what they did well or how to improve…"
-                  className="min-h-[120px] rounded-[24px] border-slate-200 bg-white p-5 shadow-sm resize-none focus:ring-primary font-medium"
+                  className="min-h-[100px] rounded-xl border-slate-200 bg-white p-4 shadow-sm resize-none focus:ring-primary font-medium"
                 />
               </div>
             </div>
           </div>
 
-          <div className="px-8 pb-8 pt-0 flex justify-end gap-4">
+          <div className="px-6 pb-6 pt-2 flex justify-end gap-3 shrink-0">
             <Button
               variant="ghost"
               onClick={() => setSelectedSubmission(null)}
-              className="h-14 px-8 rounded-2xl font-bold text-slate-500"
+              className="h-10 px-6 rounded-lg font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100"
             >
               Cancel
             </Button>
             <Button
               onClick={submitGrade}
               disabled={gradeMutation.isPending}
-              className="h-14 px-12 rounded-2xl bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-slate-900/20 active:scale-95 transition-all gap-2"
+              className="h-10 px-8 rounded-lg bg-slate-900 hover:bg-black text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-slate-900/20 active:scale-95 transition-all gap-2"
             >
               {gradeMutation.isPending ? "Saving…" : "Apply Grade"}
-              <Star size={16} />
+              <Star size={14} />
             </Button>
           </div>
         </DialogContent>
@@ -440,8 +440,8 @@ const InstructorSubmissions = () => {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
     </div>
   );

@@ -6,18 +6,13 @@ import {
   User,
   LogOut,
   ChevronDown,
-  Shield,
-  CreditCard,
-  BellRing,
-  Settings,
-  Camera,
   Repeat,
   Clock,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logoLms from "@/assets/logo-lms.png";
+import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 import { useUser, useLogout, useSwitchAcademyRole } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -84,17 +79,18 @@ const LmsNavbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
-      <div className="section-container flex items-center justify-between h-16 md:h-20">
-        <Link to="/dashboard" className="flex items-center">
-          <img
-            src={logoLms}
-            alt="Aliko Academy LMS"
-            className="h-20 md:h-28 w-auto object-contain"
-            style={{ imageRendering: "auto" }}
-          />
-        </Link>
+      <div className="section-container grid grid-cols-3 items-center h-16 md:h-20">
+        <div className="flex justify-start">
+          <Link to="/dashboard" className="flex items-center">
+            <img
+              src={logoLms}
+              alt="Aliko Academy LMS"
+              className="h-6 md:h-10 w-auto object-contain"
+            />
+          </Link>
+        </div>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex justify-center gap-8">
           {lmsLinks.map((link) =>
             link.external ? (
               <a
@@ -102,7 +98,7 @@ const LmsNavbar = () => {
                 href={link.to}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                className="text-sm font-medium text-muted-foreground hover:text-primary"
               >
                 {link.label}
               </a>
@@ -110,7 +106,7 @@ const LmsNavbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium hover:text-primary ${
                   location.pathname === link.to
                     ? "text-primary"
                     : "text-muted-foreground"
@@ -122,14 +118,14 @@ const LmsNavbar = () => {
           )}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex justify-end items-center gap-3">
           {isInstructor ? (
             <Button
               variant="outline"
               size="sm"
               onClick={handleSwitchRole}
               disabled={isSwitching}
-              className="gap-2 border-emerald-500/20 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+              className="gap-2 border-primary/20 text-primary cursor-pointer shadow-sm"
             >
               <Repeat className="w-4 h-4" />
               Switch to Instructor
@@ -258,13 +254,6 @@ const LmsNavbar = () => {
                   >
                     <LogOut className="w-4 h-4" /> Log Out
                   </button>
-                  <a
-                    href="https://academy.alikohub.com"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" /> Back to Website
-                  </a>
                 </div>
               </div>
             )}
@@ -309,7 +298,7 @@ const LmsNavbar = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start gap-2 border-emerald-500/20 text-emerald-600"
+                className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
                 onClick={() => {
                   handleSwitchRole();
                   setOpen(false);

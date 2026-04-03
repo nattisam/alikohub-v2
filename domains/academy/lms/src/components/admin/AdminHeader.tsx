@@ -87,12 +87,6 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
               </div>
 
               <div className="py-1">
-                <Link
-                  to="/"
-                  className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
-                >
-                  <User className="w-4 h-4 text-slate-500" /> Go to Website
-                </Link>
                 {!isAdmin && (
                   <Link
                     to="/lms"

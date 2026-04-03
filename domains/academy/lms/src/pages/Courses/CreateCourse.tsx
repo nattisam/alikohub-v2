@@ -107,7 +107,7 @@ const InstructorCreateCourse = () => {
     shortDescription: "",
     skills: [] as string[],
     newSkill: "",
-    price: "0",
+    price: "",
     thumbnail: null as File | null,
     thumbnailPreview: "" as string,
   });
@@ -185,7 +185,7 @@ const InstructorCreateCourse = () => {
     data.append("title", formData.title);
     data.append("shortDescription", formData.shortDescription);
     data.append("category", formData.category);
-    data.append("price", formData.price.toString());
+    data.append("price", formData.price ? formData.price.toString() : "0");
     data.append("status", "DRAFT");
 
     if (formData.thumbnail) {

@@ -358,12 +358,17 @@ const CourseDetails = () => {
                 What you'll learn
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                {[
-                  "Interactive labs and real-world projects",
-                  "Expert mentorship and peer networking",
-                  "Lifetime access to course materials",
-                  "Digital certification upon completion",
-                ].map((item, i) => (
+                {(course.outcomes?.length
+                  ? course.outcomes
+                  : course.skills?.length
+                    ? course.skills
+                    : [
+                        "Interactive labs and real-world projects",
+                        "Expert mentorship and peer networking",
+                        "Lifetime access to course materials",
+                        "Digital certification upon completion",
+                      ]
+                ).map((item: string, i: number) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#E6A337] shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-700 font-bold leading-tight">

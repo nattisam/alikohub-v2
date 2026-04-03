@@ -179,19 +179,12 @@ export const CurriculumTab = ({
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  size="sm"
-                  onClick={handleUpdateLessonSave}
-                  className="gap-2 rounded-xl font-bold bg-primary hover:bg-primary-dark text-white h-11 px-6 shadow-lg shadow-primary/20 transition-all"
-                >
-                  <Save className="w-4 h-4" /> Save Changes
-                </Button>
-                <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => onDeleteLesson(lesson.id)}
-                  className="gap-2 text-slate-400 hover:text-red-500 hover:bg-red-50 font-bold h-11 px-4 transition-all"
+                  className="gap-2 text-red-500 hover:text-white hover:bg-red-500 border-red-200 font-bold h-11 px-6 rounded-xl transition-all shadow-sm"
                 >
-                  <Trash2 className="w-4 h-4" /> Delete
+                  <Trash2 className="w-4 h-4" /> Delete Lesson
                 </Button>
               </div>
             </div>
@@ -265,7 +258,7 @@ export const CurriculumTab = ({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-slate-400 hover:text-red-500 rounded-lg"
+                          className="h-8 w-8 text-slate-400 hover:bg-red-500 hover:text-white rounded-lg transition-all"
                           onClick={() => onDeleteContent(content.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -498,17 +491,7 @@ export const CurriculumTab = ({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ZoomOut size={16} />
-                  </Button>
-                  <span className="text-xs font-bold text-slate-500">100%</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ZoomIn size={16} />
-                  </Button>
-                  <div className="mx-2 h-4 w-px bg-slate-200" />
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Maximize2 size={16} />
-                  </Button>
+                  {/* Zoom and fullscreen removed */}
                 </div>
               </div>
 
@@ -536,9 +519,9 @@ export const CurriculumTab = ({
                 </p>
                 <div className="flex gap-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="text-red-500 hover:bg-red-50 font-bold h-8"
+                    className="text-red-500 hover:text-white hover:bg-red-500 border-red-200 font-bold h-8 transition-all"
                     onClick={() => {
                       onDeleteContent(data.id);
                       onSetSelectedItem(null);
@@ -590,9 +573,9 @@ export const CurriculumTab = ({
                     Back to Quiz
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="text-red-500 hover:bg-red-50 hover:text-red-600 font-bold h-8"
+                    className="text-red-500 hover:bg-red-500 border-red-200 hover:text-white font-bold h-8 transition-all"
                     onClick={() => {
                       onDeleteExercise(exercise.id);
                       onSetSelectedItem(null);
@@ -721,7 +704,7 @@ export const CurriculumTab = ({
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-9 w-9 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                        className="h-9 w-9 text-slate-400 hover:bg-red-500 hover:text-white rounded-xl transition-all"
                         onClick={() => onDeleteExercise(exercise.id)}
                       >
                         <Trash2 className="w-4 h-4" />

@@ -66,7 +66,7 @@ const LoginPage = () => {
           className="space-y-4 sm:space-y-5 lg:space-y-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
+          transition={{ duration: 0.3 }}
         >
           <FormField
             control={form.control}

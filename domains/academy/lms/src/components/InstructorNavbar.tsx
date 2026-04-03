@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logoLms from "@/assets/logo-lms.png";
+import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 import { useUser, useLogout, useSwitchAcademyRole } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -66,24 +66,28 @@ const InstructorNavbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 nav-solid border-b border-border shadow-sm bg-slate-900 text-white">
-      <div className="section-container flex items-center justify-between h-16 md:h-20">
-        <Link to="/instructor" className="flex items-center">
-          <img
-            src={logoLms}
-            alt="Aliko Academy Instructor"
-            className="h-20 md:h-28 w-auto object-contain brightness-0 invert"
-          />
-        </Link>
+    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
+      <div className="section-container grid grid-cols-3 items-center h-16 md:h-20">
+        <div className="flex justify-start">
+          <Link to="/instructor" className="flex items-center">
+            <img
+              src={logoLms}
+              alt="Aliko Academy Instructor"
+              className="h-6 md:h-10 w-auto object-contain"
+            />
+          </Link>
+        </div>
 
         {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex justify-center gap-8">
           {instructorLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={`text-sm font-medium transition-colors hover:text-accent flex items-center gap-2 ${
-                location.pathname === link.to ? "text-accent" : "text-slate-300"
+              className={`text-sm font-medium hover:text-primary flex items-center gap-2 ${
+                location.pathname === link.to
+                  ? "text-primary"
+                  : "text-muted-foreground"
               }`}
             >
               <link.icon className="w-4 h-4" />
@@ -93,13 +97,13 @@ const InstructorNavbar = () => {
         </div>
 
         {/* User Profile & Role Switcher */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex justify-end items-center gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={handleSwitchRole}
             disabled={isSwitching}
-            className="border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white gap-2"
+            className="gap-2 border-primary/20 text-primary cursor-pointer shadow-sm"
           >
             <Repeat className="w-4 h-4" />
             Switch to Student
@@ -108,50 +112,73 @@ const InstructorNavbar = () => {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <Avatar className="h-8 w-8 border border-slate-700">
+              <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage
                   src={user?.profilePicture || ""}
                   alt={user?.firstname}
                 />
-                <AvatarFallback className="bg-accent/20 text-accent font-bold">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
+              <span className="text-sm font-medium text-foreground">
+                {user ? `${user.firstname} ${user.lastname}` : "Instructor"}
+              </span>
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </button>
 
             {profileOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-slate-800 rounded-lg border border-slate-700 shadow-xl py-2 z-[100] text-slate-200">
-                <div className="px-4 py-3 border-b border-slate-700">
-                  <p className="text-sm font-semibold">
-                    {user?.firstname} {user?.lastname}
-                  </p>
-                  <p className="text-xs text-slate-400 truncate">
-                    {user?.email}
-                  </p>
+              <div className="absolute right-0 top-full mt-2 w-56 bg-card rounded-lg border shadow-lg py-2 z-[100]">
+                <div className="px-4 py-3 border-b">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border border-border">
+                      <AvatarImage
+                        src={user?.profilePicture || ""}
+                        alt={user?.firstname}
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {user
+                          ? `${user.firstname} ${user.lastname}`
+                          : "Instructor"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {user?.email || "instructor@alikohub.com"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="py-1">
                   <Link
                     to="/profile"
-                    className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-700 transition-colors"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                   >
                     <User className="w-4 h-4" /> Profile Settings
                   </Link>
                   <Link
                     to="/instructor/settings"
-                    className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-700 transition-colors"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                   >
                     <Settings className="w-4 h-4" /> Instructor Settings
                   </Link>
                 </div>
 
-                <div className="border-t border-slate-700 py-1">
+                <div className="border-t py-1">
                   <button
-                    onClick={() => logout()}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-slate-700 transition-colors w-full text-left"
+                    onClick={() => {
+                      logout();
+                      setProfileOpen(false);
+                    }}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors w-full text-left"
                   >
                     <LogOut className="w-4 h-4" /> Log Out
                   </button>
@@ -162,41 +189,65 @@ const InstructorNavbar = () => {
         </div>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-white" onClick={() => setOpen(!open)}>
+        <button
+          className="md:hidden text-foreground"
+          onClick={() => setOpen(!open)}
+        >
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t border-slate-700 px-4 pb-4 space-y-3 bg-slate-900">
+        <div className="md:hidden border-t px-4 pb-4 space-y-3">
           {instructorLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 py-3 text-sm font-medium text-slate-300 hover:text-accent"
+              className="flex items-center gap-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary"
             >
               <link.icon className="w-4 h-4" />
               {link.label}
             </Link>
           ))}
-          <div className="pt-4 border-t border-slate-700 flex flex-col gap-2">
+          <div className="pt-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSwitchRole}
+              className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
+              onClick={() => {
+                handleSwitchRole();
+                setOpen(false);
+              }}
               disabled={isSwitching}
-              className="w-full bg-slate-800 border-slate-700 hover:bg-slate-700 gap-2"
             >
               <Repeat className="w-4 h-4" />
               Switch to Student Role
             </Button>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 text-muted-foreground hover:text-primary"
+              asChild
+            >
+              <a
+                href="https://academy.alikohub.com"
+                onClick={() => setOpen(false)}
+              >
+                Back to Website
+              </a>
+            </Button>
             <Button
               variant="destructive"
               size="sm"
-              className="w-full"
-              onClick={() => logout()}
+              className="flex-1"
+              onClick={() => {
+                logout();
+                setOpen(false);
+              }}
             >
               Log Out
             </Button>

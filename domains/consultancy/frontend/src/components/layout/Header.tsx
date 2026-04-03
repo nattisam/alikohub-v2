@@ -29,58 +29,62 @@ const Header = () => {
   const location = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 bg-navy backdrop-blur-md border-b border-border">
-      <div className="container-wide flex items-center justify-between h-16 px-4 lg:px-8">
+    <header className="sticky top-0 z-50 bg-navy backdrop-blur-md border-b border-white/20">
+      <div className="container-wide flex items-center justify-between h-20 lg:h-24 px-4 lg:px-8">
         <div className="flex items-center gap-2 lg:gap-6">
           <Link to="/" className="flex items-center">
-            <img src={logo} alt="Aliko Consultancy Logo" className="h-14 md:h-16 w-auto object-contain" />
+            <img
+              src={logo}
+              alt="Aliko Consultancy Logo"
+              className="h-12 md:h-16 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-2">
-          {navItems.map((item) =>
-            item.children ? (
-              <div key={item.label} className="relative group">
+            {navItems.map((item) =>
+              item.children ? (
+                <div key={item.label} className="relative group">
+                  <Link
+                    to={item.href}
+                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition-colors hover:text-accent ${
+                      location.pathname.startsWith(item.href)
+                        ? "text-accent"
+                        : "text-primary-foreground/70"
+                    }`}
+                  >
+                    {item.label}
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </Link>
+                  <div className="absolute top-full left-0 pt-2 opacity-0 invisible -translate-y-2 group-hover:translate-y-0 group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out">
+                    <div className="bg-navy/90 backdrop-blur-md shadow-xl py-2 min-w-[220px]">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          to={child.href}
+                          className="block px-5 py-3 text-sm text-primary-foreground/80 hover:text-accent hover:bg-white/5 transition-colors"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
                 <Link
+                  key={item.label}
                   to={item.href}
-                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition-colors hover:text-accent ${
-                    location.pathname.startsWith(item.href)
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors hover:text-accent ${
+                    location.pathname === item.href
                       ? "text-accent"
                       : "text-primary-foreground/70"
                   }`}
                 >
                   {item.label}
-                  <ChevronDown className="w-3.5 h-3.5" />
                 </Link>
-                <div className="absolute top-full left-0 pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="bg-card border border-border rounded-lg shadow-lg py-2 min-w-[180px]">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        to={child.href}
-                        className="block px-4 py-2 text-sm text-muted-foreground hover:text-accent hover:bg-muted transition-colors"
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors hover:text-accent ${
-                  location.pathname === item.href
-                    ? "text-accent"
-                    : "text-primary-foreground/70"
-                }`}
-              >
-                {item.label}
-              </Link>
-            )
-          )}
-        </nav>
+              ),
+            )}
+          </nav>
         </div>
 
         <div className="flex items-center gap-3">
@@ -94,7 +98,11 @@ const Header = () => {
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X className="w-5 h-5 text-primary-foreground" /> : <Menu className="w-5 h-5 text-primary-foreground" />}
+            {mobileOpen ? (
+              <X className="w-5 h-5 text-primary-foreground" />
+            ) : (
+              <Menu className="w-5 h-5 text-primary-foreground" />
+            )}
           </button>
         </div>
       </div>
@@ -112,13 +120,18 @@ const Header = () => {
                     else setTravelOpen(!travelOpen);
                   }}
                   className={`flex items-center justify-between px-3 py-3 text-sm font-medium rounded-md ${
-                    location.pathname === item.href || location.pathname.startsWith(item.href + "/")
+                    location.pathname === item.href ||
+                    location.pathname.startsWith(item.href + "/")
                       ? "text-accent bg-muted"
                       : "text-foreground"
                   }`}
                 >
                   {item.label}
-                  {item.children && <ChevronDown className={`w-4 h-4 transition-transform ${travelOpen ? "rotate-180" : ""}`} />}
+                  {item.children && (
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${travelOpen ? "rotate-180" : ""}`}
+                    />
+                  )}
                 </Link>
                 {item.children && travelOpen && (
                   <div className="pl-4">
