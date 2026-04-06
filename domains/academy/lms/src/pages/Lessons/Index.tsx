@@ -175,30 +175,24 @@ const LmsLearn = () => {
     }
   }, [course, activeItemId, allItems]);
 
-  // Sync state when item changes
+  // 1. Sync state when item changes
   useEffect(() => {
     if (activeItem) {
       setActiveLessonId(activeItem.lessonId);
       setActiveItemType(
         activeItem.itemType as "video" | "reading" | "quiz" | "pdf",
       );
+
+      // Interaction state resets for non-essential UI bits
+      // while preserving quiz submissions until sync effect confirms them
+      setIsAnswered(false);
+      setCurrentExerciseIndex(0);
     }
   }, [activeItem]);
 
-  // 1. Reset quiz state only when switching to a quiz or a different lesson's quiz
-  useEffect(() => {
-    if (activeItemType === "quiz") {
-      setCurrentExerciseIndex(0);
-      setIsAnswered(false);
-      setSelectedAnswers({});
-      setQuizSubmitted(false);
-      setQuizScore(0);
-    }
-  }, [activeItemId, activeItemType]);
-
   // 2. Sync with backend data (detailed fetch or report) and localStorage
   useEffect(() => {
-    if (detailedExercises.length) {
+    if (activeItemType === "quiz" && detailedExercises.length) {
       const answers: Record<string, string> = {};
       let submittedCount = 0;
       let score = 0;
@@ -252,21 +246,28 @@ const LmsLearn = () => {
         }
       });
 
+      // Special handling: only set submitted to false if all queries are definitively done
+      // and no submission was found. This avoids clearing the state during fast navigation.
+      const isLoadingSubmissions = exerciseQueries.some(
+        (q) => q.isLoading && (q as any).isEnabled,
+      );
+
       if (submittedCount > 0) {
         setSelectedAnswers(answers);
         setQuizSubmitted(true);
         setQuizScore(score);
-      } else {
+      } else if (!isLoadingSubmissions) {
         setQuizSubmitted(false);
         setQuizScore(0);
         setSelectedAnswers({});
       }
-    } else {
+    } else if (activeItemType === "quiz") {
+      // No exercises in this lesson, reset quiz state
       setQuizSubmitted(false);
       setQuizScore(0);
       setSelectedAnswers({});
     }
-  }, [activeLessonId, lastSyncKey, reportData]);
+  }, [activeLessonId, lastSyncKey, reportData, activeItemType]);
 
   if (isLoading || isReportLoading) {
     return (
@@ -512,7 +513,7 @@ const LmsLearn = () => {
                   </div>
 
                   <RadioGroup
-                    value={selectedAnswers[exercise.id]}
+                    value={selectedAnswers[exercise.id] || ""}
                     onValueChange={(v) =>
                       !quizSubmitted && handleOptionSelect(exercise.id, v)
                     }

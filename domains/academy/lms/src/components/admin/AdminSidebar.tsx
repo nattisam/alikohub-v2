@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BarChart3, Users, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logoLms from "@/assets/logo-lms.png";
+import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 
 interface NavItem {
   label: string;
@@ -68,14 +68,14 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
             <img
               src={logoLms}
               alt="Aliko Academy Admin"
-              className="hidden lg:block max-h-full w-auto object-contain brightness-0 invert"
+              className="hidden lg:block max-h-12 w-auto object-contain"
             />
 
             <div className="lg:hidden flex items-center justify-center w-full">
               <img
                 src={logoLms}
                 alt="Aliko Academy Admin"
-                className="w-16 h-auto object-contain brightness-0 invert"
+                className="w-12 h-auto object-contain"
               />
             </div>
           </Link>

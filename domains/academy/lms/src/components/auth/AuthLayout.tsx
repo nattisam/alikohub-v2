@@ -25,7 +25,7 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
     <div className="min-h-screen flex">
       {/* ── Left branding panel ── */}
       <div
-        className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-center justify-center p-4"
+        className="hidden lg:flex lg:w-[48%] relative overflow-hidden items-center justify-center p-4 lg:sticky lg:top-0 lg:h-screen"
         style={{
           background: "#081830",
         }}

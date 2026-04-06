@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "./PageTransition";
 import Index from "@/pages/Index";
@@ -11,7 +11,7 @@ import Contact from "@/pages/Contact";
 import OurStory from "@/pages/OurStory";
 import Donate from "@/pages/Donate";
 import NotFound from "@/pages/NotFound";
-import AdminLogin from "@/pages/admin/AdminLogin";
+import LoginPage from "@/pages/Login";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminProjects from "@/pages/admin/AdminProjects";
@@ -26,11 +26,92 @@ import ProtectedRoute from "@/components/admin/ProtectedRoute";
 export function AnimatedRoutes() {
   const location = useLocation();
 
-  // Admin routes don't use page transitions
-  if (location.pathname.startsWith("/admin")) {
-    return (
-      <Routes location={location}>
-        <Route path="/admin/login" element={<AdminLogin />} />
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route
+          path="/"
+          element={
+            <PageTransition>
+              <Index />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <PageTransition>
+              <About />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/services"
+          element={
+            <PageTransition>
+              <Services />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/how-we-do-it"
+          element={
+            <PageTransition>
+              <HowWeDoIt />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <PageTransition>
+              <Projects />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/partners"
+          element={
+            <PageTransition>
+              <Partners />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <PageTransition>
+              <Contact />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/our-story"
+          element={
+            <PageTransition>
+              <OurStory />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/donate"
+          element={
+            <PageTransition>
+              <Donate />
+            </PageTransition>
+          }
+        />
+
+        {/* Auth Routes - Simplified to only admin login */}
+        <Route path="/admin/login" element={<LoginPage />} />
+        <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+        <Route
+          path="/register"
+          element={<Navigate to="/admin/login" replace />}
+        />
+
+        {/* Admin Routes */}
         <Route
           path="/admin"
           element={
@@ -48,23 +129,15 @@ export function AnimatedRoutes() {
           <Route path="donations" element={<AdminDonations />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
-      </Routes>
-    );
-  }
 
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-        <Route path="/services" element={<PageTransition><Services /></PageTransition>} />
-        <Route path="/how-we-do-it" element={<PageTransition><HowWeDoIt /></PageTransition>} />
-        <Route path="/projects" element={<PageTransition><Projects /></PageTransition>} />
-        <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-        <Route path="/our-story" element={<PageTransition><OurStory /></PageTransition>} />
-        <Route path="/donate" element={<PageTransition><Donate /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        <Route
+          path="*"
+          element={
+            <PageTransition>
+              <NotFound />
+            </PageTransition>
+          }
+        />
       </Routes>
     </AnimatePresence>
   );

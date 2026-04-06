@@ -1,20 +1,20 @@
 import { Layout } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { washService } from "@/services/washService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  Mail,
+  Phone,
+  MapPin,
   Send,
   Facebook,
   Twitter,
   Linkedin,
-  Instagram
+  Instagram,
 } from "lucide-react";
 
 const contactInfo = [
@@ -60,9 +60,9 @@ const Contact = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      const { error } = await supabase.from("contacts").insert({
+      await washService.submitContact({
         name: formData.name,
         organization: formData.organization || null,
         email: formData.email,
@@ -73,8 +73,6 @@ const Contact = () => {
         source_page: "contact",
       });
 
-      if (error) throw error;
-      
       toast({
         title: "Message Sent!",
         description: "Thank you for contacting us. We'll get back to you soon.",
@@ -88,7 +86,7 @@ const Contact = () => {
       setIsSubmitting(false);
       return;
     }
-    
+
     setFormData({
       name: "",
       organization: "",
@@ -101,8 +99,12 @@ const Contact = () => {
     setIsSubmitting(false);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -125,7 +127,8 @@ const Contact = () => {
               Contact <span className="text-accent">Us</span>
             </h1>
             <p className="text-xl text-primary-foreground/80 leading-relaxed">
-              Ready to discuss a project or partnership? We'd love to hear from you.
+              Ready to discuss a project or partnership? We'd love to hear from
+              you.
             </p>
           </motion.div>
         </div>
@@ -175,7 +178,9 @@ const Contact = () => {
 
               {/* Social Links */}
               <div>
-                <h3 className="font-semibold text-foreground mb-4">Follow Us</h3>
+                <h3 className="font-semibold text-foreground mb-4">
+                  Follow Us
+                </h3>
                 <div className="flex gap-3">
                   {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
                     <a
@@ -201,7 +206,7 @@ const Contact = () => {
                 <h2 className="font-display text-2xl font-bold text-foreground mb-6">
                   Send Us a Message
                 </h2>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -280,10 +285,18 @@ const Contact = () => {
                         className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
                       >
                         <option value="">Select a service</option>
-                        <option value="gravity-systems">Gravity Water Systems</option>
-                        <option value="reservoirs">Reservoir Construction</option>
-                        <option value="spring-protection">Spring Protection</option>
-                        <option value="water-points">Public Water Points</option>
+                        <option value="gravity-systems">
+                          Gravity Water Systems
+                        </option>
+                        <option value="reservoirs">
+                          Reservoir Construction
+                        </option>
+                        <option value="spring-protection">
+                          Spring Protection
+                        </option>
+                        <option value="water-points">
+                          Public Water Points
+                        </option>
                         <option value="sanitation">Sanitation & Hygiene</option>
                         <option value="partnership">Partnership Inquiry</option>
                         <option value="other">Other</option>
@@ -305,9 +318,9 @@ const Contact = () => {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    variant="accent" 
+                  <Button
+                    type="submit"
+                    variant="accent"
                     size="lg"
                     disabled={isSubmitting}
                   >

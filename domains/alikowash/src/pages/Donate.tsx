@@ -1,27 +1,26 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Droplets, 
-  Heart, 
-  Users, 
-  Building, 
+import { washService } from "@/services/washService";
+import {
+  Droplets,
+  Heart,
+  Users,
+  Building,
   Sparkles,
   CheckCircle2,
   Mail,
   Globe,
   DollarSign,
   MessageSquare,
-  User
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { z } from "zod";
 
 const donationSchema = z.object({
@@ -33,25 +32,25 @@ const donationSchema = z.object({
 });
 
 const impactItems = [
-  { 
-    icon: Droplets, 
+  {
+    icon: Droplets,
     title: "Safe Water Access",
-    description: "Providing clean, safe drinking water to communities"
+    description: "Providing clean, safe drinking water to communities",
   },
-  { 
-    icon: Heart, 
+  {
+    icon: Heart,
     title: "Community Health",
-    description: "Reducing waterborne diseases and improving lives"
+    description: "Reducing waterborne diseases and improving lives",
   },
-  { 
-    icon: Building, 
+  {
+    icon: Building,
     title: "Sustainable Infrastructure",
-    description: "Building systems that last for generations"
+    description: "Building systems that last for generations",
   },
-  { 
-    icon: Users, 
+  {
+    icon: Users,
     title: "Generational Impact",
-    description: "Creating lasting change for future generations"
+    description: "Creating lasting change for future generations",
   },
 ];
 
@@ -89,9 +88,9 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    
+
     const amount = getFinalAmount();
-    
+
     const validation = donationSchema.safeParse({
       ...formData,
       amount,
@@ -111,7 +110,7 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("donations").insert({
+      await washService.submitDonation({
         donor_name: formData.name,
         email: formData.email,
         country: formData.country,
@@ -119,8 +118,6 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
         message: formData.message || null,
       });
 
-      if (error) throw error;
-      
       setSubmitted(true);
       toast({
         title: "Thank you for your support!",
@@ -140,7 +137,10 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
   if (submitted) {
     return (
       <Layout>
-        <div ref={ref} className="min-h-[70vh] flex items-center justify-center section-padding">
+        <div
+          ref={ref}
+          className="min-h-[70vh] flex items-center justify-center section-padding"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -153,8 +153,8 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
               Thank You for Supporting Aliko Wash
             </h1>
             <p className="text-muted-foreground text-lg mb-8">
-              We will contact you shortly with next steps. Your contribution helps 
-              bring clean water to communities in need.
+              We will contact you shortly with next steps. Your contribution
+              helps bring clean water to communities in need.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button asChild>
@@ -179,7 +179,7 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
             <div className="absolute top-20 right-20 w-64 h-64 border-4 border-primary-foreground rounded-full" />
             <div className="absolute -bottom-10 -left-10 w-48 h-48 border-4 border-primary-foreground rounded-full" />
           </div>
-          
+
           <div className="container-main relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -195,7 +195,7 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                 <span className="text-accent">Support Life.</span>
               </h1>
               <p className="text-xl text-primary-foreground/80 leading-relaxed">
-                Your contribution helps build sustainable water, hygiene, and 
+                Your contribution helps build sustainable water, hygiene, and
                 sanitation systems for communities who need them most.
               </p>
             </motion.div>
@@ -244,7 +244,7 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                   <h2 className="font-display text-2xl font-bold text-foreground mb-6">
                     Make Your Donation
                   </h2>
-                  
+
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Amount Selection */}
                     <div>
@@ -273,18 +273,25 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                           type="number"
                           placeholder="Custom amount"
                           value={customAmount}
-                          onChange={(e) => handleCustomAmountChange(e.target.value)}
+                          onChange={(e) =>
+                            handleCustomAmountChange(e.target.value)
+                          }
                           className="pl-10"
                         />
                       </div>
                       {errors.amount && (
-                        <p className="text-destructive text-sm mt-1">{errors.amount}</p>
+                        <p className="text-destructive text-sm mt-1">
+                          {errors.amount}
+                        </p>
                       )}
                     </div>
 
                     {/* Name */}
                     <div>
-                      <Label htmlFor="name" className="text-foreground font-medium">
+                      <Label
+                        htmlFor="name"
+                        className="text-foreground font-medium"
+                      >
                         Your Name *
                       </Label>
                       <div className="relative mt-2">
@@ -293,18 +300,25 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                           id="name"
                           placeholder="Enter your full name"
                           value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                          }
                           className="pl-10"
                         />
                       </div>
                       {errors.name && (
-                        <p className="text-destructive text-sm mt-1">{errors.name}</p>
+                        <p className="text-destructive text-sm mt-1">
+                          {errors.name}
+                        </p>
                       )}
                     </div>
 
                     {/* Email */}
                     <div>
-                      <Label htmlFor="email" className="text-foreground font-medium">
+                      <Label
+                        htmlFor="email"
+                        className="text-foreground font-medium"
+                      >
                         Email Address *
                       </Label>
                       <div className="relative mt-2">
@@ -314,18 +328,25 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                           type="email"
                           placeholder="you@example.com"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
                           className="pl-10"
                         />
                       </div>
                       {errors.email && (
-                        <p className="text-destructive text-sm mt-1">{errors.email}</p>
+                        <p className="text-destructive text-sm mt-1">
+                          {errors.email}
+                        </p>
                       )}
                     </div>
 
                     {/* Country */}
                     <div>
-                      <Label htmlFor="country" className="text-foreground font-medium">
+                      <Label
+                        htmlFor="country"
+                        className="text-foreground font-medium"
+                      >
                         Country *
                       </Label>
                       <div className="relative mt-2">
@@ -334,18 +355,28 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                           id="country"
                           placeholder="Your country"
                           value={formData.country}
-                          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              country: e.target.value,
+                            })
+                          }
                           className="pl-10"
                         />
                       </div>
                       {errors.country && (
-                        <p className="text-destructive text-sm mt-1">{errors.country}</p>
+                        <p className="text-destructive text-sm mt-1">
+                          {errors.country}
+                        </p>
                       )}
                     </div>
 
                     {/* Message */}
                     <div>
-                      <Label htmlFor="message" className="text-foreground font-medium">
+                      <Label
+                        htmlFor="message"
+                        className="text-foreground font-medium"
+                      >
                         Message (Optional)
                       </Label>
                       <div className="relative mt-2">
@@ -353,15 +384,20 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                           id="message"
                           placeholder="Share why you're supporting Aliko Wash..."
                           value={formData.message}
-                          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              message: e.target.value,
+                            })
+                          }
                           rows={4}
                         />
                       </div>
                     </div>
 
-                    <Button 
-                      type="submit" 
-                      size="lg" 
+                    <Button
+                      type="submit"
+                      size="lg"
                       className="w-full"
                       disabled={isSubmitting}
                     >
@@ -380,7 +416,8 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
 
                     <p className="text-center text-sm text-muted-foreground">
                       <Sparkles className="w-4 h-4 inline mr-1" />
-                      Secure payment integration coming soon. We'll contact you with payment details.
+                      Secure payment integration coming soon. We'll contact you
+                      with payment details.
                     </p>
                   </form>
                 </div>
@@ -403,9 +440,12 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                         <Droplets className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">Water Infrastructure</h3>
+                        <h3 className="font-semibold text-foreground">
+                          Water Infrastructure
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          Building gravity-fed systems, reservoirs, and protected springs
+                          Building gravity-fed systems, reservoirs, and
+                          protected springs
                         </p>
                       </div>
                     </div>
@@ -414,9 +454,12 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                         <Building className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">Sanitation Facilities</h3>
+                        <h3 className="font-semibold text-foreground">
+                          Sanitation Facilities
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          Institutional toilets, handwashing stations, and hygiene programs
+                          Institutional toilets, handwashing stations, and
+                          hygiene programs
                         </p>
                       </div>
                     </div>
@@ -425,9 +468,12 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                         <Users className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">Community Training</h3>
+                        <h3 className="font-semibold text-foreground">
+                          Community Training
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          Training local committees to maintain systems for generations
+                          Training local committees to maintain systems for
+                          generations
                         </p>
                       </div>
                     </div>
@@ -439,7 +485,7 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                     Questions About Donating?
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Contact us directly and we'll be happy to discuss how your 
+                    Contact us directly and we'll be happy to discuss how your
                     contribution can make the biggest impact.
                   </p>
                   <Button variant="outline" asChild>
@@ -451,13 +497,13 @@ const Donate = forwardRef<HTMLDivElement>((_, ref) => {
                 </div>
 
                 <div className="flex flex-wrap gap-4">
-                  <Link 
+                  <Link
                     to="/projects"
                     className="text-primary hover:underline font-medium text-sm"
                   >
                     View Our Projects →
                   </Link>
-                  <Link 
+                  <Link
                     to="/our-story"
                     className="text-primary hover:underline font-medium text-sm"
                   >

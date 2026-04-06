@@ -19,6 +19,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import PasswordInput from "@/components/auth/PasswordInput";
+import GoogleButton from "@/components/auth/GoogleButton";
 
 const registerSchema = zod.object({
   firstname: zod.string().min(2, "First name must be at least 2 characters"),
@@ -78,7 +79,7 @@ const RegisterPage = () => {
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-5"
+          className="space-y-[30px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
@@ -206,17 +207,32 @@ const RegisterPage = () => {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full h-11 font-semibold"
-            disabled={isPending || !captchaValue}
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              "Create account"
-            )}
-          </Button>
+          <div className="space-y-6">
+            <Button
+              type="submit"
+              className="w-full h-11 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+              disabled={isPending || !captchaValue}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Create account"
+              )}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/60" />
+              </div>
+              <div className="relative flex justify-center text-[12px] uppercase tracking-[0.1em]">
+                <span className="bg-white/80 backdrop-blur-sm px-4 text-muted-foreground/60 font-bold uppercase">
+                  OR
+                </span>
+              </div>
+            </div>
+
+            <GoogleButton label="Continue with Google" />
+          </div>
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}

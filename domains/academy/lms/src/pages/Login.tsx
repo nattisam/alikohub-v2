@@ -18,6 +18,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import PasswordInput from "@/components/auth/PasswordInput";
+import GoogleButton from "@/components/auth/GoogleButton";
 
 const loginSchema = zod.object({
   email: zod.string().email("Invalid email address"),
@@ -63,7 +64,7 @@ const LoginPage = () => {
       <Form {...form}>
         <motion.form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 sm:space-y-5 lg:space-y-6"
+          className="space-y-[30px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -115,7 +116,7 @@ const LoginPage = () => {
             )}
           />
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-6">
             <Button
               type="submit"
               className="w-full h-11 sm:h-12 text-base font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
@@ -127,6 +128,19 @@ const LoginPage = () => {
                 "Sign in"
               )}
             </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/60" />
+              </div>
+              <div className="relative flex justify-center text-[12px] uppercase tracking-[0.1em]">
+                <span className="bg-white/80 backdrop-blur-sm px-4 text-muted-foreground/60 font-bold uppercase">
+                  OR
+                </span>
+              </div>
+            </div>
+
+            <GoogleButton label="Continue with Google" />
           </div>
 
           <div className="text-center pt-2">
