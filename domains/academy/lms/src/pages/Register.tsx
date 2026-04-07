@@ -14,19 +14,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { useRegister, useUser } from "@/hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
-import ReCAPTCHA from "react-google-recaptcha";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import PasswordInput from "@/components/auth/PasswordInput";
 import GoogleButton from "@/components/auth/GoogleButton";
 
-const registerSchema = zod.object({
-  firstname: zod.string().min(2, "First name must be at least 2 characters"),
-  lastname: zod.string().min(2, "Last name must be at least 2 characters"),
-  email: zod.string().email("Invalid email address"),
-  password: zod.string().min(6, "Password must be at least 6 characters"),
-});
+const registerSchema = zod
+  .object({
+    firstname: zod.string().min(2, "First name must be at least 2 characters"),
+    lastname: zod.string().min(2, "Last name must be at least 2 characters"),
+    email: zod.string().email("Invalid email address"),
+    password: zod.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: zod.string().min(1, "Please confirm your password"),
+    _hp: zod.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormValues = zod.infer<typeof registerSchema>;
 
@@ -40,7 +46,6 @@ const RegisterPage = () => {
   const { mutate: register, isPending } = useRegister();
   const { data: user } = useUser();
   const navigate = useNavigate();
-  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -61,14 +66,21 @@ const RegisterPage = () => {
       lastname: "",
       email: "",
       password: "",
+      confirmPassword: "",
+      _hp: "",
     },
   });
 
   const passwordValue = form.watch("password");
 
   const onSubmit = (values: RegisterFormValues) => {
-    if (!captchaValue) return;
-    register({ ...values, captchaToken: captchaValue });
+    // Honeypot check: if _hp is filled, it's likely a bot
+    if (values._hp) {
+      console.warn("Honeypot hit! Bot detected.");
+      return;
+    }
+    const { confirmPassword, _hp, ...apiValues } = values;
+    register(apiValues);
   };
 
   return (
@@ -84,6 +96,16 @@ const RegisterPage = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
         >
+          {/* Honeypot field for bot protection */}
+          <div style={{ display: "none" }} aria-hidden="true">
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              {...form.register("_hp")}
+            />
+          </div>
+
           {/* First & Last Name row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
@@ -196,22 +218,30 @@ const RegisterPage = () => {
             )}
           />
 
-          {/* ReCAPTCHA */}
-          <div className="flex justify-center py-1">
-            <ReCAPTCHA
-              sitekey={
-                import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-                "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-              }
-              onChange={(value) => setCaptchaValue(value)}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    id="signup-confirm-password"
+                    placeholder="Repeat your password"
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="space-y-6">
             <Button
               type="submit"
               className="w-full h-11 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
-              disabled={isPending || !captchaValue}
+              disabled={isPending}
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

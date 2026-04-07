@@ -59,7 +59,7 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
           >
             <Avatar className="h-8 w-8 border border-slate-200">
               <AvatarImage
-                src={user?.profilePicture || ""}
+                src={user?.profilePicture || undefined}
                 alt={user?.firstname}
               />
               <AvatarFallback className="bg-primary/20 text-primary font-bold">

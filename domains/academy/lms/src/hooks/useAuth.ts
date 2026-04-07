@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/authService";
 import type {
@@ -8,6 +9,8 @@ import type {
 } from "@/types/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -38,6 +41,57 @@ export const useLogin = () => {
       toast.error(message);
     },
   });
+};
+
+export const useGoogleLogin = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: (idToken: string) => authService.googleLogin(idToken),
+    onSuccess: (data: AuthResponse) => {
+      authService.setSession(data.accessToken, data.refreshToken, data.user);
+      queryClient.setQueryData(["user"], data.user);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast.success("Successfully authenticated with Google!");
+
+      if (data.isNewUser) {
+        toast.info("Welcome to Aliko Academy! Please complete your profile.");
+      }
+
+      if (data.user.globalRole === "ADMIN") {
+        navigate("/admin");
+      } else if (data.user.academyActiveRole === "instructor") {
+        navigate("/instructor");
+      } else {
+        navigate("/dashboard");
+      }
+    },
+    onError: (error: any) => {
+      const message =
+        error.response?.data?.message || "Google authentication failed.";
+      toast.error(message);
+    },
+  });
+};
+
+export const useGoogleAuth = () => {
+  const { mutate: googleLogin, isPending } = useGoogleLogin();
+
+  const signIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      googleLogin(idToken);
+    } catch (error: any) {
+      if (error.code !== "auth/popup-closed-by-user") {
+        console.error("Google Sign-In Error:", error);
+        toast.error("Google login failed. Please try again.");
+      }
+    }
+  };
+
+  return { signIn, isPending };
 };
 
 export const useRegister = () => {

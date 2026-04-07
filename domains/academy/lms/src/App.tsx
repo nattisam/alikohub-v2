@@ -61,6 +61,68 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Runs inside BrowserRouter + QueryClientProvider so hooks work correctly */
+const AppInner = () => {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* Default Redirect */}
+      <Route path="/" element={<LoginPage />} />
+
+      {/* Protected Portal Routes */}
+      <Route element={<ProtectedRoute />}>
+        {/* Student & Shared Protected Routes */}
+        <Route path="/dashboard" element={<StudentDashboard />} />
+        <Route path="/courses" element={<CourseExplorer />} />
+        <Route path="/courses/:id" element={<CourseDetails />} />
+        <Route path="/learning" element={<StudentProgress />} />
+        <Route path="/learn/:id" element={<LessonView />} />
+        <Route path="/instructor/apply" element={<ApplyInstructor />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+
+        {/* Account Routes */}
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/photo" element={<Photo />} />
+        <Route path="/account-security" element={<AccountSecurity />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+        <Route path="/certifications" element={<Certifications />} />
+        <Route path="/career-hub" element={<CareerHub />} />
+
+        {/* Instructor Routes */}
+        <Route element={<InstructorRoute />}>
+          <Route path="/instructor" element={<InstructorDashboard />} />
+          <Route path="/instructor/courses" element={<InstructorCourses />} />
+          <Route path="/instructor/courses/new" element={<CreateCourse />} />
+          <Route path="/instructor/courses/:id" element={<CourseEditor />} />
+          <Route
+            path="/instructor/analytics"
+            element={<InstructorAnalytics />}
+          />
+          <Route path="/instructor/submissions" element={<Submissions />} />
+          <Route path="/instructor/schedules" element={<Schedules />} />
+          <Route path="/instructor/settings" element={<InstructorSettings />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/applications" element={<AdminDashboard />} />
+          <Route path="/admin/courses" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AdminDashboard />} />
+        </Route>
+      </Route>
+
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <StateProvider>
@@ -68,80 +130,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-
-            {/* Default Redirect */}
-            <Route path="/" element={<LoginPage />} />
-
-            {/* Protected Portal Routes */}
-            <Route element={<ProtectedRoute />}>
-              {/* Student & Shared Protected Routes */}
-              <Route path="/dashboard" element={<StudentDashboard />} />
-              <Route path="/courses" element={<CourseExplorer />} />
-              <Route path="/courses/:id" element={<CourseDetails />} />
-              <Route path="/learning" element={<StudentProgress />} />
-              <Route path="/learn/:id" element={<LessonView />} />
-              <Route path="/instructor/apply" element={<ApplyInstructor />} />
-              <Route path="/payment/success" element={<PaymentSuccess />} />
-
-              {/* Account Routes */}
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/photo" element={<Photo />} />
-              <Route path="/account-security" element={<AccountSecurity />} />
-              <Route path="/subscriptions" element={<Subscriptions />} />
-              <Route path="/certifications" element={<Certifications />} />
-              <Route path="/career-hub" element={<CareerHub />} />
-
-              {/* Instructor Routes */}
-              <Route element={<InstructorRoute />}>
-                <Route path="/instructor" element={<InstructorDashboard />} />
-                <Route
-                  path="/instructor/courses"
-                  element={<InstructorCourses />}
-                />
-                <Route
-                  path="/instructor/courses/new"
-                  element={<CreateCourse />}
-                />
-                <Route
-                  path="/instructor/courses/:id"
-                  element={<CourseEditor />}
-                />
-                <Route
-                  path="/instructor/analytics"
-                  element={<InstructorAnalytics />}
-                />
-                <Route
-                  path="/instructor/submissions"
-                  element={<Submissions />}
-                />
-                <Route path="/instructor/schedules" element={<Schedules />} />
-                <Route
-                  path="/instructor/settings"
-                  element={<InstructorSettings />}
-                />
-              </Route>
-
-              {/* Admin Routes */}
-              <Route element={<AdminRoute />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route
-                  path="/admin/applications"
-                  element={<AdminDashboard />}
-                />
-                <Route path="/admin/courses" element={<AdminDashboard />} />
-                <Route path="/admin/analytics" element={<AdminDashboard />} />
-              </Route>
-            </Route>
-
-            {/* 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppInner />
         </BrowserRouter>
       </TooltipProvider>
     </StateProvider>

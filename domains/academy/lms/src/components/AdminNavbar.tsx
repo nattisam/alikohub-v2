@@ -63,7 +63,7 @@ const AdminNavbar = () => {
             >
               <Avatar className="h-8 w-8 border border-slate-700">
                 <AvatarImage
-                  src={user?.profilePicture || ""}
+                  src={user?.profilePicture || undefined}
                   alt={user?.firstname}
                 />
                 <AvatarFallback className="bg-red-500/20 text-red-500 font-bold">

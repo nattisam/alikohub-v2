@@ -24,6 +24,7 @@ export interface User {
   lastname: string;
   email: string;
   globalRole: string;
+  authProvider?: string;
   profilePicture: string | null;
   bio: string | null;
   status: string;
@@ -50,7 +51,9 @@ export interface AuthResponse {
   user: User;
   accessToken: string;
   refreshToken: string;
-  firebaseCustomToken: string;
+  firebaseCustomToken?: string;
+  firebaseIdToken?: string;
+  isNewUser?: boolean;
 }
 
 export interface LoginCredentials {
@@ -63,7 +66,6 @@ export interface RegisterCredentials {
   lastname: string;
   email: string;
   password?: string;
-  captchaToken?: string;
 }
 
 export interface SelectRoleRequest {

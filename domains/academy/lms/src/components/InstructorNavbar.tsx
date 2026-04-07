@@ -116,7 +116,7 @@ const InstructorNavbar = () => {
             >
               <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage
-                  src={user?.profilePicture || ""}
+                  src={user?.profilePicture || undefined}
                   alt={user?.firstname}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold">
@@ -135,7 +135,7 @@ const InstructorNavbar = () => {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border border-border">
                       <AvatarImage
-                        src={user?.profilePicture || ""}
+                        src={user?.profilePicture || undefined}
                         alt={user?.firstname}
                       />
                       <AvatarFallback className="bg-primary/10 text-primary font-bold">
