@@ -1,13 +1,12 @@
 import React from "react";
-import InstructorNavbar from "@/components/InstructorNavbar";
+import InstructorLayout from "@/components/InstructorLayout";
 import { Calendar, Clock, BellRing, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const InstructorSchedules = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <InstructorNavbar />
+    <InstructorLayout>
       <main className="section-container py-8 md:py-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -81,7 +80,7 @@ const InstructorSchedules = () => {
           </div>
         </div>
       </main>
-    </div>
+    </InstructorLayout>
   );
 };
 

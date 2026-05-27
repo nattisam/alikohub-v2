@@ -1,4 +1,3 @@
-import alikoLogo from "@/assets/Aliko Academy LMS Icon.png";
 import { BookOpen, Award, Users, Zap } from "lucide-react";
 
 interface AuthLayoutProps {
@@ -46,7 +45,7 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
             <div className="relative w-full h-32 flex items-center justify-center">
               {/* Logo */}
               <img
-                src={alikoLogo}
+                src="/academy-icon.png"
                 alt="Aliko Academy"
                 fetchPriority="high"
                 loading="eager"
@@ -63,7 +62,7 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
               <p
                 className="text-sm font-medium tracking-widest uppercase"
                 style={{
-                  color: "rgba(255, 255, 255, 0.7)",
+                  color: "rgba(255, 255, 255, 0.9)",
                   letterSpacing: "0.25em",
                 }}
               >
@@ -127,7 +126,7 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
                 <div className="w-40 h-20 bg-white/30 blur-2xl rounded-full" />
               </div>
               <img
-                src={alikoLogo}
+                src="/academy-icon.png"
                 alt="Aliko Academy"
                 fetchPriority="high"
                 loading="eager"
@@ -140,7 +139,7 @@ const AuthLayout = ({ children, heading, subheading }: AuthLayoutProps) => {
                 <span style={{ color: "#0095DA" }}>Aliko</span>{" "}
                 <span style={{ color: "#F37E28" }}>Academy</span>
               </span>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground/60 mt-1">
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground mt-1">
                 Learn · Grow · Succeed
               </p>
             </div>

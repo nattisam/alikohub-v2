@@ -2,9 +2,8 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useUser } from "@/hooks/useAuth";
 
 const ProtectedRoute = () => {
-  const { data: user, isLoading } = useUser();
-
-  if (isLoading) {
+  const { data: user, isLoading, isFetched } = useUser();
+  if (isLoading || !isFetched) {
     return null;
   }
 

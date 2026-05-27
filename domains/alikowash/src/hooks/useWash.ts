@@ -106,3 +106,99 @@ export const useDeletePartner = () => {
     },
   });
 };
+
+export const useTeam = () => {
+  return useQuery({
+    queryKey: ["team"],
+    queryFn: washService.getTeam,
+  });
+};
+
+export const useUpsertTeamMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: any) => washService.upsertTeamMember(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      toast.success("Team member saved");
+    },
+  });
+};
+
+export const useDeleteTeamMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => washService.deleteTeamMember(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      toast.success("Team member deleted");
+    },
+  });
+};
+export const useDonations = () => {
+  return useQuery({
+    queryKey: ["donations"],
+    queryFn: washService.getDonations,
+  });
+};
+
+export const useUpdateDonationStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string | number; status: string }) =>
+      washService.updateDonationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+      toast.success("Donation status updated");
+    },
+  });
+};
+
+export const useDeleteDonation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string | number) => washService.deleteDonation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["donations"] });
+      toast.success("Donation record deleted");
+    },
+  });
+};
+
+export const useSettings = () => {
+  return useQuery({
+    queryKey: ["settings"],
+    queryFn: washService.getSettings,
+  });
+};
+
+export const useUpsertSetting = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { key: string; value: any }) =>
+      washService.upsertSetting(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      toast.success("Setting saved");
+    },
+  });
+};
+
+export const useUsers = () => {
+  return useQuery({
+    queryKey: ["admin-users"],
+    queryFn: washService.getUsers,
+  });
+};
+
+export const useUpdateUserRole = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, role }: { id: string | number; role: string }) =>
+      washService.updateUserRole(id, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("User role updated");
+    },
+  });
+};

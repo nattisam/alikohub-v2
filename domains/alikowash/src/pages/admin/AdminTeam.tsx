@@ -18,9 +18,9 @@ const empty = {
   name: "",
   role: "",
   bio: "",
-  photo_url: "",
-  display_order: 0,
-  is_published: true,
+  imageUrl: "",
+  displayOrder: 0,
+  isPublished: true,
 };
 
 export default function AdminTeam() {
@@ -154,25 +154,55 @@ export default function AdminTeam() {
                 />
               </div>
               <div>
-                <Label>Photo URL</Label>
-                <Input
-                  value={editing.photo_url || ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, photo_url: e.target.value })
-                  }
-                  className="mt-1"
-                />
+                <Label>Member Photo</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  {editing.imageUrl && (
+                    <img
+                      src={editing.imageUrl}
+                      alt="Preview"
+                      className="w-16 h-16 rounded-full object-cover border"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const loadingToast =
+                              toast.loading("Uploading image...");
+                            const res = await washService.uploadImage(file);
+                            setEditing({ ...editing, imageUrl: res.url });
+                            toast.dismiss(loadingToast);
+                            toast.success("Image uploaded!");
+                          } catch (err: any) {
+                            toast.error(
+                              "Upload failed: " +
+                                (err.message || "Unknown error"),
+                            );
+                          }
+                        }
+                      }}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Max 2MB. Jpeg, Png or Webp.
+                    </p>
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Display Order</Label>
                   <Input
                     type="number"
-                    value={editing.display_order}
+                    value={editing.displayOrder}
                     onChange={(e) =>
                       setEditing({
                         ...editing,
-                        display_order: parseInt(e.target.value) || 0,
+                        displayOrder: parseInt(e.target.value) || 0,
                       })
                     }
                     className="mt-1"
@@ -181,9 +211,9 @@ export default function AdminTeam() {
                 <div className="flex items-center gap-2 pt-6">
                   <input
                     type="checkbox"
-                    checked={editing.is_published}
+                    checked={editing.isPublished}
                     onChange={(e) =>
-                      setEditing({ ...editing, is_published: e.target.checked })
+                      setEditing({ ...editing, isPublished: e.target.checked })
                     }
                     id="pub"
                   />

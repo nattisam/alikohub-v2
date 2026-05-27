@@ -663,6 +663,28 @@ export const useGradeSubmission = () => {
   });
 };
 
+export const useUpdateExercise = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      exerciseId,
+      data,
+    }: {
+      exerciseId: string | number;
+      data: any;
+    }) => academyService.instructor.updateExercise(exerciseId.toString(), data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["course"],
+      });
+      toast.success("Exercise updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update exercise");
+    },
+  });
+};
+
 export const useCreateExercise = () => {
   const queryClient = useQueryClient();
   return useMutation({

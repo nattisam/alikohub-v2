@@ -25,6 +25,10 @@ import {
   ChevronUp,
   Save,
   Edit2,
+  Sparkles,
+  Copy,
+  UploadCloud,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Course, Lesson } from "@/types/academy";
@@ -42,7 +46,12 @@ interface CurriculumTabProps {
   onAddLesson: (moduleId: string) => void;
   onUpdateLesson: (lessonId: string, data: any) => void;
   onAddContent: (moduleId: string, lessonId: string) => void;
-  onAddExercise: (moduleId: string, lessonId: string) => void;
+  onAddExercise: (
+    moduleId: string,
+    lessonId: string,
+    initialTitle?: string,
+  ) => void;
+  onEditExercise: (exercise: any) => void;
   onDeleteModule: (moduleId: string) => void;
   onDeleteLesson: (lessonId: string) => void;
   onDeleteContent: (contentId: string) => void;
@@ -84,6 +93,7 @@ export const CurriculumTab = ({
   onUpdateLesson,
   onAddContent,
   onAddExercise,
+  onEditExercise,
   onDeleteModule,
   onDeleteLesson,
   onDeleteContent,
@@ -149,42 +159,47 @@ export const CurriculumTab = ({
       return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
           {/* Lesson Header */}
-          <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm transition-all">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10 shadow-sm">
+          <div className="bg-transparent pb-6 transition-all">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col gap-3">
+                <Badge
+                  variant="outline"
+                  className="w-fit gap-1.5 border-[#7c6ef0]/30 bg-[#7c6ef0]/10 text-[#7c6ef0] hover:bg-[#7c6ef0]/10 font-bold text-xs rounded-full px-3 py-1"
+                >
                   {lesson.type === "VIDEO" ? (
-                    <Video className="w-8 h-8" />
+                    <PlayCircle className="w-3.5 h-3.5 text-[#7c6ef0]" />
                   ) : (
-                    <FileText className="w-8 h-8" />
+                    <FileText className="w-3.5 h-3.5 text-[#7c6ef0]" />
                   )}
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1 opacity-70">
-                    Editing Lesson
-                  </p>
-                  <h3 className="text-2xl font-bold text-slate-900 font-heading leading-none">
-                    {editingLesson?.title || lesson.title}
-                  </h3>
-                  <div className="flex items-center gap-3 text-sm text-slate-400 font-medium">
-                    <span className="capitalize">
-                      {lesson.type.toLowerCase()}
-                    </span>
-                    <span>•</span>
-                    <span>{lesson.contents?.length || 0} materials</span>
-                    <span>•</span>
-                    <span>{lesson.exercises?.length || 0} assessments</span>
-                  </div>
+                  <span className="capitalize">
+                    {lesson.type.toLowerCase()} lesson
+                  </span>
+                </Badge>
+
+                <h3 className="text-3xl font-bold text-slate-900 font-heading leading-tight tracking-tight">
+                  {editingLesson?.title || lesson.title}
+                </h3>
+
+                <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
+                  <span>Module {selectedItem.moduleId}</span>
+                  <span>•</span>
+                  <span>{lesson.contents?.length || 0} materials</span>
+                  <span>•</span>
+                  <span className="text-emerald-500 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{" "}
+                    Published
+                  </span>
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onDeleteLesson(lesson.id)}
-                  className="gap-2 text-red-500 hover:text-white hover:bg-red-500 border-red-200 font-bold h-11 px-6 rounded-xl transition-all shadow-sm"
+                  className="gap-2 text-slate-500 bg-white hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-slate-200 font-bold h-10 px-3 rounded-xl transition-all shadow-sm"
                 >
-                  <Trash2 className="w-4 h-4" /> Delete Lesson
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -199,94 +214,117 @@ export const CurriculumTab = ({
             <TabsList className="bg-transparent border-b border-slate-200 w-full justify-start rounded-none h-auto p-0 gap-8">
               <TabsTrigger
                 value="materials"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-slate-500 data-[state=active]:text-slate-900 pb-3 px-0 transition-all capitalize"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#7c6ef0] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-slate-500 data-[state=active]:text-[#7c6ef0] pb-3 px-0 transition-all capitalize"
               >
-                Learning Materials
+                Materials
               </TabsTrigger>
               <TabsTrigger
                 value="assessments"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-slate-500 data-[state=active]:text-slate-900 pb-3 px-0 transition-all capitalize"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#7c6ef0] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-slate-500 data-[state=active]:text-[#7c6ef0] pb-3 px-0 transition-all capitalize"
               >
                 Assessments
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="materials" className="mt-6">
-              <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className="text-lg font-bold text-slate-900 font-heading">
-                    Learning Materials
-                  </h4>
-                  <Button
-                    size="sm"
-                    className="bg-primary hover:bg-primary-dark text-white rounded-xl gap-2 font-bold"
-                    onClick={() =>
-                      onAddContent(selectedItem.moduleId!, lesson.id)
-                    }
-                  >
-                    <Plus className="w-4 h-4" /> Add Material
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
+              <div className="space-y-4">
+                <div className="space-y-4">
                   {lesson.contents?.map((content: any) => (
                     <div
                       key={content.id}
-                      className="p-4 rounded-2xl border border-slate-100 bg-slate-50/30 flex items-center justify-between group hover:border-primary/20 hover:bg-white transition-all"
+                      className="p-5 rounded-[24px] border border-slate-200 bg-white flex items-center justify-between group hover:border-[#7c6ef0]/30 hover:shadow-sm transition-all shadow-sm"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-primary">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-500">
                           {content.type === "VIDEO" ? (
-                            <PlayCircle className="w-5 h-5" />
+                            <PlayCircle className="w-6 h-6" />
                           ) : (
-                            <FileText className="w-5 h-5" />
+                            <FileText className="w-6 h-6" />
                           )}
                         </div>
-                        <span className="font-bold text-slate-700">
-                          {content.title}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800">
+                            {content.title}
+                          </span>
+                          <span className="text-xs text-slate-500 mt-1">
+                            {content.type} • Uploaded recently
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-slate-400 hover:text-primary rounded-lg"
+                          className="h-10 w-10 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-xl"
                           onClick={() => setSelectItem(content)}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-5 h-5" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-slate-400 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                          className="h-10 w-10 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all"
                           onClick={() => onDeleteContent(content.id)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </Button>
                       </div>
                     </div>
                   ))}
-                  {(!lesson.contents || lesson.contents.length === 0) && (
-                    <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                      <MonitorPlay className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                      <p className="text-slate-500 font-medium">
-                        No materials yet
-                      </p>
+
+                  {/* Upload Area */}
+                  <div className="mt-8 p-10 rounded-[32px] border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center text-center transition-all hover:bg-slate-50 hover:border-slate-300">
+                    <UploadCloud className="w-12 h-12 text-slate-300 mb-4" />
+                    <h4 className="text-lg font-bold text-slate-800 mb-2">
+                      Add content to this lesson
+                    </h4>
+                    <p className="text-sm text-slate-500 mb-6">
+                      Click the button below to open the upload modal
+                    </p>
+
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        className="gap-2 text-slate-600 bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 font-bold h-10 px-5 rounded-xl transition-all shadow-sm"
+                        onClick={() =>
+                          onAddContent(selectedItem.moduleId!, lesson.id)
+                        }
+                      >
+                        <UploadCloud className="w-4 h-4" /> Upload file
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="gap-2 text-slate-600 bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 font-bold h-10 px-5 rounded-xl transition-all shadow-sm"
+                        onClick={() =>
+                          onAddContent(selectedItem.moduleId!, lesson.id)
+                        }
+                      >
+                        <LinkIcon className="w-4 h-4" /> Add URL
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="gap-2 text-slate-600 bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 font-bold h-10 px-5 rounded-xl transition-all shadow-sm"
+                        onClick={() =>
+                          onAddContent(selectedItem.moduleId!, lesson.id)
+                        }
+                      >
+                        <Youtube className="w-4 h-4" /> Embed video
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
 
             <TabsContent value="assessments" className="mt-6">
-              <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+              <div className="p-8 rounded-[32px] border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="text-lg font-bold text-slate-900 font-heading">
                     Lesson Assessments
                   </h4>
                   <Button
                     size="sm"
-                    className="bg-primary hover:bg-primary-dark text-white rounded-xl gap-2 font-bold"
+                    className="bg-[#7c6ef0] hover:bg-[#6b5ee0] text-white rounded-xl gap-2 font-bold"
                     onClick={() =>
                       onAddExercise(selectedItem.moduleId!, lesson.id)
                     }
@@ -296,47 +334,80 @@ export const CurriculumTab = ({
                 </div>
 
                 <div className="space-y-3">
-                  {lesson.exercises?.length > 0 && (
-                    <div
-                      className="p-5 rounded-[24px] border border-amber-100 bg-amber-50/30 flex items-center justify-between group hover:border-amber-200 hover:bg-white transition-all cursor-pointer"
-                      onClick={() =>
-                        onSetSelectedItem({
-                          type: "QUIZ_SESSION",
-                          data: lesson.exercises,
-                          moduleId: selectedItem.moduleId,
-                          lessonId: lesson.id,
-                        })
-                      }
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-amber-500 shadow-sm">
-                          <HelpCircle className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <span className="font-bold text-slate-900 block">
-                            Lesson Assessment
-                          </span>
-                          <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
-                            {lesson.exercises.length} Questions • Click to
-                            Manage
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-100 transition-all">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-10 w-10 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  {(() => {
+                    if (!lesson.exercises || lesson.exercises.length === 0)
+                      return null;
+
+                    const groupedExercises = (lesson.exercises || []).reduce(
+                      (acc: any, ex: any) => {
+                        const title = ex.title || "Lesson Assessment";
+                        // Group by the suffix if it exists, otherwise by title
+                        const groupKey = title.includes(" ||| ")
+                          ? title.split(" ||| ")[1]
+                          : title;
+
+                        if (!acc[groupKey]) {
+                          acc[groupKey] = {
+                            fullTitle: title, // Use the title of the first item for the group
+                            exercises: [],
+                          };
+                        }
+                        acc[groupKey].exercises.push(ex);
+                        return acc;
+                      },
+                      {},
+                    );
+
+                    return Object.entries(groupedExercises).map(
+                      ([groupKey, group]: [string, any]) => {
+                        const { fullTitle, exercises: groupExercises } = group;
+                        const displayTitle = fullTitle.split(" ||| ")[0];
+                        return (
+                          <div
+                            key={fullTitle}
+                            className="p-5 rounded-[24px] border border-slate-200 bg-white flex items-center justify-between group hover:border-[#7c6ef0]/30 hover:shadow-sm transition-all cursor-pointer shadow-sm"
+                            onClick={() =>
+                              onSetSelectedItem({
+                                type: "QUIZ_SESSION",
+                                data: groupExercises,
+                                moduleId: selectedItem.moduleId,
+                                lessonId: lesson.id,
+                                title: fullTitle,
+                              })
+                            }
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-[#7c6ef0]/10 border border-[#7c6ef0]/20 flex items-center justify-center text-[#7c6ef0] shadow-sm">
+                                <HelpCircle className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <span className="font-bold text-slate-800 block">
+                                  {displayTitle}
+                                </span>
+                                <span className="text-xs font-bold text-[#7c6ef0] uppercase tracking-wider">
+                                  {groupExercises.length} Questions • Click to
+                                  Manage
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-100 transition-all">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-10 w-10 text-[#7c6ef0] hover:text-white hover:bg-[#7c6ef0] rounded-xl"
+                              >
+                                <Eye className="w-5 h-5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      },
+                    );
+                  })()}
 
                   {(!lesson.exercises || lesson.exercises.length === 0) && (
-                    <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                      <ClipboardList className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <div className="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      <ClipboardList className="w-10 h-10 text-slate-400 mx-auto mb-3" />
                       <p className="text-slate-500 font-medium">
                         No assessments yet
                       </p>
@@ -375,8 +446,8 @@ export const CurriculumTab = ({
                   <video src={embedUrl} controls className="w-full h-full" />
                 )
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-white/50">
-                  <Video className="w-12 h-12 mb-2 opacity-20" />
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <Video className="w-12 h-12 mb-2 opacity-50" />
                   <p>No video URL available</p>
                 </div>
               )}
@@ -575,6 +646,14 @@ export const CurriculumTab = ({
                   <Button
                     variant="outline"
                     size="sm"
+                    className="rounded-xl font-bold border-amber-200 text-amber-700 hover:bg-amber-50 h-8 gap-1"
+                    onClick={() => onEditExercise(exercise)}
+                  >
+                    <Edit2 className="w-3.5 h-3.5" /> Edit Question
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="text-red-500 hover:bg-red-500 border-red-200 hover:text-white font-bold h-8 transition-all"
                     onClick={() => {
                       onDeleteExercise(exercise.id);
@@ -641,7 +720,8 @@ export const CurriculumTab = ({
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-900 font-heading">
-                      Lesson Assessment
+                      {selectedItem.title?.split(" ||| ")[0] ||
+                        "Lesson Assessment"}
                     </h3>
                     <p className="text-sm text-slate-500 font-medium">
                       Manage all questions for this knowledge check
@@ -657,6 +737,7 @@ export const CurriculumTab = ({
                       onAddExercise(
                         selectedItem.moduleId!,
                         selectedItem.lessonId!,
+                        selectedItem.title, // Preserve the full title including batch ID
                       )
                     }
                     className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl gap-2"
@@ -682,7 +763,8 @@ export const CurriculumTab = ({
                         {idx + 1}
                       </span>
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                        {exercise.title || "Untitled Question"}
+                        {exercise.title?.split(" ||| ")[0] ||
+                          "Untitled Question"}
                       </span>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -690,14 +772,7 @@ export const CurriculumTab = ({
                         size="icon"
                         variant="ghost"
                         className="h-9 w-9 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-xl"
-                        onClick={() =>
-                          onSetSelectedItem({
-                            type: "EXERCISE",
-                            data: exercise,
-                            moduleId: selectedItem.moduleId,
-                            lessonId: selectedItem.lessonId,
-                          })
-                        }
+                        onClick={() => onEditExercise(exercise)}
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
@@ -781,11 +856,11 @@ export const CurriculumTab = ({
   return (
     <div className="w-full">
       {renderPreview() || (
-        <div className="min-h-[600px] flex flex-col items-center justify-center text-center p-12 bg-white rounded-[32px] border border-dashed border-slate-200 shadow-sm">
-          <div className="w-24 h-24 rounded-3xl bg-primary/5 shadow-xl shadow-primary/5 flex items-center justify-center mb-8 text-primary">
+        <div className="min-h-[600px] flex flex-col items-center justify-center text-center p-12 bg-transparent text-slate-500">
+          <div className="w-24 h-24 rounded-3xl bg-white border border-slate-200 flex items-center justify-center mb-8 text-slate-400 shadow-sm">
             <MonitorPlay className="w-12 h-12" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-3 font-heading">
+          <h3 className="text-2xl font-bold text-slate-800 mb-3 font-heading">
             Curriculum Builder
           </h3>
           <p className="text-slate-500 max-w-sm font-medium">

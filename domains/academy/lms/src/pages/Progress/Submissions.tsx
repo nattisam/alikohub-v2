@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import InstructorNavbar from "@/components/InstructorNavbar";
+import InstructorLayout from "@/components/InstructorLayout";
 import {
   FileText,
   CheckCircle,
@@ -82,9 +82,7 @@ const InstructorSubmissions = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col h-screen overflow-hidden">
-      <InstructorNavbar />
-
+    <InstructorLayout>
       {/* ── Header ── */}
       <div className="bg-white border-b border-slate-200 px-8 py-6 shrink-0">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -443,7 +441,7 @@ const InstructorSubmissions = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
-    </div>
+    </InstructorLayout>
   );
 };
 

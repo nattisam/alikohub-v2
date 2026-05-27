@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import InstructorNavbar from "@/components/InstructorNavbar";
 import {
   ArrowLeft,
   Save,
@@ -20,7 +19,10 @@ import {
   Users,
   Menu,
   X,
+  GripVertical,
+  PlayCircle,
 } from "lucide-react";
+import { Reorder } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -51,8 +53,10 @@ import {
   useCreateContent,
   useDeleteContent,
   useCreateExercisesBulk,
+  useUpdateExercise,
   useDeleteExercise,
 } from "@/hooks/useAcademy";
+import { academyService } from "@/services/academyService";
 import { DeleteConfirmationModal } from "@/components/DeleteConfirmationModal";
 
 const InstructorCourseEditor = () => {
@@ -73,6 +77,7 @@ const InstructorCourseEditor = () => {
   const createContentMutation = useCreateContent();
   const deleteContentMutation = useDeleteContent();
   const createExerciseMutation = useCreateExercisesBulk();
+  const updateExerciseMutation = useUpdateExercise();
   const deleteExerciseMutation = useDeleteExercise();
 
   const [activeTab, setActiveTab] = useState("basic");
@@ -93,6 +98,7 @@ const InstructorCourseEditor = () => {
 
   const [selectedModuleId, setSelectedModuleId] = useState<string>("");
   const [selectedLessonId, setSelectedLessonId] = useState<string>("");
+  const [initialExerciseTitle, setInitialExerciseTitle] = useState<string>("");
   const [previewContent, setPreviewContent] = useState<any>(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -119,10 +125,13 @@ const InstructorCourseEditor = () => {
     Record<string, boolean>
   >({});
 
+  const reorderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const [moduleTitle, setModuleTitle] = useState("");
   const [moduleDescription, setModuleDescription] = useState("");
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonType, setLessonType] = useState("VIDEO");
+  const [editingExercise, setEditingExercise] = useState<any>(null);
 
   // Delete states
   const [deleteConfig, setDeleteConfig] = useState<{
@@ -290,9 +299,15 @@ const InstructorCourseEditor = () => {
     });
   };
 
-  const handleAddExercise = (moduleId: string, lessonId: string) => {
+  const handleAddExercise = (
+    moduleId: string,
+    lessonId: string,
+    initialTitle?: string,
+  ) => {
     setSelectedModuleId(moduleId);
     setSelectedLessonId(lessonId);
+    setInitialExerciseTitle(initialTitle || "");
+    setEditingExercise(null);
     setIsExerciseModalOpen(true);
   };
 
@@ -303,6 +318,71 @@ const InstructorCourseEditor = () => {
         setIsExerciseModalOpen(false);
       },
     });
+  };
+
+  const handleEditExercise = (exercise: any) => {
+    setEditingExercise(exercise);
+    setIsExerciseModalOpen(true);
+  };
+
+  const handleUpdateExercise = (exerciseId: string, data: any) => {
+    updateExerciseMutation.mutate(
+      { exerciseId, data },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["course", id] });
+          setIsExerciseModalOpen(false);
+          setEditingExercise(null);
+        },
+      },
+    );
+  };
+
+  const handleReorderLessons = (moduleId: string, newLessons: any[]) => {
+    const previousCourse = queryClient.getQueryData(["course", id]);
+
+    queryClient.setQueryData(["course", id], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        modules: old.modules.map((m: any) => {
+          if (m.id.toString() === moduleId) {
+            return { ...m, lessons: newLessons };
+          }
+          return m;
+        }),
+      };
+    });
+
+    if (reorderTimeoutRef.current) {
+      clearTimeout(reorderTimeoutRef.current);
+    }
+
+    reorderTimeoutRef.current = setTimeout(async () => {
+      try {
+        const updates = newLessons.map((lesson, index) => ({
+          lessonId: lesson.id,
+          data: { order: index + 1 },
+        }));
+
+        await Promise.all(
+          updates.map((update) =>
+            academyService.instructor.updateLesson(
+              update.lessonId,
+              update.data,
+            ),
+          ),
+        );
+
+        queryClient.invalidateQueries({ queryKey: ["course", id] });
+      } catch (error) {
+        console.error("Failed to update lesson order:", error);
+        toast.error("Failed to update lesson order");
+        if (previousCourse) {
+          queryClient.setQueryData(["course", id], previousCourse);
+        }
+      }
+    }, 1000);
   };
 
   const handleDeleteConfirm = () => {
@@ -382,7 +462,6 @@ const InstructorCourseEditor = () => {
     });
   };
 
-  // Tab content rendering
   const renderTabContent = () => {
     if (activeTab === "basic") {
       return (
@@ -426,6 +505,7 @@ const InstructorCourseEditor = () => {
           }
           onAddContent={handleAddContent}
           onAddExercise={handleAddExercise}
+          onEditExercise={handleEditExercise}
           onDeleteModule={(mid) =>
             setDeleteConfig({ type: "module", id: mid, title: "Module" })
           }
@@ -483,68 +563,57 @@ const InstructorCourseEditor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col h-screen overflow-hidden text-slate-900">
-      {/* Header */}
-      <header className="h-14 flex items-center justify-between px-4 border-b border-slate-200 z-50 bg-white shadow-sm shrink-0">
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col h-screen overflow-hidden text-slate-200">
+      <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200 z-50 bg-white text-slate-900 shrink-0">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-md"
+            onClick={() => navigate("/instructor/courses")}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <ArrowLeft className="w-4 h-4 text-slate-700" />
           </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/instructor/courses")}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-600" />
-            </button>
-            <h1 className="text-sm font-semibold truncate max-w-[200px] sm:max-w-md lg:max-w-xl">
-              {isEdit ? course?.title : "New Course"}
+          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+            <h1 className="text-[15px] font-bold text-slate-900 leading-none">
+              Curriculum builder
             </h1>
+            <span className="text-[11px] text-slate-500 bg-slate-50 py-1 px-3 rounded-full border border-slate-200 truncate max-w-[150px] sm:max-w-xs block leading-none w-fit">
+              {isEdit ? course?.title : "New Course"}
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {}}
+            className="gap-2 font-bold h-9 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+          >
+            <Eye className="w-4 h-4" /> Preview
+          </Button>
           <Button
             onClick={handleSaveBasicInfo}
             disabled={
               createCourseMutation.isPending || updateCourseMutation.isPending
             }
             size="sm"
-            className="gap-2 font-bold bg-slate-900 text-white hover:bg-slate-800 h-9 hidden sm:flex rounded-lg"
+            className="gap-2 font-bold bg-[#7c6ef0] text-white hover:bg-[#6b5ee0] h-9 hidden sm:flex rounded-xl transition-all border-none"
           >
             <Save className="w-4 h-4" />
-            {isEdit ? "Save Changes" : "Create"}
+            {isEdit ? "Save draft" : "Create draft"}
           </Button>
-          {(!course?.status ||
-            course.status === "DRAFT" ||
-            course.status === "REJECTED") && (
-            <Button
-              onClick={handleSubmitForApproval}
-              disabled={submitCourseMutation.isPending || !id}
-              variant="outline"
-              size="sm"
-              className="gap-2 font-bold h-9 rounded-lg"
-            >
-              <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">Submit</span>
-            </Button>
-          )}
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Sidebar */}
         <aside
           className={cn(
-            "fixed lg:relative z-40 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 overflow-hidden h-[calc(100vh-56px)] shrink-0",
+            "fixed lg:relative z-40 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 overflow-hidden h-[calc(100vh-64px)] shrink-0 text-slate-700",
             isSidebarOpen
               ? "w-[340px] translate-x-0"
               : "w-0 -translate-x-full lg:w-0",
           )}
         >
-          <div className="p-4 flex items-center justify-end border-b border-slate-100 bg-slate-50/50 lg:hidden">
+          <div className="p-4 flex items-center justify-end border-b border-slate-200 bg-slate-50 lg:hidden">
             <button
               onClick={() => setIsSidebarOpen(false)}
               className="p-1.5 hover:bg-slate-200 rounded-md transition-colors"
@@ -555,134 +624,148 @@ const InstructorCourseEditor = () => {
 
           <ScrollArea className="flex-1">
             <div className="flex flex-col pb-4">
-              {/* Curriculum Section */}
               {showCurriculum && (
-                <div className="mt-2 pb-4 border-b border-slate-100 space-y-2">
-                  <div className="px-4 flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setActiveTab("curriculum");
-                        if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                      }}
-                      className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group ${
-                        activeTab === "curriculum"
-                          ? "bg-primary/5 text-primary border border-primary/10"
-                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent"
-                      }`}
-                    >
-                      <Book
-                        className={`w-4 h-4 transition-colors ${
-                          activeTab === "curriculum"
-                            ? "text-primary"
-                            : "text-slate-400 group-hover:text-slate-600"
-                        }`}
-                      />
-                      <span className="flex-1 text-left">
-                        Curriculum Builder
-                      </span>
-                    </button>
-                    <button
-                      onClick={handleAddModule}
-                      className="p-3 bg-primary/5 hover:bg-primary/10 rounded-xl text-primary transition-colors border border-primary/10 shadow-sm"
-                      title="Add Module"
-                    >
-                      <PlusSquare className="w-4 h-4" />
-                    </button>
+                <div className="flex flex-col border-b border-slate-200 pb-4">
+                  <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100 mb-2">
+                    <h2 className="text-sm font-bold text-slate-900">
+                      Course structure
+                    </h2>
                   </div>
 
-                  <div className="flex flex-col pt-2">
+                  <div className="flex flex-col">
                     {course?.modules?.map((module, mIdx) => (
                       <div
                         key={module.id}
-                        className="flex flex-col border-t border-slate-50"
+                        className="flex flex-col border-b border-slate-100 last:border-0"
                       >
                         <div
                           onClick={() => {
                             toggleModule(module.id.toString());
-                            if (activeTab !== "curriculum")
-                              setActiveTab("curriculum");
+                            setActiveTab("curriculum");
                           }}
-                          className={`flex items-center justify-between px-6 py-3 cursor-pointer transition-all ${
+                          className={`flex items-center justify-between px-5 py-3 cursor-pointer transition-all ${
                             expandedModules[module.id]
-                              ? "bg-slate-50/80"
+                              ? "bg-slate-50"
                               : "hover:bg-slate-50/50"
                           }`}
                         >
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             <ChevronRight
-                              className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                              className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${
                                 expandedModules[module.id] ? "rotate-90" : ""
                               }`}
                             />
-                            <span className="text-[13px] font-bold text-slate-700 truncate">
+                            <span className="text-[13px] font-bold text-slate-800 break-words whitespace-normal line-clamp-2 leading-tight pr-2">
                               {mIdx + 1}. {module.title}
                             </span>
                           </div>
+                          <div className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500 shrink-0">
+                            {module.lessons?.length || 0}
+                          </div>
                         </div>
                         {expandedModules[module.id] && (
-                          <div className="flex flex-col bg-slate-50/30">
-                            {module.lessons?.map((lesson) => (
-                              <button
-                                key={lesson.id}
-                                onClick={() => {
-                                  handleLessonSelect(
-                                    lesson,
-                                    module.id.toString(),
-                                  );
-                                  if (window.innerWidth < 1024)
-                                    setIsSidebarOpen(false);
-                                }}
-                                className={`group flex items-start gap-3 px-6 py-3 text-left transition-all ${
-                                  selectedCurriculumItem?.lessonId === lesson.id
-                                    ? "bg-blue-50/40 border-l-4 border-l-primary"
-                                    : "hover:bg-slate-50 border-l-4 border-l-transparent text-slate-600"
-                                }`}
-                              >
-                                <div className="pt-0.5 shrink-0">
-                                  {lesson.type === "VIDEO" ? (
-                                    <MonitorPlay
-                                      className={`w-3.5 h-3.5 ${selectedCurriculumItem?.lessonId === lesson.id ? "text-primary" : "text-slate-400"}`}
-                                    />
-                                  ) : (
-                                    <FileText
-                                      className={`w-3.5 h-3.5 ${selectedCurriculumItem?.lessonId === lesson.id ? "text-primary" : "text-slate-400"}`}
-                                    />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <span
-                                    className={`text-[12px] font-medium block truncate ${selectedCurriculumItem?.lessonId === lesson.id ? "text-primary font-bold" : ""}`}
+                          <div className="flex flex-col bg-transparent pb-3">
+                            <Reorder.Group
+                              axis="y"
+                              values={module.lessons || []}
+                              onReorder={(newLessons) =>
+                                handleReorderLessons(
+                                  module.id.toString(),
+                                  newLessons,
+                                )
+                              }
+                              className="flex flex-col"
+                            >
+                              {module.lessons?.map((lesson) => (
+                                <Reorder.Item
+                                  key={lesson.id}
+                                  value={lesson}
+                                  className="relative"
+                                >
+                                  <div
+                                    className={`group flex items-center p-0 text-left transition-all relative cursor-pointer ${
+                                      selectedCurriculumItem?.lessonId ===
+                                      lesson.id
+                                        ? "bg-slate-50/80"
+                                        : "hover:bg-slate-50/50"
+                                    }`}
+                                    onClick={() => {
+                                      handleLessonSelect(
+                                        lesson,
+                                        module.id.toString(),
+                                      );
+                                      if (window.innerWidth < 1024)
+                                        setIsSidebarOpen(false);
+                                    }}
                                   >
-                                    {lesson.title}
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
+                                    <div
+                                      className={`absolute left-0 top-0 bottom-0 w-[2px] transition-all ${
+                                        selectedCurriculumItem?.lessonId ===
+                                        lesson.id
+                                          ? "bg-[#7c6ef0]"
+                                          : "bg-transparent"
+                                      }`}
+                                    />
+                                    <div className="pl-4 pr-2 opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing text-slate-400">
+                                      <GripVertical className="w-3.5 h-3.5" />
+                                    </div>
+
+                                    <div className="flex-1 flex items-center justify-between py-2.5 pr-4 pl-1 min-w-0">
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <div
+                                          className={`w-6 h-6 rounded flex items-center justify-center shrink-0 transition-colors ${
+                                            selectedCurriculumItem?.lessonId ===
+                                            lesson.id
+                                              ? "bg-[#7c6ef0]/10 text-[#7c6ef0] border border-[#7c6ef0]/20"
+                                              : "bg-white text-slate-400 border border-slate-200"
+                                          }`}
+                                        >
+                                          {lesson.type === "VIDEO" ? (
+                                            <PlayCircle className="w-3 h-3" />
+                                          ) : (
+                                            <FileText className="w-3 h-3" />
+                                          )}
+                                        </div>
+                                        <span
+                                          className={`text-[12px] truncate transition-colors ${
+                                            selectedCurriculumItem?.lessonId ===
+                                            lesson.id
+                                              ? "font-bold text-[#7c6ef0]"
+                                              : "font-medium text-slate-600 group-hover:text-slate-900"
+                                          }`}
+                                        >
+                                          {lesson.title}
+                                        </span>
+                                      </div>
+                                      <div className="shrink-0 ml-2 border border-emerald-500/20 bg-emerald-50/50 rounded px-1.5 py-[1px]">
+                                        <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1">
+                                          <span className="text-[10px]">*</span>
+                                          Pub
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Reorder.Item>
+                              ))}
+                            </Reorder.Group>
                             <button
                               onClick={() =>
                                 handleAddLesson(module.id.toString())
                               }
-                              className="flex items-center gap-2 px-10 py-3 text-[11px] font-bold text-slate-400 hover:text-primary transition-colors hover:bg-slate-50 w-full"
+                              className="flex items-center gap-2 pl-[3.25rem] pr-6 py-2.5 mt-1 text-[12px] font-medium text-slate-500 hover:text-slate-800 transition-colors"
                             >
-                              <Plus className="w-3 h-3" /> Add Lesson
+                              <Plus className="w-3.5 h-3.5" /> Add lesson
                             </button>
                           </div>
                         )}
                       </div>
                     ))}
-                    {(!course?.modules || course.modules.length === 0) && (
-                      <p className="text-[11px] text-slate-400 italic px-6 py-2">
-                        No modules added yet.
-                      </p>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Main Navigation */}
-              <div className="p-4 space-y-1 bg-white">
+              <div className="px-4 py-6 space-y-2">
                 {[
-                  { id: "basic", label: "Basic Info", icon: Layout },
                   { id: "settings", label: "Settings", icon: SettingsIcon },
                   ...(isEdit
                     ? [
@@ -704,14 +787,14 @@ const InstructorCourseEditor = () => {
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group ${
                       activeTab === tab.id
-                        ? "bg-primary/5 text-primary border border-primary/10"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-transparent"
+                        ? "bg-slate-100 text-slate-900 border border-slate-200"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent"
                     }`}
                   >
                     <tab.icon
                       className={`w-4 h-4 transition-colors ${
                         activeTab === tab.id
-                          ? "text-primary"
+                          ? "text-slate-900"
                           : "text-slate-400 group-hover:text-slate-600"
                       }`}
                     />
@@ -721,9 +804,17 @@ const InstructorCourseEditor = () => {
               </div>
             </div>
           </ScrollArea>
+
+          <div className="p-4 border-t border-slate-200 bg-white">
+            <button
+              onClick={handleAddModule}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm transition-all shadow-sm"
+            >
+              <PlusSquare className="w-4 h-4" /> New module
+            </button>
+          </div>
         </aside>
 
-        {/* Backdrop for mobile */}
         {isSidebarOpen && (
           <div
             className="fixed inset-0 bg-slate-900/10 backdrop-blur-[1px] z-30 lg:hidden"
@@ -731,7 +822,6 @@ const InstructorCourseEditor = () => {
           />
         )}
 
-        {/* Content Area */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 flex flex-col relative custom-scrollbar">
           <div className="flex-1 mx-auto w-full flex flex-col transition-all duration-300 max-w-5xl p-4 md:p-10">
             {renderTabContent()}
@@ -746,7 +836,6 @@ const InstructorCourseEditor = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}</style>
 
-      {/* Module Modal */}
       <ModuleModal
         isOpen={isModuleModalOpen}
         onClose={() => {
@@ -762,7 +851,6 @@ const InstructorCourseEditor = () => {
         isCreating={createModuleMutation.isPending}
       />
 
-      {/* Lesson Modal */}
       <LessonModal
         isOpen={isLessonModalOpen}
         onClose={() => {
@@ -778,24 +866,41 @@ const InstructorCourseEditor = () => {
         isCreating={createLessonMutation.isPending}
       />
 
-      {/* Content Modal */}
-      <ContentModal
-        isOpen={isContentModalOpen}
-        onClose={() => setIsContentModalOpen(false)}
-        onAdd={handleCreateContent}
-        lessonId={selectedLessonId}
-        isAdding={createContentMutation.isPending}
-      />
+      {isContentModalOpen && (
+        <ContentModal
+          isOpen={true}
+          onClose={() => setIsContentModalOpen(false)}
+          onAdd={handleCreateContent}
+          lessonId={selectedLessonId}
+          isAdding={createContentMutation.isPending}
+        />
+      )}
 
-      {/* Exercise Modal */}
-      <ExerciseModal
-        isOpen={isExerciseModalOpen}
-        onClose={() => setIsExerciseModalOpen(false)}
-        onAddBulk={handleCreateExercise}
-        moduleId={selectedModuleId}
-        lessonId={selectedLessonId}
-        isAdding={createExerciseMutation.isPending}
-      />
+      {isExerciseModalOpen && (
+        <ExerciseModal
+          isOpen={true}
+          onClose={() => {
+            setIsExerciseModalOpen(false);
+            setInitialExerciseTitle("");
+            setEditingExercise(null);
+          }}
+          onAddBulk={handleCreateExercise}
+          moduleId={selectedModuleId}
+          lessonId={selectedLessonId}
+          isAdding={
+            createExerciseMutation.isPending || updateExerciseMutation.isPending
+          }
+          initialTitle={initialExerciseTitle}
+          initialData={editingExercise}
+          onUpdate={handleUpdateExercise}
+          existingExercisesCount={
+            course?.modules
+              ?.flatMap((m) => m.lessons || [])
+              .find((l) => l.id.toString() === selectedLessonId.toString())
+              ?.exercises?.length || 0
+          }
+        />
+      )}
 
       <PreviewModal
         isOpen={isPreviewModalOpen}

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import InstructorNavbar from "@/components/InstructorNavbar";
+import InstructorLayout from "@/components/InstructorLayout";
 import {
   Check,
   Upload,
@@ -207,9 +207,7 @@ const InstructorCreateCourse = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <InstructorNavbar />
-
+    <InstructorLayout>
       {/* Sticky header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-[64px] md:top-[80px] z-40">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -617,7 +615,7 @@ const InstructorCreateCourse = () => {
           )}
         </div>
       </main>
-    </div>
+    </InstructorLayout>
   );
 };
 

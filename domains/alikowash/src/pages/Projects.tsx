@@ -54,7 +54,7 @@ const Projects = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects
-                .filter((p: any) => p.is_published !== false)
+                .filter((p: any) => (p.isPublished ?? p.is_published) !== false)
                 .map((project: any, index: number) => (
                   <motion.div
                     key={project.id || project.title}
@@ -68,7 +68,7 @@ const Projects = () => {
                       {project.photos && project.photos[0] ? (
                         <img
                           src={project.photos[0]}
-                          alt={project.title}
+                          alt={project.projectName || project.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
@@ -77,17 +77,18 @@ const Projects = () => {
                         </div>
                       )}
 
-                      {project.capacity_m3 && (
+                      {(project.capacityM3 || project.capacity_m3) && (
                         <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-bold">
-                          {project.capacity_m3}m³
+                          {project.capacityM3 || project.capacity_m3}m³
                         </div>
                       )}
 
-                      {project.partner_names && project.partner_names[0] && (
-                        <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                          {project.partner_names[0]}
-                        </div>
-                      )}
+                      {(project.partnerNames || project.partner_names) &&
+                        (project.partnerNames || project.partner_names)[0] && (
+                          <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                            {(project.partnerNames || project.partner_names)[0]}
+                          </div>
+                        )}
                     </div>
 
                     <div className="p-6">
@@ -98,27 +99,29 @@ const Projects = () => {
                             {project.location}
                           </span>
                         )}
-                        {project.year_gc && (
+                        {(project.year ||
+                          project.yearGc ||
+                          project.year_gc) && (
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {project.year_gc}
+                            {project.year || project.yearGc || project.year_gc}
                           </span>
                         )}
-                        {project.system_type && (
+                        {(project.systemType || project.system_type) && (
                           <span className="flex items-center gap-1">
                             <Droplets className="w-3 h-3" />
-                            {project.system_type}
+                            {project.systemType || project.system_type}
                           </span>
                         )}
                       </div>
 
                       <h3 className="font-display text-lg font-bold text-foreground mb-3 leading-tight group-hover:text-primary transition-colors">
-                        {project.title}
+                        {project.projectName || project.title}
                       </h3>
 
-                      {project.summary && (
+                      {(project.storyText || project.summary) && (
                         <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                          {project.summary}
+                          {project.storyText || project.summary}
                         </p>
                       )}
 

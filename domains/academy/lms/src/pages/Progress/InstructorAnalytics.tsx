@@ -1,5 +1,5 @@
 import React from "react";
-import InstructorNavbar from "@/components/InstructorNavbar";
+import InstructorLayout from "@/components/InstructorLayout";
 import { BarChart2, TrendingUp, Users, BookOpen, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,8 +11,7 @@ const InstructorAnalytics = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <InstructorNavbar />
+      <InstructorLayout>
         <main className="section-container py-8 md:py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {[1, 2, 3, 4].map((i) => (
@@ -27,13 +26,12 @@ const InstructorAnalytics = () => {
             ))}
           </div>
         </main>
-      </div>
+      </InstructorLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <InstructorNavbar />
+    <InstructorLayout>
       <main className="section-container py-8 md:py-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -123,7 +121,7 @@ const InstructorAnalytics = () => {
           </CardContent>
         </Card>
       </main>
-    </div>
+    </InstructorLayout>
   );
 };
 

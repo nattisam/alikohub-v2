@@ -2,10 +2,9 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useUser } from "@/hooks/useAuth";
 
 const AdminRoute = () => {
-  const { data: user, isLoading } = useUser();
-
-  if (isLoading) {
-    return null; // Loading state
+  const { data: user, isLoading, isFetched } = useUser();
+  if (isLoading || !isFetched) {
+    return null; // Initial loading state
   }
 
   if (!user) {

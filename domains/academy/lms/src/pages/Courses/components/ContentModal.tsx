@@ -31,18 +31,26 @@ export const ContentModal = ({
   const [type, setType] = useState<"PDF" | "VIDEO" | "TEXT">("PDF");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState("upload");
+
+  React.useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   const resetForm = () => {
     setTitle("");
     setType("PDF");
     setUrl("");
     setFile(null);
+    setActiveTab("upload");
   };
 
   const handleAdd = () => {
     if (!title) return;
 
-    if (file) {
+    if (file && activeTab === "upload") {
       const formData = new FormData();
       formData.append("lessonId", lessonId);
       formData.append("title", title);
@@ -55,11 +63,9 @@ export const ContentModal = ({
         lessonId: Number(lessonId),
         title,
         type,
-        url,
+        url: activeTab === "url" ? url : "",
       });
     }
-    // Form is usually reset in the parent after success,
-    // but we can clear local state if we want.
   };
 
   const handleClose = () => {
@@ -119,7 +125,11 @@ export const ContentModal = ({
             </div>
           </div>
 
-          <Tabs defaultValue="upload" className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-2 h-12 bg-slate-100/50 p-1">
               <TabsTrigger
                 value="upload"

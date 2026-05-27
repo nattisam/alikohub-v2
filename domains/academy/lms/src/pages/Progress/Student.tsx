@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Award, CheckCircle2, MoreHorizontal, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import LmsNavbar from "@/components/LmsNavbar";
+import StudentLayout from "@/components/StudentLayout";
 import {
   useEnrollments,
   useStudentDashboard,
@@ -61,9 +61,7 @@ const LmsMyLearning = () => {
       : calculatedProgress || 0;
 
   return (
-    <div className="min-h-screen bg-white">
-      <LmsNavbar />
-
+    <StudentLayout>
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Stats Header - Overall Progress */}
         <div className="mb-8 border rounded-lg p-6 bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -260,7 +258,7 @@ const LmsMyLearning = () => {
           </p>
         </div>
       </div>
-    </div>
+    </StudentLayout>
   );
 };
 

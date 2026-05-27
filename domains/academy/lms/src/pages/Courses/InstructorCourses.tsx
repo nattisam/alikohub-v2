@@ -1,5 +1,5 @@
 import { useState } from "react";
-import InstructorNavbar from "@/components/InstructorNavbar";
+import InstructorLayout from "@/components/InstructorLayout";
 import { PlusCircle, Search, Filter, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInstructorCourses, useDeleteCourse } from "@/hooks/useAcademy";
@@ -43,9 +43,7 @@ const InstructorCourses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <InstructorNavbar />
-
+    <InstructorLayout>
       <main className="section-container py-8 md:py-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -241,7 +239,7 @@ const InstructorCourses = () => {
         isOpen={isCohortModalOpen}
         onClose={() => setIsCohortModalOpen(false)}
       />
-    </div>
+    </InstructorLayout>
   );
 };
 

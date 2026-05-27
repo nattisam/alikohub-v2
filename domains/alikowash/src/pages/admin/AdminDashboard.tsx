@@ -36,25 +36,18 @@ export default function AdminDashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // In a real API, we might have a single /stats endpoint
-        // For now we'll call individual ones or use a mock if they don't exist
-        const [projects, partners, contacts, donations, team, stories] =
-          await Promise.all([
-            washService.getProjects().catch(() => ({ length: 0 })),
-            washService.getPartners().catch(() => ({ length: 0 })),
-            washService.getContacts().catch(() => ({ length: 0 })),
-            washService.getDonations().catch(() => ({ length: 0 })),
-            washService.getTeam().catch(() => ({ length: 0 })),
-            washService.getStories().catch(() => ({ length: 0 })),
-          ]);
+        const [statsData, contacts] = await Promise.all([
+          washService.getStats().catch(() => ({})),
+          washService.getContacts().catch(() => []),
+        ]);
 
         setStats({
-          projects: Array.isArray(projects) ? projects.length : 0,
-          partners: Array.isArray(partners) ? partners.length : 0,
-          contacts: Array.isArray(contacts) ? contacts.length : 0,
-          donations: Array.isArray(donations) ? donations.length : 0,
-          team: Array.isArray(team) ? team.length : 0,
-          stories: Array.isArray(stories) ? stories.length : 0,
+          projects: statsData.projects || 0,
+          partners: statsData.partners || 0,
+          contacts: statsData.contacts || 0,
+          donations: statsData.donations || 0,
+          team: statsData.team || 0,
+          stories: statsData.stories || 0,
         });
 
         // Get 5 most recent contacts

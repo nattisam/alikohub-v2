@@ -1,7 +1,14 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, X, ZoomIn, Calendar, Sparkles } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  ZoomIn,
+  Calendar,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ChapterImage {
@@ -40,23 +47,30 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
   const [isHovering, setIsHovering] = useState(false);
 
   const themeStyles = {
-    sepia: "bg-gradient-to-br from-amber-50/50 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10",
-    urgent: "bg-gradient-to-br from-red-50/30 to-orange-50/30 dark:from-red-950/20 dark:to-orange-950/10",
-    clinical: "bg-gradient-to-br from-cyan-50/30 to-blue-50/30 dark:from-cyan-950/20 dark:to-blue-950/10",
-    hopeful: "bg-gradient-to-br from-green-50/30 to-cyan-50/30 dark:from-green-950/20 dark:to-cyan-950/10",
+    sepia:
+      "bg-gradient-to-br from-amber-50/50 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10",
+    urgent:
+      "bg-gradient-to-br from-red-50/30 to-orange-50/30 dark:from-red-950/20 dark:to-orange-950/10",
+    clinical:
+      "bg-gradient-to-br from-cyan-50/30 to-blue-50/30 dark:from-cyan-950/20 dark:to-blue-950/10",
+    hopeful:
+      "bg-gradient-to-br from-green-50/30 to-cyan-50/30 dark:from-green-950/20 dark:to-cyan-950/10",
   };
 
   const nextImage = () => {
+    if (!chapter.images || chapter.images.length === 0) return;
     setCurrentImageIndex((prev) => (prev + 1) % chapter.images.length);
   };
 
   const prevImage = () => {
+    if (!chapter.images || chapter.images.length === 0) return;
     setCurrentImageIndex(
-      (prev) => (prev - 1 + chapter.images.length) % chapter.images.length
+      (prev) => (prev - 1 + chapter.images.length) % chapter.images.length,
     );
   };
 
   const openLightbox = (index: number) => {
+    if (!chapter.images || chapter.images.length === 0) return;
     setLightboxIndex(index);
     setLightboxOpen(true);
   };
@@ -67,15 +81,15 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
         id={`chapter-${chapter.id}`}
         ref={ref}
         className={cn(
-          "min-h-screen py-20 scroll-mt-32",
-          themeStyles[chapter.theme as keyof typeof themeStyles]
+          "min-h-[70vh] py-12 md:py-20 scroll-mt-40 md:scroll-mt-48",
+          themeStyles[chapter.theme as keyof typeof themeStyles],
         )}
       >
         <div className="container-main">
           <div
             className={cn(
               "grid lg:grid-cols-2 gap-12 lg:gap-20 items-center",
-              index % 2 === 1 && "lg:grid-flow-dense"
+              index % 2 === 1 && "lg:grid-flow-dense",
             )}
           >
             {/* Content Side */}
@@ -96,26 +110,26 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
                   <motion.span
                     className={cn(
                       "inline-block text-7xl md:text-9xl font-display font-bold",
-                      yearGradients[chapter.year] || "text-primary/20"
+                      yearGradients[chapter.year] || "text-primary/20",
                     )}
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
                     {chapter.year}
                   </motion.span>
-                  
+
                   {/* Decorative sparkles */}
                   <motion.div
                     className="absolute -top-2 -right-2"
-                    animate={{ 
+                    animate={{
                       rotate: [0, 15, -15, 0],
-                      scale: [1, 1.2, 1]
+                      scale: [1, 1.2, 1],
                     }}
                     transition={{ duration: 3, repeat: Infinity }}
                   >
                     <Sparkles className="w-6 h-6 text-accent" />
                   </motion.div>
-                  
+
                   {/* Calendar icon */}
                   <motion.div
                     className="absolute -bottom-1 -left-4 bg-primary/10 rounded-full p-2"
@@ -129,7 +143,7 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
               </div>
 
               {/* Title & Badge */}
-              <motion.div 
+              <motion.div
                 className="flex flex-wrap items-center gap-3 mb-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -144,14 +158,17 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
                     animate={isInView ? { scale: 1 } : {}}
                     transition={{ delay: 0.4, type: "spring" }}
                   >
-                    <Badge variant="destructive" className="text-xs animate-pulse">
+                    <Badge
+                      variant="destructive"
+                      className="text-xs animate-pulse"
+                    >
                       {chapter.badge}
                     </Badge>
                   </motion.div>
                 )}
               </motion.div>
 
-              <motion.p 
+              <motion.p
                 className="text-xl md:text-2xl text-primary font-semibold mb-6"
                 initial={{ opacity: 0, x: -20 }}
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -160,7 +177,7 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
                 {chapter.subtitle}
               </motion.p>
 
-              <motion.p 
+              <motion.p
                 className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8"
                 initial={{ opacity: 0 }}
                 animate={isInView ? { opacity: 1 } : {}}
@@ -170,7 +187,7 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
               </motion.p>
 
               {/* Tags with staggered animation */}
-              <motion.div 
+              <motion.div
                 className="flex flex-wrap gap-2"
                 initial={{ opacity: 0 }}
                 animate={isInView ? { opacity: 1 } : {}}
@@ -201,58 +218,72 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
               onMouseLeave={() => setIsHovering(false)}
             >
               {/* Main Image Carousel */}
-              <motion.div 
+              <motion.div
                 className="relative rounded-2xl overflow-hidden shadow-2xl group"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <AnimatePresence mode="wait">
-                    <motion.img
-                      key={currentImageIndex}
-                      src={chapter.images[currentImageIndex].src}
-                      alt={chapter.images[currentImageIndex].caption}
-                      className="w-full h-full object-cover"
-                      initial={{ opacity: 0, scale: 1.1 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.5 }}
-                    />
+                    {chapter.images && chapter.images.length > 0 ? (
+                      <motion.img
+                        key={currentImageIndex}
+                        src={chapter.images[currentImageIndex]?.src || ""}
+                        alt={chapter.images[currentImageIndex]?.caption || ""}
+                        className="w-full h-full object-cover"
+                        initial={{ opacity: 0, scale: 1.1 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <span className="text-muted-foreground">
+                          No image available
+                        </span>
+                      </div>
+                    )}
                   </AnimatePresence>
-                  
+
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
+
                   {/* Zoom button */}
-                  <motion.button
-                    onClick={() => openLightbox(currentImageIndex)}
-                    className="absolute top-4 right-4 p-3 bg-white/90 backdrop-blur-sm rounded-full text-foreground shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <ZoomIn className="w-5 h-5" />
-                  </motion.button>
+                  {chapter.images && chapter.images.length > 0 && (
+                    <motion.button
+                      onClick={() => openLightbox(currentImageIndex)}
+                      className="absolute top-4 right-4 p-3 bg-white/90 backdrop-blur-sm rounded-full text-foreground shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <ZoomIn className="w-5 h-5" />
+                    </motion.button>
+                  )}
 
                   {/* Image counter */}
-                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    {currentImageIndex + 1} / {chapter.images.length}
-                  </div>
+                  {chapter.images && chapter.images.length > 1 && (
+                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      {currentImageIndex + 1} / {chapter.images.length}
+                    </div>
+                  )}
 
                   {/* Caption */}
-                  <motion.div 
-                    className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <p className="text-white text-lg font-medium">
-                      {chapter.images[currentImageIndex].caption}
-                    </p>
-                  </motion.div>
+                  {chapter.images && chapter.images.length > 0 && (
+                    <motion.div
+                      className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6"
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <p className="text-white text-lg font-medium">
+                        {chapter.images[currentImageIndex]?.caption}
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
 
                 {/* Navigation Arrows */}
-                {chapter.images.length > 1 && (
+                {chapter.images && chapter.images.length > 1 && (
                   <>
                     <motion.button
                       onClick={prevImage}
@@ -275,8 +306,8 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
               </motion.div>
 
               {/* Thumbnail Strip with enhanced styling */}
-              {chapter.images.length > 1 && (
-                <motion.div 
+              {chapter.images && chapter.images.length > 1 && (
+                <motion.div
                   className="mt-4 flex gap-3 overflow-x-auto scrollbar-hide pb-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -290,14 +321,14 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
                         "flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden transition-all duration-300 border-2",
                         currentImageIndex === i
                           ? "ring-2 ring-primary ring-offset-2 border-primary scale-105"
-                          : "opacity-60 hover:opacity-100 border-transparent hover:border-primary/30"
+                          : "opacity-60 hover:opacity-100 border-transparent hover:border-primary/30",
                       )}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <img
-                        src={img.src}
-                        alt={img.caption}
+                        src={img?.src || ""}
+                        alt={img?.caption || ""}
                         className="w-full h-full object-cover"
                       />
                     </motion.button>
@@ -340,35 +371,44 @@ export function StoryChapter({ chapter, index }: ChapterProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setLightboxIndex(
-                (prev) => (prev - 1 + chapter.images.length) % chapter.images.length
-              );
+              if (chapter.images && chapter.images.length > 0) {
+                setLightboxIndex(
+                  (prev) =>
+                    (prev - 1 + chapter.images.length) % chapter.images.length,
+                );
+              }
             }}
             className="absolute left-4 p-2 text-white hover:text-white/80 transition-colors"
           >
             <ChevronLeft className="w-8 h-8" />
           </button>
 
-          <img
-            src={chapter.images[lightboxIndex].src}
-            alt={chapter.images[lightboxIndex].caption}
-            className="max-w-[90vw] max-h-[90vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {chapter.images && chapter.images.length > 0 && (
+            <img
+              src={chapter.images[lightboxIndex]?.src || ""}
+              alt={chapter.images[lightboxIndex]?.caption || ""}
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
 
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setLightboxIndex((prev) => (prev + 1) % chapter.images.length);
+              if (chapter.images && chapter.images.length > 0) {
+                setLightboxIndex((prev) => (prev + 1) % chapter.images.length);
+              }
             }}
             className="absolute right-4 p-2 text-white hover:text-white/80 transition-colors"
           >
             <ChevronRight className="w-8 h-8" />
           </button>
 
-          <p className="absolute bottom-8 text-white text-center">
-            {chapter.images[lightboxIndex].caption}
-          </p>
+          {chapter.images && chapter.images.length > 0 && (
+            <p className="absolute bottom-8 text-white text-center">
+              {chapter.images[lightboxIndex]?.caption}
+            </p>
+          )}
         </div>
       )}
     </>

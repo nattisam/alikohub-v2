@@ -1,7 +1,6 @@
 import { Award, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import LmsNavbar from "@/components/LmsNavbar";
-
+import StudentLayout from "@/components/StudentLayout";
 const certificates = [
   {
     title: "CPR/BLS Certification",
@@ -21,9 +20,7 @@ const certificates = [
 
 const Certifications = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <LmsNavbar />
-
+    <StudentLayout>
       <div className="section-container py-8 md:py-12">
         <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground mb-2">
           Certifications
@@ -82,7 +79,7 @@ const Certifications = () => {
           </div>
         )}
       </div>
-    </div>
+    </StudentLayout>
   );
 };
 

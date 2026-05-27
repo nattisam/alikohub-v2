@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -67,7 +68,7 @@ const InstructorNavbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
-      <div className="section-container grid grid-cols-3 items-center h-16 md:h-20">
+      <div className="section-container flex items-center justify-between h-16 md:h-20 md:grid md:grid-cols-3">
         <div className="flex justify-start">
           <Link to="/instructor" className="flex items-center">
             <img
@@ -197,63 +198,70 @@ const InstructorNavbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
-      {open && (
-        <div className="md:hidden border-t px-4 pb-4 space-y-3">
-          {instructorLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary"
-            >
-              <link.icon className="w-4 h-4" />
-              {link.label}
-            </Link>
-          ))}
-          <div className="pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
-              onClick={() => {
-                handleSwitchRole();
-                setOpen(false);
-              }}
-              disabled={isSwitching}
-            >
-              <Repeat className="w-4 h-4" />
-              Switch to Student Role
-            </Button>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-muted-foreground hover:text-primary"
-              asChild
-            >
-              <a
-                href="https://academy.alikohub.com"
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border px-4 py-6 shadow-xl space-y-4 z-50 overflow-y-auto max-h-[calc(100vh-4rem)]"
+          >
+            {instructorLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
                 onClick={() => setOpen(false)}
+                className="flex items-center gap-3 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                Back to Website
-              </a>
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                logout();
-                setOpen(false);
-              }}
-            >
-              Log Out
-            </Button>
-          </div>
-        </div>
-      )}
+                <link.icon className="w-4 h-4" />
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
+                onClick={() => {
+                  handleSwitchRole();
+                  setOpen(false);
+                }}
+                disabled={isSwitching}
+              >
+                <Repeat className="w-4 h-4" />
+                Switch to Student Role
+              </Button>
+            </div>
+            <div className="flex gap-4 pt-4 border-t border-border/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 text-muted-foreground hover:text-primary h-10"
+                asChild
+              >
+                <a
+                  href="https://academy.alikohub.com"
+                  onClick={() => setOpen(false)}
+                >
+                  Back to Website
+                </a>
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1 h-10"
+                onClick={() => {
+                  logout();
+                  setOpen(false);
+                }}
+              >
+                Log Out
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

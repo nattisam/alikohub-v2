@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   useCourseDetails,
   useMarkLessonComplete,
@@ -11,49 +11,50 @@ import {
 } from "@/hooks/useAcademy";
 import { useQueries } from "@tanstack/react-query";
 import { academyService } from "@/services/academyService";
-import LmsNavbar from "@/components/LmsNavbar";
+import { useUser, useLogout } from "@/hooks/useAuth";
 import {
   ChevronLeft,
   ChevronRight,
-  Video,
   FileText,
   HelpCircle,
-  CheckCircle,
   CheckCircle2,
   Circle,
-  PlayCircle,
   Lock,
   Menu,
   X,
-  Youtube,
-  BookOpen,
   Play,
   ArrowLeft,
-  Search,
-  MoreVertical,
-  Globe,
-  Settings,
-  Bell,
-  Clock,
-  Layout,
   PlaySquare,
-  Download,
+  Maximize2,
+  BookOpen,
+  ChevronDown,
+  LogOut,
+  User,
+  LayoutDashboard,
 } from "lucide-react";
+import PdfViewer from "./components/PdfViewer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+interface CourseItem {
+  id: string;
+  title: string;
+  lessonId: string;
+  itemType: "video" | "reading" | "quiz" | "pdf";
+  type?: string;
+  url?: string;
+  exercises?: any[];
+  fullTitle?: string;
+  content?: string;
+}
 
 const LmsLearn = () => {
   const { id } = useParams();
@@ -67,21 +68,40 @@ const LmsLearn = () => {
   const { data: reportData, isLoading: isReportLoading } = useCourseReport(
     id || "",
   );
+  const { data: user } = useUser();
+  const logout = useLogout();
+
+  const profileRef = useRef<HTMLDivElement>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const userInitials = user
+    ? `${user.firstname?.charAt(0) || ""}${user.lastname?.charAt(0) || ""}`.toUpperCase()
+    : "U";
 
   const enrollment = enrollments?.find(
     (e) =>
       String(e.courseId) === String(id) || String(e.course?.id) === String(id),
   );
-
   const isEnrolled =
     enrollment &&
     (enrollment.status === "ACTIVE" || enrollment.status === "COMPLETED");
 
-  // Find progress from dashboard data
   const courseProgressData = dashboardData?.find(
     (d: any) => d.courseId === Number(id),
   );
-
   const progress = Math.round(
     courseProgressData?.percentage || enrollment?.progress || 0,
   );
@@ -92,57 +112,92 @@ const LmsLearn = () => {
     "video" | "reading" | "quiz" | "pdf"
   >("video");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
   >({});
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [isAnswered, setIsAnswered] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<
+    Record<string, boolean>
+  >({});
 
-  // Handle auto-open sidebar on desktop resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsSidebarOpen(true);
-      }
+      if (window.innerWidth >= 1024) setIsSidebarOpen(true);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
   const flatLessons = course?.modules?.flatMap((m) => m.lessons || []) || [];
   const currentLessonIndex = flatLessons.findIndex(
     (l) => l.id === activeLessonId,
   );
   const activeLesson = flatLessons[currentLessonIndex];
 
-  // All items in the course for easy navigation
-  const allItems =
+  const allItems: CourseItem[] =
     course?.modules?.flatMap(
       (m) =>
-        m.lessons?.flatMap((l) => [
-          ...(l.contents?.map((c) => ({
-            ...c,
-            lessonId: l.id,
-            itemType: (c.type === "VIDEO" ? "video" : "reading") as
-              | "video"
-              | "reading",
-          })) || []),
-          ...(l.exercises?.map((e) => ({
-            ...e,
-            lessonId: l.id,
-            itemType: "quiz" as "quiz",
-          })) || []),
-        ]) || [],
+        m.lessons?.flatMap((l) => {
+          const items: CourseItem[] =
+            l.contents?.map((c) => ({
+              ...c,
+              lessonId: l.id,
+              itemType: (c.type === "VIDEO" ? "video" : "reading") as
+                | "video"
+                | "reading"
+                | "quiz"
+                | "pdf",
+            })) || [];
+
+          if (l.exercises && l.exercises.length > 0) {
+            const groupedAssessments = l.exercises.reduce(
+              (acc: any, ex: any) => {
+                const title = ex.title || `Practice: ${l.title}`;
+                const groupKey = title.includes(" ||| ")
+                  ? title.split(" ||| ")[1]
+                  : title;
+                if (!acc[groupKey])
+                  acc[groupKey] = { fullTitle: title, exercises: [] };
+                acc[groupKey].exercises.push(ex);
+                return acc;
+              },
+              {} as Record<string, any>,
+            );
+            Object.entries(groupedAssessments).forEach(
+              ([groupKey, group]: [string, any]) => {
+                const { fullTitle, exercises } = group;
+                const displayTitle = fullTitle.split(" ||| ")[0];
+                items.push({
+                  id: `quiz-${l.id}-${groupKey.replace(/\s+/g, "-").toLowerCase()}`,
+                  title: displayTitle,
+                  fullTitle,
+                  lessonId: l.id,
+                  itemType: "quiz",
+                  exercises,
+                });
+              },
+            );
+          }
+          return items;
+        }) || [],
     ) || [];
 
   const currentItemIndex = allItems.findIndex(
-    (item) => item.id === activeItemId,
+    (item: CourseItem) =>
+      item.id === activeItemId ||
+      (item.itemType === ("quiz" as any) &&
+        item.exercises?.some((ex: any) => ex.id === activeItemId)),
   );
   const activeItem = allItems[currentItemIndex];
+  const isPdf =
+    (activeItem as any)?.type === "PDF" ||
+    (activeItem as any)?.url?.toLowerCase().endsWith(".pdf");
 
-  // Fetch individual exercises as source of truth for submissions
-  const exercises = activeLesson?.exercises || [];
+  const exercises =
+    (activeItem as any)?.exercises || activeLesson?.exercises || [];
   const exerciseQueries = useQueries({
     queries: exercises.map((ex: any) => ({
       queryKey: ["exercise", ex.id],
@@ -150,20 +205,17 @@ const LmsLearn = () => {
       enabled: !!ex.id && activeItemType === "quiz",
     })),
   });
-
-  // Track the most recent data to avoid re-running the sync effect too often
   const lastSyncKey = JSON.stringify(
     exerciseQueries.map(
-      (q) => q.data?.mySubmission?.updatedAt || q.dataUpdatedAt,
+      (q: any) => q.data?.mySubmission?.updatedAt || q.dataUpdatedAt,
     ),
   );
-
-  const detailedExercises = exercises.map((ex: any, idx) => {
+  const detailedExercises = exercises.map((ex: any, idx: number) => {
     const detailed = exerciseQueries[idx]?.data;
     return detailed || ex;
   });
 
-  // Auto-select first item on load
+  // Auto-select first item
   useEffect(() => {
     if (course && allItems.length > 0 && !activeItemId) {
       const firstItem = allItems[0];
@@ -172,86 +224,64 @@ const LmsLearn = () => {
       setActiveItemType(
         firstItem.itemType as "video" | "reading" | "quiz" | "pdf",
       );
+      if (course.modules?.[0]) {
+        setExpandedModules({ [course.modules[0].id]: true });
+      }
     }
   }, [course, activeItemId, allItems]);
 
-  // 1. Sync state when item changes
   useEffect(() => {
     if (activeItem) {
       setActiveLessonId(activeItem.lessonId);
       setActiveItemType(
         activeItem.itemType as "video" | "reading" | "quiz" | "pdf",
       );
-
-      // Interaction state resets for non-essential UI bits
-      // while preserving quiz submissions until sync effect confirms them
       setIsAnswered(false);
-      setCurrentExerciseIndex(0);
     }
   }, [activeItem]);
 
-  // 2. Sync with backend data (detailed fetch or report) and localStorage
   useEffect(() => {
     if (activeItemType === "quiz" && detailedExercises.length) {
       const answers: Record<string, string> = {};
       let submittedCount = 0;
       let score = 0;
-
-      // Find this lesson in report if available
       const reportLesson = reportData
         ?.flatMap((m: any) => m.lessons || [])
         .find((l: any) => l.lessonId === Number(activeLessonId));
 
       detailedExercises.forEach((ex: any) => {
-        // Try to find exercise in report
         const reportExercise = reportLesson?.exercises?.find(
           (rex: any) => rex.exerciseId === Number(ex.id),
         );
-
         const localAnswer = localStorage.getItem(`academy_ex_answer_${ex.id}`);
-
-        // Source of truth priorities:
-        // 1. Specific detailed fetch (detailedEx.mySubmission)
-        // 2. Report data (reportExercise.answer)
-        // 3. Original lesson structure (ex.mySubmission)
-        // 4. LocalStorage
         const storedAnswer =
           ex.mySubmission?.answer ||
           reportExercise?.answer ||
           ex.userAnswer ||
           ex.submission?.answer ||
           localAnswer;
-
-        // Either there is a stored answer or the report says it's GRADED/COMPLETED
         const isCompletedState =
           !!storedAnswer ||
           reportExercise?.status === "GRADED" ||
           reportExercise?.status === "COMPLETED";
 
         if (isCompletedState) {
-          // Make sure we have a fallback answer so the UI considers it answered
           answers[ex.id] =
             storedAnswer || localAnswer || ex.correctAnswer || "SUBMITTED";
           submittedCount++;
-
-          // Check if correct
           const isCorrect =
             ex.mySubmission?.isCorrect ||
             ex.mySubmission?.status === "GRADED" ||
             reportExercise?.isCorrect ||
             reportExercise?.status === "GRADED" ||
             answers[ex.id] === ex.correctAnswer;
-
           if (isCorrect) score++;
         }
       });
 
-      // Special handling: only set submitted to false if all queries are definitively done
-      // and no submission was found. This avoids clearing the state during fast navigation.
       const isLoadingSubmissions = exerciseQueries.some(
         (q) => q.isLoading && (q as any).isEnabled,
       );
-
       if (submittedCount > 0) {
         setSelectedAnswers(answers);
         setQuizSubmitted(true);
@@ -262,28 +292,26 @@ const LmsLearn = () => {
         setSelectedAnswers({});
       }
     } else if (activeItemType === "quiz") {
-      // No exercises in this lesson, reset quiz state
       setQuizSubmitted(false);
       setQuizScore(0);
       setSelectedAnswers({});
     }
   }, [activeLessonId, lastSyncKey, reportData, activeItemType]);
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading || isReportLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <LmsNavbar />
-        <div className="flex h-[calc(100vh-64px)]">
-          <div className="w-80 bg-white border-r hidden md:block p-4 space-y-4">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-          <div className="flex-1 p-8">
-            <Skeleton className="h-[400px] w-full rounded-2xl mb-8" />
-            <Skeleton className="h-12 w-3/4 mb-4" />
-            <Skeleton className="h-24 w-full" />
-          </div>
+      <div className="min-h-screen bg-slate-50 flex h-screen">
+        <div className="w-72 h-full bg-white border-r border-slate-200 p-4 flex flex-col gap-3">
+          <Skeleton className="h-8 w-36 mb-2" />
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-10 w-full rounded-lg" />
+          ))}
+        </div>
+        <div className="flex-1 p-8 space-y-6">
+          <Skeleton className="h-[360px] w-full rounded-2xl" />
+          <Skeleton className="h-8 w-2/3 rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -292,12 +320,11 @@ const LmsLearn = () => {
   if (!course) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
-        <h2 className="text-2xl font-bold font-heading text-slate-900 mb-2">
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
           Course not found
         </h2>
         <p className="text-slate-500 mb-6 text-center max-w-md">
-          We couldn't find the course you're looking for. It might have been
-          removed.
+          We couldn't find the course you're looking for.
         </p>
         <Button onClick={() => navigate("/dashboard")} className="rounded-xl">
           Return to My Learning
@@ -312,18 +339,18 @@ const LmsLearn = () => {
         <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mb-6 border border-amber-100 shadow-sm">
           <Lock className="w-10 h-10 text-amber-500" />
         </div>
-        <h2 className="text-3xl font-black font-heading text-slate-900 mb-3 tracking-tight">
+        <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">
           Access Restricted
         </h2>
-        <p className="text-slate-500 mb-8 text-center max-w-md font-medium leading-relaxed">
+        <p className="text-slate-500 mb-8 max-w-md leading-relaxed">
           {enrollment?.status === "PENDING"
-            ? "Your enrollment is currently pending. This usually means payment is required or approval is in progress."
-            : "You are not enrolled in this course yet. Enroll now to get instant access to all learning materials."}
+            ? "Your enrollment is pending. Payment or approval may be required."
+            : "You are not enrolled in this course. Enroll to get access."}
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             onClick={() => navigate(`/courses/${id}`)}
-            className="rounded-2xl h-12 px-8 bg-slate-900 hover:bg-slate-800 font-bold shadow-lg shadow-slate-900/10 active:scale-95 transition-all"
+            className="rounded-2xl h-12 px-8 bg-slate-900 hover:bg-slate-800 font-bold"
           >
             {enrollment?.status === "PENDING"
               ? "View Enrollment Status"
@@ -332,7 +359,7 @@ const LmsLearn = () => {
           <Button
             variant="outline"
             onClick={() => navigate("/dashboard")}
-            className="rounded-2xl h-12 px-8 border-slate-200 hover:bg-slate-50 font-bold active:scale-95 transition-all"
+            className="rounded-2xl h-12 px-8 font-bold"
           >
             Back to Dashboard
           </Button>
@@ -341,7 +368,7 @@ const LmsLearn = () => {
     );
   }
 
-  // Handlers
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const checkLessonCompleted = (lessonId: string | number) => {
     if (!reportData) return false;
     const allReportLessons = reportData.flatMap((m: any) => m.lessons || []);
@@ -355,38 +382,18 @@ const LmsLearn = () => {
     ? checkLessonCompleted(activeLessonId)
     : false;
 
-  const handleNext = (options?: { bypassCheck?: boolean }) => {
-    const bypassCheck = options?.bypassCheck === true;
-    if (!bypassCheck && activeLessonId) {
-      if (!isLessonCompleted) {
-        toast.error(
-          "Please complete this lesson before moving to the next one.",
-        );
-        return;
-      }
-    }
-    if (currentLessonIndex < flatLessons.length - 1) {
-      setActiveLessonId(flatLessons[currentLessonIndex + 1].id);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentLessonIndex > 0) {
-      setActiveLessonId(flatLessons[currentLessonIndex - 1].id);
-    }
-  };
-
   const handleMarkComplete = () => {
     if (activeLessonId) {
       markCompleteMutation.mutate(
-        {
-          courseId: course.id,
-          lessonId: activeLessonId,
-        },
+        { courseId: course.id, lessonId: activeLessonId },
         {
           onSuccess: () => {
             toast.success("Lesson marked as complete!");
-            handleNext({ bypassCheck: true });
+            if (currentItemIndex < allItems.length - 1) {
+              const nextItem = allItems[currentItemIndex + 1];
+              setActiveItemId(nextItem.id);
+              setActiveItemType(nextItem.itemType);
+            }
           },
         },
       );
@@ -395,22 +402,6 @@ const LmsLearn = () => {
 
   const handleOptionSelect = (exerciseId: string, option: string) => {
     setSelectedAnswers((prev) => ({ ...prev, [exerciseId]: option }));
-  };
-
-  const handleExerciseSubmit = (exerciseId: string) => {
-    const answer = selectedAnswers[exerciseId];
-    if (!answer) {
-      toast.error("Please select an answer first.");
-      return;
-    }
-    submitExerciseMutation.mutate(
-      { exerciseId, answer },
-      {
-        onSuccess: () => {
-          setIsAnswered(true);
-        },
-      },
-    );
   };
 
   const isYouTube = (url?: string) => {
@@ -459,59 +450,59 @@ const LmsLearn = () => {
     return [];
   };
 
+  // ── Content renderer ──────────────────────────────────────────────────────
   const renderActiveContent = () => {
+    // ── Quiz ─────────────────────────────────────────────────────────────
     if (activeItemType === "quiz") {
       const exercisesList = detailedExercises || [];
       return (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-          <div className="space-y-8">
-            <div className="rounded-2xl bg-slate-50 p-8 border border-slate-200">
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-400">
+          <div className="space-y-5 px-6 md:px-10 pt-8 pb-16">
+            {/* Quiz header */}
+            <div className="rounded-2xl bg-amber-50 border border-amber-100 p-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shadow-sm">
-                  <HelpCircle size={24} />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                  <HelpCircle size={22} />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                    Lesson Assessment
+                    {activeItem?.title || "Assessment"}
                   </h2>
                   {quizSubmitted ? (
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-lg font-bold text-emerald-600">
+                      <span className="text-base font-bold text-emerald-600">
                         Score: {quizScore} / {exercisesList.length}
                       </span>
-                      <Badge className="bg-emerald-100 text-emerald-700 border-none font-bold">
+                      <Badge className="bg-emerald-100 text-emerald-700 border-none font-bold text-xs">
                         {Math.round((quizScore / exercisesList.length) * 100)}%
                       </Badge>
                     </div>
                   ) : (
                     <p className="text-sm text-slate-500 font-medium mt-1">
-                      {exercisesList.length} Questions • Answer all to complete.
+                      {exercisesList.length} Questions · Answer all to submit.
                     </p>
                   )}
                 </div>
               </div>
             </div>
 
+            {/* Questions */}
             {exercisesList.map((exercise: any, index: number) => {
               const options = parseOptions(exercise.options);
               return (
                 <div
                   key={exercise.id}
-                  className="rounded-2xl bg-white p-8 border border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="rounded-2xl bg-white border border-slate-200 shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4 duration-400"
+                  style={{ animationDelay: `${index * 60}ms` }}
                 >
-                  <div className="mb-6 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider bg-amber-50 px-3 py-1 rounded-md">
+                  <div className="mb-5">
+                    <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border border-amber-100 px-3 py-1 rounded-full">
                       Question {index + 1}
                     </span>
                   </div>
-
-                  <div className="mb-8">
-                    <div className="text-lg font-bold text-slate-900 leading-snug">
-                      {exercise.question}
-                    </div>
+                  <div className="mb-6 text-base font-semibold text-slate-900 leading-snug">
+                    {exercise.question}
                   </div>
-
                   <RadioGroup
                     value={selectedAnswers[exercise.id] || ""}
                     onValueChange={(v) =>
@@ -526,15 +517,13 @@ const LmsLearn = () => {
                       const isCorrect = exercise.correctAnswer === option;
                       const isWrong = isSelected && !isCorrect;
 
-                      let bgClass =
-                        "border-slate-200 bg-white hover:border-primary/50";
+                      let cls = "border-slate-200 bg-white";
                       if (quizSubmitted) {
-                        if (isCorrect)
-                          bgClass = "border-emerald-500 bg-emerald-50";
-                        else if (isWrong) bgClass = "border-red-500 bg-red-50";
-                        else bgClass = "border-slate-100 opacity-50";
+                        if (isCorrect) cls = "border-emerald-400 bg-emerald-50";
+                        else if (isWrong) cls = "border-red-400 bg-red-50";
+                        else cls = "border-slate-100 opacity-60";
                       } else if (isSelected) {
-                        bgClass = "border-primary bg-blue-50/30";
+                        cls = "border-primary bg-primary/5";
                       }
 
                       return (
@@ -542,8 +531,11 @@ const LmsLearn = () => {
                           key={idx}
                           htmlFor={`q${exercise.id}-o${idx}`}
                           className={cn(
-                            "flex items-center gap-4 rounded-xl border p-4 transition-all cursor-pointer",
-                            bgClass,
+                            "flex items-center gap-4 rounded-xl border p-4 transition-all",
+                            !quizSubmitted
+                              ? "cursor-pointer hover:border-primary/50 hover:bg-primary/5"
+                              : "cursor-default",
+                            cls,
                           )}
                         >
                           {!quizSubmitted ? (
@@ -559,9 +551,9 @@ const LmsLearn = () => {
                           ) : isWrong ? (
                             <X size={18} className="text-red-500 shrink-0" />
                           ) : (
-                            <div className="w-4 h-4 rounded-full border border-slate-200 shrink-0" />
+                            <div className="w-4 h-4 rounded-full border border-slate-300 shrink-0" />
                           )}
-                          <span className="text-[15px] font-medium">
+                          <span className="text-[15px] font-medium text-slate-800">
                             {option}
                           </span>
                         </Label>
@@ -573,31 +565,31 @@ const LmsLearn = () => {
             })}
 
             {!quizSubmitted && (
-              <div className="flex justify-center pt-8">
+              <div className="flex justify-center pt-4">
                 <Button
                   onClick={() => {
                     const allAnswered = exercisesList.every(
-                      (ex) => selectedAnswers[ex.id],
+                      (ex: any) => selectedAnswers[ex.id],
                     );
                     if (!allAnswered) {
                       toast.error("Please answer all questions.");
                       return;
                     }
-                    let correctCount = 0;
-                    exercisesList.forEach((ex) => {
+                    let correct = 0;
+                    exercisesList.forEach((ex: any) => {
                       if (selectedAnswers[ex.id] === ex.correctAnswer)
-                        correctCount++;
+                        correct++;
                     });
-                    setQuizScore(correctCount);
+                    setQuizScore(correct);
                     Promise.all(
-                      exercisesList.map((ex) =>
+                      exercisesList.map((ex: any) =>
                         submitExerciseMutation.mutateAsync({
                           exerciseId: ex.id,
                           answer: selectedAnswers[ex.id],
                         }),
                       ),
                     ).then(() => {
-                      exercisesList.forEach((ex) => {
+                      exercisesList.forEach((ex: any) => {
                         localStorage.setItem(
                           `academy_ex_answer_${ex.id}`,
                           selectedAnswers[ex.id],
@@ -609,7 +601,7 @@ const LmsLearn = () => {
                     });
                   }}
                   disabled={submitExerciseMutation.isPending}
-                  className="rounded-xl px-10 h-14 bg-slate-900 text-white font-bold"
+                  className="rounded-xl px-10 h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md"
                 >
                   Submit Quiz
                 </Button>
@@ -620,17 +612,19 @@ const LmsLearn = () => {
       );
     }
 
+    // ── Video ─────────────────────────────────────────────────────────────
     if (activeItemType === "video") {
       return (
-        <div className="w-full animate-in fade-in duration-500">
-          <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-lg mb-8">
+        <div className="w-full animate-in fade-in duration-400 flex flex-col">
+          {/* Full-width flush video — no border-radius, edge-to-edge */}
+          <div className="aspect-video w-full overflow-hidden bg-slate-900">
             {isYouTube((activeItem as any)?.url) ? (
               <iframe
                 className="w-full h-full border-0"
                 src={getYouTubeEmbedUrl((activeItem as any)?.url || "")}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-              ></iframe>
+              />
             ) : (
               <video
                 src={getFullUrl((activeItem as any)?.url)}
@@ -640,88 +634,76 @@ const LmsLearn = () => {
               />
             )}
           </div>
-          <div className="prose prose-slate max-w-none mb-8">
-            <h3 className="text-xl font-bold text-slate-800 mb-4">
-              About this lesson
-            </h3>
-            <p className="text-slate-600 leading-relaxed">
+
+          {/* Meta & actions */}
+          <div className="px-6 md:px-10 pt-6 pb-4">
+            <h2 className="text-xl font-bold text-slate-900 mb-1">
+              {activeItem?.title}
+            </h2>
+            <p className="text-slate-500 text-sm leading-relaxed mb-8">
               In this part of the course, we'll explore {activeItem?.title}. Pay
               close attention to the key concepts mentioned in the video.
             </p>
-          </div>
 
-          {/* Mark Complete Action */}
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-slate-50 p-6 rounded-2xl border border-slate-200 mt-8 gap-4">
-            <div>
-              <h3 className="font-bold text-slate-800">
-                Done with this content?
-              </h3>
-              <p className="text-sm text-slate-500">
-                Mark it as complete to track your progress.
-              </p>
+            {/* Mark complete */}
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-slate-50 border border-slate-200 p-5 rounded-2xl gap-4">
+              <div>
+                <h3 className="font-bold text-slate-800">
+                  Done with this content?
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Mark it as complete to track your progress.
+                </p>
+              </div>
+              <Button
+                onClick={handleMarkComplete}
+                disabled={isLessonCompleted || markCompleteMutation.isPending}
+                className={cn(
+                  "rounded-xl px-8 h-11 font-bold shrink-0 transition-all",
+                  isLessonCompleted
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                    : "bg-slate-900 hover:bg-slate-800 text-white",
+                )}
+              >
+                {isLessonCompleted ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" /> Completed
+                  </>
+                ) : (
+                  "Mark as Complete"
+                )}
+              </Button>
             </div>
-            <Button
-              onClick={handleMarkComplete}
-              disabled={isLessonCompleted || markCompleteMutation.isPending}
-              className={cn(
-                "rounded-xl px-8 h-12 font-bold shrink-0",
-                isLessonCompleted
-                  ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                  : "bg-slate-900 text-white hover:bg-slate-800",
-              )}
-            >
-              {isLessonCompleted ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" /> Completed
-                </>
-              ) : (
-                "Mark as Complete"
-              )}
-            </Button>
           </div>
         </div>
       );
     }
 
+    // ── Reading ───────────────────────────────────────────────────────────
     if (activeItemType === "reading") {
-      const isPdf =
-        (activeItem as any)?.type === "PDF" ||
-        (activeItem as any)?.url?.toLowerCase().endsWith(".pdf");
       const url = getFullUrl((activeItem as any)?.url);
-
       return (
-        <div className="w-full animate-in fade-in duration-500 flex flex-col flex-1 overflow-hidden">
-          <div className="mb-6 flex items-center justify-between shrink-0">
-            <div>
-              <h3 className="text-xl font-bold text-slate-800 mb-1">
-                {activeItem?.title}
-              </h3>
-              <p className="text-sm text-slate-500 font-medium">
-                Reading Material • Please review the document below
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="rounded-xl border-slate-200 hover:bg-slate-50 font-bold gap-2"
-            >
-              <a href={url} download target="_blank" rel="noopener noreferrer">
-                <Download size={16} />
-                Download PDF
-              </a>
-            </Button>
-          </div>
-
+        <div className="w-full animate-in fade-in duration-400 flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 w-full min-h-[85vh] relative overflow-hidden">
             {isPdf ? (
-              <iframe
-                src={`${url}#toolbar=0&navpanes=0&view=FitH`}
-                className="absolute inset-0 w-full h-full border-0 bg-white"
-                title={activeItem?.title}
-              />
+              <div className="absolute inset-0 bg-slate-100 overflow-hidden group">
+                <iframe
+                  src={`${url}#toolbar=0&navpanes=0&view=FitH`}
+                  className="w-full h-full border-0 bg-white"
+                  title={activeItem?.title}
+                />
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="icon"
+                    onClick={() => setIsPdfViewerOpen(true)}
+                    className="bg-white/90 backdrop-blur text-slate-900 hover:bg-white shadow-xl rounded-xl h-10 w-10"
+                  >
+                    <Maximize2 size={18} />
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center min-h-[600px] h-full text-center p-12 bg-slate-50 rounded-2xl">
+              <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-12 bg-slate-50">
                 <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-slate-100">
                   <FileText className="w-10 h-10 text-primary" />
                 </div>
@@ -729,12 +711,11 @@ const LmsLearn = () => {
                   View Reading Resource
                 </h4>
                 <p className="text-slate-500 max-w-sm mb-8">
-                  This reading is available as an external resource. Click the
-                  button below to view it.
+                  This reading is available as an external resource.
                 </p>
                 <Button
                   onClick={() => window.open(url, "_blank")}
-                  className="rounded-xl px-10 h-14 bg-primary text-white font-bold shadow-lg shadow-primary/20"
+                  className="rounded-xl px-10 h-12 bg-primary text-white font-bold shadow-lg shadow-primary/20"
                 >
                   Open Resource in New Tab
                 </Button>
@@ -742,8 +723,7 @@ const LmsLearn = () => {
             )}
           </div>
 
-          {/* Mark Complete Action */}
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-slate-50 p-6 rounded-2xl border border-slate-200 mt-6 shrink-0 gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-slate-50 border-t border-slate-200 p-6 gap-4 mt-6 shrink-0">
             <div>
               <h3 className="font-bold text-slate-800">Finished reading?</h3>
               <p className="text-sm text-slate-500">
@@ -754,15 +734,15 @@ const LmsLearn = () => {
               onClick={handleMarkComplete}
               disabled={isLessonCompleted || markCompleteMutation.isPending}
               className={cn(
-                "rounded-xl px-8 h-12 font-bold shrink-0",
+                "rounded-xl px-8 h-11 font-bold shrink-0 transition-all",
                 isLessonCompleted
                   ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                  : "bg-slate-900 text-white hover:bg-slate-800",
+                  : "bg-slate-900 hover:bg-slate-800 text-white",
               )}
             >
               {isLessonCompleted ? (
                 <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" /> Completed
+                  <CheckCircle2 className="w-4 h-4 mr-2" /> Completed
                 </>
               ) : (
                 "Mark as Complete"
@@ -776,254 +756,374 @@ const LmsLearn = () => {
     return null;
   };
 
+  // ── Main layout ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white flex flex-col h-screen overflow-hidden text-slate-900">
-      {/* Header */}
-      <header className="h-14 flex items-center justify-between px-4 border-b border-slate-200 z-50 bg-white shadow-sm">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col h-screen overflow-hidden text-slate-900">
+      <AnimatePresence>
+        {isPdfViewerOpen && isPdf && (
+          <PdfViewer
+            url={getFullUrl((activeItem as any)?.url || activeItem?.content)}
+            title={activeItem?.title || "Document"}
+            onClose={() => setIsPdfViewerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className="h-14 shrink-0 flex items-center justify-between px-4 bg-white border-b border-slate-200 z-50 shadow-sm">
+        {/* Left */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-slate-100 rounded-md"
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="w-5 h-5 text-slate-500" />
           </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-600" />
-            </button>
-            <h1 className="text-sm font-semibold truncate max-w-[200px] sm:max-w-md lg:max-w-xl">
-              {course.title}
-            </h1>
-          </div>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-500" />
+          </button>
+          <h1 className="text-sm font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-md lg:max-w-xl ml-1">
+            {course.title}
+          </h1>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-6">
-          <div className="hidden md:flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-              <Layout className="w-3 h-3 text-primary" />
-              <span>{progress}% Complete</span>
-            </div>
-            <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-700 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+        {/* Right */}
+        <div className="flex items-center">
+          {/* Avatar dropdown */}
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <Avatar className="h-8 w-8 border border-slate-200">
+                <AvatarImage
+                  src={user?.profilePicture || undefined}
+                  alt={user?.firstname}
+                />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {profileOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl border border-slate-200 shadow-lg py-2 z-[100]">
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
+                    {user ? `${user.firstname} ${user.lastname}` : "Student"}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+                <div className="py-1">
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                    My Dashboard
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-slate-400" />
+                    Profile
+                  </Link>
+                </div>
+                <div className="border-t border-slate-100 py-1">
+                  <button
+                    onClick={() => {
+                      logout();
+                      setProfileOpen(false);
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
+      {/* ── Body ───────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside
           className={cn(
             "fixed lg:relative z-40 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 overflow-hidden h-[calc(100vh-56px)] shrink-0",
             isSidebarOpen
-              ? "w-[340px] translate-x-0"
+              ? "w-[300px] translate-x-0"
               : "w-0 -translate-x-full lg:w-0",
           )}
         >
-          <div className="p-4 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
-            <div>
-              <button
-                onClick={() => navigate(`/courses/${id}`)}
-                className="text-[11px] font-bold text-primary hover:underline uppercase tracking-[0.1em]"
-              >
-                Assess for Success: {course.title}
-              </button>
+          {/* Sidebar header */}
+          <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100 bg-slate-50/60 shrink-0">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary" />
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                Course Content
+              </span>
             </div>
             <button
               onClick={() => setIsSidebarOpen(false)}
               className="lg:hidden p-1.5 hover:bg-slate-200 rounded-md transition-colors"
             >
-              <X className="w-4 h-4 text-slate-500" />
+              <X className="w-4 h-4 text-slate-400" />
             </button>
           </div>
 
+          {/* Progress bar */}
+          <div className="px-4 py-3 border-b border-slate-100 shrink-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Progress
+              </span>
+              <span className="text-[11px] font-bold text-primary">
+                {progress}%
+              </span>
+            </div>
+            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-700"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
           <ScrollArea className="flex-1">
-            <div className="flex flex-col">
-              {course.modules?.map((module, mIdx) => (
-                <div key={module.id} className="flex flex-col">
-                  {/* Module Header */}
-                  <div className="sticky top-0 z-20 bg-slate-50/90 backdrop-blur-sm px-4 py-3 border-b border-slate-100">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                      Module {mIdx + 1}: {module.title}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col">
-                    {module.lessons?.map((lesson, lIdx) => (
-                      <div key={lesson.id} className="flex flex-col">
-                        {/* Lesson Header - Sticky beneath module */}
-                        <div className="sticky top-[41px] z-10 bg-white/95 backdrop-blur-sm px-4 py-2.5 border-b border-slate-50">
-                          <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] text-slate-500 font-bold shrink-0">
-                              {lIdx + 1}
-                            </span>
-                            {lesson.title}
-                          </h4>
-                        </div>
-
-                        {/* Items List */}
-                        <div className="flex flex-col py-1">
-                          {/* Contents */}
-                          {lesson.contents?.map((content) => {
-                            const isActive = activeItemId === content.id;
-                            const isCompleted = checkLessonCompleted(lesson.id);
-                            return (
-                              <button
-                                key={content.id}
-                                onClick={() => {
-                                  setActiveItemId(content.id);
-                                  setActiveItemType(
-                                    content.type === "VIDEO"
-                                      ? "video"
-                                      : "reading",
-                                  );
-                                  if (window.innerWidth < 1024)
-                                    setIsSidebarOpen(false);
-                                }}
-                                className={cn(
-                                  "group flex items-start gap-4 px-6 py-3.5 text-left transition-all relative",
-                                  isActive
-                                    ? "bg-blue-50/40 border-r-4 border-primary"
-                                    : "hover:bg-slate-50 border-r-4 border-transparent",
-                                )}
-                              >
-                                <div className="pt-0.5 shrink-0">
-                                  {isCompleted ? (
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                  ) : (
-                                    <Circle className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p
-                                    className={cn(
-                                      "text-[13px] leading-snug font-medium line-clamp-2",
-                                      isActive
-                                        ? "text-primary font-bold"
-                                        : "text-slate-600",
-                                    )}
-                                  >
-                                    {content.title}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1.5">
-                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                      {content.type === "VIDEO" ? (
-                                        <Play size={10} strokeWidth={3} />
-                                      ) : (
-                                        <FileText size={10} strokeWidth={3} />
-                                      )}
-                                      {content.type === "VIDEO"
-                                        ? "Video"
-                                        : "Reading"}
-                                    </div>
-                                    <span className="text-slate-200 text-xs">
-                                      •
-                                    </span>
-                                    <span className="text-[10px] font-medium text-slate-400">
-                                      5 min
-                                    </span>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
-
-                          {/* Exercises */}
-                          {lesson.exercises?.map((exercise) => {
-                            const isActive = activeItemId === exercise.id;
-                            const isCompleted = checkLessonCompleted(lesson.id);
-                            return (
-                              <button
-                                key={exercise.id}
-                                onClick={() => {
-                                  setActiveItemId(exercise.id);
-                                  setActiveItemType("quiz");
-                                  if (window.innerWidth < 1024)
-                                    setIsSidebarOpen(false);
-                                }}
-                                className={cn(
-                                  "group flex items-start gap-4 px-6 py-3.5 text-left transition-all relative",
-                                  isActive
-                                    ? "bg-blue-50/40 border-r-4 border-primary"
-                                    : "hover:bg-slate-50 border-r-4 border-transparent",
-                                )}
-                              >
-                                <div className="pt-0.5 shrink-0">
-                                  {isCompleted ? (
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                  ) : (
-                                    <PlaySquare className="w-4 h-4 text-slate-300 group-hover:text-slate-400" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p
-                                    className={cn(
-                                      "text-[13px] leading-snug font-medium line-clamp-2",
-                                      isActive
-                                        ? "text-primary font-bold"
-                                        : "text-slate-600",
-                                    )}
-                                  >
-                                    Practice: {lesson.title}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1.5">
-                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                      <HelpCircle size={10} strokeWidth={3} />
-                                      Quiz
-                                    </div>
-                                    <span className="text-slate-200 text-xs">
-                                      •
-                                    </span>
-                                    <span className="text-[10px] font-medium text-slate-400">
-                                      {exercise.points || 10} points
-                                    </span>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+            <div className="flex flex-col py-2">
+              {course.modules?.map((module, mIdx) => {
+                const isExpanded = expandedModules[module.id] !== false;
+                return (
+                  <div key={module.id} className="flex flex-col">
+                    {/* Module header */}
+                    <button
+                      onClick={() =>
+                        setExpandedModules((prev) => ({
+                          ...prev,
+                          [module.id]: !isExpanded,
+                        }))
+                      }
+                      className="flex items-center justify-between px-4 py-3 text-left w-full hover:bg-slate-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                          {mIdx + 1}
+                        </span>
+                        <span className="text-[12px] font-bold text-slate-700 uppercase tracking-wide truncate">
+                          {module.title}
+                        </span>
                       </div>
-                    ))}
+                      <ChevronDown
+                        className={cn(
+                          "w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0",
+                          isExpanded ? "rotate-180" : "",
+                        )}
+                      />
+                    </button>
+
+                    {isExpanded && (
+                      <div className="flex flex-col pb-2">
+                        {module.lessons?.map((lesson, lIdx) => (
+                          <div key={lesson.id} className="flex flex-col">
+                            {/* Lesson label */}
+                            <div className="px-8 py-2 border-b border-slate-50 bg-slate-50/40">
+                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                                {lIdx + 1}. {lesson.title}
+                              </h4>
+                            </div>
+
+                            {/* Content items */}
+                            {lesson.contents?.map((content) => {
+                              const isActive = activeItemId === content.id;
+                              const isCompleted = checkLessonCompleted(
+                                lesson.id,
+                              );
+                              return (
+                                <button
+                                  key={content.id}
+                                  onClick={() => {
+                                    setActiveItemId(content.id);
+                                    setActiveItemType(
+                                      content.type === "VIDEO"
+                                        ? "video"
+                                        : "reading",
+                                    );
+                                    if (window.innerWidth < 1024)
+                                      setIsSidebarOpen(false);
+                                  }}
+                                  className={cn(
+                                    "group flex items-center gap-3 pl-10 pr-4 py-3 text-left transition-all w-full relative border-r-4",
+                                    isActive
+                                      ? "border-primary bg-primary/5"
+                                      : "border-transparent hover:bg-slate-50",
+                                  )}
+                                >
+                                  <div className="shrink-0">
+                                    {isCompleted ? (
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                    ) : (
+                                      <Circle
+                                        className={cn(
+                                          "w-3.5 h-3.5 transition-colors",
+                                          isActive
+                                            ? "text-primary"
+                                            : "text-slate-300 group-hover:text-slate-400",
+                                        )}
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p
+                                      className={cn(
+                                        "text-[12px] font-medium leading-snug line-clamp-2 transition-colors",
+                                        isActive
+                                          ? "text-primary font-bold"
+                                          : "text-slate-600 group-hover:text-slate-900",
+                                      )}
+                                    >
+                                      {content.title}
+                                    </p>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      {content.type === "VIDEO" ? (
+                                        <Play
+                                          size={9}
+                                          strokeWidth={3}
+                                          className="text-slate-400"
+                                        />
+                                      ) : (
+                                        <FileText
+                                          size={9}
+                                          strokeWidth={3}
+                                          className="text-slate-400"
+                                        />
+                                      )}
+                                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-tight">
+                                        {content.type === "VIDEO"
+                                          ? "Video"
+                                          : "Reading"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+
+                            {/* Quiz items */}
+                            {allItems
+                              .filter(
+                                (item: any) =>
+                                  item.lessonId === lesson.id &&
+                                  item.itemType === "quiz",
+                              )
+                              .map((quizItem) => {
+                                const isActive = activeItemId === quizItem.id;
+                                const isCompleted = checkLessonCompleted(
+                                  lesson.id,
+                                );
+                                return (
+                                  <button
+                                    key={quizItem.id}
+                                    onClick={() => {
+                                      setActiveItemId(quizItem.id);
+                                      setActiveItemType("quiz");
+                                      if (window.innerWidth < 1024)
+                                        setIsSidebarOpen(false);
+                                    }}
+                                    className={cn(
+                                      "group flex items-center gap-3 pl-10 pr-4 py-3 text-left transition-all w-full relative border-r-4",
+                                      isActive
+                                        ? "border-amber-500 bg-amber-50/60"
+                                        : "border-transparent hover:bg-slate-50",
+                                    )}
+                                  >
+                                    <div className="shrink-0">
+                                      {isCompleted ? (
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                      ) : (
+                                        <PlaySquare
+                                          className={cn(
+                                            "w-3.5 h-3.5 transition-colors",
+                                            isActive
+                                              ? "text-amber-500"
+                                              : "text-slate-300 group-hover:text-slate-400",
+                                          )}
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p
+                                        className={cn(
+                                          "text-[12px] font-medium leading-snug line-clamp-2 transition-colors",
+                                          isActive
+                                            ? "text-amber-700 font-bold"
+                                            : "text-slate-600 group-hover:text-slate-900",
+                                        )}
+                                      >
+                                        {quizItem.title}
+                                      </p>
+                                      <div className="flex items-center gap-1.5 mt-1">
+                                        <HelpCircle
+                                          size={9}
+                                          strokeWidth={3}
+                                          className="text-slate-400"
+                                        />
+                                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-tight">
+                                          Quiz ·{" "}
+                                          {(quizItem as any).exercises.length} Q
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
         </aside>
 
-        {/* Backdrop for mobile */}
+        {/* Mobile backdrop */}
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-slate-900/10 backdrop-blur-[1px] z-30 lg:hidden"
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] z-30 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
-        {/* Content Area */}
+        {/* ── Content Area ─────────────────────────────────────────────────── */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white flex flex-col relative custom-scrollbar">
-          <div
-            className={cn(
-              "flex-1 mx-auto w-full flex flex-col transition-all duration-300",
-              activeItemType === "reading"
-                ? "max-w-7xl p-2 md:p-6"
-                : "max-w-[1000px] p-4 md:p-10",
-            )}
-          >
-            {/* Redundant titles removed for focused view */}
-
+          <div className="flex-1 w-full flex flex-col transition-all duration-300">
             <div className="relative group flex-1 flex flex-col">
               {renderActiveContent()}
             </div>
 
-            <div className="mt-16 flex flex-col sm:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-100 pb-20">
-              <div className="text-sm font-medium text-slate-500 order-2 sm:order-1">
+            {/* Navigation bar */}
+            <div
+              className={cn(
+                "flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-slate-100 pb-14",
+                activeItemType === "video"
+                  ? "mt-4 px-6 md:px-10"
+                  : "mt-10 px-4 md:px-10",
+              )}
+            >
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide order-2 sm:order-1">
                 Item {currentItemIndex + 1} of {allItems.length}
               </div>
               <div className="flex items-center gap-3 order-1 sm:order-2 w-full sm:w-auto">
@@ -1037,10 +1137,10 @@ const LmsLearn = () => {
                     }
                   }}
                   disabled={currentItemIndex === 0}
-                  className="rounded-lg h-12 flex-1 sm:flex-initial px-6 text-sm font-bold border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all text-slate-600"
+                  className="rounded-lg h-11 flex-1 sm:flex-initial px-6 text-sm font-bold border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
                 >
-                  <ChevronLeft className="w-4 h-4 mr-2" />
-                  Previous item
+                  <ChevronLeft className="w-4 h-4 mr-1.5" />
+                  Previous
                 </Button>
                 <Button
                   onClick={() => {
@@ -1051,10 +1151,10 @@ const LmsLearn = () => {
                     }
                   }}
                   disabled={currentItemIndex === allItems.length - 1}
-                  className="rounded-lg h-12 flex-1 sm:flex-initial px-8 text-sm font-bold bg-primary hover:shadow-lg transition-all active:scale-[0.98] gap-2 shadow-sm"
+                  className="rounded-lg h-11 flex-1 sm:flex-initial px-8 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-[0.98]"
                 >
-                  Next item
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1.5" />
                 </Button>
               </div>
             </div>
@@ -1063,7 +1163,7 @@ const LmsLearn = () => {
       </div>
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }

@@ -9,8 +9,9 @@ import type {
 } from "@/types/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
+import type { ApiError } from "@/types/auth";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -34,7 +35,7 @@ export const useLogin = () => {
         navigate("/dashboard");
       }
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message ||
         "Failed to login. Please check your credentials.";
@@ -67,7 +68,7 @@ export const useGoogleLogin = () => {
         navigate("/dashboard");
       }
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message || "Google authentication failed.";
       toast.error(message);
@@ -107,7 +108,7 @@ export const useRegister = () => {
       toast.success("Successfully registered!");
       navigate("/");
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message ||
         "Registration failed. Please try again.";
@@ -120,10 +121,15 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  return () => {
+  return async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Firebase signOut error", error);
+    }
     authService.logout();
     queryClient.setQueryData(["user"], null);
-    queryClient.clear();
+    queryClient.removeQueries({ queryKey: ["user"] });
     toast.success("Logged out successfully");
     navigate("/");
   };
@@ -149,9 +155,13 @@ export const useUser = () => {
           );
           const mergedUser = { ...remoteUser, ...academyStatus };
 
-          // Sync back to localStorage
+          // Sync back to localStorage only if changed
           const refreshToken = localStorage.getItem("refreshToken") || "";
-          authService.setSession(accessToken, refreshToken, mergedUser);
+
+          if (JSON.stringify(mergedUser) !== JSON.stringify(localUser)) {
+            authService.setSession(accessToken, refreshToken, mergedUser);
+          }
+
           return mergedUser;
         } catch (statusError) {
           return remoteUser;
@@ -208,7 +218,7 @@ export const useSelectAcademyRole = () => {
         };
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message || "Failed to select academy role";
       toast.error(message);
@@ -250,7 +260,7 @@ export const useSwitchAcademyRole = () => {
         };
       });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message || "Failed to switch academy role";
       toast.error(message);
@@ -269,7 +279,7 @@ export const useApplyInstructor = () => {
       // Invalidate the user query to re-fetch and see the new status
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message || "Failed to submit application";
       toast.error(message);
@@ -280,7 +290,7 @@ export const useApplyInstructor = () => {
 export const useUploadResume = () => {
   return useMutation({
     mutationFn: (file: File) => authService.uploadResume(file),
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       const message =
         error.response?.data?.message || "Failed to upload resume";
       toast.error(message);

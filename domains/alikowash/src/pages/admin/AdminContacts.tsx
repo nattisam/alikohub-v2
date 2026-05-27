@@ -23,7 +23,7 @@ export default function AdminContacts() {
   };
 
   const markRead = async (contact: any) => {
-    if (!contact.is_read) {
+    if (!contact.isRead) {
       await washService.markContactRead(contact.id);
       refetch();
     }
@@ -37,11 +37,11 @@ export default function AdminContacts() {
       </h1>
       <div className="grid gap-3">
         {items.map((c) => (
-          <Card key={c.id} className={!c.is_read ? "border-primary/30" : ""}>
+          <Card key={c.id} className={!c.isRead ? "border-primary/30" : ""}>
             <CardContent className="p-4 flex items-center justify-between flex-wrap gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  {!c.is_read && (
+                  {!c.isRead && (
                     <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                   )}
                   <span className="font-semibold text-foreground">
@@ -49,10 +49,10 @@ export default function AdminContacts() {
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {c.email} • {c.service_interest || "General"}
+                  {c.email} • {c.serviceInterest || "General"}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(c.created_at).toLocaleString()}
+                  {new Date(c.createdAt || c.created_at).toLocaleString()}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -110,9 +110,9 @@ export default function AdminContacts() {
                   <strong>Country:</strong> {selected.country}
                 </div>
               )}
-              {selected.service_interest && (
+              {selected.serviceInterest && (
                 <div>
-                  <strong>Service:</strong> {selected.service_interest}
+                  <strong>Service:</strong> {selected.serviceInterest}
                 </div>
               )}
               {selected.message && (
@@ -124,7 +124,10 @@ export default function AdminContacts() {
                 </div>
               )}
               <div className="text-xs text-muted-foreground">
-                Submitted: {new Date(selected.created_at).toLocaleString()}
+                Submitted:{" "}
+                {new Date(
+                  selected.createdAt || selected.created_at,
+                ).toLocaleString()}
               </div>
             </div>
           )}

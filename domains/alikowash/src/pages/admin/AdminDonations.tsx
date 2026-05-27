@@ -114,11 +114,31 @@ export default function AdminDonations() {
                   </p>
                 </div>
               )}
-              {selected.status && (
-                <div>
-                  <strong>Status:</strong> {selected.status}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <strong>Status:</strong>
+                <select
+                  className="bg-secondary border-none rounded p-1 text-xs"
+                  value={selected.status || "pending"}
+                  onChange={async (e) => {
+                    try {
+                      await washService.updateDonationStatus(
+                        selected.id,
+                        e.target.value,
+                      );
+                      toast.success("Status updated");
+                      setSelected({ ...selected, status: e.target.value });
+                      fetchData();
+                    } catch (error: any) {
+                      toast.error("Failed to update status");
+                    }
+                  }}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </div>
               <div className="text-xs text-muted-foreground">
                 Submitted: {new Date(selected.created_at).toLocaleString()}
               </div>

@@ -1,5 +1,5 @@
 import { User, Loader2 } from "lucide-react";
-import LmsNavbar from "@/components/LmsNavbar";
+import StudentLayout from "@/components/StudentLayout";
 import { useUser } from "@/hooks/useAuth";
 
 const Profile = () => {
@@ -13,18 +13,16 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <LmsNavbar />
+      <StudentLayout>
         <div className="flex items-center justify-center py-20 font-medium">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <LmsNavbar />
+    <StudentLayout>
       <div className="section-container max-w-2xl py-12 md:py-20">
         <div className="flex items-center gap-4 mb-10">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/10 shadow-sm">
@@ -64,7 +62,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
-    </div>
+    </StudentLayout>
   );
 };
 

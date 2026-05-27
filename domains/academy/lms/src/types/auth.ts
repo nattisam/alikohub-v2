@@ -90,3 +90,10 @@ export interface InstructorApplicationRequest {
     answer: string;
   }[];
 }
+
+export interface ApiError {
+  response?: {
+    data?: { message?: string };
+    status?: number;
+  };
+}

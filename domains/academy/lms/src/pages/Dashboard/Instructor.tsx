@@ -1,4 +1,4 @@
-import InstructorNavbar from "@/components/InstructorNavbar";
+import InstructorLayout from "@/components/InstructorLayout";
 import {
   Users,
   BookOpen,
@@ -54,9 +54,7 @@ const InstructorDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <InstructorNavbar />
-
+    <InstructorLayout>
       {/* Header Section */}
       <section className="bg-slate-900 border-b border-slate-800">
         <div className="section-container py-10 md:py-12">
@@ -285,7 +283,7 @@ const InstructorDashboard = () => {
           </div>
         </div>
       </main>
-    </div>
+    </InstructorLayout>
   );
 };
 

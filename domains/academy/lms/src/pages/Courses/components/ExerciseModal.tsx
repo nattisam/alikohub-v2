@@ -18,7 +18,27 @@ interface ExerciseModalProps {
   moduleId: string;
   lessonId: string;
   isAdding: boolean;
+  initialTitle?: string;
+  existingExercisesCount?: number;
+  initialData?: any;
+  onUpdate?: (exerciseId: string, data: any) => void;
 }
+
+const parseOptions = (options: any): string[] => {
+  if (Array.isArray(options)) return options;
+  if (typeof options === "string") {
+    try {
+      const parsed = JSON.parse(options);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return options
+        .split(",")
+        .map((o: string) => o.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+};
 
 export const ExerciseModal = ({
   isOpen,
@@ -27,19 +47,75 @@ export const ExerciseModal = ({
   moduleId,
   lessonId,
   isAdding,
+  initialTitle,
+  existingExercisesCount = 0,
+  initialData,
+  onUpdate,
 }: ExerciseModalProps) => {
   const [bulkExercises, setBulkExercises] = useState<any[]>([]);
-  const [formData, setFormData] = useState<any>({
-    title: "",
-    type: "MULTIPLE_CHOICE",
-    question: "",
-    description: "",
-    options: ["", ""],
-    correctAnswer: "",
-    points: 10,
+
+  // Extract batch ID from initialTitle if present, otherwise generate new
+  const [activeBatchId, setActiveBatchId] = useState(() => {
+    if (initialTitle?.includes(" ||| ")) {
+      return initialTitle.split(" ||| ")[1];
+    }
+    if (initialData?.title?.includes(" ||| ")) {
+      return initialData.title.split(" ||| ")[1];
+    }
+    return Math.random().toString(36).substring(2, 9);
   });
 
-  const resetForm = () => {
+  const [formData, setFormData] = useState<any>({
+    title:
+      initialData?.title?.split(" ||| ")[0] ||
+      initialTitle?.split(" ||| ")[0] ||
+      "",
+    type: initialData?.type || "MULTIPLE_CHOICE",
+    question: initialData?.question || "",
+    description: initialData?.description || "",
+    options: initialData?.options
+      ? parseOptions(initialData.options)
+      : ["", ""],
+    correctAnswer: initialData?.correctAnswer || "",
+    points: initialData?.points || 1,
+  });
+
+  // Update form if initialData or initialTitle changes
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setFormData({
+          title: initialData.title?.split(" ||| ")[0] || "",
+          type: initialData.type || "MULTIPLE_CHOICE",
+          question: initialData.question || "",
+          description: initialData.description || "",
+          options: parseOptions(initialData.options),
+          correctAnswer: initialData.correctAnswer || "",
+          points: initialData.points || 1,
+        });
+        const [, batchId] = initialData.title?.split(" ||| ") || [];
+        if (batchId) setActiveBatchId(batchId);
+      } else if (initialTitle && !bulkExercises.length) {
+        const [, batchId] = initialTitle.split(" ||| ");
+        setFormData((prev: any) => ({
+          ...prev,
+          title: "", // Always clear title for new entry
+          question: "",
+          description: "",
+          options: ["", ""],
+          correctAnswer: "",
+          points: 1,
+        }));
+        if (batchId) setActiveBatchId(batchId);
+      } else if (!initialTitle && !bulkExercises.length) {
+        // Regenerate batch ID for fresh assessments
+        setActiveBatchId(Math.random().toString(36).substring(2, 9));
+        resetForm();
+      }
+    }
+  }, [initialData, initialTitle, isOpen]);
+
+  const resetForm = (keepTitle = false) => {
     setFormData({
       title: "",
       type: "MULTIPLE_CHOICE",
@@ -47,7 +123,7 @@ export const ExerciseModal = ({
       description: "",
       options: ["", ""],
       correctAnswer: "",
-      points: 10,
+      points: 1,
     });
   };
 
@@ -108,11 +184,21 @@ export const ExerciseModal = ({
   };
 
   const validateForm = () => {
-    if (!formData.title || !formData.question) return false;
+    if (!formData.title) return false;
     return formData.correctAnswer !== "";
   };
 
-  const prepareExerciseData = (data: any) => ({ ...data });
+  const prepareExerciseData = (data: any) => {
+    // Suffix with the active batch ID to ensure grouping
+    const fullTitle = `${data.title} ||| ${activeBatchId}`;
+
+    return {
+      ...data,
+      title: fullTitle,
+      description: data.title,
+      question: data.title,
+    };
+  };
 
   const handleNext = () => {
     if (!validateForm()) return;
@@ -122,48 +208,56 @@ export const ExerciseModal = ({
         ...prepareExerciseData(formData),
         moduleId: Number(moduleId),
         lessonId: Number(lessonId),
-        order: bulkExercises.length + 1,
+        order: existingExercisesCount + bulkExercises.length + 1,
       },
     ]);
-    resetForm();
+    resetForm(true);
   };
 
   const handleFinalSubmit = () => {
+    if (initialData && onUpdate) {
+      if (!validateForm()) return;
+      onUpdate(initialData.id, prepareExerciseData(formData));
+      onClose();
+      return;
+    }
+
     let finalDtos = [...bulkExercises];
     if (validateForm()) {
       finalDtos.push({
         ...prepareExerciseData(formData),
         moduleId: Number(moduleId),
         lessonId: Number(lessonId),
-        order: finalDtos.length + 1,
+        order: existingExercisesCount + finalDtos.length + 1,
       });
     }
     if (finalDtos.length === 0) return;
     onAddBulk({ dtos: finalDtos });
+    clearAll();
   };
 
   const handleClose = () => {
-    clearAll();
+    if (!initialData) clearAll();
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[650px] p-0 border-none rounded-3xl overflow-hidden bg-white max-h-[95vh] flex flex-col">
-        {/* Header Section */}
         <div className="p-6 pb-2 flex justify-between items-start">
           <div className="space-y-1">
-            <DialogTitle className="text-xl font-bold text-slate-900">
-              Add Exercise
+            <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-3">
+              {initialData ? "Edit Question" : "Add Exercise"}
             </DialogTitle>
             <DialogDescription className="text-sm text-slate-500">
-              Create a multiple-choice question for this lesson.
+              {initialData
+                ? "Update the details for this question."
+                : "Create a multiple-choice question for this lesson."}
             </DialogDescription>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-8 py-4 space-y-6">
-          {/* Bulk Collection Badge - Integrated discreetly */}
           {bulkExercises.length > 0 && (
             <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
               <span className="text-[10px] font-black uppercase text-slate-400 w-full mb-1">
@@ -189,7 +283,6 @@ export const ExerciseModal = ({
             </div>
           )}
 
-          {/* Type Selector - Keeping your logic but styling it minimally */}
           <div className="flex gap-2">
             {[
               { id: "MULTIPLE_CHOICE", icon: List, label: "Multiple Choice" },
@@ -210,18 +303,17 @@ export const ExerciseModal = ({
             ))}
           </div>
 
-          {/* Title & Points */}
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-sm font-bold text-slate-800">
-                Question Title
+                Question
               </label>
               <Input
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                placeholder="e.g. Quiz 1"
+                placeholder="e.g. What is React?"
                 className="bg-white border-slate-200 h-12 rounded-xl focus-visible:ring-[#F5C07A]"
               />
             </div>
@@ -240,20 +332,6 @@ export const ExerciseModal = ({
             </div>
           </div>
 
-          {/* Question Textarea */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-800">Question</label>
-            <textarea
-              value={formData.question}
-              onChange={(e) =>
-                setFormData({ ...formData, question: e.target.value })
-              }
-              placeholder="Enter the question..."
-              className="w-full min-h-[100px] p-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-[#F5C07A] focus:border-transparent outline-none transition-all resize-none text-sm font-medium"
-            />
-          </div>
-
-          {/* Options Section */}
           <div className="space-y-3 pb-4">
             <label className="text-sm font-bold text-slate-800 block">
               Options —{" "}
@@ -311,7 +389,7 @@ export const ExerciseModal = ({
                 type="button"
                 variant="outline"
                 onClick={handleAddOption}
-                className="mt-2 border-slate-200 text-slate-900 font-bold rounded-xl h-12 px-6 flex items-center gap-2 hover:bg-slate-50"
+                className="mt-2 border-slate-200 text-slate-900 font-bold rounded-xl h-12 px-6 flex items-center gap-2 hover:bg-slate-50 hover:text-primary"
               >
                 <Plus className="w-4 h-4" /> Add Option
               </Button>
@@ -319,7 +397,6 @@ export const ExerciseModal = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="p-6 flex justify-between items-center bg-white border-t border-slate-50">
           <Button
             variant="ghost"
@@ -329,26 +406,31 @@ export const ExerciseModal = ({
             Cancel
           </Button>
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleNext}
-              disabled={!validateForm()}
-              className="font-bold border-slate-200 text-slate-700 rounded-xl h-12 px-6"
-            >
-              Add & Next
-            </Button>
+            {!initialData && (
+              <Button
+                variant="outline"
+                onClick={handleNext}
+                disabled={!validateForm()}
+                className="font-bold border-slate-200 text-slate-700 rounded-xl h-12 px-6 hover:bg-slate-50 hover:text-primary"
+              >
+                Save & Next Question
+              </Button>
+            )}
             <Button
               onClick={handleFinalSubmit}
               disabled={
-                isAdding || (bulkExercises.length === 0 && !validateForm())
+                isAdding ||
+                (!initialData && bulkExercises.length === 0 && !validateForm())
               }
               className="bg-[#F5C07A] hover:bg-[#f0b05d] text-white font-bold rounded-xl h-12 px-8 shadow-sm transition-all border-none min-w-[140px]"
             >
               {isAdding
                 ? "Saving..."
-                : bulkExercises.length > 0
-                  ? `Finish (${bulkExercises.length + (validateForm() ? 1 : 0)})`
-                  : "Save Exercise"}
+                : initialData
+                  ? "Update Question"
+                  : bulkExercises.length > 0
+                    ? `Finish Assessment (${bulkExercises.length + (validateForm() ? 1 : 0)})`
+                    : "Finish Assessment"}
             </Button>
           </div>
         </div>

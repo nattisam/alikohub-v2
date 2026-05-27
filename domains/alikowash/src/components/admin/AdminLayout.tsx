@@ -10,6 +10,7 @@ import {
   Heart,
   BookOpen,
   Users,
+  UserCog,
   Settings,
   LogOut,
   Menu,
@@ -25,6 +26,7 @@ const navItems = [
   { name: "Story Chapters", href: "/admin/stories", icon: BookOpen },
   { name: "Contacts", href: "/admin/contacts", icon: MessageSquare },
   { name: "Donations", href: "/admin/donations", icon: Heart },
+  { name: "Users", href: "/admin/users", icon: UserCog },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -61,19 +63,28 @@ export default function AdminLayout() {
               <Droplets className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="font-display text-lg font-bold text-primary">Aliko</span>
-              <span className="text-[10px] font-semibold text-accent -mt-1">ADMIN</span>
+              <span className="font-display text-lg font-bold text-primary">
+                Aliko
+              </span>
+              <span className="text-[10px] font-semibold text-accent -mt-1">
+                ADMIN
+              </span>
             </div>
           </Link>
-          <button className="lg:hidden p-1" onClick={() => setSidebarOpen(false)}>
+          <button
+            className="lg:hidden p-1"
+            onClick={() => setSidebarOpen(false)}
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href ||
-              (item.href !== "/admin" && location.pathname.startsWith(item.href));
+            const isActive =
+              location.pathname === item.href ||
+              (item.href !== "/admin" &&
+                location.pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}

@@ -44,14 +44,20 @@ const passwordChecks = [
 
 const RegisterPage = () => {
   const { mutate: register, isPending } = useRegister();
-  const { data: user } = useUser();
+  const { data: user, isLoading, isFetched } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
+      const isInstructor =
+        user.globalRole === "ADMIN" ||
+        user.academyUser?.role === "INSTRUCTOR" ||
+        user.roleStatus?.instructor?.toUpperCase() === "ACTIVE" ||
+        user.instructorStatus?.toUpperCase() === "ACTIVE";
+
       if (user.globalRole === "ADMIN") {
         navigate("/admin");
-      } else if (user.academyActiveRole === "instructor") {
+      } else if (isInstructor) {
         navigate("/instructor");
       } else {
         navigate("/dashboard");
@@ -82,6 +88,8 @@ const RegisterPage = () => {
     const { confirmPassword, _hp, ...apiValues } = values;
     register(apiValues);
   };
+
+  if (isLoading || !isFetched) return null;
 
   return (
     <AuthLayout

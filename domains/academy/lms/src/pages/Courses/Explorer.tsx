@@ -1,22 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Clock, BarChart, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import LmsNavbar from "@/components/LmsNavbar";
+import StudentLayout from "@/components/StudentLayout";
 import {
   useCourses,
   useCoursesByCategory,
   useCoursesByDifficulty,
 } from "@/hooks/useAcademy";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const streams = ["All", "Health", "Technology", "STEM"];
 const levels = ["All Levels", "Beginner", "Intermediate", "Advanced"];
 
 const LmsExplore = () => {
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [activeStream, setActiveStream] = useState("All");
   const [activeLevel, setActiveLevel] = useState("All Levels");
+
+  useEffect(() => {
+    const q = searchParams.get("search");
+    if (q) setSearch(q);
+  }, [searchParams]);
 
   // Fetch all published courses
   const { data: allCoursesData, isLoading: isLoadingAll } = useCourses(
@@ -77,24 +83,22 @@ const LmsExplore = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <LmsNavbar />
-
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-800 py-10">
+    <StudentLayout>
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-800 to-slate-900 border-b py-10">
         <div className="section-container relative z-10">
           <h1 className="text-2xl md:text-3xl font-heading font-bold text-white mb-6">
             Explore Courses
           </h1>
 
           <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
 
             <input
               type="text"
               placeholder="Search courses..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-lg border-0 bg-white/90 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="w-full pl-12 pr-4 py-3 rounded-lg border-0 bg-white/10 backdrop-blur-md text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all focus:bg-white/20"
             />
           </div>
         </div>
@@ -218,7 +222,7 @@ const LmsExplore = () => {
           </p>
         )}
       </div>
-    </div>
+    </StudentLayout>
   );
 };
 

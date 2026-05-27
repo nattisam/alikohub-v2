@@ -29,14 +29,20 @@ type LoginFormValues = zod.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const { mutate: login, isPending } = useLogin();
-  const { data: user } = useUser();
+  const { data: user, isLoading, isFetched } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
+      const isInstructor =
+        user.globalRole === "ADMIN" ||
+        user.academyUser?.role === "INSTRUCTOR" ||
+        user.roleStatus?.instructor?.toUpperCase() === "ACTIVE" ||
+        user.instructorStatus?.toUpperCase() === "ACTIVE";
+
       if (user.globalRole === "ADMIN") {
         navigate("/admin");
-      } else if (user.academyActiveRole === "instructor") {
+      } else if (isInstructor) {
         navigate("/instructor");
       } else {
         navigate("/dashboard");
@@ -55,6 +61,8 @@ const LoginPage = () => {
   const onSubmit = (values: LoginFormValues) => {
     login(values);
   };
+
+  if (isLoading || !isFetched) return null;
 
   return (
     <AuthLayout

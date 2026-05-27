@@ -16,32 +16,26 @@ import {
 
 interface Project {
   id: string;
-  title: string;
-  location: string | null;
-  year_gc: string | null;
-  system_type: string | null;
-  capacity_m3: string | null;
+  projectName: string;
+  year: number | string;
+  storyText: string | null;
+  location?: string | null;
+  systemType?: string | null;
+  capacityM3?: number | null;
   tags: string[] | null;
-  summary: string | null;
-  description: string | null;
   photos: string[] | null;
-  partner_names: string[] | null;
-  display_order: number | null;
-  is_published: boolean | null;
+  captions: string[] | null;
+  orderIndex: number;
+  isPublished: boolean;
 }
 
 const emptyProject = {
-  title: "",
-  location: "",
-  year_gc: "",
-  system_type: "",
-  capacity_m3: "",
+  projectName: "",
+  year: new Date().getFullYear(),
+  storyText: "",
   tags: "",
-  summary: "",
-  description: "",
-  partner_names: "",
-  display_order: 0,
-  is_published: true,
+  orderIndex: 0,
+  isPublished: true,
 };
 
 export default function AdminProjects() {
@@ -64,18 +58,29 @@ export default function AdminProjects() {
 
   const handleSave = async () => {
     const payload = {
-      ...editingProject,
+      projectName: editingProject.projectName || editingProject.title,
+      year: Number(editingProject.year || editingProject.yearGc),
+      storyText:
+        editingProject.storyText ||
+        editingProject.summary ||
+        editingProject.description,
+      orderIndex: Number(
+        editingProject.orderIndex || editingProject.displayOrder || 0,
+      ),
+      isPublished: editingProject.isPublished,
+      photos: editingProject.photos || [],
+      captions: editingProject.captions || [],
       tags: editingProject.tags
         ? typeof editingProject.tags === "string"
           ? editingProject.tags.split(",").map((t: string) => t.trim())
           : editingProject.tags
-        : null,
-      partner_names: editingProject.partner_names
-        ? typeof editingProject.partner_names === "string"
-          ? editingProject.partner_names.split(",").map((t: string) => t.trim())
-          : editingProject.partner_names
-        : null,
+        : [],
     };
+
+    // If editing, include the ID but remove metadata
+    if (editingProject.id) {
+      (payload as any).id = editingProject.id;
+    }
 
     try {
       await washService.upsertProject(payload);
@@ -102,7 +107,6 @@ export default function AdminProjects() {
     setEditingProject({
       ...project,
       tags: project.tags?.join(", ") || "",
-      partner_names: project.partner_names?.join(", ") || "",
     });
     setIsOpen(true);
   };
@@ -129,11 +133,11 @@ export default function AdminProjects() {
             <CardContent className="p-4 flex items-center justify-between flex-wrap gap-3">
               <div className="min-w-0">
                 <div className="font-semibold text-foreground truncate">
-                  {p.title}
+                  {p.projectName || p.title}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {p.location} • {p.year_gc} • {p.system_type}
-                  {!p.is_published && (
+                  {p.year}
+                  {!p.isPublished && (
                     <span className="ml-2 text-destructive">(Draft)</span>
                   )}
                 </div>
@@ -170,100 +174,43 @@ export default function AdminProjects() {
           {editingProject && (
             <div className="space-y-4">
               <div>
-                <Label>Title *</Label>
+                <Label>Project Name *</Label>
                 <Input
-                  value={editingProject.title}
+                  value={editingProject.projectName}
                   onChange={(e) =>
                     setEditingProject({
                       ...editingProject,
-                      title: e.target.value,
+                      projectName: e.target.value,
                     })
                   }
                   className="mt-1"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Location</Label>
-                  <Input
-                    value={editingProject.location}
-                    onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        location: e.target.value,
-                      })
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label>Year</Label>
-                  <Input
-                    value={editingProject.year_gc}
-                    onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        year_gc: e.target.value,
-                      })
-                    }
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>System Type</Label>
-                  <Input
-                    value={editingProject.system_type}
-                    onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        system_type: e.target.value,
-                      })
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label>Capacity (m³)</Label>
-                  <Input
-                    value={editingProject.capacity_m3}
-                    onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        capacity_m3: e.target.value,
-                      })
-                    }
-                    className="mt-1"
-                  />
-                </div>
-              </div>
               <div>
-                <Label>Summary</Label>
-                <Textarea
-                  value={editingProject.summary}
+                <Label>Year</Label>
+                <Input
+                  value={editingProject.year}
                   onChange={(e) =>
                     setEditingProject({
                       ...editingProject,
-                      summary: e.target.value,
+                      year: e.target.value,
                     })
                   }
                   className="mt-1"
-                  rows={2}
                 />
               </div>
               <div>
-                <Label>Description</Label>
+                <Label>Description / Story Text</Label>
                 <Textarea
-                  value={editingProject.description}
+                  value={editingProject.storyText || ""}
                   onChange={(e) =>
                     setEditingProject({
                       ...editingProject,
-                      description: e.target.value,
+                      storyText: e.target.value,
                     })
                   }
                   className="mt-1"
-                  rows={3}
+                  rows={5}
                 />
               </div>
               <div>
@@ -280,29 +227,16 @@ export default function AdminProjects() {
                   placeholder="water, irrigation"
                 />
               </div>
-              <div>
-                <Label>Partner Names (comma-separated)</Label>
-                <Input
-                  value={editingProject.partner_names}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      partner_names: e.target.value,
-                    })
-                  }
-                  className="mt-1"
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Display Order</Label>
+                  <Label>Order Index</Label>
                   <Input
                     type="number"
-                    value={editingProject.display_order}
+                    value={editingProject.orderIndex}
                     onChange={(e) =>
                       setEditingProject({
                         ...editingProject,
-                        display_order: parseInt(e.target.value) || 0,
+                        orderIndex: parseInt(e.target.value) || 0,
                       })
                     }
                     className="mt-1"
@@ -311,11 +245,11 @@ export default function AdminProjects() {
                 <div className="flex items-center gap-2 pt-6">
                   <input
                     type="checkbox"
-                    checked={editingProject.is_published}
+                    checked={editingProject.isPublished}
                     onChange={(e) =>
                       setEditingProject({
                         ...editingProject,
-                        is_published: e.target.checked,
+                        isPublished: e.target.checked,
                       })
                     }
                     id="published"

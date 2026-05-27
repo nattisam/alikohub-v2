@@ -10,10 +10,10 @@ import {
   PlayCircle,
   ExternalLink,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import LmsNavbar from "@/components/LmsNavbar";
 import { useUser } from "@/hooks/useAuth";
 import {
   useEnrollments,
@@ -22,6 +22,7 @@ import {
 } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import StudentLayout from "@/components/StudentLayout";
 
 const upcomingWebinars = [
   {
@@ -60,6 +61,13 @@ const recordedWebinars = [
     views: 276,
   },
 ];
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
 
 const StudentDashboard = () => {
   const { data: user } = useUser();
@@ -102,6 +110,9 @@ const StudentDashboard = () => {
       ? sumPercentage
       : calculatedProgress || 0;
 
+  const completedCount =
+    enrollments?.filter((e) => e.status === "COMPLETED").length || 0;
+
   const instructorStatus = user?.instructorStatus?.toUpperCase();
   const isInstructor =
     user?.globalRole === "ADMIN" ||
@@ -119,74 +130,129 @@ const StudentDashboard = () => {
     user?.roleStatus?.instructor?.toUpperCase() === "PENDING";
 
   return (
-    <div className="min-h-screen bg-background">
-      <LmsNavbar />
+    <StudentLayout>
+      <div className="max-w-6xl mx-auto px-5 py-6 space-y-6">
+        {/* ── Hero / Welcome Banner ── */}
+        <div
+          className="relative overflow-hidden rounded-2xl p-6 md:p-8"
+          style={{
+            backgroundColor: "#081830",
+          }}
+        >
+          {/* Decorative blobs */}
+          <div
+            className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10"
+            style={{
+              background:
+                "radial-gradient(circle, #7c6ef0 0%, transparent 70%)",
+              transform: "translate(30%, -30%)",
+            }}
+          />
+          <div
+            className="absolute bottom-0 left-1/2 w-48 h-48 rounded-full opacity-10"
+            style={{
+              background:
+                "radial-gradient(circle, #4f8ef0 0%, transparent 70%)",
+              transform: "translateY(40%)",
+            }}
+          />
 
-      {/* Header */}
-      <section className="bg-gradient-to-r from-slate-800 to-slate-900 border-b">
-        <div className="section-container py-8 md:py-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+            <div className="space-y-3">
+              <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">
+                Welcome back
+              </p>
               <h1 className="text-2xl md:text-3xl font-heading font-bold text-white">
-                Welcome back, {user?.firstname || "Learner"}
+                {getGreeting()}, {user?.firstname || "Learner"} 👋
               </h1>
-
-              <p className="mt-1 text-white/70">
+              <p className="text-white/80 text-sm">
                 Continue learning with{" "}
-                <span className="font-medium text-white">Aliko Academy</span>
+                <span className="font-semibold text-white">Aliko Academy</span>
               </p>
 
-              <div className="mt-4 max-w-md">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-white/60">Overall Progress</span>
-                  <span className="font-semibold text-white">
+              {/* Progress bar */}
+              <div className="max-w-xs mt-1">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="text-white/60 font-medium">
+                    Overall progress
+                  </span>
+                  <span className="font-bold text-white">
                     {overallProgress}%
                   </span>
                 </div>
-                <Progress value={overallProgress} className="h-2.5" />
+                <div className="h-2 rounded-full bg-white/20 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${overallProgress}%`,
+                      background: "linear-gradient(90deg, #7c6ef0, #a78bfa)",
+                    }}
+                  />
+                </div>
               </div>
 
-              <p className="mt-3 text-sm text-white/60">
-                {enrollments?.length || 0} Active Enrollments
+              <p className="text-white/60 text-xs">
+                {enrollments?.length || 0} active enrollments · {completedCount}{" "}
+                completed
               </p>
             </div>
 
-            <Button
-              size="lg"
-              asChild
-              className="gap-2 self-start bg-white text-slate-900 hover:bg-white/90"
-            >
-              <Link to="/courses">
-                Continue Learning <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
+            {/* CTAs */}
+            <div className="flex flex-col gap-2 md:items-end shrink-0">
+              <Button
+                asChild
+                size="sm"
+                className="gap-2 bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-sm text-sm font-semibold"
+              >
+                <Link to="/learning">
+                  <PlayCircle className="w-4 h-4" />
+                  Continue learning
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-white text-slate-900 hover:bg-white/90 border-0 text-sm font-semibold"
+              >
+                <Link to="/courses">Browse new courses</Link>
+              </Button>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* Main */}
-      <div className="section-container py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-xl font-heading font-semibold text-foreground">
-              My Active Courses
-            </h2>
+        {/* ── Two-column layout ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ── LEFT: Active Courses ── */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-heading font-bold text-foreground">
+                My active courses
+              </h2>
+              <Link
+                to="/learning"
+                className="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
+              >
+                View all <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {isLoading ? (
                 Array(3)
                   .fill(0)
                   .map((_, i) => (
-                    <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                    <Skeleton key={i} className="h-28 w-full rounded-xl" />
                   ))
               ) : enrollments?.length === 0 ? (
-                <div className="bg-card rounded-lg border p-5 text-center">
-                  <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground mb-3">
-                    You are not enrolled in any courses yet.
+                <div className="bg-card rounded-xl border p-8 text-center">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                    <BookOpen className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    You're not enrolled in any courses yet.
                   </p>
-                  <Button asChild>
+                  <Button asChild size="sm">
                     <Link to="/courses">Browse Courses</Link>
                   </Button>
                 </div>
@@ -206,112 +272,71 @@ const StudentDashboard = () => {
                   return (
                     <div
                       key={enrollment.id}
-                      className="bg-card rounded-lg border p-5 hover:shadow-md transition-shadow duration-200"
+                      className="bg-card rounded-xl border hover:shadow-md transition-shadow duration-200 p-4 flex gap-4"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted">
-                              {enrollment.course?.category || "Course"}
+                      {/* Course thumbnail placeholder */}
+                      <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shrink-0 border border-border overflow-hidden">
+                        {enrollment.course?.thumbnail ? (
+                          <img
+                            src={enrollment.course.thumbnail}
+                            alt={enrollment.course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <BookOpen className="w-6 h-6 text-indigo-400" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        {/* Category badge */}
+                        {enrollment.course?.category && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                              {enrollment.course.category}
                             </span>
                           </div>
+                        )}
 
-                          <h3 className="font-heading font-semibold text-foreground">
-                            {enrollment.course?.title}
-                          </h3>
+                        <h3 className="text-sm font-heading font-semibold text-foreground leading-snug truncate">
+                          {enrollment.course?.title}
+                        </h3>
 
-                          <div className="mt-3 max-w-xs">
-                            <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-muted-foreground">
-                                Progress
-                              </span>
-                              <span className="font-medium">
-                                {currentProgress}%
-                              </span>
-                            </div>
-
-                            <Progress value={currentProgress} className="h-2" />
+                        {/* Progress */}
+                        <div className="mt-2 max-w-xs">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">
+                              Progress
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {currentProgress}%
+                            </span>
                           </div>
+                          <Progress value={currentProgress} className="h-1.5" />
                         </div>
-
-                        <Button size="sm" asChild className="gap-1 self-start">
-                          <Link to={`/learn/${enrollment.courseId}`}>
-                            Continue <ArrowRight className="w-3 h-3" />
-                          </Link>
-                        </Button>
                       </div>
+
+                      <Button
+                        size="sm"
+                        asChild
+                        className="gap-1 self-center shrink-0 text-xs"
+                      >
+                        <Link to={`/learn/${enrollment.courseId}`}>
+                          Continue <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </Button>
                     </div>
                   );
                 })
               )}
             </div>
-          </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="space-y-6">
-            {/* SUMMARY */}
-            <div className="bg-card rounded-lg border p-5">
-              <h3 className="font-heading font-semibold text-foreground mb-4">
-                Learning Summary
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  {
-                    icon: BookOpen,
-                    label: "Courses Active",
-                    value: enrollments?.length || 0,
-                    bg: "bg-blue-50",
-                    iconColor: "text-blue-600",
-                  },
-                  {
-                    icon: Award,
-                    label: "Courses Done",
-                    value: analytics?.programsCompleted || 0,
-                    bg: "bg-emerald-50",
-                    iconColor: "text-emerald-600",
-                  },
-                  {
-                    icon: Clock,
-                    label: "Lessons Viewed",
-                    value: analytics?.lessonsViewed || 0,
-                    bg: "bg-amber-50",
-                    iconColor: "text-amber-600",
-                  },
-                  {
-                    icon: TrendingUp,
-                    label: "Quizzes Done",
-                    value: analytics?.quizzesCompleted || 0,
-                    bg: "bg-purple-50",
-                    iconColor: "text-purple-600",
-                  },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className={`text-center p-3 rounded-lg ${stat.bg}`}
-                  >
-                    <stat.icon
-                      className={`w-5 h-5 ${stat.iconColor} mx-auto mb-1`}
-                    />
-                    <p className="text-lg font-heading font-bold text-foreground">
-                      {stat.value}
-                    </p>
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">
-                      {stat.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* WEBINARS */}
-            <div className="bg-card rounded-lg border p-5">
+            {/* ── Webinars ── */}
+            <div className="bg-card rounded-xl border p-5 mt-2">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-heading font-semibold text-foreground flex items-center gap-2">
-                  <Video className="w-4 h-4 text-accent" /> Webinars
+                <h3 className="font-heading font-semibold text-foreground flex items-center gap-2 text-sm">
+                  <Video className="w-4 h-4 text-primary" /> Upcoming Webinars
                 </h3>
               </div>
-
               <div className="space-y-3">
                 {upcomingWebinars.map((webinar) => (
                   <div
@@ -320,30 +345,26 @@ const StudentDashboard = () => {
                   >
                     <div className="mt-0.5">
                       {webinar.status === "live" ? (
-                        <Radio className="w-4 h-4 text-health" />
+                        <Radio className="w-4 h-4 text-rose-500" />
                       ) : (
-                        <Calendar className="w-4 h-4 text-accent" />
+                        <Calendar className="w-4 h-4 text-primary" />
                       )}
                     </div>
-
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {webinar.title}
                         </p>
-
                         {webinar.status === "live" && (
-                          <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded stream-health">
+                          <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-rose-500 text-white shrink-0">
                             Live
                           </span>
                         )}
                       </div>
-
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {webinar.speaker} · {webinar.date} at {webinar.time}
                       </p>
                     </div>
-
                     <Button
                       variant={
                         webinar.status === "live" ? "default" : "outline"
@@ -358,53 +379,128 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* RECORDED */}
-            <div className="bg-card rounded-lg border p-5">
-              <h3 className="font-heading font-semibold text-foreground mb-4 flex items-center gap-2">
-                <PlayCircle className="w-4 h-4 text-accent" /> Recorded Sessions
+            {/* ── Recorded Sessions ── */}
+            <div className="bg-card rounded-xl border p-5">
+              <h3 className="font-heading font-semibold text-foreground mb-4 flex items-center gap-2 text-sm">
+                <PlayCircle className="w-4 h-4 text-primary" /> Recorded
+                Sessions
               </h3>
-
               <div className="space-y-3">
                 {recordedWebinars.map((rec) => (
                   <div
                     key={rec.title}
                     className="flex items-center gap-3 group cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-                      <PlayCircle className="w-4 h-4 text-accent" />
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors shrink-0">
+                      <PlayCircle className="w-4 h-4 text-primary" />
                     </div>
-
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                         {rec.title}
                       </p>
-
                       <p className="text-xs text-muted-foreground">
                         {rec.duration} · {rec.views} views
                       </p>
                     </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                    <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          {/* ── RIGHT: Summary & CTA ── */}
+          <div className="space-y-4">
+            {/* Learning Summary */}
+            <div className="bg-card rounded-xl border p-5">
+              <h3 className="font-heading font-semibold text-foreground mb-4 text-sm flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" /> Learning summary
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  {
+                    icon: BookOpen,
+                    label: "Courses active",
+                    value: enrollments?.length || 0,
+                    color: "text-indigo-600",
+                    bg: "bg-indigo-50",
+                  },
+                  {
+                    icon: Award,
+                    label: "Courses done",
+                    value: analytics?.programsCompleted || 0,
+                    color: "text-emerald-600",
+                    bg: "bg-emerald-50",
+                  },
+                  {
+                    icon: Clock,
+                    label: "Lessons viewed",
+                    value: analytics?.lessonsViewed || 0,
+                    color: "text-amber-600",
+                    bg: "bg-amber-50",
+                  },
+                  {
+                    icon: TrendingUp,
+                    label: "Quizzes done",
+                    value: analytics?.quizzesCompleted || 0,
+                    color: "text-purple-600",
+                    bg: "bg-purple-50",
+                  },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className={`flex flex-col items-center text-center p-3 rounded-xl ${stat.bg}`}
+                  >
+                    <stat.icon className={`w-5 h-5 ${stat.color} mb-1.5`} />
+                    <p className="text-xl font-heading font-bold text-foreground leading-none">
+                      {isLoading ? "—" : stat.value}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                      {stat.label}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* INSTRUCTOR CTA */}
+            {/* Overall Progress card */}
+            <div className="bg-card rounded-xl border p-5">
+              <h3 className="font-heading font-semibold text-foreground mb-3 text-sm">
+                Overall Progress
+              </h3>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-muted-foreground">Completion rate</span>
+                <span className="font-bold text-foreground">
+                  {overallProgress}%
+                </span>
+              </div>
+              <Progress value={overallProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-2">
+                {enrollments?.length || 0} enrollments · {completedCount}{" "}
+                completed
+              </p>
+            </div>
+
+            {/* Instructor CTA */}
             {!isInstructor && (
-              <div className="bg-slate-900 rounded-lg p-6 text-white text-center shadow-lg shadow-slate-200/20">
-                <Sparkles className="w-8 h-8 text-accent mx-auto mb-3" />
-                <h3 className="text-lg font-heading font-bold mb-2">
+              <div
+                className="rounded-xl p-5 text-white text-center"
+                style={{
+                  backgroundColor: "#081830",
+                }}
+              >
+                <Sparkles className="w-7 h-7 text-white/80 mx-auto mb-3" />
+                <h3 className="text-sm font-heading font-bold mb-1.5">
                   {isPending ? "Application Pending" : "Share your Knowledge"}
                 </h3>
                 <p className="text-white/60 text-xs mb-4 leading-relaxed">
                   {isPending
-                    ? "Our team is currently reviewing your instructor profile. We'll be in touch soon!"
+                    ? "Our team is reviewing your instructor profile. We'll be in touch soon!"
                     : "Become an instructor and share your expertise with thousands of students globally."}
                 </p>
                 <Button
                   asChild
-                  className="w-full bg-white text-slate-900 hover:bg-white/90 font-bold"
+                  className="w-full bg-white text-slate-900 hover:bg-white/90 font-bold text-xs"
                   size="sm"
                 >
                   <Link to="/instructor/apply">
@@ -416,7 +512,7 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </StudentLayout>
   );
 };
 

@@ -107,11 +107,15 @@ export const ExerciseModal = ({
   };
 
   const validateForm = () => {
-    if (!formData.title || !formData.question) return false;
+    if (!formData.title) return false;
     return formData.correctAnswer !== "";
   };
 
-  const prepareExerciseData = (data: any) => ({ ...data });
+  const prepareExerciseData = (data: any) => ({
+    ...data,
+    description: data.title,
+    question: data.title,
+  });
 
   const handleNext = () => {
     if (!validateForm()) return;
@@ -213,7 +217,7 @@ export const ExerciseModal = ({
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-sm font-bold text-slate-800">
-                Question Title
+                Question
               </label>
               <Input
                 value={formData.title}
@@ -237,19 +241,6 @@ export const ExerciseModal = ({
                 className="bg-white border-slate-200 h-12 rounded-xl text-center focus-visible:ring-[#F5C07A]"
               />
             </div>
-          </div>
-
-          {/* Question Textarea */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-800">Question</label>
-            <textarea
-              value={formData.question}
-              onChange={(e) =>
-                setFormData({ ...formData, question: e.target.value })
-              }
-              placeholder="Enter the question..."
-              className="w-full min-h-[100px] p-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-[#F5C07A] focus:border-transparent outline-none transition-all resize-none text-sm font-medium"
-            />
           </div>
 
           {/* Options Section */}

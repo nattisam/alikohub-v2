@@ -12,7 +12,7 @@ export const washService = {
   },
   markContactRead: async (id: string | number) => {
     const response = await api.patch(`/alikowash/contacts/${id}`, {
-      is_read: true,
+      isRead: true,
     });
     return response.data;
   },
@@ -102,14 +102,69 @@ export const washService = {
     const response = await api.get("/alikowash/donations");
     return response.data;
   },
+  getDonationById: async (id: string | number) => {
+    const response = await api.get(`/alikowash/donations/${id}`);
+    return response.data;
+  },
   submitDonation: async (data: any) => {
     const response = await api.post("/alikowash/donations", data);
+    return response.data;
+  },
+  updateDonationStatus: async (id: string | number, status: string) => {
+    const response = await api.patch(`/alikowash/donations/${id}/status`, {
+      status,
+    });
+    return response.data;
+  },
+  deleteDonation: async (id: string | number) => {
+    const response = await api.delete(`/alikowash/donations/${id}`);
+    return response.data;
+  },
+
+  // Settings
+  getSettings: async () => {
+    const response = await api.get("/alikowash/settings");
+    return response.data;
+  },
+  getSettingByKey: async (key: string) => {
+    const response = await api.get(`/alikowash/settings/${key}`);
+    return response.data;
+  },
+  upsertSetting: async (data: { key: string; value: any }) => {
+    const response = await api.post("/alikowash/settings", data);
+    return response.data;
+  },
+  deleteSetting: async (key: string) => {
+    const response = await api.delete(`/alikowash/settings/${key}`);
     return response.data;
   },
 
   // Stats
   getStats: async () => {
     const response = await api.get("/alikowash/stats");
+    return response.data;
+  },
+
+  // Admin Users
+  getUsers: async () => {
+    const response = await api.get("/alikowash/admin/users");
+    return response.data;
+  },
+  updateUserRole: async (id: string | number, role: string) => {
+    const response = await api.patch(`/alikowash/admin/users/${id}/role`, {
+      role,
+    });
+    return response.data;
+  },
+  // Upload
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post("/alikowash/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   },
 };

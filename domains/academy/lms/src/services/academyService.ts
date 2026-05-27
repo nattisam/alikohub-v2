@@ -356,7 +356,7 @@ export const academyService = {
 
     updateLesson: async (
       lessonId: string,
-      data: { title?: string; type?: string },
+      data: { title?: string; type?: string; order?: number },
     ) => {
       const response = await api.put<Lesson>(
         `/academy/lessons/${lessonId}`,

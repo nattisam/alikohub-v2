@@ -14,6 +14,7 @@ import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/Login";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminProjects from "@/pages/admin/AdminProjects";
 import AdminPartners from "@/pages/admin/AdminPartners";
 import AdminTeam from "@/pages/admin/AdminTeam";
@@ -127,6 +128,7 @@ export function AnimatedRoutes() {
           <Route path="stories" element={<AdminStories />} />
           <Route path="contacts" element={<AdminContacts />} />
           <Route path="donations" element={<AdminDonations />} />
+          <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 

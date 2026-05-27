@@ -16,11 +16,11 @@ import {
 
 const empty = {
   year: "",
-  project_name: "",
-  story_text: "",
+  projectName: "",
+  storyText: "",
   tags: "",
-  order_index: 0,
-  is_published: true,
+  orderIndex: 0,
+  isPublished: true,
 };
 
 export default function AdminStories() {
@@ -38,14 +38,25 @@ export default function AdminStories() {
   }, []);
 
   const handleSave = async () => {
-    const payload = {
-      ...editing,
+    const payload: any = {
+      year: Number(editing.year),
+      projectName: editing.projectName,
+      storyText: editing.storyText,
+      orderIndex: Number(editing.orderIndex || 0),
+      isPublished: editing.isPublished,
+      photos: editing.photos || [],
+      captions: editing.captions || [],
       tags: editing.tags
         ? typeof editing.tags === "string"
           ? editing.tags.split(",").map((t: string) => t.trim())
           : editing.tags
-        : null,
+        : [],
     };
+
+    if (editing.id) {
+      payload.id = editing.id;
+    }
+
     try {
       await washService.upsertStory(payload);
       toast({ title: "Saved!" });
@@ -87,10 +98,10 @@ export default function AdminStories() {
             <CardContent className="p-4 flex items-center justify-between flex-wrap gap-3">
               <div>
                 <div className="font-semibold text-foreground">
-                  {s.year} — {s.project_name}
+                  {s.year} — {s.projectName}
                 </div>
                 <div className="text-sm text-muted-foreground truncate max-w-md">
-                  {s.story_text?.slice(0, 80)}...
+                  {s.storyText?.slice(0, 80)}...
                 </div>
               </div>
               <div className="flex gap-2">
@@ -145,11 +156,11 @@ export default function AdminStories() {
                   <Label>Order Index</Label>
                   <Input
                     type="number"
-                    value={editing.order_index}
+                    value={editing.orderIndex}
                     onChange={(e) =>
                       setEditing({
                         ...editing,
-                        order_index: parseInt(e.target.value) || 0,
+                        orderIndex: parseInt(e.target.value) || 0,
                       })
                     }
                     className="mt-1"
@@ -159,9 +170,9 @@ export default function AdminStories() {
               <div>
                 <Label>Project Name *</Label>
                 <Input
-                  value={editing.project_name}
+                  value={editing.projectName}
                   onChange={(e) =>
-                    setEditing({ ...editing, project_name: e.target.value })
+                    setEditing({ ...editing, projectName: e.target.value })
                   }
                   className="mt-1"
                 />
@@ -169,9 +180,9 @@ export default function AdminStories() {
               <div>
                 <Label>Story Text</Label>
                 <Textarea
-                  value={editing.story_text || ""}
+                  value={editing.storyText || ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, story_text: e.target.value })
+                    setEditing({ ...editing, storyText: e.target.value })
                   }
                   className="mt-1"
                   rows={5}
@@ -190,9 +201,9 @@ export default function AdminStories() {
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  checked={editing.is_published}
+                  checked={editing.isPublished}
                   onChange={(e) =>
-                    setEditing({ ...editing, is_published: e.target.checked })
+                    setEditing({ ...editing, isPublished: e.target.checked })
                   }
                   id="pub"
                 />

@@ -11,47 +11,55 @@ import weftaLogo from "@/assets/partners/wefta.jpg";
 import daughtersOfCharityLogo from "@/assets/partners/daughters-of-charity.png";
 import lafimDiakonieLogo from "@/assets/partners/lafim-diakonie.png";
 
+import { usePartners } from "@/hooks/useWash";
+
 interface Partner {
   name: string;
   fullName?: string;
   description?: string;
   logo?: string;
   website?: string;
+  category?: string;
 }
 
 const partnerTypes = [
   {
     icon: Heart,
     title: "Donors & Funding Partners",
-    description: "Provide financial support to bring clean water to communities in need.",
+    description:
+      "Provide financial support to bring clean water to communities in need.",
     partners: [
-      { 
-        name: "WEFTA", 
+      {
+        name: "WEFTA",
         fullName: "Water Engineers for the Americans and Africans",
-        description: "International organization supporting water infrastructure projects",
+        description:
+          "International organization supporting water infrastructure projects",
         logo: weftaLogo,
-        website: "https://wefta.net"
+        website: "https://wefta.net",
       },
-      { 
-        name: "Daughters of Charity", 
+      {
+        name: "Daughters of Charity",
         fullName: "Province of St. Louise",
-        description: "Catholic organization supporting schools and community development",
+        description:
+          "Catholic organization supporting schools and community development",
         logo: daughtersOfCharityLogo,
       },
-      { 
-        name: "Glimmer of Hope", 
+      {
+        name: "Glimmer of Hope",
         fullName: "Eliminate Poverty. Illuminate Lives.",
-        description: "Foundation supporting sustainable development initiatives",
+        description:
+          "Foundation supporting sustainable development initiatives",
         logo: glimmerOfHopeLogo,
       },
-      { 
-        name: "Lafim-Diakonie", 
+      {
+        name: "Lafim-Diakonie",
         fullName: "Wir tun gut.",
-        description: "German diaconal organization supporting development projects",
+        description:
+          "German diaconal organization supporting development projects",
         logo: lafimDiakonieLogo,
       },
-      { 
-        name: "Catholic Diocese of Stockholm", 
+      {
+        name: "Catholic Diocese of Stockholm",
         fullName: "Sweden",
         description: "Faith-based donor organization",
       },
@@ -60,11 +68,22 @@ const partnerTypes = [
   {
     icon: Building,
     title: "Implementing & Technical Partners",
-    description: "Work with us on the ground to design, build, and maintain infrastructure.",
+    description:
+      "Work with us on the ground to design, build, and maintain infrastructure.",
     partners: [
-      { name: "Western Wollega Bethel Synod", fullName: "WWBS", description: "Regional church organization" },
-      { name: "Local Government Water Offices", description: "Coordination and permits" },
-      { name: "Regional Health Bureaus", description: "Health impact assessment" },
+      {
+        name: "Western Wollega Bethel Synod",
+        fullName: "WWBS",
+        description: "Regional church organization",
+      },
+      {
+        name: "Local Government Water Offices",
+        description: "Coordination and permits",
+      },
+      {
+        name: "Regional Health Bureaus",
+        description: "Health impact assessment",
+      },
     ] as Partner[],
   },
   {
@@ -72,9 +91,15 @@ const partnerTypes = [
     title: "Institutional & Community Partners",
     description: "Communities and institutions we serve and collaborate with.",
     partners: [
-      { name: "Community WASH Committees", description: "Local ownership and maintenance" },
+      {
+        name: "Community WASH Committees",
+        description: "Local ownership and maintenance",
+      },
       { name: "Local Health Offices", description: "Health coordination" },
-      { name: "Schools & Educational Institutions", description: "Institutional beneficiaries" },
+      {
+        name: "Schools & Educational Institutions",
+        description: "Institutional beneficiaries",
+      },
     ] as Partner[],
   },
 ];
@@ -87,6 +112,37 @@ const impactStats = [
 ];
 
 const Partners = forwardRef<HTMLDivElement>((_, ref) => {
+  const { data: apiPartners = [] } = usePartners();
+
+  // Helper to get partners by category
+  const getPartnersForType = (categoryKey: string, staticList: Partner[]) => {
+    const dynamic = apiPartners
+      .filter((p: any) => p.category === categoryKey)
+      .map((p: any) => ({
+        name: p.orgName,
+        fullName: p.orgFullName,
+        description: p.role,
+        logo: p.logoUrl,
+        website: p.websiteUrl,
+      }));
+    return [...staticList, ...dynamic];
+  };
+
+  const processedPartnerTypes = [
+    {
+      ...partnerTypes[0],
+      partners: getPartnersForType("donor", partnerTypes[0].partners),
+    },
+    {
+      ...partnerTypes[1],
+      partners: getPartnersForType("implementing", partnerTypes[1].partners),
+    },
+    {
+      ...partnerTypes[2],
+      partners: getPartnersForType("institutional", partnerTypes[2].partners),
+    },
+  ];
+
   return (
     <Layout>
       <div ref={ref}>
@@ -105,7 +161,7 @@ const Partners = forwardRef<HTMLDivElement>((_, ref) => {
                 Partner With <span className="text-accent">Us</span>
               </h1>
               <p className="text-xl text-primary-foreground/80 leading-relaxed">
-                Together, we can bring clean water to more communities. Join our 
+                Together, we can bring clean water to more communities. Join our
                 network of partners making a lasting impact.
               </p>
             </motion.div>
@@ -153,28 +209,28 @@ const Partners = forwardRef<HTMLDivElement>((_, ref) => {
             </motion.div>
 
             <div className="space-y-12">
-              {partnerTypes.map((type, index) => (
+              {processedPartnerTypes.map((type, index) => (
                 <motion.div
                   key={type.title}
                   initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
-                  transition={{ 
-                    delay: index * 0.15, 
+                  transition={{
+                    delay: index * 0.15,
                     duration: 0.6,
                     type: "spring",
-                    stiffness: 100
+                    stiffness: 100,
                   }}
                   className="bg-card rounded-2xl p-8 shadow-card"
                 >
-                  <motion.div 
+                  <motion.div
                     className="flex items-center gap-4 mb-8"
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.15 + 0.2 }}
                   >
-                    <motion.div 
+                    <motion.div
                       className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ type: "spring", stiffness: 300 }}
@@ -192,7 +248,7 @@ const Partners = forwardRef<HTMLDivElement>((_, ref) => {
                   </motion.div>
 
                   <div className="overflow-hidden">
-                    <motion.div 
+                    <motion.div
                       className="flex gap-6"
                       animate={{ x: ["0%", "-50%"] }}
                       transition={{
@@ -200,46 +256,48 @@ const Partners = forwardRef<HTMLDivElement>((_, ref) => {
                           duration: 20 + index * 5,
                           repeat: Infinity,
                           ease: "linear",
-                        }
+                        },
                       }}
                     >
                       {/* Duplicate partners for seamless loop */}
-                      {[...type.partners, ...type.partners].map((partner, partnerIndex) => (
-                        <motion.div
-                          key={`${partner.name}-${partnerIndex}`}
-                          whileHover={{ scale: 1.08, y: -8 }}
-                          className="group flex-shrink-0 flex flex-col items-center text-center"
-                        >
-                          <div className="rounded-xl bg-background flex items-center justify-center shadow-md hover:shadow-xl w-48 h-36 p-5 transition-all">
-                            {partner.logo ? (
-                              partner.website ? (
-                                <a 
-                                  href={partner.website} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="w-full h-full flex items-center justify-center"
-                                >
+                      {[...type.partners, ...type.partners].map(
+                        (partner, partnerIndex) => (
+                          <motion.div
+                            key={`${partner.name}-${partnerIndex}`}
+                            whileHover={{ scale: 1.08, y: -8 }}
+                            className="group flex-shrink-0 flex flex-col items-center text-center"
+                          >
+                            <div className="rounded-xl bg-background flex items-center justify-center shadow-md hover:shadow-xl w-48 h-36 p-5 transition-all">
+                              {partner.logo ? (
+                                partner.website ? (
+                                  <a
+                                    href={partner.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full h-full flex items-center justify-center"
+                                  >
+                                    <img
+                                      src={partner.logo}
+                                      alt={partner.name}
+                                      className="max-w-full max-h-full object-contain object-center"
+                                    />
+                                  </a>
+                                ) : (
                                   <img
                                     src={partner.logo}
                                     alt={partner.name}
                                     className="max-w-full max-h-full object-contain object-center"
                                   />
-                                </a>
+                                )
                               ) : (
-                                <img
-                                  src={partner.logo}
-                                  alt={partner.name}
-                                  className="max-w-full max-h-full object-contain object-center"
-                                />
-                              )
-                            ) : (
-                              <span className="text-base font-semibold text-foreground text-center leading-tight px-2">
-                                {partner.name}
-                              </span>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
+                                <span className="text-base font-semibold text-foreground text-center leading-tight px-2">
+                                  {partner.name}
+                                </span>
+                              )}
+                            </div>
+                          </motion.div>
+                        ),
+                      )}
                     </motion.div>
                   </div>
                 </motion.div>
@@ -261,13 +319,13 @@ const Partners = forwardRef<HTMLDivElement>((_, ref) => {
                 Become a Partner
               </h2>
               <p className="text-accent-foreground/80 text-lg max-w-2xl mx-auto mb-8">
-                Whether you're an individual donor, organization, or institution, 
-                there's a way for you to contribute to bringing clean water to 
-                communities in need.
+                Whether you're an individual donor, organization, or
+                institution, there's a way for you to contribute to bringing
+                clean water to communities in need.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-accent-foreground text-accent hover:bg-accent-foreground/90"
                   asChild
                 >
@@ -276,8 +334,8 @@ const Partners = forwardRef<HTMLDivElement>((_, ref) => {
                     <ChevronRight className="w-5 h-5" />
                   </Link>
                 </Button>
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   variant="outline"
                   className="border-accent-foreground/30 text-accent-foreground hover:bg-accent-foreground/10"
                   asChild

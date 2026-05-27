@@ -14,14 +14,14 @@ import {
 } from "@/components/ui/dialog";
 
 const emptyPartner = {
-  org_name: "",
-  org_full_name: "",
+  orgName: "",
+  orgFullName: "",
   role: "",
   category: "donor",
-  logo_url: "",
-  website_url: "",
-  display_order: 0,
-  is_published: true,
+  logoUrl: "",
+  websiteUrl: "",
+  displayOrder: 0,
+  isPublished: true,
 };
 
 export default function AdminPartners() {
@@ -84,9 +84,7 @@ export default function AdminPartners() {
           <Card key={p.id}>
             <CardContent className="p-4 flex items-center justify-between flex-wrap gap-3">
               <div>
-                <div className="font-semibold text-foreground">
-                  {p.org_name}
-                </div>
+                <div className="font-semibold text-foreground">{p.orgName}</div>
                 <div className="text-sm text-muted-foreground">
                   {p.category} • {p.role}
                 </div>
@@ -130,9 +128,9 @@ export default function AdminPartners() {
               <div>
                 <Label>Organization Name *</Label>
                 <Input
-                  value={editing.org_name}
+                  value={editing.orgName}
                   onChange={(e) =>
-                    setEditing({ ...editing, org_name: e.target.value })
+                    setEditing({ ...editing, orgName: e.target.value })
                   }
                   className="mt-1"
                 />
@@ -140,9 +138,9 @@ export default function AdminPartners() {
               <div>
                 <Label>Full Name</Label>
                 <Input
-                  value={editing.org_full_name || ""}
+                  value={editing.orgFullName || ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, org_full_name: e.target.value })
+                    setEditing({ ...editing, orgFullName: e.target.value })
                   }
                   className="mt-1"
                 />
@@ -176,9 +174,9 @@ export default function AdminPartners() {
               <div>
                 <Label>Logo URL</Label>
                 <Input
-                  value={editing.logo_url || ""}
+                  value={editing.logoUrl || ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, logo_url: e.target.value })
+                    setEditing({ ...editing, logoUrl: e.target.value })
                   }
                   className="mt-1"
                 />
@@ -186,9 +184,9 @@ export default function AdminPartners() {
               <div>
                 <Label>Website URL</Label>
                 <Input
-                  value={editing.website_url || ""}
+                  value={editing.websiteUrl || ""}
                   onChange={(e) =>
-                    setEditing({ ...editing, website_url: e.target.value })
+                    setEditing({ ...editing, websiteUrl: e.target.value })
                   }
                   className="mt-1"
                 />
@@ -198,11 +196,11 @@ export default function AdminPartners() {
                   <Label>Display Order</Label>
                   <Input
                     type="number"
-                    value={editing.display_order}
+                    value={editing.displayOrder}
                     onChange={(e) =>
                       setEditing({
                         ...editing,
-                        display_order: parseInt(e.target.value) || 0,
+                        displayOrder: parseInt(e.target.value) || 0,
                       })
                     }
                     className="mt-1"
@@ -211,9 +209,9 @@ export default function AdminPartners() {
                 <div className="flex items-center gap-2 pt-6">
                   <input
                     type="checkbox"
-                    checked={editing.is_published}
+                    checked={editing.isPublished}
                     onChange={(e) =>
-                      setEditing({ ...editing, is_published: e.target.checked })
+                      setEditing({ ...editing, isPublished: e.target.checked })
                     }
                     id="pub"
                   />

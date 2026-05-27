@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -79,7 +80,7 @@ const LmsNavbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
-      <div className="section-container grid grid-cols-3 items-center h-16 md:h-20">
+      <div className="section-container flex items-center justify-between h-16 md:h-20 md:grid md:grid-cols-3">
         <div className="flex justify-start">
           <Link to="/dashboard" className="flex items-center">
             <img
@@ -268,100 +269,108 @@ const LmsNavbar = () => {
         </button>
       </div>
 
-      {open && (
-        <div className="md:hidden border-t px-4 pb-4 space-y-3">
-          {lmsLinks.map((link) =>
-            link.external ? (
-              <a
-                key={link.to}
-                href={link.to}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium text-muted-foreground hover:text-primary"
-              >
-                {link.label}
-              </a>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border px-4 py-6 shadow-xl space-y-4 z-50 overflow-y-auto max-h-[calc(100vh-4rem)]"
+          >
+            {lmsLinks.map((link) =>
+              link.external ? (
+                <a
+                  key={link.to}
+                  href={link.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="block py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setOpen(false)}
+                  className="block py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
+            {isInstructor ? (
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
+                  onClick={() => {
+                    handleSwitchRole();
+                    setOpen(false);
+                  }}
+                  disabled={isSwitching}
+                >
+                  <Repeat className="w-4 h-4" />
+                  Switch to Instructor
+                </Button>
+              </div>
             ) : (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setOpen(false)}
-                className="block py-2 text-sm font-medium text-muted-foreground hover:text-primary"
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
-          {isInstructor ? (
-            <div className="pt-2">
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2 border-primary/20 text-primary"
+                  asChild
+                  onClick={() => setOpen(false)}
+                >
+                  <Link to="/instructor/apply">
+                    {isPending ? (
+                      <>
+                        <Clock className="w-4 h-4" />
+                        Application Pending
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Become an Instructor
+                      </>
+                    )}
+                  </Link>
+                </Button>
+              </div>
+            )}
+            <div className="flex gap-4 pt-4 border-t border-border/50">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
+                className="flex-1 text-muted-foreground hover:text-primary h-10"
+                asChild
+              >
+                <a
+                  href="https://academy.alikohub.com"
+                  onClick={() => setOpen(false)}
+                >
+                  Back to Website
+                </a>
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1 h-10"
                 onClick={() => {
-                  handleSwitchRole();
+                  logout();
                   setOpen(false);
                 }}
-                disabled={isSwitching}
               >
-                <Repeat className="w-4 h-4" />
-                Switch to Instructor
+                Log Out
               </Button>
             </div>
-          ) : (
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2 border-primary/20 text-primary"
-                asChild
-                onClick={() => setOpen(false)}
-              >
-                <Link to="/instructor/apply">
-                  {isPending ? (
-                    <>
-                      <Clock className="w-4 h-4" />
-                      Application Pending
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Become an Instructor
-                    </>
-                  )}
-                </Link>
-              </Button>
-            </div>
-          )}
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-muted-foreground hover:text-primary"
-              asChild
-            >
-              <a
-                href="https://academy.alikohub.com"
-                onClick={() => setOpen(false)}
-              >
-                Back to Website
-              </a>
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                logout();
-                setOpen(false);
-              }}
-            >
-              Log Out
-            </Button>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
