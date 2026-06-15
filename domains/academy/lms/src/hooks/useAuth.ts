@@ -26,10 +26,17 @@ export const useLogin = () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success("Successfully logged in!");
 
+      // Determine active role, prefer academyUser.activeRole as it's the most accurate
+      const activeRole = (
+        data.user.academyUser?.activeRole ||
+        data.user.academyActiveRole ||
+        ""
+      ).toLowerCase();
+
       // If user is admin, redirect to /admin
       if (data.user.globalRole === "ADMIN") {
         navigate("/admin");
-      } else if (data.user.academyActiveRole === "instructor") {
+      } else if (activeRole === "instructor") {
         navigate("/instructor");
       } else {
         navigate("/dashboard");
@@ -60,9 +67,16 @@ export const useGoogleLogin = () => {
         toast.info("Welcome to Aliko Academy! Please complete your profile.");
       }
 
+      // Determine active role
+      const activeRole = (
+        data.user.academyUser?.activeRole ||
+        data.user.academyActiveRole ||
+        ""
+      ).toLowerCase();
+
       if (data.user.globalRole === "ADMIN") {
         navigate("/admin");
-      } else if (data.user.academyActiveRole === "instructor") {
+      } else if (activeRole === "instructor") {
         navigate("/instructor");
       } else {
         navigate("/dashboard");

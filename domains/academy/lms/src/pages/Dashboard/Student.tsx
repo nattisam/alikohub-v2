@@ -19,6 +19,7 @@ import {
   useEnrollments,
   useStudentAnalytics,
   useStudentDashboard,
+  useMyTransactions,
 } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,6 +74,7 @@ const StudentDashboard = () => {
   const { data: user } = useUser();
   const { data: enrollments, isLoading: isEnrollmentsLoading } =
     useEnrollments();
+  const { data: myTransactions } = useMyTransactions();
   const { data: analytics, isLoading: isAnalyticsLoading } =
     useStudentAnalytics();
   const { data: dashboard, isLoading: isDashboardLoading } =
@@ -81,8 +83,24 @@ const StudentDashboard = () => {
   const isLoading =
     isEnrollmentsLoading || isAnalyticsLoading || isDashboardLoading;
 
+  // Cross-check: courses with COMPLETED transactions count as enrolled even if enrollment is still PENDING
+  const completedTxCourseIds = new Set(
+    myTransactions
+      ?.filter((tx: any) => tx.status === "COMPLETED")
+      .map((tx: any) => (tx.metadata as any)?.courseId)
+      .filter(Boolean) || [],
+  );
+
+  // Only show enrollments that are ACTIVE, COMPLETED, or have a completed transaction
+  const activeEnrollments = enrollments?.filter(
+    (e: any) =>
+      e.status === "ACTIVE" ||
+      e.status === "COMPLETED" ||
+      completedTxCourseIds.has(e.courseId ?? e.course?.id),
+  );
+
   const totalLessonsAll =
-    enrollments?.reduce((acc, e) => acc + (e.course?.lessonsCount || 0), 0) ||
+    activeEnrollments?.reduce((acc, e) => acc + (e.course?.lessonsCount || 0), 0) ||
     1;
   const calculatedProgress = analytics
     ? Math.min(
@@ -111,7 +129,7 @@ const StudentDashboard = () => {
       : calculatedProgress || 0;
 
   const completedCount =
-    enrollments?.filter((e) => e.status === "COMPLETED").length || 0;
+    activeEnrollments?.filter((e) => e.status === "COMPLETED").length || 0;
 
   const instructorStatus = user?.instructorStatus?.toUpperCase();
   const isInstructor =
@@ -192,7 +210,7 @@ const StudentDashboard = () => {
               </div>
 
               <p className="text-white/60 text-xs">
-                {enrollments?.length || 0} active enrollments · {completedCount}{" "}
+                {activeEnrollments?.length || 0} active enrollments · {completedCount}{" "}
                 completed
               </p>
             </div>
@@ -244,7 +262,7 @@ const StudentDashboard = () => {
                   .map((_, i) => (
                     <Skeleton key={i} className="h-28 w-full rounded-xl" />
                   ))
-              ) : enrollments?.length === 0 ? (
+              ) : activeEnrollments?.length === 0 ? (
                 <div className="bg-card rounded-xl border p-8 text-center">
                   <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
                     <BookOpen className="w-6 h-6 text-muted-foreground" />
@@ -257,7 +275,7 @@ const StudentDashboard = () => {
                   </Button>
                 </div>
               ) : (
-                enrollments?.map((enrollment) => {
+                activeEnrollments?.map((enrollment) => {
                   const pData =
                     dashboard && Array.isArray(dashboard)
                       ? dashboard.find(
@@ -421,7 +439,7 @@ const StudentDashboard = () => {
                   {
                     icon: BookOpen,
                     label: "Courses active",
-                    value: enrollments?.length || 0,
+                    value: activeEnrollments?.length || 0,
                     color: "text-indigo-600",
                     bg: "bg-indigo-50",
                   },
@@ -476,7 +494,7 @@ const StudentDashboard = () => {
               </div>
               <Progress value={overallProgress} className="h-2" />
               <p className="text-xs text-muted-foreground mt-2">
-                {enrollments?.length || 0} enrollments · {completedCount}{" "}
+                {activeEnrollments?.length || 0} enrollments · {completedCount}{" "}
                 completed
               </p>
             </div>

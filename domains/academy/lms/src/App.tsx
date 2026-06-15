@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { StateProvider } from "@/contexts/StateContext";
 
 // Auth & Layout
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -51,6 +50,7 @@ import Notifications from "@/pages/Account/Notifications";
 import Photo from "@/pages/Account/Photo";
 import Subscriptions from "@/pages/Account/Subscriptions";
 import CareerHub from "@/pages/Account/CareerHub";
+import TransactionsPage from "@/pages/Account/Transactions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +92,7 @@ const AppInner = () => {
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/certifications" element={<Certifications />} />
         <Route path="/career-hub" element={<CareerHub />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
 
         {/* Instructor Routes */}
         <Route element={<InstructorRoute />}>
@@ -114,6 +115,7 @@ const AppInner = () => {
           <Route path="/admin/applications" element={<AdminDashboard />} />
           <Route path="/admin/courses" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AdminDashboard />} />
+          <Route path="/admin/transactions" element={<AdminDashboard />} />
         </Route>
       </Route>
 
@@ -125,7 +127,6 @@ const AppInner = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <StateProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -133,7 +134,6 @@ const App = () => (
           <AppInner />
         </BrowserRouter>
       </TooltipProvider>
-    </StateProvider>
   </QueryClientProvider>
 );
 

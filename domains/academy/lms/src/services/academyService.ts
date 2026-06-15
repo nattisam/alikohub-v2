@@ -94,12 +94,13 @@ export const academyService = {
   // Student Endpoints
   enrollInCourse: async (
     courseId: string | number,
-    paymentGateway: string = "CHAPA",
+    paymentGateway?: string,
   ) => {
     const response = await api.post<Enrollment>(
-      `/academy/enrollment/course/${courseId}`,
+      `/academy/enrollment`,
       {
-        paymentGateway,
+        courseId: Number(courseId),
+        ...(paymentGateway && { paymentGateway }),
       },
     );
     return response.data;
@@ -108,13 +109,14 @@ export const academyService = {
   enrollInCohort: async (
     cohortId: string | number,
     courseId: string | number,
-    paymentGateway: string = "CHAPA",
+    paymentGateway?: string,
   ) => {
     const response = await api.post<Enrollment>(
-      `/academy/enrollment/cohort/${cohortId}`,
+      `/academy/enrollment`,
       {
         courseId: Number(courseId),
-        paymentGateway,
+        cohortId: Number(cohortId),
+        ...(paymentGateway && { paymentGateway }),
       },
     );
     return response.data;
@@ -166,6 +168,13 @@ export const academyService = {
     return response.data;
   },
 
+  checkLessonComplete: async (courseId: string, lessonId: string) => {
+    const response = await api.get(
+      `/academy/progress/course/${courseId}/lesson/${lessonId}/complete`,
+    );
+    return response.data;
+  },
+
   submitExercise: async (exerciseId: string, answer: string) => {
     const response = await api.post(`/academy/exercises/${exerciseId}/submit`, {
       answer,
@@ -182,6 +191,11 @@ export const academyService = {
     const response = await api.get(
       `/academy/progress/course/${courseId}/report`,
     );
+    return response.data;
+  },
+
+  getMyTransactions: async () => {
+    const response = await api.get("/payments/transactions/my");
     return response.data;
   },
 

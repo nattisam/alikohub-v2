@@ -23,6 +23,8 @@ import {
   useEnrollInCohort,
   useEnrollments,
 } from "@/hooks/useAcademy";
+import { useMyTransactions } from "@/hooks/usePayment";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
@@ -40,6 +42,7 @@ const CourseDetails = () => {
   const { data: course, isLoading } = useCourseDetails(id || "");
   const { data: cohortsData } = useCohorts(id || "");
   const { data: enrollments, isLoading: enrollmentsLoading } = useEnrollments();
+  const { data: myTransactions } = useMyTransactions();
 
   const cohorts = ((cohortsData as any)?.cohorts || []).filter(
     (c: any) => c.courseId === Number(id),
@@ -50,33 +53,56 @@ const CourseDetails = () => {
       (e.course?.id === Number(id) || e.courseId === Number(id)) && !e.cohortId,
   );
 
+  // Cross-check: if admin marked the transaction COMPLETED, the enrollment
+  // might still be PENDING because the PATCH endpoint doesn't emit payment.succeeded.
+  // We treat a COMPLETED transaction for this course as proof of payment.
+  const hasCompletedTransaction = myTransactions?.some(
+    (tx: any) =>
+      tx.status === "COMPLETED" &&
+      (tx.metadata as any)?.courseId === Number(id),
+  );
+
   const isEnrolledInCourse =
-    courseEnrollment &&
-    (courseEnrollment.status === "ACTIVE" ||
-      courseEnrollment.status === "COMPLETED");
+    (courseEnrollment &&
+      (courseEnrollment.status === "ACTIVE" ||
+        courseEnrollment.status === "COMPLETED")) ||
+    hasCompletedTransaction;
 
   const isPendingPayment =
+    !hasCompletedTransaction &&
     courseEnrollment &&
     (courseEnrollment.status === "PENDING" ||
       courseEnrollment.paymentStatus === "PENDING");
 
-  const enrolledCohortIds =
-    enrollments
+  // Cohort IDs from activated enrollments OR completed transactions
+  const completedCohortTxIds = myTransactions
+    ?.filter(
+      (tx: any) =>
+        tx.status === "COMPLETED" &&
+        (tx.metadata as any)?.courseId === Number(id) &&
+        (tx.metadata as any)?.cohortId,
+    )
+    .map((tx: any) => (tx.metadata as any)?.cohortId) || [];
+
+  const enrolledCohortIds = [
+    ...(enrollments
       ?.filter(
         (e: any) =>
-          ((e.course?.id === Number(id) || e.courseId === Number(id)) &&
-            e.cohortId &&
-            (e.status === "ACTIVE" || e.status === "COMPLETED")) ||
-          (e.status === "PENDING" && e.paymentStatus === "PENDING" && false), // PENDING cohorts shouldn't show as fully enrolled yet
+          (e.course?.id === Number(id) || e.courseId === Number(id)) &&
+          e.cohortId &&
+          (e.status === "ACTIVE" || e.status === "COMPLETED"),
       )
-      .map((e: any) => e.cohortId) || [];
+      .map((e: any) => e.cohortId) || []),
+    ...completedCohortTxIds,
+  ];
 
   const pendingCohortEnrollments =
     enrollments?.filter(
       (e: any) =>
         (e.course?.id === Number(id) || e.courseId === Number(id)) &&
         e.cohortId &&
-        (e.status === "PENDING" || e.paymentStatus === "PENDING"),
+        (e.status === "PENDING" || e.paymentStatus === "PENDING") &&
+        !completedCohortTxIds.includes(e.cohortId),
     ) || [];
 
   const enrollMutation = useEnrollInCourse();
@@ -87,10 +113,15 @@ const CourseDetails = () => {
     "self-paced" | number
   >("self-paced");
 
+  // A course is free if the backend marks it free OR its price is 0 / not set
+  const isCourseFree = course
+    ? course.isFree === true || !course.price || course.price === 0
+    : false;
+
   const handleEnrollCourse = () => {
     if (!course) return;
     enrollMutation.mutate(
-      { courseId: course.id.toString(), paymentGateway: "CHAPA" },
+      { courseId: course.id.toString() },
       {
         onSuccess: (data: any) => {
           if (!data?.checkoutUrl) {
@@ -104,7 +135,7 @@ const CourseDetails = () => {
   const handleEnrollCohort = (cohortId: number) => {
     if (!course) return;
     enrollInCohortMutation.mutate(
-      { cohortId, courseId: course.id.toString(), paymentGateway: "CHAPA" },
+      { cohortId, courseId: course.id.toString() },
       {
         onSuccess: (data: any) => {
           if (!data?.checkoutUrl) {
@@ -257,7 +288,7 @@ const CourseDetails = () => {
 
                 <div className="text-center">
                   <p className="text-3xl font-black text-slate-900">
-                    {course.isFree ? "Free" : `$${course.price}`}
+                    {isCourseFree ? "Free" : course?.priceInUsd && course.priceInUsd > 0 ? `$${course.priceInUsd}` : `${course.price} ETB`}
                   </p>
                   {cohorts.length > 0 && (
                     <p className="text-xs text-slate-500 mt-1">
@@ -267,7 +298,7 @@ const CourseDetails = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  {/* Self-Paced Button */}
+                  {/* Self-Paced Button — only when no cohorts */}
                   {isEnrolledInCourse ? (
                     <Button
                       size="lg"
@@ -279,33 +310,33 @@ const CourseDetails = () => {
                   ) : isPendingPayment ? (
                     <Button
                       size="lg"
-                      className="w-full bg-[#E6A337] hover:bg-[#d4922b] text-white font-bold gap-2 h-12 rounded-xl"
-                      onClick={handleEnrollCourse}
-                      disabled={enrollMutation.isPending || enrollmentsLoading}
+                      className="w-full bg-amber-100 text-amber-700 font-bold h-12 rounded-xl cursor-default"
+                      disabled
                     >
-                      {enrollMutation.isPending
-                        ? "Processing..."
-                        : "Complete Payment"}
+                      Payment Pending
                     </Button>
-                  ) : (
+                  ) : cohorts.length === 0 ? (
                     <Button
                       size="lg"
                       className="w-full bg-[#1C2840] hover:bg-[#141d2e] text-white font-bold gap-2 h-12 rounded-xl"
                       onClick={handleEnrollCourse}
-                      disabled={enrollMutation.isPending || enrollmentsLoading}
+                      disabled={
+                        enrollMutation.isPending ||
+                        enrollmentsLoading
+                      }
                     >
                       {enrollMutation.isPending ? (
                         "Processing..."
                       ) : (
                         <>
                           <Play className="h-4 w-4" />{" "}
-                          {course.isFree
+                          {isCourseFree
                             ? "Enroll Self-Paced - Free"
                             : "Enroll Self-Paced"}
                         </>
                       )}
                     </Button>
-                  )}
+                  ) : null}
 
                   {/* Cohort Button */}
                   {cohorts.length > 0 && (
@@ -598,7 +629,8 @@ const CourseDetails = () => {
               Select Pathway
             </p>
 
-            {/* Self-Paced Option */}
+            {/* Self-Paced Option — only shown when no cohorts */}
+            {cohorts.length === 0 && (
             <button
               type="button"
               onClick={() => {
@@ -642,6 +674,7 @@ const CourseDetails = () => {
                 <span>Instant access to all modules & future updates</span>
               </div>
             </button>
+            )}
 
             {/* Cohort Options */}
             {cohorts.length > 0 &&
@@ -734,7 +767,7 @@ const CourseDetails = () => {
                 Enrollment Fee
               </p>
               <p className="text-2xl font-extrabold text-[#1C2840]">
-                {course.isFree ? "FREE" : `$${course.price}`}
+                {isCourseFree ? "FREE" : course?.priceInUsd && course.priceInUsd > 0 ? `$${course.priceInUsd}` : `${course.price} ETB`}
               </p>
             </div>
             <Button
@@ -746,10 +779,16 @@ const CourseDetails = () => {
                 (selectedEnrollmentType === "self-paced" &&
                   isEnrolledInCourse) ||
                 (typeof selectedEnrollmentType === "number" &&
-                  enrolledCohortIds.includes(selectedEnrollmentType))
+                  enrolledCohortIds.includes(selectedEnrollmentType)) ||
+                (selectedEnrollmentType === "self-paced" && isPendingPayment) ||
+                (typeof selectedEnrollmentType === "number" &&
+                  pendingCohortEnrollments.some(
+                    (e) => e.cohortId === selectedEnrollmentType,
+                  ))
               }
             >
-              {enrollMutation.isPending || enrollInCohortMutation.isPending
+              {enrollMutation.isPending ||
+              enrollInCohortMutation.isPending
                 ? "Starting..."
                 : (selectedEnrollmentType === "self-paced" &&
                       isEnrolledInCourse) ||
@@ -757,12 +796,12 @@ const CourseDetails = () => {
                       enrolledCohortIds.includes(selectedEnrollmentType))
                   ? "Already Enrolled"
                   : selectedEnrollmentType === "self-paced" && isPendingPayment
-                    ? "Resume Payment"
+                    ? "Payment Pending"
                     : typeof selectedEnrollmentType === "number" &&
                         pendingCohortEnrollments.some(
                           (e) => e.cohortId === selectedEnrollmentType,
                         )
-                      ? "Complete Payment"
+                      ? "Payment Pending"
                       : "Secure My Spot"}
             </Button>
           </div>

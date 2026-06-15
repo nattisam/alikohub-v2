@@ -9,6 +9,7 @@ import {
   useSubmitExercise,
   useCourseReport,
 } from "@/hooks/useAcademy";
+import { useMyTransactions } from "@/hooks/usePayment";
 import { useQueries } from "@tanstack/react-query";
 import { academyService } from "@/services/academyService";
 import { useUser, useLogout } from "@/hooks/useAuth";
@@ -33,6 +34,8 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import PdfViewer from "./components/PdfViewer";
+import InlinePdfViewer from "./components/InlinePdfViewer";
+import CelebrationModal from "./components/CelebrationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -91,13 +94,24 @@ const LmsLearn = () => {
     ? `${user.firstname?.charAt(0) || ""}${user.lastname?.charAt(0) || ""}`.toUpperCase()
     : "U";
 
+  const { data: myTransactions } = useMyTransactions();
+
   const enrollment = enrollments?.find(
     (e) =>
       String(e.courseId) === String(id) || String(e.course?.id) === String(id),
   );
+
+  // Cross-check: a COMPLETED transaction for this course means the admin approved payment
+  const hasCompletedTransaction = myTransactions?.some(
+    (tx: any) =>
+      tx.status === "COMPLETED" &&
+      (tx.metadata as any)?.courseId === Number(id),
+  );
+
   const isEnrolled =
-    enrollment &&
-    (enrollment.status === "ACTIVE" || enrollment.status === "COMPLETED");
+    (enrollment &&
+      (enrollment.status === "ACTIVE" || enrollment.status === "COMPLETED")) ||
+    hasCompletedTransaction;
 
   const courseProgressData = dashboardData?.find(
     (d: any) => d.courseId === Number(id),
@@ -117,11 +131,45 @@ const LmsLearn = () => {
     Record<string, string>
   >({});
   const [isAnswered, setIsAnswered] = useState(false);
+  const [pdfTotalPages, setPdfTotalPages] = useState(0);
+  const [pdfCurrentPage, setPdfCurrentPage] = useState(1);
   const [quizScore, setQuizScore] = useState(0);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [expandedModules, setExpandedModules] = useState<
     Record<string, boolean>
   >({});
+  const [celebration, setCelebration] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    isLastItem?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    isLastItem: false,
+  });
+
+  const isLastItemInModule = () => {
+    const currentModule = course?.modules?.find((m: any) =>
+      m.lessons?.some((l: any) => l.id === activeLessonId),
+    );
+    if (
+      !currentModule ||
+      !currentModule.lessons ||
+      currentModule.lessons.length === 0
+    )
+      return false;
+    const lastLessonInModule =
+      currentModule.lessons[currentModule.lessons.length - 1];
+
+    const itemsInLastLesson = allItems.filter(
+      (i) => i.lessonId === lastLessonInModule.id,
+    );
+    if (!itemsInLastLesson.length) return false;
+
+    return activeItemId === itemsInLastLesson[itemsInLastLesson.length - 1].id;
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -247,11 +295,11 @@ const LmsLearn = () => {
       let score = 0;
       const reportLesson = reportData
         ?.flatMap((m: any) => m.lessons || [])
-        .find((l: any) => l.lessonId === Number(activeLessonId));
+        .find((l: any) => Number(l.lessonId) === Number(activeLessonId));
 
       detailedExercises.forEach((ex: any) => {
         const reportExercise = reportLesson?.exercises?.find(
-          (rex: any) => rex.exerciseId === Number(ex.id),
+          (rex: any) => Number(rex.exerciseId) === Number(ex.id),
         );
         const localAnswer = localStorage.getItem(`academy_ex_answer_${ex.id}`);
         const storedAnswer =
@@ -297,6 +345,18 @@ const LmsLearn = () => {
       setSelectedAnswers({});
     }
   }, [activeLessonId, lastSyncKey, reportData, activeItemType]);
+
+  const lessonProgressQueries = useQueries({
+    queries: flatLessons.map((l: any) => ({
+      queryKey: ["lesson-complete", course?.id, l.id],
+      queryFn: () =>
+        academyService.checkLessonComplete(
+          course?.id?.toString() || "",
+          l.id.toString(),
+        ),
+      enabled: !!course?.id && !!l.id,
+    })),
+  });
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading || isReportLoading) {
@@ -369,18 +429,35 @@ const LmsLearn = () => {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
   const checkLessonCompleted = (lessonId: string | number) => {
     if (!reportData) return false;
-    const allReportLessons = reportData.flatMap((m: any) => m.lessons || []);
-    const lesson = allReportLessons.find(
-      (l: any) => l.lessonId === Number(lessonId),
+    // Flatten report to find the lesson
+    for (const moduleObj of reportData) {
+      if (moduleObj.lessons) {
+        const found = moduleObj.lessons.find(
+          (l: any) => Number(l.lessonId) === Number(lessonId),
+        );
+        if (found) return found.status === "COMPLETED";
+      }
+    }
+    return false;
+  };
+
+  const isLessonMarkedComplete = (lessonId: string | number) => {
+    const query = lessonProgressQueries.find(
+      (_, idx) => String(flatLessons[idx].id) === String(lessonId),
     );
-    return lesson?.status === "COMPLETED";
+    return query?.data?.completed === true;
   };
 
   const isLessonCompleted = activeLessonId
     ? checkLessonCompleted(activeLessonId)
     : false;
+
+  const isLessonLocked = (lessonId: string | number) => {
+    return false; // Unlock all lessons as per user request
+  };
 
   const handleMarkComplete = () => {
     if (activeLessonId) {
@@ -388,15 +465,36 @@ const LmsLearn = () => {
         { courseId: course.id, lessonId: activeLessonId },
         {
           onSuccess: () => {
-            toast.success("Lesson marked as complete!");
-            if (currentItemIndex < allItems.length - 1) {
-              const nextItem = allItems[currentItemIndex + 1];
-              setActiveItemId(nextItem.id);
-              setActiveItemType(nextItem.itemType);
-            }
+            const isModuleEnd = isLastItemInModule();
+            setCelebration({
+              isOpen: true,
+              title: isModuleEnd
+                ? "Module Mastered!"
+                : "Skill lesson completed",
+              message: isModuleEnd
+                ? "Excellent progress, keep up the momentum!"
+                : "You're one step closer to your goal.",
+              isLastItem: currentItemIndex === allItems.length - 1,
+            });
           },
         },
       );
+    }
+  };
+
+  const handleNextItem = () => {
+    if (currentItemIndex < allItems.length - 1) {
+      const nextItem = allItems[currentItemIndex + 1];
+      setActiveItemId(nextItem.id);
+      setActiveItemType(nextItem.itemType);
+    }
+  };
+
+  const handlePrevItem = () => {
+    if (currentItemIndex > 0) {
+      const prevItem = allItems[currentItemIndex - 1];
+      setActiveItemId(prevItem.id);
+      setActiveItemType(prevItem.itemType);
     }
   };
 
@@ -455,9 +553,51 @@ const LmsLearn = () => {
     // ── Quiz ─────────────────────────────────────────────────────────────
     if (activeItemType === "quiz") {
       const exercisesList = detailedExercises || [];
+      const isFinished = isLessonCompleted;
+
       return (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-400">
-          <div className="space-y-5 px-6 md:px-10 pt-8 pb-16">
+        <div className="w-full flex flex-col flex-1 overflow-y-auto custom-scrollbar">
+          {/* Sticky Lesson Header */}
+          <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                Lesson Assessment
+              </span>
+              <h1 className="text-lg font-black text-slate-900 truncate">
+                {activeLesson?.title || activeItem?.title}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePrevItem}
+                disabled={currentItemIndex === 0}
+                className="h-9 px-3 font-bold text-slate-500 rounded-xl"
+              >
+                <ChevronLeft size={16} className="mr-1" /> Prev
+              </Button>
+
+              {isFinished ? (
+                <Button
+                  onClick={handleNextItem}
+                  disabled={currentItemIndex === allItems.length - 1}
+                  className="h-9 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm"
+                >
+                  Next Item <ChevronRight size={16} className="ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleMarkComplete}
+                  disabled={markCompleteMutation.isPending}
+                  className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-sm"
+                >
+                  Complete Lesson
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="space-y-5 px-6 md:px-10 pt-8 pb-32">
             {/* Quiz header */}
             <div className="rounded-2xl bg-amber-50 border border-amber-100 p-6">
               <div className="flex items-center gap-4">
@@ -580,6 +720,8 @@ const LmsLearn = () => {
                       if (selectedAnswers[ex.id] === ex.correctAnswer)
                         correct++;
                     });
+                    const isPassed =
+                      correct >= Math.ceil(exercisesList.length * 0.7);
                     setQuizScore(correct);
                     Promise.all(
                       exercisesList.map((ex: any) =>
@@ -596,8 +738,21 @@ const LmsLearn = () => {
                         );
                       });
                       setQuizSubmitted(true);
-                      toast.success("Quiz submitted!");
-                      handleMarkComplete();
+                      if (isPassed || correct === exercisesList.length) {
+                        const isModuleEnd = isLastItemInModule();
+                        setCelebration({
+                          isOpen: true,
+                          title: isModuleEnd
+                            ? "Module Mastered!"
+                            : "Quiz passed",
+                          message: isModuleEnd
+                            ? "Excellent progress, keep up the momentum!"
+                            : "Great work on demonstrating your knowledge.",
+                          isLastItem: currentItemIndex === allItems.length - 1,
+                        });
+                      } else {
+                        toast.success("Quiz submitted!");
+                      }
                     });
                   }}
                   disabled={submitExerciseMutation.isPending}
@@ -614,8 +769,51 @@ const LmsLearn = () => {
 
     // ── Video ─────────────────────────────────────────────────────────────
     if (activeItemType === "video") {
+      const isFinished = isLessonCompleted;
+
       return (
-        <div className="w-full animate-in fade-in duration-400 flex flex-col">
+        <div className="w-full flex-1 flex flex-col overflow-y-auto custom-scrollbar overflow-x-hidden animate-in fade-in duration-400">
+          {/* Sticky Lesson Header */}
+          <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                Video Lesson
+              </span>
+              <h1 className="text-lg font-black text-slate-900 truncate">
+                {activeLesson?.title || activeItem?.title}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePrevItem}
+                disabled={currentItemIndex === 0}
+                className="h-9 px-3 font-bold text-slate-500 rounded-xl"
+              >
+                <ChevronLeft size={16} className="mr-1" /> Prev
+              </Button>
+
+              {isFinished ? (
+                <Button
+                  onClick={handleNextItem}
+                  disabled={currentItemIndex === allItems.length - 1}
+                  className="h-9 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm"
+                >
+                  Next Item <ChevronRight size={16} className="ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleMarkComplete}
+                  disabled={markCompleteMutation.isPending}
+                  className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-sm"
+                >
+                  Complete Lesson
+                </Button>
+              )}
+            </div>
+          </div>
+
           {/* Full-width flush video — no border-radius, edge-to-edge */}
           <div className="aspect-video w-full overflow-hidden bg-slate-900">
             {isYouTube((activeItem as any)?.url) ? (
@@ -635,45 +833,15 @@ const LmsLearn = () => {
             )}
           </div>
 
-          {/* Meta & actions */}
-          <div className="px-6 md:px-10 pt-6 pb-4">
+          {/* Meta */}
+          <div className="px-6 md:px-10 pt-6 pb-20">
             <h2 className="text-xl font-bold text-slate-900 mb-1">
-              {activeItem?.title}
+              About this lesson
             </h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-8">
               In this part of the course, we'll explore {activeItem?.title}. Pay
               close attention to the key concepts mentioned in the video.
             </p>
-
-            {/* Mark complete */}
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-slate-50 border border-slate-200 p-5 rounded-2xl gap-4">
-              <div>
-                <h3 className="font-bold text-slate-800">
-                  Done with this content?
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Mark it as complete to track your progress.
-                </p>
-              </div>
-              <Button
-                onClick={handleMarkComplete}
-                disabled={isLessonCompleted || markCompleteMutation.isPending}
-                className={cn(
-                  "rounded-xl px-8 h-11 font-bold shrink-0 transition-all",
-                  isLessonCompleted
-                    ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                    : "bg-slate-900 hover:bg-slate-800 text-white",
-                )}
-              >
-                {isLessonCompleted ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> Completed
-                  </>
-                ) : (
-                  "Mark as Complete"
-                )}
-              </Button>
-            </div>
           </div>
         </div>
       );
@@ -682,26 +850,77 @@ const LmsLearn = () => {
     // ── Reading ───────────────────────────────────────────────────────────
     if (activeItemType === "reading") {
       const url = getFullUrl((activeItem as any)?.url);
+      const isFinished = isLessonCompleted;
+
       return (
         <div className="w-full animate-in fade-in duration-400 flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 w-full min-h-[85vh] relative overflow-hidden">
+          {/* Sticky Lesson Header */}
+          <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                {isPdf ? "Reading Material" : "External Resource"}
+              </span>
+              <h1 className="text-lg font-black text-slate-900 truncate">
+                {activeLesson?.title || activeItem?.title}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              {isPdf && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setIsPdfViewerOpen(true)}
+                  className="h-9 w-9 text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  <Maximize2 size={16} />
+                </Button>
+              )}
+
+              <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePrevItem}
+                disabled={currentItemIndex === 0}
+                className="h-9 px-3 font-bold text-slate-500 rounded-xl"
+              >
+                <ChevronLeft size={16} className="mr-1" /> Prev
+              </Button>
+
+              {isFinished ? (
+                <Button
+                  onClick={handleNextItem}
+                  disabled={currentItemIndex === allItems.length - 1}
+                  className="h-9 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm"
+                >
+                  Next Item <ChevronRight size={16} className="ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleMarkComplete}
+                  disabled={markCompleteMutation.isPending}
+                  className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-sm"
+                >
+                  Complete Lesson
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 w-full relative overflow-hidden bg-white">
             {isPdf ? (
-              <div className="absolute inset-0 bg-slate-100 overflow-hidden group">
-                <iframe
-                  src={`${url}#toolbar=0&navpanes=0&view=FitH`}
-                  className="w-full h-full border-0 bg-white"
-                  title={activeItem?.title}
-                />
-                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="icon"
-                    onClick={() => setIsPdfViewerOpen(true)}
-                    className="bg-white/90 backdrop-blur text-slate-900 hover:bg-white shadow-xl rounded-xl h-10 w-10"
-                  >
-                    <Maximize2 size={18} />
-                  </Button>
-                </div>
-              </div>
+              <InlinePdfViewer
+                fileUrl={url}
+                onPageChange={(current, total) => {
+                  setPdfCurrentPage(current);
+                  setPdfTotalPages(total);
+                  if (current === total && total > 1 && !isLessonCompleted) {
+                    handleMarkComplete();
+                  }
+                }}
+                onDocumentLoad={(total) => setPdfTotalPages(total)}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-12 bg-slate-50">
                 <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-slate-100">
@@ -721,33 +940,6 @@ const LmsLearn = () => {
                 </Button>
               </div>
             )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center bg-slate-50 border-t border-slate-200 p-6 gap-4 mt-6 shrink-0">
-            <div>
-              <h3 className="font-bold text-slate-800">Finished reading?</h3>
-              <p className="text-sm text-slate-500">
-                Mark it as complete to track your progress.
-              </p>
-            </div>
-            <Button
-              onClick={handleMarkComplete}
-              disabled={isLessonCompleted || markCompleteMutation.isPending}
-              className={cn(
-                "rounded-xl px-8 h-11 font-bold shrink-0 transition-all",
-                isLessonCompleted
-                  ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                  : "bg-slate-900 hover:bg-slate-800 text-white",
-              )}
-            >
-              {isLessonCompleted ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" /> Completed
-                </>
-              ) : (
-                "Mark as Complete"
-              )}
-            </Button>
           </div>
         </div>
       );
@@ -935,161 +1127,170 @@ const LmsLearn = () => {
 
                     {isExpanded && (
                       <div className="flex flex-col pb-2">
-                        {module.lessons?.map((lesson, lIdx) => (
-                          <div key={lesson.id} className="flex flex-col">
-                            {/* Lesson label */}
-                            <div className="px-8 py-2 border-b border-slate-50 bg-slate-50/40">
-                              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">
-                                {lIdx + 1}. {lesson.title}
-                              </h4>
-                            </div>
+                        {module.lessons?.map((lesson, lIdx) => {
+                          const isFinished = checkLessonCompleted(lesson.id);
+                          const isMarkedComplete = isLessonMarkedComplete(
+                            lesson.id,
+                          );
+                          const isLocked = isLessonLocked(lesson.id);
+                          const isActiveLesson = activeLessonId === lesson.id;
 
-                            {/* Content items */}
-                            {lesson.contents?.map((content) => {
-                              const isActive = activeItemId === content.id;
-                              const isCompleted = checkLessonCompleted(
-                                lesson.id,
-                              );
-                              return (
-                                <button
-                                  key={content.id}
-                                  onClick={() => {
-                                    setActiveItemId(content.id);
-                                    setActiveItemType(
-                                      content.type === "VIDEO"
-                                        ? "video"
-                                        : "reading",
-                                    );
-                                    if (window.innerWidth < 1024)
-                                      setIsSidebarOpen(false);
-                                  }}
-                                  className={cn(
-                                    "group flex items-center gap-3 pl-10 pr-4 py-3 text-left transition-all w-full relative border-r-4",
-                                    isActive
-                                      ? "border-primary bg-primary/5"
-                                      : "border-transparent hover:bg-slate-50",
-                                  )}
-                                >
+                          return (
+                            <div key={lesson.id} className="flex flex-col">
+                              {/* Lesson Header */}
+                              <div
+                                className={cn(
+                                  "px-8 py-3 border-b border-slate-100 flex items-center justify-between transition-colors",
+                                  isFinished
+                                    ? "bg-emerald-50/40"
+                                    : isActiveLesson
+                                      ? "bg-primary/5"
+                                      : "bg-slate-50/40",
+                                )}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
                                   <div className="shrink-0">
-                                    {isCompleted ? (
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                    {isMarkedComplete ? (
+                                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                      </div>
+                                    ) : isActiveLesson ? (
+                                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20">
+                                        <Play className="w-3 h-3 text-primary fill-primary" />
+                                      </div>
                                     ) : (
-                                      <Circle
-                                        className={cn(
-                                          "w-3.5 h-3.5 transition-colors",
-                                          isActive
-                                            ? "text-primary"
-                                            : "text-slate-300 group-hover:text-slate-400",
-                                        )}
-                                      />
+                                      <div className="w-5 h-5 rounded-full border-2 border-slate-200" />
                                     )}
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p
-                                      className={cn(
-                                        "text-[12px] font-medium leading-snug line-clamp-2 transition-colors",
-                                        isActive
-                                          ? "text-primary font-bold"
-                                          : "text-slate-600 group-hover:text-slate-900",
-                                      )}
-                                    >
-                                      {content.title}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                      {content.type === "VIDEO" ? (
-                                        <Play
-                                          size={9}
-                                          strokeWidth={3}
-                                          className="text-slate-400"
-                                        />
-                                      ) : (
-                                        <FileText
-                                          size={9}
-                                          strokeWidth={3}
-                                          className="text-slate-400"
-                                        />
-                                      )}
-                                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-tight">
-                                        {content.type === "VIDEO"
-                                          ? "Video"
-                                          : "Reading"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
-
-                            {/* Quiz items */}
-                            {allItems
-                              .filter(
-                                (item: any) =>
-                                  item.lessonId === lesson.id &&
-                                  item.itemType === "quiz",
-                              )
-                              .map((quizItem) => {
-                                const isActive = activeItemId === quizItem.id;
-                                const isCompleted = checkLessonCompleted(
-                                  lesson.id,
-                                );
-                                return (
-                                  <button
-                                    key={quizItem.id}
-                                    onClick={() => {
-                                      setActiveItemId(quizItem.id);
-                                      setActiveItemType("quiz");
-                                      if (window.innerWidth < 1024)
-                                        setIsSidebarOpen(false);
-                                    }}
+                                  <h4
                                     className={cn(
-                                      "group flex items-center gap-3 pl-10 pr-4 py-3 text-left transition-all w-full relative border-r-4",
-                                      isActive
-                                        ? "border-amber-500 bg-amber-50/60"
-                                        : "border-transparent hover:bg-slate-50",
+                                      "text-[10px] font-black uppercase tracking-widest truncate",
+                                      isFinished
+                                        ? "text-emerald-700"
+                                        : isActiveLesson
+                                          ? "text-primary"
+                                          : "text-slate-400",
                                     )}
                                   >
-                                    <div className="shrink-0">
-                                      {isCompleted ? (
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                      ) : (
-                                        <PlaySquare
-                                          className={cn(
-                                            "w-3.5 h-3.5 transition-colors",
-                                            isActive
-                                              ? "text-amber-500"
-                                              : "text-slate-300 group-hover:text-slate-400",
-                                          )}
-                                        />
+                                    {lIdx + 1}. {lesson.title}
+                                  </h4>
+                                </div>
+                              </div>
+
+                              {/* Content items - simplified nested list */}
+                              <div className="flex flex-col">
+                                {lesson.contents?.map((content) => {
+                                  const isActive = activeItemId === content.id;
+                                  return (
+                                    <button
+                                      key={content.id}
+                                      onClick={() => {
+                                        setActiveItemId(content.id);
+                                        setActiveItemType(
+                                          content.type === "VIDEO"
+                                            ? "video"
+                                            : "reading",
+                                        );
+                                        if (window.innerWidth < 1024)
+                                          setIsSidebarOpen(false);
+                                      }}
+                                      className={cn(
+                                        "group flex items-center gap-3 px-10 py-3 text-left transition-all w-full border-l-4",
+                                        isActive
+                                          ? "border-primary bg-primary/5"
+                                          : "border-transparent hover:bg-slate-50",
                                       )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
+                                    >
+                                      <div className="shrink-0">
+                                        {content.type === "VIDEO" ? (
+                                          <PlaySquare
+                                            className={cn(
+                                              "w-4 h-4",
+                                              isActive
+                                                ? "text-primary"
+                                                : "text-slate-400",
+                                            )}
+                                          />
+                                        ) : (
+                                          <FileText
+                                            className={cn(
+                                              "w-4 h-4",
+                                              isActive
+                                                ? "text-primary"
+                                                : "text-slate-400",
+                                            )}
+                                          />
+                                        )}
+                                      </div>
                                       <p
                                         className={cn(
-                                          "text-[12px] font-medium leading-snug line-clamp-2 transition-colors",
+                                          "text-[12px] leading-snug line-clamp-1 transition-colors",
                                           isActive
-                                            ? "text-amber-700 font-bold"
-                                            : "text-slate-600 group-hover:text-slate-900",
+                                            ? "text-primary font-bold"
+                                            : isFinished
+                                              ? "text-slate-400 italic"
+                                              : "text-slate-600 font-medium group-hover:text-slate-900",
                                         )}
                                       >
-                                        {quizItem.title}
+                                        {content.title}
                                       </p>
-                                      <div className="flex items-center gap-1.5 mt-1">
+                                    </button>
+                                  );
+                                })}
+
+                                {/* Quiz item inside lesson */}
+                                {allItems
+                                  .filter(
+                                    (item: any) =>
+                                      item.lessonId === lesson.id &&
+                                      item.itemType === "quiz",
+                                  )
+                                  .map((quizItem) => {
+                                    const isActive =
+                                      activeItemId === quizItem.id;
+                                    return (
+                                      <button
+                                        key={quizItem.id}
+                                        onClick={() => {
+                                          setActiveItemId(quizItem.id);
+                                          setActiveItemType("quiz");
+                                          if (window.innerWidth < 1024)
+                                            setIsSidebarOpen(false);
+                                        }}
+                                        className={cn(
+                                          "group flex items-center gap-3 px-10 py-3 text-left transition-all w-full border-l-4",
+                                          isActive
+                                            ? "border-amber-500 bg-amber-50/60"
+                                            : "border-transparent hover:bg-slate-50",
+                                        )}
+                                      >
                                         <HelpCircle
-                                          size={9}
-                                          strokeWidth={3}
-                                          className="text-slate-400"
+                                          className={cn(
+                                            "w-4 h-4 shrink-0",
+                                            isActive
+                                              ? "text-amber-600"
+                                              : "text-slate-400",
+                                          )}
                                         />
-                                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-tight">
-                                          Quiz ·{" "}
-                                          {(quizItem as any).exercises.length} Q
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                          </div>
-                        ))}
+                                        <p
+                                          className={cn(
+                                            "text-[12px] leading-snug line-clamp-1 transition-colors",
+                                            isActive
+                                              ? "text-amber-700 font-bold"
+                                              : isFinished
+                                                ? "text-slate-400 italic"
+                                                : "text-slate-600 font-medium group-hover:text-slate-900",
+                                          )}
+                                        >
+                                          {quizItem.title}
+                                        </p>
+                                      </button>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -1108,59 +1309,30 @@ const LmsLearn = () => {
         )}
 
         {/* ── Content Area ─────────────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white flex flex-col relative custom-scrollbar">
-          <div className="flex-1 w-full flex flex-col transition-all duration-300">
+        <main className="flex-1 bg-white flex flex-col relative overflow-hidden">
+          <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col transition-all duration-300 custom-scrollbar">
             <div className="relative group flex-1 flex flex-col">
               {renderActiveContent()}
-            </div>
-
-            {/* Navigation bar */}
-            <div
-              className={cn(
-                "flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-slate-100 pb-14",
-                activeItemType === "video"
-                  ? "mt-4 px-6 md:px-10"
-                  : "mt-10 px-4 md:px-10",
-              )}
-            >
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide order-2 sm:order-1">
-                Item {currentItemIndex + 1} of {allItems.length}
-              </div>
-              <div className="flex items-center gap-3 order-1 sm:order-2 w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (currentItemIndex > 0) {
-                      const prevItem = allItems[currentItemIndex - 1];
-                      setActiveItemId(prevItem.id);
-                      setActiveItemType(prevItem.itemType);
-                    }
-                  }}
-                  disabled={currentItemIndex === 0}
-                  className="rounded-lg h-11 flex-1 sm:flex-initial px-6 text-sm font-bold border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1.5" />
-                  Previous
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (currentItemIndex < allItems.length - 1) {
-                      const nextItem = allItems[currentItemIndex + 1];
-                      setActiveItemId(nextItem.id);
-                      setActiveItemType(nextItem.itemType);
-                    }
-                  }}
-                  disabled={currentItemIndex === allItems.length - 1}
-                  className="rounded-lg h-11 flex-1 sm:flex-initial px-8 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-sm transition-all active:scale-[0.98]"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-1.5" />
-                </Button>
-              </div>
             </div>
           </div>
         </main>
       </div>
+
+      <CelebrationModal
+        isOpen={celebration.isOpen}
+        title={celebration.title}
+        message={celebration.message}
+        isLastItem={celebration.isLastItem}
+        onClose={() => setCelebration((prev) => ({ ...prev, isOpen: false }))}
+        onContinue={() => {
+          setCelebration((prev) => ({ ...prev, isOpen: false }));
+          if (celebration.isLastItem) {
+            navigate("/dashboard");
+          } else {
+            handleNextItem();
+          }
+        }}
+      />
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }

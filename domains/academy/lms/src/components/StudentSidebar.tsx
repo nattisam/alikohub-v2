@@ -6,6 +6,7 @@ import {
   Award,
   Briefcase,
   X,
+  Receipt,
 } from "lucide-react";
 import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,10 @@ const achieveNav = [
     icon: Briefcase,
     external: true,
   },
+];
+
+const accountNav = [
+  { label: "Transactions", to: "/transactions", icon: Receipt },
 ];
 
 interface StudentSidebarProps {
@@ -152,6 +157,17 @@ const StudentSidebar = ({ isOpen = false, onClose }: StudentSidebarProps) => {
             </p>
             <div className="space-y-0.5">
               {achieveNav.map((item) => (
+                <NavItem key={item.to} item={item} />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+              Account
+            </p>
+            <div className="space-y-0.5">
+              {accountNav.map((item) => (
                 <NavItem key={item.to} item={item} />
               ))}
             </div>

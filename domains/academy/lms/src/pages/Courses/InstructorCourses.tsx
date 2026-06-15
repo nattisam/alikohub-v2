@@ -15,7 +15,7 @@ const InstructorCourses = () => {
     data: coursesData,
     isLoading,
     refetch,
-  } = useInstructorCourses({ page: 1, pageSize: 10 });
+  } = useInstructorCourses({ page: 1, pageSize: 100 });
 
   const deleteCourseMutation = useDeleteCourse();
   const [deleteId, setDeleteId] = useState<string | null>(null);

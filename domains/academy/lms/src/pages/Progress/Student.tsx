@@ -7,6 +7,7 @@ import {
   useEnrollments,
   useStudentDashboard,
   useStudentAnalytics,
+  useMyTransactions,
 } from "@/hooks/useAcademy";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,7 @@ const LmsMyLearning = () => {
   const [activeTab, setActiveTab] = useState("In Progress");
   const { data: enrollments, isLoading: isEnrollmentsLoading } =
     useEnrollments();
+  const { data: myTransactions } = useMyTransactions();
   const { data: analytics, isLoading: isAnalyticsLoading } =
     useStudentAnalytics();
   const { data: dashboard, isLoading: isDashboardLoading } =
@@ -25,8 +27,20 @@ const LmsMyLearning = () => {
   const isLoading =
     isEnrollmentsLoading || isAnalyticsLoading || isDashboardLoading;
 
+  // Cross-check: courses with COMPLETED transactions count as enrolled even if enrollment is still PENDING
+  const completedTxCourseIds = new Set(
+    myTransactions
+      ?.filter((tx: any) => tx.status === "COMPLETED")
+      .map((tx: any) => (tx.metadata as any)?.courseId)
+      .filter(Boolean) || [],
+  );
+
   const filteredEnrollments = enrollments?.filter((enrollment) => {
-    if (activeTab === "In Progress") return enrollment.status === "ACTIVE";
+    const hasCompletedTx = completedTxCourseIds.has(
+      enrollment.courseId ?? enrollment.course?.id,
+    );
+    if (activeTab === "In Progress")
+      return enrollment.status === "ACTIVE" || hasCompletedTx;
     if (activeTab === "Completed") return enrollment.status === "COMPLETED";
     return false;
   });

@@ -3,13 +3,19 @@ import { Link } from "react-router-dom";
 import { Menu, User, LogOut, ChevronDown, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useLogout } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 interface AdminHeaderProps {
   title?: string;
   onMenuClick?: () => void;
+  darkTheme?: boolean;
 }
 
-export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
+export function AdminHeader({
+  title,
+  onMenuClick,
+  darkTheme,
+}: AdminHeaderProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const { data: user } = useUser();
@@ -34,18 +40,33 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-white px-4 md:px-8 py-4 flex items-center justify-between shadow-sm">
+    <header
+      className={cn(
+        "sticky top-0 z-40 border-b px-4 md:px-8 py-4 flex items-center justify-between shadow-sm",
+        darkTheme ? "bg-[#222222] border-[#333333]" : "bg-white border-border",
+      )}
+    >
       <div className="flex items-center gap-4">
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+            className={cn(
+              "lg:hidden p-2 rounded-lg transition-colors border",
+              darkTheme
+                ? "hover:bg-[#333333] border-[#444] text-slate-300"
+                : "hover:bg-slate-100 border-slate-200 text-slate-600",
+            )}
             title="Toggle Menu"
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="w-5 h-5" />
           </button>
         )}
-        <h1 className="text-lg md:text-xl font-bold text-slate-800">
+        <h1
+          className={cn(
+            "text-lg md:text-xl font-bold",
+            darkTheme ? "text-white" : "text-slate-800",
+          )}
+        >
           {title || "Dashboard"}
         </h1>
       </div>
@@ -55,9 +76,17 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+            className={cn(
+              "flex items-center gap-2 px-2 py-1 rounded-lg transition-colors",
+              darkTheme ? "hover:bg-[#333333]" : "hover:bg-slate-100",
+            )}
           >
-            <Avatar className="h-8 w-8 border border-slate-200">
+            <Avatar
+              className={cn(
+                "h-8 w-8 border",
+                darkTheme ? "border-[#444]" : "border-slate-200",
+              )}
+            >
               <AvatarImage
                 src={user?.profilePicture || undefined}
                 alt={user?.firstname}
@@ -67,14 +96,29 @@ export function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
               </AvatarFallback>
             </Avatar>
             <div className="hidden md:flex flex-col items-start text-left">
-              <span className="text-sm font-semibold text-slate-800 leading-tight">
-                {user?.firstname}
+              <span
+                className={cn(
+                  "text-sm font-semibold leading-tight",
+                  darkTheme ? "text-white" : "text-slate-800",
+                )}
+              >
+                {user?.firstname || "Global Admin"}
               </span>
-              <span className="text-[10px] text-slate-500 leading-tight">
-                Admin
+              <span
+                className={cn(
+                  "text-[10px] leading-tight",
+                  darkTheme ? "text-slate-400" : "text-slate-500",
+                )}
+              >
+                Administrator
               </span>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown
+              className={cn(
+                "w-4 h-4",
+                darkTheme ? "text-slate-400" : "text-slate-400",
+              )}
+            />
           </button>
 
           {profileOpen && (

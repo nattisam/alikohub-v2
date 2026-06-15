@@ -21,8 +21,21 @@ const InstructorRoute = () => {
     user?.roleStatus?.instructor === "ACTIVE" ||
     user?.roleStatus?.instructor?.toUpperCase() === "ACTIVE";
 
+  const activeRole = (
+    user?.academyUser?.activeRole ||
+    user?.academyActiveRole ||
+    ""
+  ).toLowerCase();
+
+  const isActiveInstructor =
+    user?.globalRole === "ADMIN" || activeRole === "instructor";
+
   if (!isInstructor) {
     return <Navigate to="/apply-instructor" replace />;
+  }
+
+  if (!isActiveInstructor) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

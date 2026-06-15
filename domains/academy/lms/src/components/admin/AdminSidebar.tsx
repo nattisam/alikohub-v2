@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Users, BookOpen } from "lucide-react";
+import { BarChart3, Users, BookOpen, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 
@@ -26,6 +26,11 @@ const mainNavItems: NavItem[] = [
     label: "Platform Analytics",
     href: "/admin/analytics",
     icon: <BarChart3 className="w-5 h-5" />,
+  },
+  {
+    label: "Platform Payments",
+    href: "/admin/transactions",
+    icon: <CreditCard className="w-5 h-5" />,
   },
 ];
 

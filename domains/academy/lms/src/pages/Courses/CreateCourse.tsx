@@ -108,6 +108,7 @@ const InstructorCreateCourse = () => {
     skills: [] as string[],
     newSkill: "",
     price: "",
+    priceInUsd: "",
     thumbnail: null as File | null,
     thumbnailPreview: "" as string,
   });
@@ -186,6 +187,7 @@ const InstructorCreateCourse = () => {
     data.append("shortDescription", formData.shortDescription);
     data.append("category", formData.category);
     data.append("price", formData.price ? formData.price.toString() : "0");
+    data.append("priceInUsd", formData.priceInUsd ? formData.priceInUsd.toString() : "0");
     data.append("status", "DRAFT");
 
     if (formData.thumbnail) {
@@ -490,32 +492,53 @@ const InstructorCreateCourse = () => {
                   publishing. Set to 0 for a free course.
                 </p>
 
-                {/* Price input */}
-                <div className="border border-border rounded-xl p-6 bg-card space-y-2">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                    Market Price (USD)
-                  </Label>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-3xl font-bold text-muted-foreground">
-                      $
-                    </span>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={formData.price}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                          handleUpdateField({ price: val });
-                        }
-                      }}
-                      placeholder="0.00"
-                      className="border-none bg-transparent text-4xl font-black text-foreground focus-visible:ring-0 shadow-none h-auto p-0 w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
+                {/* Price inputs */}
+                <div className="border border-border rounded-xl p-6 bg-card space-y-5">
+                  <div>
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      Price (ETB)
+                    </Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-2xl font-bold text-muted-foreground">Br</span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={formData.price}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                            handleUpdateField({ price: val });
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="border-none bg-transparent text-3xl font-black text-foreground focus-visible:ring-0 shadow-none h-auto p-0 w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Chapa (local) payments.</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Students will see this as the enrollment fee.
-                  </p>
+
+                  <div className="border-t border-border pt-5">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      Price in USD
+                    </Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-2xl font-bold text-muted-foreground">$</span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={formData.priceInUsd}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                            handleUpdateField({ priceInUsd: val });
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="border-none bg-transparent text-3xl font-black text-foreground focus-visible:ring-0 shadow-none h-auto p-0 w-40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Stripe (international) payments.</p>
+                  </div>
                 </div>
 
                 {/* Launch info box */}

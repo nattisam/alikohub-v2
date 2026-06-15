@@ -1,89 +1,92 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Clock, Calendar } from 'lucide-react';
-import { Button } from '@/components/categories/technology/ui/button';
-import { ProgramBadge, getLevelVariant } from '@/components/categories/technology/ui/badge-variants';
-import { Program } from '@/data/categories/technology/programs';
-import { cn } from '@/lib/categories/technology/utils';
+import { Link } from "react-router-dom";
+import { ArrowRight, Clock, Calendar } from "lucide-react";
+import { Button } from "@/components/categories/technology/ui/button";
+import {
+  ProgramBadge,
+  getLevelVariant,
+} from "@/components/categories/technology/ui/badge-variants";
+import { Program } from "@/data/categories/technology/programs";
+import { cn } from "@/lib/categories/technology/utils";
 
 // Per-program thumbnails
-import thumbFullstack from '@/assets/categories/technology/thumb-fullstack.jpg';
-import thumbFrontend from '@/assets/categories/technology/thumb-frontend.jpg';
-import thumbBackend from '@/assets/categories/technology/thumb-backend.jpg';
-import thumbDataAnalytics from '@/assets/categories/technology/thumb-data-analytics.jpg';
-import thumbDataEngineering from '@/assets/categories/technology/thumb-data-engineering.jpg';
-import thumbDataScience from '@/assets/categories/technology/thumb-data-science.jpg';
-import thumbAiEngineer from '@/assets/categories/technology/thumb-ai-engineer.jpg';
-import thumbMlEngineer from '@/assets/categories/technology/thumb-ml-engineer.jpg';
-import thumbCloudAzure from '@/assets/categories/technology/thumb-cloud-azure.jpg';
-import thumbCloudAws from '@/assets/categories/technology/thumb-cloud-aws.jpg';
-import thumbDevops from '@/assets/categories/technology/thumb-devops.jpg';
-import thumbCybersecurity from '@/assets/categories/technology/thumb-cybersecurity.jpg';
-import thumbLowcode from '@/assets/categories/technology/thumb-lowcode.jpg';
+import thumbFullstack from "@/assets/categories/technology/thumb-fullstack.jpg";
+import thumbFrontend from "@/assets/categories/technology/thumb-frontend.jpg";
+import thumbBackend from "@/assets/categories/technology/thumb-backend.jpg";
+import thumbDataAnalytics from "@/assets/categories/technology/thumb-data-analytics.jpg";
+import thumbDataEngineering from "@/assets/categories/technology/thumb-data-engineering.jpg";
+import thumbDataScience from "@/assets/categories/technology/thumb-data-science.jpg";
+import thumbAiEngineer from "@/assets/categories/technology/thumb-ai-engineer.jpg";
+import thumbMlEngineer from "@/assets/categories/technology/thumb-ml-engineer.jpg";
+import thumbCloudAzure from "@/assets/categories/technology/thumb-cloud-azure.jpg";
+import thumbCloudAws from "@/assets/categories/technology/thumb-cloud-aws.jpg";
+import thumbDevops from "@/assets/categories/technology/thumb-devops.jpg";
+import thumbCybersecurity from "@/assets/categories/technology/thumb-cybersecurity.jpg";
+import thumbLowcode from "@/assets/categories/technology/thumb-lowcode.jpg";
 
 // Domain fallback images
-import heroSoftwareEngineering from '@/assets/categories/technology/hero-software-engineering.jpg';
-import heroDataAnalytics from '@/assets/categories/technology/hero-data-analytics.jpg';
-import heroAiMl from '@/assets/categories/technology/hero-ai-ml.jpg';
-import heroCloudEngineering from '@/assets/categories/technology/hero-cloud-engineering.jpg';
-import heroCybersecurity from '@/assets/categories/technology/hero-cybersecurity.jpg';
-import heroLowcode from '@/assets/categories/technology/hero-lowcode.jpg';
+import heroSoftwareEngineering from "@/assets/categories/technology/hero-software-engineering.jpg";
+import heroDataAnalytics from "@/assets/categories/technology/hero-data-analytics.jpg";
+import heroAiMl from "@/assets/categories/technology/hero-ai-ml.jpg";
+import heroCloudEngineering from "@/assets/categories/technology/hero-cloud-engineering.jpg";
+import heroCybersecurity from "@/assets/categories/technology/hero-cybersecurity.jpg";
+import heroLowcode from "@/assets/categories/technology/hero-lowcode.jpg";
 
 // Slug-specific thumbnails for distinct visuals per program
 const slugThumbnails: Record<string, string> = {
   // Software Engineering
-  'full-stack-software-engineering': thumbFullstack,
-  'front-end-engineering': thumbFrontend,
-  'back-end-engineering': thumbBackend,
-  'programming-fundamentals': thumbFrontend,
-  'html-css-responsive-design': thumbFrontend,
-  'javascript-fundamentals': thumbFrontend,
-  'typescript-fundamentals': thumbFrontend,
-  'react-fundamentals': thumbFrontend,
-  'nodejs-api-fundamentals': thumbBackend,
-  'python-programming-fundamentals': thumbBackend,
-  'sql-foundations-for-developers': thumbBackend,
-  'system-design-basics': thumbFullstack,
-  'testing-fundamentals': thumbFullstack,
+  "full-stack-software-engineering": thumbFullstack,
+  "front-end-engineering": thumbFrontend,
+  "back-end-engineering": thumbBackend,
+  "programming-fundamentals": thumbFrontend,
+  "html-css-responsive-design": thumbFrontend,
+  "javascript-fundamentals": thumbFrontend,
+  "typescript-fundamentals": thumbFrontend,
+  "react-fundamentals": thumbFrontend,
+  "nodejs-api-fundamentals": thumbBackend,
+  "python-programming-fundamentals": thumbBackend,
+  "sql-foundations-for-developers": thumbBackend,
+  "system-design-basics": thumbFullstack,
+  "testing-fundamentals": thumbFullstack,
   // Data & Analytics
-  'data-analytics': thumbDataAnalytics,
-  'data-engineering': thumbDataEngineering,
-  'data-science': thumbDataScience,
-  'sql-for-analytics': thumbDataAnalytics,
-  'excel-data-analysis': thumbDataAnalytics,
-  'power-bi-dashboards': thumbDataAnalytics,
-  'python-for-data': thumbDataScience,
-  'statistics-essentials': thumbDataScience,
+  "data-analytics": thumbDataAnalytics,
+  "data-engineering": thumbDataEngineering,
+  "data-science": thumbDataScience,
+  "sql-for-analytics": thumbDataAnalytics,
+  "excel-data-analysis": thumbDataAnalytics,
+  "power-bi-dashboards": thumbDataAnalytics,
+  "python-for-data": thumbDataScience,
+  "statistics-essentials": thumbDataScience,
   // AI & Machine Learning
-  'ai-engineer-applied-genai': thumbAiEngineer,
-  'machine-learning-engineer': thumbMlEngineer,
-  'prompt-engineering': thumbAiEngineer,
-  'intro-to-ml': thumbMlEngineer,
-  'intro-to-machine-learning': thumbMlEngineer,
+  "ai-engineer-applied-genai": thumbAiEngineer,
+  "machine-learning-engineer": thumbMlEngineer,
+  "prompt-engineering": thumbAiEngineer,
+  "intro-to-ml": thumbMlEngineer,
+  "intro-to-machine-learning": thumbMlEngineer,
   // Cloud & DevOps
-  'cloud-engineer-azure': thumbCloudAzure,
-  'cloud-engineer-aws': thumbCloudAws,
-  'devops-engineer': thumbDevops,
-  'cloud-fundamentals': thumbCloudAzure,
-  'docker-fundamentals': thumbDevops,
-  'linux-fundamentals': thumbDevops,
+  "cloud-engineer-azure": thumbCloudAzure,
+  "cloud-engineer-aws": thumbCloudAws,
+  "devops-engineer": thumbDevops,
+  "cloud-fundamentals": thumbCloudAzure,
+  "docker-fundamentals": thumbDevops,
+  "linux-fundamentals": thumbDevops,
   // Cybersecurity
-  'cybersecurity-analyst': thumbCybersecurity,
-  'cybersecurity-foundations': thumbCybersecurity,
-  'security-operations': thumbCybersecurity,
+  "cybersecurity-analyst": thumbCybersecurity,
+  "cybersecurity-foundations": thumbCybersecurity,
+  "security-operations": thumbCybersecurity,
   // Low-Code
-  'power-platform-app-maker': thumbLowcode,
-  'power-apps-fundamentals': thumbLowcode,
-  'power-automate-fundamentals': thumbLowcode,
+  "power-platform-app-maker": thumbLowcode,
+  "power-apps-fundamentals": thumbLowcode,
+  "power-automate-fundamentals": thumbLowcode,
 };
 
 // Category fallback map
 const categoryFallback: Record<string, string> = {
-  'Software Engineering': heroSoftwareEngineering,
-  'Data & Analytics': heroDataAnalytics,
-  'AI & Machine Learning': heroAiMl,
-  'Cloud & DevOps': heroCloudEngineering,
-  'Cybersecurity': heroCybersecurity,
-  'Low-Code & Business Apps': heroLowcode,
+  "Software Engineering": heroSoftwareEngineering,
+  "Data & Analytics": heroDataAnalytics,
+  "AI & Machine Learning": heroAiMl,
+  "Cloud & DevOps": heroCloudEngineering,
+  Cybersecurity: heroCybersecurity,
+  "Low-Code & Business Apps": heroLowcode,
 };
 
 interface ProgramCardProps {
@@ -92,17 +95,22 @@ interface ProgramCardProps {
 }
 
 const ProgramCard = ({ program, className }: ProgramCardProps) => {
-  const detailPath = program.type === 'career-track'
-    ? `/technology/programs/career-tracks/${program.slug}`
-    : `/technology/programs/short-courses/${program.slug}`;
+  const detailPath =
+    program.type === "career-track"
+      ? `/technology/programs/career-tracks/${program.slug}`
+      : `/technology/programs/short-courses/${program.slug}`;
 
-  const thumbnail = slugThumbnails[program.slug] || categoryFallback[program.category] || heroSoftwareEngineering;
+  const thumbnail =
+    (program as any).image_url ||
+    slugThumbnails[program.slug] ||
+    categoryFallback[program.category] ||
+    heroSoftwareEngineering;
 
   return (
     <article
       className={cn(
-        'group flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden hover:border-accent/40 transition-all duration-500',
-        className
+        "group flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden hover:border-accent/40 transition-all duration-500",
+        className,
       )}
     >
       {/* Thumbnail */}
@@ -166,9 +174,7 @@ const ProgramCard = ({ program, className }: ProgramCardProps) => {
       {/* CTA */}
       <div className="px-5 pb-5">
         <Link to={detailPath}>
-          <Button
-            className="w-full h-10 bg-accent text-white rounded-xl font-semibold text-sm border-none"
-          >
+          <Button className="w-full h-10 bg-accent text-white rounded-xl font-semibold text-sm border-none">
             View Details
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

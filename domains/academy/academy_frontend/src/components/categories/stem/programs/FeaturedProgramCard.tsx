@@ -46,7 +46,13 @@ interface FeaturedProgramCardProps {
 }
 
 export function FeaturedProgramCard({ program }: FeaturedProgramCardProps) {
-  const thumbnail = programThumbnails[program.slug] || civilEngThumb;
+  const fallbackThumbnail = programThumbnails[program.slug] || civilEngThumb;
+  const thumbnail = program.thumbnail
+    ? program.thumbnail.startsWith("http")
+      ? program.thumbnail
+      : `https://api.consultancy.alikohub.com${program.thumbnail.startsWith("/") ? "" : "/"}${program.thumbnail}`
+    : fallbackThumbnail;
+
   const highlights = program.description
     ? ["Software certification", "Online paced curriculum"]
     : ["Interactive learning", "Skill credential"];

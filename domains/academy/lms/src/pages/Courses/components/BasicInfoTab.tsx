@@ -9,6 +9,7 @@ interface BasicInfoTabProps {
     shortDescription: string;
     category: string;
     price: string;
+    priceInUsd: string;
     thumbnail: File | null;
   };
   course?: Course;
@@ -72,12 +73,10 @@ export const BasicInfoTab = ({
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">
-                Course Price (USD)
+                Price (ETB)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
-                  $
-                </span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Br</span>
                 <Input
                   type="text"
                   inputMode="decimal"
@@ -89,11 +88,36 @@ export const BasicInfoTab = ({
                     }
                   }}
                   placeholder="0.00"
+                  className="pl-10 h-12"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2 font-medium">
+                Used for Chapa (local) payments. Set to 0 for a free course.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                Price in USD
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={formData.priceInUsd}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                      onFormDataChange({ ...formData, priceInUsd: val });
+                    }
+                  }}
+                  placeholder="0.00"
                   className="pl-8 h-12"
                 />
               </div>
               <p className="text-[11px] text-slate-400 mt-2 font-medium">
-                Set to 0.00 to make this course free for all students.
+                Used for Stripe (international) payments. Set to 0 for a free course.
               </p>
             </div>
           </div>

@@ -86,6 +86,7 @@ const InstructorCourseEditor = () => {
     shortDescription: "",
     category: "",
     price: "",
+    priceInUsd: "",
     thumbnail: null as File | null,
   });
 
@@ -149,6 +150,7 @@ const InstructorCourseEditor = () => {
         shortDescription: course.shortDescription || "",
         category: course.category || "",
         price: course.price ? course.price.toString() : "",
+        priceInUsd: course.priceInUsd ? course.priceInUsd.toString() : "",
         thumbnail: null,
       });
 
@@ -198,6 +200,7 @@ const InstructorCourseEditor = () => {
     data.append("shortDescription", formData.shortDescription);
     data.append("category", formData.category);
     data.append("price", formData.price ? formData.price.toString() : "0");
+    data.append("priceInUsd", formData.priceInUsd ? formData.priceInUsd.toString() : "0");
     data.append("status", "DRAFT");
     if (formData.thumbnail) {
       data.append("thumbnail", formData.thumbnail);
@@ -735,12 +738,6 @@ const InstructorCourseEditor = () => {
                                           }`}
                                         >
                                           {lesson.title}
-                                        </span>
-                                      </div>
-                                      <div className="shrink-0 ml-2 border border-emerald-500/20 bg-emerald-50/50 rounded px-1.5 py-[1px]">
-                                        <span className="text-[9px] font-black uppercase text-emerald-600 flex items-center gap-1">
-                                          <span className="text-[10px]">*</span>
-                                          Pub
                                         </span>
                                       </div>
                                     </div>

@@ -2,21 +2,30 @@ import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/categories/stem/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Clock,
-  MapPin,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  ArrowLeft,
+  ArrowRight,
   Calendar,
-  DollarSign,
-  CheckCircle,
+  Clock,
+  CheckCircle2,
+  GraduationCap,
+  Briefcase,
+  Building2,
+  ExternalLink,
+  AlertCircle,
   BookOpen,
   Award,
-  ArrowLeft,
-  GraduationCap,
-  Sparkles,
   Loader2,
 } from "lucide-react";
 import { useCourseBySlug } from "@/hooks/useAcademy";
+import { cn } from "@/lib/utils";
 
 const ProgramDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -26,7 +35,7 @@ const ProgramDetail = () => {
   // Prefer API data
   const programData = apiProgram;
 
-  // Transform to a consistent structure like Health
+  // Transform to a consistent structure
   const program = programData
     ? {
         ...programData,
@@ -45,28 +54,52 @@ const ProgramDetail = () => {
           programData.estimatedTime ||
           (programData as any).duration ||
           "12 Weeks",
-        hours: (programData as any).hours || {
-          total: 120,
-          theory: 60,
-          lab: 40,
-          clinical: 20,
-        },
+        durationWeeks: (programData as any).durationWeeks || 12,
+        weeklyHours: (programData as any).weeklyHours || 10,
+        level:
+          (programData as any).level ||
+          (programData as any).difficulty ||
+          "Beginner",
+        deliveryMode: (programData as any).deliveryMode || "Online",
+        domain:
+          (programData as any).domain ||
+          (programData as any).category ||
+          "STEM",
         modality: (programData as any).deliveryMode || "Online",
         location: (programData as any).location || "Virtual Classroom",
         enrollmentStatus:
           (programData as any).enrollmentStatus ||
           (programData.status === "PUBLISHED" ? "open" : "closed"),
         startDate: (programData as any).startDate || "Check Cohort Schedule",
-        careerPathways: (programData as any).careerPathways || [
-          "Systems Engineering",
-          "Data Analysis",
-          "Research and Development",
+        careerPathways: (programData as any).careerPathways ||
+          (programData as any).careerOutcomes || [
+            "Systems Engineering",
+            "Data Analysis",
+            "Research and Development",
+          ],
+        requirements: (programData as any).requirements ||
+          (programData as any).prerequisites || [
+            "High school diploma or equivalent",
+            "Basic math prerequisite",
+            "Interest in STEM",
+          ],
+        skillsGained: (programData as any).skillsGained || [
+          "Industry-standard tools and methodologies",
+          "Problem-solving and critical thinking",
+          "Technical documentation and reporting",
+          "Hands-on practical application",
         ],
-        requirements: (programData as any).requirements || [
-          "High school diploma or equivalent",
-          "Basic math prerequisite",
-          "Interest in STEM",
+        industryApplications: (programData as any).industryApplications || [
+          "Technology",
+          "Engineering",
+          "Research",
+          "Data Science",
         ],
+        alignmentStatement:
+          (programData as any).alignmentStatement ||
+          "This program is aligned with current industry standards and best practices, preparing graduates for real-world challenges in STEM fields.",
+        externalReferenceLink:
+          (programData as any).externalReferenceLink || null,
         certification:
           (programData as any).certification ||
           "Aliko Academy Professional Certification",
@@ -74,10 +107,6 @@ const ProgramDetail = () => {
         modules: programData.modules || [],
       }
     : null;
-
-  const handleEnroll = () => {
-    window.location.href = "https://lms.alikohub.com";
-  };
 
   if (isLoading) {
     return (
@@ -96,415 +125,410 @@ const ProgramDetail = () => {
     return <Navigate to="/stem/programs" replace />;
   }
 
+  // Enhanced contrast level classes
+  const levelClasses: Record<string, string> = {
+    Beginner: "bg-accent-green/12 text-accent-green border-accent-green/35",
+    Intermediate: "bg-primary/12 text-primary border-primary/35",
+    Professional: "bg-accent/12 text-accent border-accent/35",
+  };
+
+  const deliveryClasses: Record<string, string> = {
+    Online: "bg-accent/12 text-accent border-accent/35",
+    Hybrid: "bg-accent-green/12 text-accent-green border-accent-green/35",
+  };
+
+  const handleEnroll = () => {
+    window.location.href = "https://lms.alikohub.com";
+  };
+
   return (
     <Layout>
-      {/* Header */}
-      <section className="relative py-16 lg:py-20 bg-gradient-to-br from-primary/5 via-card to-accent/5 overflow-hidden border-b border-border">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
+      {/* Breadcrumb */}
+      <div className="border-b border-divider bg-card">
+        <div className="container-content py-4">
+          <nav className="flex items-center gap-2 text-sm">
+            <Link
+              to="/stem/programs"
+              className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Programs
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-medium truncate">
+              {program.name}
+            </span>
+          </nav>
+        </div>
+      </div>
 
-        <div className="container-academy relative">
-          <Link
-            to="/stem/programs"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Programs
-          </Link>
-
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                {program.featured && (
-                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Featured Program
-                  </Badge>
+      {/* Hero */}
+      <section className="gradient-hero py-12 lg:py-16">
+        <div className="container-content">
+          <div className="max-w-4xl">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Badge
+                variant="outline"
+                className={cn(
+                  levelClasses[program.level] || levelClasses["Beginner"],
                 )}
-                <Badge
-                  className={
-                    program.enrollmentStatus === "open"
-                      ? "bg-accent text-accent-foreground"
-                      : ""
-                  }
-                >
-                  {program.enrollmentStatus === "open"
-                    ? "Enrollment Open"
-                    : "Start Date: TBD"}
-                </Badge>
-              </div>
-              <h1 className="text-3xl lg:text-5xl font-bold text-primary">
-                {program.name}
-              </h1>
-              <p className="mt-4 text-lg text-muted-foreground max-w-3xl">
-                {program.description}
-              </p>
-
-              {/* Quick stats row */}
-              <div className="mt-8 flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {program.duration}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {program.hours.total} hours
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {program.modality}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {program.location}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              >
+                {program.level}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  deliveryClasses[program.deliveryMode] ||
+                    deliveryClasses["Online"],
+                )}
+              >
+                {program.deliveryMode}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="bg-secondary text-secondary-foreground"
+              >
+                {program.domain}
+              </Badge>
             </div>
-
-            <Card className="lg:w-80 shrink-0 shadow-xl border-t-4 border-t-primary">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <GraduationCap className="h-5 w-5 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">Program Quick Facts</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <DollarSign className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-lg font-bold text-foreground">
-                      ${program.tuition.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Total tuition
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <Calendar className="h-5 w-5 text-accent" />
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {program.enrollmentStatus === "open"
-                        ? `Starts ${program.startDate}`
-                        : "Check Schedule"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Next cohort</p>
-                  </div>
-                </div>
-                <Button
-                  onClick={handleEnroll}
-                  disabled={program.enrollmentStatus !== "open"}
-                  className="w-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
-                  size="lg"
-                >
-                  Access LMS
-                </Button>
-              </CardContent>
-            </Card>
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
+              {program.name}
+            </h1>
+            <p className="mt-4 text-lg text-muted-foreground max-w-3xl">
+              {program.description}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {program.durationWeeks} weeks
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                {program.weeklyHours} hours/week
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Content */}
-      <section className="py-12 lg:py-16">
-        <div className="container-academy">
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2 space-y-12">
-              {/* Career Pathways */}
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Award className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">Career Pathways</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Graduates of this program find employment in various STEM
-                    settings:
-                  </p>
-                  <ul className="grid sm:grid-cols-2 gap-3">
-                    {program.careerPathways.map((pathway: string) => (
-                      <li
-                        key={pathway}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
+      {/* Main Content */}
+      <section className="section-padding">
+        <div className="container-content">
+          <div className="grid lg:grid-cols-3 gap-10">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-10">
+              {/* Who This Is For */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Who This Program Is For
+                </h2>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <Card className="border-primary/25 bg-primary/8">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <GraduationCap className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          Students
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Building industry-ready skills
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-accent/25 bg-accent/8">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <Briefcase className="h-5 w-5 text-accent mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          Professionals
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Upskilling or transitioning
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-accent-green/25 bg-accent-green/8">
+                    <CardContent className="p-4 flex items-start gap-3">
+                      <Building2 className="h-5 w-5 text-accent-green mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          Organizations
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Workforce development
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Skills Gained */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Skills & Capabilities You Gain
+                </h2>
+                <ul className="space-y-3">
+                  {program.skillsGained.map((skill: string, index: number) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-accent-green/8 border border-accent-green/20"
+                    >
+                      <CheckCircle2 className="h-5 w-5 text-accent-green mt-0.5 flex-shrink-0" />
+                      <span className="text-foreground/90">{skill}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Industry Applications */}
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Typical Industry Applications
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {program.industryApplications.map(
+                    (app: string, index: number) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="text-sm py-1.5 px-3 bg-primary/10 text-primary border-primary/30"
                       >
-                        <CheckCircle className="h-4 w-4 text-accent shrink-0" />
-                        <span className="text-sm">{pathway}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                        {app}
+                      </Badge>
+                    ),
+                  )}
+                </div>
+              </div>
 
               {/* Curriculum */}
-              {program.modules && program.modules.length > 0 ? (
-                <Card className="border-l-4 border-l-accent overflow-hidden">
-                  <CardHeader className="bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                        <BookOpen className="h-5 w-5 text-accent" />
-                      </div>
-                      <CardTitle className="text-xl">
-                        Program Curriculum
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                      {program.modules.map((module: any, idx: number) => (
-                        <div
-                          key={module.id}
-                          className="p-6 hover:bg-muted/20 transition-colors"
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <span className="text-xs font-bold text-accent uppercase tracking-wider mb-1 block">
-                                Module {idx + 1}
-                              </span>
-                              <h3 className="text-lg font-bold text-foreground">
-                                {module.title}
-                              </h3>
-                              {module.description && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {module.description}
-                                </p>
-                              )}
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className="ml-2 whitespace-nowrap"
-                            >
-                              {module.lessons?.length || 0} Lessons
-                            </Badge>
-                          </div>
-                          {module.lessons && module.lessons.length > 0 && (
-                            <div className="space-y-2">
-                              {module.lessons.map((lesson: any) => (
-                                <div
-                                  key={lesson.id}
-                                  className="flex items-center gap-3 text-sm text-muted-foreground bg-background/50 p-2 rounded border border-border/50"
-                                >
-                                  <div className="w-1.5 h-1.5 rounded-full bg-accent/50" />
-                                  <span>{lesson.title}</span>
-                                  <Badge
-                                    variant="secondary"
-                                    className="ml-auto text-[10px] px-1 h-4"
-                                  >
-                                    {lesson.type}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
+              <div>
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  Curriculum Outline
+                </h2>
+                {program.modules && program.modules.length > 0 ? (
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {program.modules.map((module: any, index: number) => (
+                      <AccordionItem
+                        key={module.id || index}
+                        value={`module-${index}`}
+                        className="border border-accent/25 rounded-lg px-4 bg-accent/6"
+                      >
+                        <AccordionTrigger className="hover:no-underline py-4">
+                          <span className="font-medium text-foreground text-left">
+                            {module.title}
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-4">
+                          {module.description && (
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {module.description}
+                            </p>
                           )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-l-4 border-l-accent">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                        <BookOpen className="h-5 w-5 text-accent" />
-                      </div>
-                      <CardTitle className="text-xl">
-                        Curriculum Overview
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-6">
-                      This program provides comprehensive training through a
-                      combination of theory, hands-on practice, and projects.
-                    </p>
-                    <div className="grid sm:grid-cols-3 gap-4">
-                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                        <p className="text-3xl font-bold text-primary">
-                          {program.hours.theory}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Theory Hours
-                        </p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5">
-                        <p className="text-3xl font-bold text-accent">
-                          {program.hours.lab}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Lab Hours
-                        </p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                        <p className="text-3xl font-bold text-primary">
-                          {program.hours.clinical}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Practical Hours
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                          {module.lessons && module.lessons.length > 0 && (
+                            <ul className="space-y-2">
+                              {module.lessons.map(
+                                (lesson: any, lessonIndex: number) => (
+                                  <li
+                                    key={lesson.id || lessonIndex}
+                                    className="flex items-center gap-2 text-foreground/80"
+                                  >
+                                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                                    {lesson.title}
+                                    {lesson.type && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="ml-auto text-[10px] px-1 h-4"
+                                      >
+                                        {lesson.type}
+                                      </Badge>
+                                    )}
+                                  </li>
+                                ),
+                              )}
+                            </ul>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Curriculum details will be available soon. Please contact
+                    admissions for more information.
+                  </p>
+                )}
+              </div>
+
+              {/* Career Outcomes */}
+              {program.careerPathways && program.careerPathways.length > 0 && (
+                <div className="bg-accent-green/10 rounded-xl p-6 border border-accent-green/25">
+                  <h2 className="font-display text-xl font-bold text-accent-green mb-4">
+                    After this program, you can become:
+                  </h2>
+                  <ul className="space-y-2">
+                    {program.careerPathways.map(
+                      (outcome: string, index: number) => (
+                        <li
+                          key={index}
+                          className="flex items-center gap-3 text-foreground/90"
+                        >
+                          <Briefcase className="h-4 w-4 text-accent-green flex-shrink-0" />
+                          {outcome}
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </div>
               )}
 
-              {/* Admission Requirements */}
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">
-                      Admission Requirements
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {program.requirements.map((req: string) => (
-                      <li key={req} className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <span>{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              {/* Industry Alignment */}
+              <div className="bg-primary/10 rounded-xl p-6 border border-primary/25">
+                <h2 className="font-display text-xl font-bold text-primary mb-3">
+                  Industry Alignment
+                </h2>
+                <p className="text-foreground/85">
+                  {program.alignmentStatement}
+                </p>
+                {program.externalReferenceLink && (
+                  <a
+                    href={program.externalReferenceLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1 text-sm text-accent hover:underline"
+                  >
+                    Reference Resource
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
 
-              {/* Certification */}
-              <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                      <GraduationCap className="h-5 w-5 text-accent" />
-                    </div>
-                    <CardTitle className="text-xl">
-                      Certification Pathway
-                    </CardTitle>
+              {/* Certification Disclaimer */}
+              <div className="bg-muted/50 border border-divider rounded-xl p-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-medium text-muted-foreground">
+                      Certification Disclaimer
+                    </h3>
+                    <p className="mt-1 text-sm text-foreground/80">
+                      Certification exams and credentials are administered by
+                      third-party vendors. Aliko Academy STEM provides training
+                      and preparation only and does not guarantee exam outcomes.
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Upon successful completion of this program, you will be
-                    prepared to take:
-                  </p>
-                  <p className="mt-3 text-lg font-semibold text-foreground">
-                    {program.certification}
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Tuition Card */}
-              <Card className="border-t-4 border-t-accent">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <DollarSign className="h-4 w-4 text-accent" />
+            {/* Right Column - Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-6">
+                {/* Enrollment Card */}
+                <Card className="border-primary/30 bg-gradient-to-b from-primary/10 to-transparent">
+                  <CardContent className="p-6">
+                    <h3 className="font-display text-lg font-semibold text-primary mb-4">
+                      Ready to Enroll?
+                    </h3>
+                    <div className="space-y-4">
+                      <Button
+                        onClick={handleEnroll}
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                        size="lg"
+                      >
+                        Access LMS
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                      <Button asChild className="w-full" variant="outline">
+                        <Link to="/stem/enterprise">
+                          Request Group Training
+                        </Link>
+                      </Button>
                     </div>
-                    <CardTitle className="text-lg">Tuition & Fees</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b border-border">
-                    <span>Program Tuition</span>
-                    <span className="text-lg font-bold text-accent">
-                      ${program.tuition.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p className="mb-2 font-medium text-foreground">
-                      Tuition includes:
-                    </p>
-                    <ul className="space-y-2">
-                      {[
-                        "All course materials",
-                        "Lab supplies and equipment",
-                        "Project placement coordination",
-                        "Certification exam preparation",
-                      ].map((item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <CheckCircle className="h-3.5 w-3.5 text-accent" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to="/stem/tuition">View Payment Options</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Start Date Card */}
-              <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="h-5 w-5 text-accent" />
-                    Next Start Date
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-foreground mb-3">
-                    {program.startDate}
-                  </p>
-                  <Badge
-                    className={
-                      program.enrollmentStatus === "open"
-                        ? "bg-accent text-accent-foreground"
-                        : ""
-                    }
-                  >
-                    {program.enrollmentStatus === "open"
-                      ? "Enrollment Open"
-                      : "Start Date: TBD"}
-                  </Badge>
-                  <Button
-                    onClick={handleEnroll}
-                    disabled={program.enrollmentStatus !== "open"}
-                    className="w-full mt-4 shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
-                  >
-                    Access LMS
-                  </Button>
-                </CardContent>
-              </Card>
+                {/* Program Details */}
+                <Card className="border-accent/25 bg-accent/6">
+                  <CardContent className="p-6">
+                    <h3 className="font-display text-lg font-semibold text-accent mb-4">
+                      Program Details
+                    </h3>
+                    <dl className="space-y-4">
+                      <div className="flex justify-between items-center py-2 border-b border-accent/15">
+                        <dt className="text-sm text-muted-foreground">Level</dt>
+                        <dd className="font-medium text-foreground">
+                          {program.level}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-accent/15">
+                        <dt className="text-sm text-muted-foreground">
+                          Delivery Mode
+                        </dt>
+                        <dd className="font-medium text-foreground">
+                          {program.deliveryMode}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-accent/15">
+                        <dt className="text-sm text-muted-foreground">
+                          Duration
+                        </dt>
+                        <dd className="font-medium text-foreground">
+                          {program.durationWeeks} weeks
+                        </dd>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <dt className="text-sm text-muted-foreground">
+                          Weekly Commitment
+                        </dt>
+                        <dd className="font-medium text-foreground">
+                          {program.weeklyHours} hours
+                        </dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
 
-              {/* Contact Card */}
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader>
-                  <CardTitle className="text-lg">Questions?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Our admissions team is here to help you get started.
-                  </p>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to="/stem/contact">Contact Admissions</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                {/* Prerequisites */}
+                {program.requirements.length > 0 && (
+                  <Card className="border-accent-green/25 bg-accent-green/6">
+                    <CardContent className="p-6">
+                      <h3 className="font-display text-lg font-semibold text-accent-green mb-4">
+                        Prerequisites
+                      </h3>
+                      <ul className="space-y-2">
+                        {program.requirements.map(
+                          (prereq: string, index: number) => (
+                            <li
+                              key={index}
+                              className="flex items-start gap-2 text-sm text-foreground/85"
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full bg-accent-green mt-2" />
+                              {prereq}
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Back to Programs */}
+      <section className="py-8 border-t border-divider bg-card">
+        <div className="container-content">
+          <Button asChild variant="ghost">
+            <Link to="/stem/programs">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to All Programs
+            </Link>
+          </Button>
         </div>
       </section>
     </Layout>

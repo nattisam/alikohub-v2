@@ -111,7 +111,7 @@ export const useEnrollInCourse = () => {
   return useMutation({
     mutationFn: ({
       courseId,
-      paymentGateway = "CHAPA",
+      paymentGateway,
     }: {
       courseId: string | number;
       paymentGateway?: string;
@@ -136,7 +136,7 @@ export const useEnrollInCohort = () => {
     mutationFn: ({
       cohortId,
       courseId,
-      paymentGateway = "CHAPA",
+      paymentGateway,
     }: {
       cohortId: string | number;
       courseId: string | number;
@@ -162,8 +162,9 @@ export const useEnrollments = () => {
   return useQuery({
     queryKey: ["enrollments"],
     queryFn: () => academyService.getMyEnrollments(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -240,6 +241,16 @@ export const useStudentDashboard = () => {
   });
 };
 
+export const useMyTransactions = () => {
+  return useQuery({
+    queryKey: ["my-transactions"],
+    queryFn: () => academyService.getMyTransactions(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+  });
+};
+
 export const useMarkLessonComplete = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -258,7 +269,18 @@ export const useMarkLessonComplete = () => {
       queryClient.invalidateQueries({ queryKey: ["student-analytics"] });
       queryClient.invalidateQueries({ queryKey: ["student-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["course-report"] });
+      queryClient.invalidateQueries({
+        queryKey: ["lesson-complete", variables.courseId, variables.lessonId],
+      });
     },
+  });
+};
+
+export const useCheckLessonComplete = (courseId: string, lessonId: string) => {
+  return useQuery({
+    queryKey: ["lesson-complete", courseId, lessonId],
+    queryFn: () => academyService.checkLessonComplete(courseId, lessonId),
+    enabled: !!courseId && !!lessonId,
   });
 };
 
@@ -494,6 +516,8 @@ export const useDeleteCourse = () => {
       academyService.instructor.deleteCourse(courseId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["instructor-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
       toast.success("Course deleted successfully!");
     },
     onError: (error: any) => {

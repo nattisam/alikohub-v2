@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -14,15 +15,17 @@ import { toast } from "sonner";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
-  const { data: user, refetch: refetchUser } = useUser();
+  const queryClient = useQueryClient();
+  const { data: user } = useUser();
 
   useEffect(() => {
-    // Refetch user data to update payment status
-    refetchUser();
+    // Invalidate enrollments and transactions so fresh data is fetched after payment webhook processes
+    queryClient.invalidateQueries({ queryKey: ["enrollments"] });
+    queryClient.invalidateQueries({ queryKey: ["my-transactions"] });
 
     // Show success message
     toast.success("Payment completed successfully!");
-  }, [refetchUser]);
+  }, [queryClient]);
 
   const handleGoToCourses = () => {
     navigate("/dashboard");
