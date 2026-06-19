@@ -59,16 +59,16 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
       {/* Sidebar Container */}
       <div
         className={cn(
-          "bg-slate-900 border-r border-slate-800 transition-all duration-300 flex flex-col min-h-screen sticky top-0 z-50 shadow-xl shrink-0",
+          "bg-[#27272a] border-r border-[#3f3f46] transition-all duration-300 flex flex-col min-h-screen sticky top-0 z-50 shadow-xl shrink-0",
           // Desktop: Full width
           "lg:w-64",
           // Mobile: Toggleable icon-only sidebar (w-20)
-          "w-20 fixed inset-y-0 left-0 lg:static -translate-x-full lg:translate-x-0",
+          "w-20 fixed inset-y-0 left-0 lg:sticky -translate-x-full lg:translate-x-0",
           isOpen && "translate-x-0",
         )}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-center h-20 border-b border-white/5">
+        <div className="flex items-center justify-center h-20 border-b border-[#3f3f46]">
           <Link to="/admin" className="flex items-center justify-center">
             <img
               src={logoLms}
@@ -87,7 +87,7 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-8 overflow-y-auto">
+        <nav className="flex-1 px-3 py-8 overflow-y-auto">
           <div className="space-y-2">
             {mainNavItems.map((item) => {
               const itemIsActive = isActive(item.href);
@@ -102,7 +102,7 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
                     "text-sm font-semibold",
                     itemIsActive
                       ? "bg-[#3BC1A8] text-white shadow-lg shadow-[#3BC1A8]/20"
-                      : "text-slate-400 hover:bg-white/5 hover:text-white",
+                      : "text-zinc-400 hover:bg-[#3f3f46] hover:text-white",
                     "justify-center lg:justify-start",
                   )}
                 >

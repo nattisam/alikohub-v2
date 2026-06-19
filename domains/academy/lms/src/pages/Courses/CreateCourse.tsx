@@ -14,6 +14,10 @@ import {
   Target,
   Lightbulb,
   BookOpen,
+  Users,
+  Clock,
+  GraduationCap,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,11 +31,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useCreateCourse } from "@/hooks/useAcademy";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-const COURSE_CATEGORIES = ["Health", "Technology", "STEM"];
+const COURSE_CATEGORIES = ["Health", "Technology", "STEM", "Data Science", "Business", "Design"];
 
 // ─── Step Indicator ────────────────────────────────────────────────────────────
 
@@ -105,13 +110,29 @@ const InstructorCreateCourse = () => {
     title: "",
     category: "Health",
     shortDescription: "",
+    longDescription: "",
     skills: [] as string[],
-    newSkill: "",
+    conceptsLearned: [] as string[],
+    outcomes: [] as string[],
+    prerequisites: [] as string[],
+    languages: [] as string[],
+    estimatedTime: "",
+    targetLevel: "Beginner",
+    createDefaultCohort: false,
     price: "",
     priceInUsd: "",
     thumbnail: null as File | null,
     thumbnailPreview: "" as string,
   });
+
+  const handleArrayAdd = (field: "skills" | "conceptsLearned" | "outcomes" | "prerequisites" | "languages", item: string) => {
+    if (!formData[field].includes(item)) {
+      setFormData(prev => ({ ...prev, [field]: [...prev[field], item] }));
+    }
+  };
+  const handleArrayRemove = (field: "skills" | "conceptsLearned" | "outcomes" | "prerequisites" | "languages", item: string) => {
+    setFormData(prev => ({ ...prev, [field]: prev[field].filter(i => i !== item) }));
+  };
 
   const handleUpdateField = (updates: Partial<typeof formData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -135,31 +156,11 @@ const InstructorCreateCourse = () => {
     handleUpdateField({ thumbnail: file, thumbnailPreview: previewUrl });
   };
 
-  const handleAddSkill = (e?: React.KeyboardEvent | React.MouseEvent) => {
-    if (e && "key" in e && e.key !== "Enter") return;
-    if (e) e.preventDefault();
-
-    if (formData.newSkill.trim()) {
-      if (!formData.skills.includes(formData.newSkill.trim())) {
-        handleUpdateField({
-          skills: [...formData.skills, formData.newSkill.trim()],
-          newSkill: "",
-        });
-      }
-    }
-  };
-
-  const handleRemoveSkill = (skillToRemove: string) => {
-    handleUpdateField({
-      skills: formData.skills.filter((s) => s !== skillToRemove),
-    });
-  };
-
   const handleNext = () => {
     if (activeStep === 1) {
-      if (!formData.title || !formData.shortDescription) {
+      if (!formData.title || !formData.shortDescription || !formData.longDescription) {
         setError(
-          "Please fill in all required fields (Title and Short Summary).",
+          "Please fill in all required fields (Title, Short Summary, and Full Description).",
         );
         return;
       }
@@ -185,10 +186,19 @@ const InstructorCreateCourse = () => {
     const data = new FormData();
     data.append("title", formData.title);
     data.append("shortDescription", formData.shortDescription);
+    data.append("longDescription", formData.longDescription);
     data.append("category", formData.category);
     data.append("price", formData.price ? formData.price.toString() : "0");
     data.append("priceInUsd", formData.priceInUsd ? formData.priceInUsd.toString() : "0");
     data.append("status", "DRAFT");
+    data.append("targetLevel", formData.targetLevel);
+    data.append("estimatedTime", formData.estimatedTime ? formData.estimatedTime.toString() : "0");
+    data.append("createDefaultCohort", formData.createDefaultCohort ? "true" : "false");
+    formData.skills.forEach((s) => data.append("skills", s));
+    formData.conceptsLearned.forEach((s) => data.append("conceptsLearned", s));
+    formData.outcomes.forEach((s) => data.append("outcomes", s));
+    formData.prerequisites.forEach((s) => data.append("prerequisites", s));
+    formData.languages.forEach((s) => data.append("languages", s));
 
     if (formData.thumbnail) {
       data.append("thumbnail", formData.thumbnail);
@@ -325,7 +335,23 @@ const InstructorCreateCourse = () => {
                         })
                       }
                       placeholder="Describe your course in 1-2 powerful sentences."
-                      className="mt-1.5 min-h-[100px] resize-none"
+                      className="mt-1.5 min-h-[80px] resize-none"
+                    />
+                  </div>
+
+                  {/* Long Description */}
+                  <div>
+                    <Label htmlFor="longDescription">
+                      Full Description <span className="text-destructive">*</span>
+                    </Label>
+                    <Textarea
+                      id="longDescription"
+                      value={formData.longDescription}
+                      onChange={(e) =>
+                        handleUpdateField({ longDescription: e.target.value })
+                      }
+                      placeholder="Dive deep into what students will learn, the teaching approach, and real-world applications."
+                      className="mt-1.5 min-h-[140px] resize-none"
                     />
                   </div>
                 </div>
@@ -383,7 +409,7 @@ const InstructorCreateCourse = () => {
             </motion.div>
           )}
 
-          {/* ── Step 2: Learning Outcomes ── */}
+          {/* ── Step 2: Skills & Outcomes ── */}
           {activeStep === 2 && (
             <motion.div
               key="step2"
@@ -393,79 +419,64 @@ const InstructorCreateCourse = () => {
               transition={{ duration: 0.22 }}
               className="space-y-8"
             >
+              {/* Skills & Tools */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Target className="w-5 h-5 text-primary" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Learning Outcomes
-                  </h3>
+                  <h3 className="text-lg font-semibold text-foreground">Skills & Tools</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Identify the core competencies students will gain. Start with
-                  action verbs (Build, Apply, Analyze...). These appear
-                  prominently on your course landing page.
-                </p>
+                <p className="text-sm text-muted-foreground">Technologies and tools students will work with (e.g. Python, Pandas, Figma).</p>
+                <TagInput
+                  items={formData.skills}
+                  onAdd={(item) => handleArrayAdd("skills", item)}
+                  onRemove={(item) => handleArrayRemove("skills", item)}
+                  placeholder="e.g. Python, Pandas, NumPy"
+                />
+              </section>
 
-                {/* Input row */}
-                <div className="flex gap-2">
-                  <Input
-                    value={formData.newSkill}
-                    onChange={(e) =>
-                      handleUpdateField({ newSkill: e.target.value })
-                    }
-                    onKeyDown={handleAddSkill}
-                    placeholder="e.g. Build production-ready GraphQL APIs"
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={handleAddSkill}
-                    variant="outline"
-                    className="gap-1.5 shrink-0"
-                  >
-                    <PlusCircle className="w-4 h-4" /> Add
-                  </Button>
+              {/* Concepts Learned */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Lightbulb className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Concepts Covered</h3>
                 </div>
+                <p className="text-sm text-muted-foreground">Key topics and concepts students will study throughout the course.</p>
+                <TagInput
+                  items={formData.conceptsLearned}
+                  onAdd={(item) => handleArrayAdd("conceptsLearned", item)}
+                  onRemove={(item) => handleArrayRemove("conceptsLearned", item)}
+                  placeholder="e.g. Data Wrangling, Statistical Analysis"
+                />
+              </section>
 
-                {/* Skills list */}
-                <div className="flex flex-wrap gap-2 min-h-[48px]">
-                  <AnimatePresence>
-                    {formData.skills.map((skill) => (
-                      <motion.div
-                        key={skill}
-                        initial={{ opacity: 0, scale: 0.85 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.85 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Badge
-                          variant="secondary"
-                          className="text-sm font-medium px-3 py-1.5 flex items-center gap-2"
-                        >
-                          <Check className="w-3 h-3 text-primary" />
-                          {skill}
-                          <button
-                            onClick={() => handleRemoveSkill(skill)}
-                            className="text-muted-foreground hover:text-destructive transition-colors ml-1"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+              {/* Learning Outcomes */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Rocket className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Learning Outcomes</h3>
                 </div>
+                <p className="text-sm text-muted-foreground">Start with action verbs (Build, Apply, Analyze). These appear on your course landing page.</p>
+                <TagInput
+                  items={formData.outcomes}
+                  onAdd={(item) => handleArrayAdd("outcomes", item)}
+                  onRemove={(item) => handleArrayRemove("outcomes", item)}
+                  placeholder="e.g. Build ML models, Create data visualizations"
+                />
+              </section>
 
-                {/* Empty state */}
-                {formData.skills.length === 0 && (
-                  <div className="py-14 w-full text-center border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <Target className="w-5 h-5 text-muted-foreground/40" />
-                    </div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                      Add at least 3 outcomes
-                    </p>
-                  </div>
-                )}
+              {/* Prerequisites */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Prerequisites</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">What students should know before enrolling.</p>
+                <TagInput
+                  items={formData.prerequisites}
+                  onAdd={(item) => handleArrayAdd("prerequisites", item)}
+                  onRemove={(item) => handleArrayRemove("prerequisites", item)}
+                  placeholder="e.g. Basic Python knowledge, High school math"
+                />
               </section>
             </motion.div>
           )}
@@ -480,6 +491,66 @@ const InstructorCreateCourse = () => {
               transition={{ duration: 0.22 }}
               className="space-y-8"
             >
+              {/* Course Details */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <GraduationCap className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Course Details</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="estimatedTime">Estimated Hours</Label>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="estimatedTime"
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.estimatedTime}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || /^\d+$/.test(val)) handleUpdateField({ estimatedTime: val });
+                        }}
+                        placeholder="e.g. 80"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">Total hours to complete.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="targetLevel">Target Level</Label>
+                    <Select
+                      value={formData.targetLevel}
+                      onValueChange={(v) => handleUpdateField({ targetLevel: v })}
+                    >
+                      <SelectTrigger id="targetLevel" className="mt-1.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Beginner">Beginner</SelectItem>
+                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Advanced">Advanced</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Who this course is for.</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Languages */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Globe className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Languages</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Languages the course is delivered in.</p>
+                <TagInput
+                  items={formData.languages}
+                  onAdd={(item) => handleArrayAdd("languages", item)}
+                  onRemove={(item) => handleArrayRemove("languages", item)}
+                  placeholder="e.g. English, Amharic"
+                />
+              </section>
+
               <section className="space-y-4">
                 <div className="flex items-center gap-2 mb-1">
                   <DollarSign className="w-5 h-5 text-primary" />
@@ -541,6 +612,23 @@ const InstructorCreateCourse = () => {
                   </div>
                 </div>
 
+                {/* Create Default Cohort Toggle */}
+                <div className="border border-border rounded-xl p-5 bg-card flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">Create Default Cohort</h4>
+                      <p className="text-xs text-muted-foreground">Automatically create an initial cohort when the course is published.</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formData.createDefaultCohort}
+                    onCheckedChange={(checked) => handleUpdateField({ createDefaultCohort: checked })}
+                  />
+                </div>
+
                 {/* Launch info box */}
                 <div className="border border-primary/20 bg-primary/5 rounded-xl p-5 flex gap-4 items-center">
                   <div className="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -576,12 +664,20 @@ const InstructorCreateCourse = () => {
                       label: "Short summary written",
                     },
                     {
+                      done: !!formData.longDescription,
+                      label: "Full description written",
+                    },
+                    {
                       done: !!formData.thumbnail,
                       label: "Cover image uploaded",
                     },
                     {
                       done: formData.skills.length >= 1,
-                      label: "At least one learning outcome added",
+                      label: "Skills & tools added",
+                    },
+                    {
+                      done: formData.outcomes.length >= 1,
+                      label: "Learning outcomes added",
                     },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
@@ -643,3 +739,58 @@ const InstructorCreateCourse = () => {
 };
 
 export default InstructorCreateCourse;
+
+// ─── Reusable Tag Input ──────────────────────────────────────────────────────────
+function TagInput({
+  items,
+  onAdd,
+  onRemove,
+  placeholder,
+}: {
+  items: string[];
+  onAdd: (item: string) => void;
+  onRemove: (item: string) => void;
+  placeholder: string;
+}) {
+  const [input, setInput] = useState("");
+  const handleAdd = () => {
+    const trimmed = input.trim();
+    if (trimmed && !items.includes(trimmed)) {
+      onAdd(trimmed);
+      setInput("");
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAdd(); } }}
+          placeholder={placeholder}
+          className="flex-1"
+        />
+        <Button onClick={handleAdd} variant="outline" className="gap-1.5 shrink-0">
+          <PlusCircle className="w-4 h-4" /> Add
+        </Button>
+      </div>
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <AnimatePresence>
+            {items.map((item) => (
+              <motion.div key={item} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} transition={{ duration: 0.15 }}>
+                <Badge variant="secondary" className="text-sm font-medium px-3 py-1.5 flex items-center gap-2">
+                  <Check className="w-3 h-3 text-primary" />
+                  {item}
+                  <button onClick={() => onRemove(item)} className="text-muted-foreground hover:text-destructive transition-colors ml-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+}

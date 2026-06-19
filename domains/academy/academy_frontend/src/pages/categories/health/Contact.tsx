@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useStateConfig } from "@/hooks/categories/health/useStateConfig";
+import { sendAcademyContact } from "@/services/academyContactService";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -34,16 +35,32 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Message Sent",
-      description:
-        "Thank you for contacting us. We'll respond within 1-2 business days.",
-    });
+    const fd = new FormData(e.currentTarget);
+    try {
+      await sendAcademyContact({
+        name: `${fd.get("firstName") ?? ""} ${fd.get("lastName") ?? ""}`.trim(),
+        email: (fd.get("email") as string) || "",
+        phone: (fd.get("phone") as string) || undefined,
+        service_interest: (fd.get("topic") as string) || undefined,
+        message: (fd.get("message") as string) || "",
+        source_page: "health-contact",
+      });
+      setIsSubmitted(true);
+      toast({
+        title: "Message Sent",
+        description:
+          "Thank you for contacting us. We'll respond within 1-2 business days.",
+      });
+    } catch (err: any) {
+      console.error("EmailJS error:", err);
+      toast({
+        title: "Error",
+        description: err?.text ?? "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

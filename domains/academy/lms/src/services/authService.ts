@@ -1,4 +1,4 @@
-import api from "@/lib/api";
+import api, { clearAuth } from "@/lib/api";
 import type {
   AuthResponse,
   LoginCredentials,
@@ -40,10 +40,7 @@ export const authService = {
   },
 
   logout: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("auth_provider");
+    clearAuth();
   },
 
   setSession: (accessToken: string, refreshToken: string, user: any) => {
@@ -99,6 +96,11 @@ export const authService = {
 
   getUserAcademyStatus: async (userId: string): Promise<any> => {
     const response = await api.get(`/auth/academy/user-status/${userId}`);
+    return response.data;
+  },
+
+  getAllUsers: async (): Promise<any[]> => {
+    const response = await api.get<any[]>("/users/all");
     return response.data;
   },
 };

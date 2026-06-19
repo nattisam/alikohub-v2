@@ -311,3 +311,11 @@ export const useUploadResume = () => {
     },
   });
 };
+
+export const useAllUsers = () => {
+  return useQuery({
+    queryKey: ["all-users"],
+    queryFn: () => authService.getAllUsers(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};

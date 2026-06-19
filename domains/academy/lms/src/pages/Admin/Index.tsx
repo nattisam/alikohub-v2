@@ -7,12 +7,13 @@ import {
   Clock,
   ExternalLink,
   Trash2,
-  Filter,
   Download,
   ArrowUpRight,
   CheckCircle2,
   DollarSign,
   ArrowDown,
+  AlertTriangle,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,7 @@ import {
   useAllTransactions,
   useUpdateTransactionStatus,
 } from "@/hooks/usePayment";
+import { useAllUsers } from "@/hooks/useAuth";
 import {
   BarChart,
   Bar,
@@ -42,10 +44,21 @@ import {
 } from "recharts";
 import ReviewApplicationModal from "@/components/ReviewApplicationModal";
 import ReviewCourseModal from "@/components/ReviewCourseModal";
+import TransactionDetailModal from "@/components/admin/TransactionDetailModal";
 import type { TeacherApplication, Course } from "@/types/academy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -63,6 +76,7 @@ const AdminDashboard = () => {
 
   const [appsPage, setAppsPage] = useState(1);
   const [coursesPage, setCoursesPage] = useState(1);
+  const [transactionsPage, setTransactionsPage] = useState(1);
   const pageSize = 5;
 
   const { data: applications, isLoading: appsLoading } = useTeacherApplications(
@@ -85,16 +99,118 @@ const AdminDashboard = () => {
   const { data: allTransactions, isLoading: allTransactionsLoading } =
     useAllTransactions();
   const updateTransactionMutation = useUpdateTransactionStatus();
+  const { data: allUsers } = useAllUsers();
+
+  // Build firebaseId → display name map
+  const userMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    if (allUsers) {
+      for (const u of allUsers as any[]) {
+        const name = [u.firstname, u.lastname].filter(Boolean).join(" ").trim();
+        map[u.firebaseId] = name || u.email || u.firebaseId;
+      }
+    }
+    return map;
+  }, [allUsers]);
 
   // Filter out free course enrollments (amount === 0)
   const paidTransactions = allTransactions?.filter(
     (tx: any) => Number(tx.amount) > 0,
   );
 
+  // Client-side pagination for transactions
+  const paginatedTransactions = paidTransactions?.slice(
+    (transactionsPage - 1) * pageSize,
+    transactionsPage * pageSize,
+  );
+
+  const exportToPdf = () => {
+    if (!paidTransactions || paidTransactions.length === 0) return;
+
+    const doc = new jsPDF({ orientation: "landscape" });
+    doc.setFontSize(16);
+    doc.text("Transaction History", 14, 16);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(
+      `Exported on ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      14,
+      23,
+    );
+
+    const head = [
+      [
+        "Username",
+        "Course Title",
+        "Amount",
+        "Currency",
+        "Provider",
+        "Status",
+        "Payment Date",
+      ],
+    ];
+    const body = paidTransactions.map((tx: any) => {
+      const meta = tx.metadata as any;
+      const courseTitle =
+        meta?.courseTitle ||
+        meta?.courseName ||
+        (meta?.courseId ? `Course #${meta.courseId}` : "—");
+      const username = userMap[tx.userId] || tx.userId?.substring(0, 8) || "—";
+      const date = tx.createdAt
+        ? new Date(tx.createdAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "—";
+      return [
+        username,
+        courseTitle,
+        Number(tx.amount).toLocaleString(),
+        tx.currency || "USD",
+        tx.provider || "N/A",
+        tx.status,
+        date,
+      ];
+    });
+
+    autoTable(doc, {
+      head,
+      body,
+      startY: 28,
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: {
+        fillColor: [39, 39, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { fontStyle: "bold" },
+        2: { halign: "right" },
+        5: { fontStyle: "bold" },
+      },
+    });
+
+    doc.save(`transactions-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   const [selectedApp, setSelectedApp] = useState<TeacherApplication | null>(
     null,
   );
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    txId: number | string;
+    newStatus: string;
+  } | null>(null);
+  const [deleteCourseTarget, setDeleteCourseTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [selectedTransactionDetail, setSelectedTransactionDetail] =
+    useState<any>(null);
 
   const chartData = [
     { name: "Courses", value: analyticsData?.totalCourses || 0 },
@@ -138,13 +254,7 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteCourse = (courseId: string, title: string) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete the course "${title}"? This action cannot be undone.`,
-      )
-    ) {
-      deleteCourseMutation.mutate(courseId);
-    }
+    setDeleteCourseTarget({ id: courseId, title });
   };
 
   const allCourses = Array.isArray(coursesData)
@@ -166,14 +276,15 @@ const AdminDashboard = () => {
       ?.filter((tx: any) => tx.status === "COMPLETED")
       .reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0) || 0;
   const completedTx =
-    paidTransactions?.filter((tx: any) => tx.status === "COMPLETED").length || 0;
+    paidTransactions?.filter((tx: any) => tx.status === "COMPLETED").length ||
+    0;
   const pendingTx =
     paidTransactions?.filter((tx: any) => tx.status === "PENDING").length || 0;
   const uniqueUsers =
     new Set(paidTransactions?.map((tx: any) => tx.userId)).size || 0;
 
   return (
-    <div className="flex min-h-screen bg-[#18181b] transition-colors duration-300">
+    <div className="flex h-screen bg-[#18181b] transition-colors duration-300 overflow-hidden">
       <AdminSidebar isOpen={sidebarOpen} onToggle={setSidebarOpen} />
 
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
@@ -196,22 +307,6 @@ const AdminDashboard = () => {
           {activeTab === "applications" && (
             <div className="space-y-6">
               <div className="bg-[#27272a] border border-[#3f3f46] rounded-xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#3f3f46] flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-white">
-                    Teacher applications
-                  </h2>
-                  <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors">
-                      <Download className="w-4 h-4" />
-                      Export
-                    </button>
-                  </div>
-                </div>
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-zinc-400 uppercase text-xs font-bold border-b border-[#3f3f46]">
@@ -260,9 +355,6 @@ const AdminDashboard = () => {
                                   <span className="font-semibold text-white text-sm">
                                     {app.user?.firstname ?? ""}{" "}
                                     {app.user?.lastname ?? ""}
-                                  </span>
-                                  <span className="text-[10px] text-zinc-500 font-mono">
-                                    ID: {String(app.id).substring(0, 8)}...
                                   </span>
                                 </div>
                               </div>
@@ -351,22 +443,6 @@ const AdminDashboard = () => {
           {activeTab === "courses" && (
             <div className="space-y-6">
               <div className="bg-[#27272a] border border-[#3f3f46] rounded-xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#3f3f46] flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-white">
-                    Course reviews
-                  </h2>
-                  <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors">
-                      <Download className="w-4 h-4" />
-                      Export
-                    </button>
-                  </div>
-                </div>
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="text-zinc-400 uppercase text-xs font-bold border-b border-[#3f3f46]">
@@ -409,32 +485,16 @@ const AdminDashboard = () => {
                             className="hover:bg-[#3f3f46]/50 transition-colors group"
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#3f3f46] flex-shrink-0 border border-[#52525b] group-hover:border-[#3BC1A8] transition-colors">
-                                  {course.thumbnail ? (
-                                    <img
-                                      src={course.thumbnail}
-                                      alt={course.title}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                                      <BookOpen className="w-6 h-6" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span
-                                    className="font-bold text-white text-sm max-w-[200px] truncate"
-                                    title={course.title}
-                                  >
-                                    {course.title}
-                                  </span>
-                                  <span className="text-[10px] text-zinc-500 truncate max-w-[200px]">
-                                    {course.shortDescription ||
-                                      "No description"}
-                                  </span>
-                                </div>
+                              <div className="flex flex-col">
+                                <span
+                                  className="font-bold text-white text-sm max-w-[200px] truncate"
+                                  title={course.title}
+                                >
+                                  {course.title}
+                                </span>
+                                <span className="text-[10px] text-zinc-500 truncate max-w-[200px]">
+                                  {course.shortDescription || "No description"}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-zinc-300 font-semibold">
@@ -550,7 +610,9 @@ const AdminDashboard = () => {
                     <div className="bg-[#27272a] border border-[#3f3f46] rounded-xl p-6 flex flex-col justify-between">
                       <div className="flex items-center gap-2 text-zinc-400 mb-2">
                         <BookOpen className="w-4 h-4" />
-                        <span className="text-sm font-semibold">Total courses</span>
+                        <span className="text-sm font-semibold">
+                          Total courses
+                        </span>
                       </div>
                       <div className="text-3xl font-bold text-white mb-2">
                         {analyticsData?.totalCourses || 0}
@@ -563,7 +625,9 @@ const AdminDashboard = () => {
                     <div className="bg-[#27272a] border border-[#3f3f46] rounded-xl p-6 flex flex-col justify-between">
                       <div className="flex items-center gap-2 text-zinc-400 mb-2">
                         <ArrowUpRight className="w-4 h-4" />
-                        <span className="text-sm font-semibold">Total progress</span>
+                        <span className="text-sm font-semibold">
+                          Total progress
+                        </span>
                       </div>
                       <div className="text-3xl font-bold text-white mb-2">
                         {analyticsData?.totalProgress || 0}
@@ -576,7 +640,9 @@ const AdminDashboard = () => {
                     <div className="bg-[#27272a] border border-[#3f3f46] rounded-xl p-6 flex flex-col justify-between">
                       <div className="flex items-center gap-2 text-zinc-400 mb-2">
                         <Users className="w-4 h-4" />
-                        <span className="text-sm font-semibold">Total enrollments</span>
+                        <span className="text-sm font-semibold">
+                          Total enrollments
+                        </span>
                       </div>
                       <div className="text-3xl font-bold text-white mb-2">
                         {analyticsData?.totalEnrollments || 0}
@@ -770,11 +836,10 @@ const AdminDashboard = () => {
                     Transaction history
                   </h2>
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors">
+                    <button
+                      onClick={exportToPdf}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#3f3f46] text-white text-sm font-semibold rounded-lg transition-colors"
+                    >
                       <Download className="w-4 h-4" />
                       Export
                     </button>
@@ -785,17 +850,21 @@ const AdminDashboard = () => {
                   <table className="w-full text-sm text-left">
                     <thead className="text-zinc-400 uppercase text-xs font-bold border-b border-[#3f3f46]">
                       <tr>
-                        <th className="px-6 py-4">ID / REF</th>
-                        <th className="px-6 py-4">USER ID</th>
-                        <th className="px-6 py-4">AMOUNT</th>
-                        <th className="px-6 py-4 text-right">ACTION</th>
+                        <th className="px-4 py-4">Username</th>
+                        <th className="px-4 py-4">Course Title</th>
+                        <th className="px-4 py-4">Amount</th>
+                        <th className="px-4 py-4">Currency</th>
+                        <th className="px-4 py-4">Provider</th>
+                        <th className="px-4 py-4 text-right">Status</th>
+                        <th className="px-4 py-4">Payment Date</th>
+                        <th className="px-4 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#3f3f46]">
                       {allTransactionsLoading ? (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={7}
                             className="px-6 py-12 text-center text-zinc-500"
                           >
                             <Clock className="w-8 h-8 text-zinc-600 animate-spin mx-auto mb-4" />
@@ -805,97 +874,174 @@ const AdminDashboard = () => {
                       ) : !paidTransactions || paidTransactions.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={7}
                             className="px-6 py-12 text-center text-zinc-500"
                           >
                             No transactions found.
                           </td>
                         </tr>
                       ) : (
-                        paidTransactions.map((tx: any) => (
-                          <tr
-                            key={tx.id}
-                            className="hover:bg-[#3f3f46]/50 transition-colors"
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex flex-col">
-                                <span className="font-bold text-white text-sm">
-                                  #{tx.id}
+                        paginatedTransactions?.map((tx: any) => {
+                          const meta = tx.metadata as any;
+                          const courseTitle =
+                            meta?.courseTitle ||
+                            meta?.courseName ||
+                            (meta?.courseId ? `Course #${meta.courseId}` : "—");
+                          const username =
+                            userMap[tx.userId] ||
+                            (tx as any).user?.email ||
+                            tx.userId?.substring(0, 8) ||
+                            "—";
+                          return (
+                            <tr
+                              key={tx.id}
+                              className="hover:bg-[#3f3f46]/50 transition-colors"
+                            >
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span className="text-zinc-200 font-medium text-sm">
+                                  {username}
                                 </span>
-                                <span className="text-xs text-zinc-400 font-mono mt-1">
-                                  {tx.reference || "N/A"}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span
-                                className="text-zinc-300 font-mono text-sm"
-                                title={tx.userId}
+                              </td>
+                              <td
+                                className="px-4 py-4 whitespace-nowrap max-w-[200px] truncate"
+                                title={courseTitle}
                               >
-                                {tx.userId?.substring(0, 16)}...
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="font-bold text-white text-sm">
-                                ${tx.amount}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <div className="relative inline-block text-left">
-                                <select
-                                  value={tx.status}
-                                  onChange={(e) => {
-                                    if (
-                                      window.confirm(
-                                        `Are you sure you want to change transaction #${tx.id} status to ${e.target.value}?`,
-                                      )
-                                    ) {
-                                      updateTransactionMutation.mutate({
-                                        id: tx.id,
-                                        status: e.target.value as any,
-                                      });
-                                    }
-                                  }}
-                                  disabled={updateTransactionMutation.isPending}
+                                <span className="text-zinc-300 text-sm">
+                                  {courseTitle}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span className="font-bold text-white text-sm">
+                                  {Number(tx.amount).toLocaleString()}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span className="text-zinc-300 text-sm">
+                                  {tx.currency || "USD"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span
                                   className={cn(
-                                    "appearance-none bg-transparent text-sm font-bold pl-3 pr-8 py-1.5 rounded-full border transition-colors cursor-pointer outline-none",
-                                    tx.status === "PENDING" &&
-                                      "text-amber-500 border-amber-500/30 hover:border-amber-500/50",
-                                    tx.status === "COMPLETED" &&
-                                      "text-emerald-500 border-emerald-500/30 hover:border-emerald-500/50",
-                                    tx.status === "FAILED" &&
-                                      "text-red-500 border-red-500/30 hover:border-red-500/50",
+                                    "text-xs font-bold uppercase px-2 py-1 rounded-md border",
+                                    tx.provider === "CHAPA" &&
+                                      "bg-green-500/10 text-green-400 border-green-500/30",
+                                    tx.provider === "STRIPE" &&
+                                      "bg-violet-500/10 text-violet-400 border-violet-500/30",
+                                    !tx.provider &&
+                                      "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
                                   )}
                                 >
-                                  <option
-                                    className="bg-[#27272a] text-amber-500"
-                                    value="PENDING"
+                                  {tx.provider || "N/A"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-right">
+                                <div className="relative inline-block text-left">
+                                  <select
+                                    value={tx.status}
+                                    onChange={(e) => {
+                                      setPendingStatusChange({
+                                        txId: tx.id,
+                                        newStatus: e.target.value,
+                                      });
+                                    }}
+                                    disabled={
+                                      updateTransactionMutation.isPending
+                                    }
+                                    className={cn(
+                                      "appearance-none bg-transparent text-xs font-bold pl-3 pr-8 py-1.5 rounded-full border transition-colors cursor-pointer outline-none",
+                                      tx.status === "PENDING" &&
+                                        "text-amber-500 border-amber-500/30 hover:border-amber-500/50",
+                                      tx.status === "COMPLETED" &&
+                                        "text-emerald-500 border-emerald-500/30 hover:border-emerald-500/50",
+                                      tx.status === "FAILED" &&
+                                        "text-red-500 border-red-500/30 hover:border-red-500/50",
+                                    )}
                                   >
-                                    PENDING
-                                  </option>
-                                  <option
-                                    className="bg-[#27272a] text-emerald-500"
-                                    value="COMPLETED"
-                                  >
-                                    COMPLETED
-                                  </option>
-                                  <option
-                                    className="bg-[#27272a] text-red-500"
-                                    value="FAILED"
-                                  >
-                                    FAILED
-                                  </option>
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                                  <ArrowDown className="w-3 h-3 text-zinc-400" />
+                                    <option
+                                      className="bg-[#27272a] text-amber-500"
+                                      value="PENDING"
+                                    >
+                                      PENDING
+                                    </option>
+                                    <option
+                                      className="bg-[#27272a] text-emerald-500"
+                                      value="COMPLETED"
+                                    >
+                                      COMPLETED
+                                    </option>
+                                    <option
+                                      className="bg-[#27272a] text-red-500"
+                                      value="FAILED"
+                                    >
+                                      FAILED
+                                    </option>
+                                  </select>
+                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                                    <ArrowDown className="w-3 h-3 text-zinc-400" />
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span className="text-xs text-zinc-400">
+                                  {tx.createdAt
+                                    ? new Date(tx.createdAt).toLocaleDateString(
+                                        "en-US",
+                                        {
+                                          month: "short",
+                                          day: "numeric",
+                                          year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )
+                                    : "—"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-right">
+                                <button
+                                  onClick={() =>
+                                    setSelectedTransactionDetail(tx)
+                                  }
+                                  className="p-1.5 bg-[#3f3f46] hover:bg-[#52525b] border border-[#52525b] text-zinc-300 hover:text-white rounded-lg transition-all"
+                                  title="View details"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="flex items-center justify-between px-6 py-4 border-t border-[#3f3f46]">
+                  <span className="text-xs text-zinc-500 font-medium">
+                    Page {transactionsPage}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      className="px-3 py-1.5 bg-[#3f3f46] hover:bg-[#52525b] border border-[#52525b] text-zinc-300 text-xs font-bold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={() =>
+                        setTransactionsPage((p) => Math.max(1, p - 1))
+                      }
+                      disabled={transactionsPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="px-3 py-1.5 bg-[#3f3f46] hover:bg-[#52525b] border border-[#52525b] text-zinc-300 text-xs font-bold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={() => setTransactionsPage((p) => p + 1)}
+                      disabled={
+                        !paginatedTransactions ||
+                        paginatedTransactions.length < pageSize
+                      }
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -921,6 +1067,123 @@ const AdminDashboard = () => {
             isProcessing={
               approveCourseMutation.isPending || rejectCourseMutation.isPending
             }
+          />
+        )}
+
+        {/* Status Change Confirmation Dialog */}
+        <Dialog
+          open={!!pendingStatusChange}
+          onOpenChange={(open) => {
+            if (!open) setPendingStatusChange(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md bg-[#27272a] border-[#3f3f46] text-white">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                Confirm Status Change
+              </DialogTitle>
+              <DialogDescription className="text-zinc-400">
+                Are you sure you want to change transaction #
+                {pendingStatusChange?.txId} status to{" "}
+                <span
+                  className={cn(
+                    "font-bold",
+                    pendingStatusChange?.newStatus === "COMPLETED" &&
+                      "text-emerald-400",
+                    pendingStatusChange?.newStatus === "PENDING" &&
+                      "text-amber-400",
+                    pendingStatusChange?.newStatus === "FAILED" &&
+                      "text-red-400",
+                  )}
+                >
+                  {pendingStatusChange?.newStatus}
+                </span>
+                ?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button
+                onClick={() => setPendingStatusChange(null)}
+                className="text-zinc-300 bg-[#3f3f46] hover:bg-[#3f3f46]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (pendingStatusChange) {
+                    updateTransactionMutation.mutate({
+                      id: pendingStatusChange.txId,
+                      status: pendingStatusChange.newStatus as any,
+                    });
+                  }
+                  setPendingStatusChange(null);
+                }}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Course Confirmation Dialog */}
+        <Dialog
+          open={!!deleteCourseTarget}
+          onOpenChange={(open) => {
+            if (!open) setDeleteCourseTarget(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px] bg-[#27272a] border-[#3f3f46]">
+            <DialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-full bg-red-500/10">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <DialogTitle className="text-xl font-bold text-white">
+                  Delete Course?
+                </DialogTitle>
+              </div>
+              <DialogDescription className="text-zinc-400 pt-2">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-zinc-200">
+                  "{deleteCourseTarget?.title}"
+                </span>
+                ? This action cannot be undone and all modules, lessons, and
+                student progress will be permanently removed.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-6 flex flex-row gap-3 sm:justify-end">
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteCourseTarget(null)}
+                disabled={deleteCourseMutation.isPending}
+                className="flex-1 sm:flex-none border border-[#3f3f46] text-zinc-300 hover:bg-[#3f3f46]"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (deleteCourseTarget) {
+                    deleteCourseMutation.mutate(deleteCourseTarget.id, {
+                      onSuccess: () => setDeleteCourseTarget(null),
+                    });
+                  }
+                }}
+                disabled={deleteCourseMutation.isPending}
+                className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700"
+              >
+                {deleteCourseMutation.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {selectedTransactionDetail && (
+          <TransactionDetailModal
+            transaction={selectedTransactionDetail}
+            userMap={userMap}
+            onClose={() => setSelectedTransactionDetail(null)}
           />
         )}
       </div>

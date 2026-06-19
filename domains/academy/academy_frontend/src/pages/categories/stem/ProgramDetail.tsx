@@ -71,38 +71,20 @@ const ProgramDetail = () => {
           (programData as any).enrollmentStatus ||
           (programData.status === "PUBLISHED" ? "open" : "closed"),
         startDate: (programData as any).startDate || "Check Cohort Schedule",
-        careerPathways: (programData as any).careerPathways ||
-          (programData as any).careerOutcomes || [
-            "Systems Engineering",
-            "Data Analysis",
-            "Research and Development",
-          ],
-        requirements: (programData as any).requirements ||
-          (programData as any).prerequisites || [
-            "High school diploma or equivalent",
-            "Basic math prerequisite",
-            "Interest in STEM",
-          ],
-        skillsGained: (programData as any).skillsGained || [
-          "Industry-standard tools and methodologies",
-          "Problem-solving and critical thinking",
-          "Technical documentation and reporting",
-          "Hands-on practical application",
-        ],
-        industryApplications: (programData as any).industryApplications || [
-          "Technology",
-          "Engineering",
-          "Research",
-          "Data Science",
-        ],
+        careerPathways: (programData as any).outcomes ||
+          (programData as any).careerPathways ||
+          (programData as any).careerOutcomes || [],
+        requirements: (programData as any).prerequisites ||
+          (programData as any).requirements || [],
+        skillsGained: (programData as any).skills || (programData as any).skillsGained || [],
+        industryApplications: (programData as any).conceptsLearned || (programData as any).industryApplications || [],
         alignmentStatement:
           (programData as any).alignmentStatement ||
           "This program is aligned with current industry standards and best practices, preparing graduates for real-world challenges in STEM fields.",
         externalReferenceLink:
           (programData as any).externalReferenceLink || null,
         certification:
-          (programData as any).certification ||
-          "Aliko Academy Professional Certification",
+          (programData as any).credential || (programData as any).certification || "",
         featured: (programData as any).featured || false,
         modules: programData.modules || [],
       }
@@ -366,7 +348,7 @@ const ProgramDetail = () => {
               {program.careerPathways && program.careerPathways.length > 0 && (
                 <div className="bg-accent-green/10 rounded-xl p-6 border border-accent-green/25">
                   <h2 className="font-display text-xl font-bold text-accent-green mb-4">
-                    After this program, you can become:
+                    After this program, you can:
                   </h2>
                   <ul className="space-y-2">
                     {program.careerPathways.map(

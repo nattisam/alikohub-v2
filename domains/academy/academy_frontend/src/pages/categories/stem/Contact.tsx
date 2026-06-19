@@ -7,21 +7,35 @@ import { Textarea } from "@/components/categories/stem/ui/textarea";
 import { Label } from "@/components/categories/stem/ui/label";
 import { Mail, MapPin, ArrowRight, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { sendAcademyContact } from "@/services/academyContactService";
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Mock submission - replace with real API call when backend is available
-      console.log('Contact form submitted:', formData);
-      toast.success("Message sent!", { description: "We'll get back to you soon." });
+      await sendAcademyContact({
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+        source_page: "stem-contact",
+      });
+      toast.success("Message sent!", {
+        description: "We'll get back to you soon.",
+      });
       setFormData({ name: "", email: "", message: "" });
     } catch (err: any) {
-      toast.error("Failed to send message", { description: err.message || "Please try again." });
+      console.error("EmailJS error:", err);
+      toast.error("Failed to send message", {
+        description: err?.text || "Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -44,7 +58,9 @@ const Contact = () => {
         <div className="container-content">
           <div className="grid lg:grid-cols-2 gap-14">
             <div>
-              <h2 className="font-display text-3xl font-bold text-foreground mb-8">Get in Touch</h2>
+              <h2 className="font-display text-3xl font-bold text-foreground mb-8">
+                Get in Touch
+              </h2>
               <div className="space-y-5 mb-10">
                 <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/10 border border-primary/25">
                   <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -52,7 +68,9 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <span className="font-bold text-foreground">stem@alikogroup.com</span>
+                    <span className="font-bold text-foreground">
+                      stem@alikogroup.com
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 rounded-xl bg-accent/10 border border-accent/25">
@@ -61,13 +79,15 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Location</p>
-                    <span className="font-bold text-foreground">Middle East & International</span>
+                    <span className="font-bold text-foreground">
+                      Middle East & International
+                    </span>
                   </div>
                 </div>
               </div>
               <Button asChild variant="outline" size="lg">
                 <a href="/enterprise">
-                  Request Enterprise Training 
+                  Request Enterprise Training
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
               </Button>
@@ -75,21 +95,60 @@ const Contact = () => {
 
             <Card className="border-divider bg-card shadow-2xl">
               <CardContent className="p-8">
-                <h3 className="font-display text-2xl font-bold text-foreground mb-6">Send a Message</h3>
+                <h3 className="font-display text-2xl font-bold text-foreground mb-6">
+                  Send a Message
+                </h3>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="font-bold">Name *</Label>
-                    <Input id="name" required value={formData.name} onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))} className="h-12" />
+                    <Label htmlFor="name" className="font-bold">
+                      Name *
+                    </Label>
+                    <Input
+                      id="name"
+                      required
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, name: e.target.value }))
+                      }
+                      className="h-12"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="font-bold">Email *</Label>
-                    <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} className="h-12" />
+                    <Label htmlFor="email" className="font-bold">
+                      Email *
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, email: e.target.value }))
+                      }
+                      className="h-12"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="message" className="font-bold">Message *</Label>
-                    <Textarea id="message" rows={5} required value={formData.message} onChange={(e) => setFormData(p => ({ ...p, message: e.target.value }))} />
+                    <Label htmlFor="message" className="font-bold">
+                      Message *
+                    </Label>
+                    <Textarea
+                      id="message"
+                      rows={5}
+                      required
+                      value={formData.message}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, message: e.target.value }))
+                      }
+                    />
                   </div>
-                  <Button type="submit" variant="hero" size="lg" disabled={isSubmitting} className="w-full">
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    disabled={isSubmitting}
+                    className="w-full"
+                  >
                     {isSubmitting ? "Sending..." : "Send Message"}
                   </Button>
                 </form>

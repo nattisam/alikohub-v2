@@ -122,30 +122,41 @@ export function AdminHeader({
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-xl py-2 z-50 text-slate-800 animate-in fade-in zoom-in duration-200">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <p className="text-sm font-semibold">
+            <div className={cn(
+              "absolute right-0 top-full mt-2 w-56 rounded-xl border shadow-xl py-2 z-50 animate-in fade-in zoom-in duration-200",
+              darkTheme
+                ? "bg-[#27272a] border-[#3f3f46] text-zinc-200"
+                : "bg-white border-slate-200 text-slate-800",
+            )}>
+              <div className={cn("px-4 py-3 border-b", darkTheme ? "border-[#3f3f46]" : "border-slate-100")}>
+                <p className={cn("text-sm font-semibold", darkTheme && "text-white")}>
                   {user?.firstname} {user?.lastname}
                 </p>
-                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                <p className={cn("text-xs truncate", darkTheme ? "text-zinc-400" : "text-slate-500")}>{user?.email}</p>
               </div>
 
               <div className="py-1">
                 {!isAdmin && (
                   <Link
                     to="/lms"
-                    className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-2 text-sm transition-colors",
+                      darkTheme ? "hover:bg-[#3f3f46] text-zinc-300" : "hover:bg-slate-50 text-slate-700",
+                    )}
                   >
-                    <ShieldCheck className="w-4 h-4 text-slate-500" /> Switch to
+                    <ShieldCheck className={cn("w-4 h-4", darkTheme ? "text-zinc-400" : "text-slate-500")} /> Switch to
                     Student
                   </Link>
                 )}
               </div>
 
-              <div className="border-t border-slate-100 py-1">
+              <div className={cn("border-t py-1", darkTheme ? "border-[#3f3f46]" : "border-slate-100")}>
                 <button
                   onClick={() => logout()}
-                  className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left font-medium"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2 text-sm transition-colors w-full text-left font-medium",
+                    darkTheme ? "text-red-400 hover:bg-red-500/10" : "text-red-600 hover:bg-red-50",
+                  )}
                 >
                   <LogOut className="w-4 h-4" /> Log Out
                 </button>

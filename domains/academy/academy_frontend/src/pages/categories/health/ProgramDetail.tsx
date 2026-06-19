@@ -38,20 +38,17 @@ const ProgramDetail = () => {
           programData.shortDescription ||
           (programData as any).description ||
           "A comprehensive health program.",
-        tuition:
-          programData.price ||
-          programData.priceInUsd ||
-          (programData as any).tuition ||
-          1200,
+        price: programData.price || 0,
+        priceInUsd: programData.priceInUsd || 0,
         duration:
           programData.estimatedTime ||
           (programData as any).duration ||
           "12 Weeks",
         hours: (programData as any).hours || {
-          total: 120,
-          theory: 60,
-          lab: 40,
-          clinical: 20,
+          total: 0,
+          theory: 0,
+          lab: 0,
+          clinical: 0,
         },
         modality: (programData as any).deliveryMode || "Online",
         location: (programData as any).location || "Global Learning Center",
@@ -59,19 +56,11 @@ const ProgramDetail = () => {
           (programData as any).enrollmentStatus ||
           (programData.status === "PUBLISHED" ? "open" : "closed"),
         startDate: (programData as any).startDate || "Check Cohort Schedule",
-        careerPathways: (programData as any).careerPathways || [
-          "Clinical Research",
-          "Healthcare Administration",
-          "Public Health Policy",
-        ],
-        requirements: (programData as any).requirements || [
-          "High school diploma or equivalent",
-          "Background check",
-          "Interest in healthcare",
-        ],
+        careerPathways: (programData as any).outcomes || (programData as any).careerPathways || [],
+        requirements: (programData as any).prerequisites || (programData as any).requirements || [],
         certification:
-          (programData as any).certification ||
-          "Aliko Academy Professional Certification",
+          (programData as any).credential || (programData as any).certification || "",
+        tuitionIncludes: (programData as any).tuitionIncludes || [],
         modules: programData.modules || [],
       }
     : null;
@@ -185,9 +174,16 @@ const ProgramDetail = () => {
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <DollarSign className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-lg font-bold text-foreground">
-                      ${program.tuition.toLocaleString()}
-                    </p>
+                    {program.price > 0 && (
+                      <p className="text-lg font-bold text-foreground">
+                        ETB {Number(program.price).toLocaleString()}
+                      </p>
+                    )}
+                    {program.priceInUsd > 0 && (
+                      <p className="text-lg font-bold text-foreground">
+                        ${Number(program.priceInUsd).toLocaleString()} USD
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Total tuition
                     </p>
@@ -430,21 +426,25 @@ const ProgramDetail = () => {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center pb-4 border-b border-border">
                     <span>Program Tuition</span>
-                    <span className="text-lg font-bold text-accent">
-                      ${program.tuition.toLocaleString()}
-                    </span>
+                    <div className="text-right">
+                      {program.price > 0 && (
+                        <p className="text-lg font-bold text-accent">
+                          ETB {Number(program.price).toLocaleString()}
+                        </p>
+                      )}
+                      {program.priceInUsd > 0 && (
+                        <p className="text-lg font-bold text-accent">
+                          ${Number(program.priceInUsd).toLocaleString()} USD
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     <p className="mb-2 font-medium text-foreground">
                       Tuition includes:
                     </p>
                     <ul className="space-y-2">
-                      {[
-                        "All course materials",
-                        "Lab supplies and equipment",
-                        "Clinical placement coordination",
-                        "Certification exam preparation",
-                      ].map((item) => (
+                      {program.tuitionIncludes.map((item: string) => (
                         <li key={item} className="flex items-center gap-2">
                           <CheckCircle className="h-3.5 w-3.5 text-accent" />
                           <span>{item}</span>

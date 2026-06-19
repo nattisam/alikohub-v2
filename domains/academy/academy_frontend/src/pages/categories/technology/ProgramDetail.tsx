@@ -1,21 +1,32 @@
 import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
-import Layout from "@/components/categories/technology/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Clock,
-  MapPin,
-  Calendar,
-  DollarSign,
-  CheckCircle,
-  BookOpen,
-  Award,
   ArrowLeft,
+  Clock,
+  Calendar,
+  Users,
+  Briefcase,
+  Award,
+  BookOpen,
+  CheckCircle,
+  Download,
+  Phone,
+  Target,
   GraduationCap,
-  Sparkles,
   Loader2,
 } from "lucide-react";
+import Layout from "@/components/categories/technology/layout/Layout";
+import { Button } from "@/components/ui/button";
+import {
+  ProgramBadge,
+  getLevelVariant,
+  getDeliveryVariant,
+} from "@/components/categories/technology/ui/badge-variants";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useCourseBySlug } from "@/hooks/useAcademy";
 
 const ProgramDetail = () => {
@@ -23,55 +34,50 @@ const ProgramDetail = () => {
   const navigate = useNavigate();
   const { data: apiProgram, isLoading } = useCourseBySlug(slug || "");
 
-  // Prefer API data
-  const programData = apiProgram;
-
-  // Transform to a consistent structure like Health
-  const program = programData
+  const program = apiProgram
     ? {
-        ...programData,
-        name: programData.title || (programData as any).name,
+        ...apiProgram,
+        title: apiProgram.title || (apiProgram as any).name,
         description:
-          programData.longDescription ||
-          programData.shortDescription ||
-          (programData as any).description ||
+          apiProgram.longDescription ||
+          apiProgram.shortDescription ||
+          (apiProgram as any).description ||
           "A comprehensive Technology program.",
+        type: (apiProgram as any).type || "short-course",
+        level: (apiProgram as any).level || "Beginner",
+        deliveryMode: (apiProgram as any).deliveryMode || "Online",
         tuition:
-          programData.price ||
-          programData.priceInUsd ||
-          (programData as any).tuition ||
+          apiProgram.price ||
+          apiProgram.priceInUsd ||
+          (apiProgram as any).tuition ||
           1200,
         duration:
-          programData.estimatedTime ||
-          (programData as any).duration ||
+          apiProgram.estimatedTime ||
+          (apiProgram as any).duration ||
           "12 Weeks",
-        hours: (programData as any).hours || {
-          total: 120,
-          theory: 60,
-          lab: 40,
-          clinical: 20,
-        },
-        modality: (programData as any).deliveryMode || "Online",
-        location: (programData as any).location || "Virtual Workspace",
-        enrollmentStatus:
-          (programData as any).enrollmentStatus ||
-          (programData.status === "PUBLISHED" ? "open" : "closed"),
-        startDate: (programData as any).startDate || "Check Cohort Schedule",
-        careerPathways: (programData as any).careerPathways || [
-          "Software Engineering",
-          "Cloud Architecture",
-          "Data Science",
-        ],
-        requirements: (programData as any).requirements || [
-          "High school diploma or equivalent",
-          "Basic computer literacy",
-          "Interest in Technology",
-        ],
-        certification:
-          (programData as any).certification ||
+        weeklyHours: (apiProgram as any).weeklyHours || "10-15 hrs/week",
+        credential:
+          (apiProgram as any).credential ||
+          (apiProgram as any).certification ||
           "Aliko Academy Professional Certification",
-        featured: (programData as any).featured || false,
-        modules: programData.modules || [],
+        startDate: (apiProgram as any).startDate || "Check Cohort Schedule",
+        enrollmentStatus:
+          (apiProgram as any).enrollmentStatus ||
+          (apiProgram.status === "PUBLISHED" ? "open" : "closed"),
+        meta: (apiProgram as any).meta || [],
+        outcomes: (apiProgram as any).outcomes || [],
+        skills: (apiProgram as any).skills || [],
+        tools: (apiProgram as any).tools || [],
+        projects: (apiProgram as any).projects || [],
+        whoItsFor: (apiProgram as any).whoItsFor || [],
+        prerequisites: (apiProgram as any).prerequisites || (apiProgram as any).requirements || [],
+        mentorship: (apiProgram as any).mentorship || {
+          cadence: "Weekly 1-on-1 Mentorship",
+          description:
+            "Get personalized guidance from industry professionals through weekly mentoring sessions tailored to your learning goals.",
+        },
+        careerServices: (apiProgram as any).careerServices || [],
+        modules: apiProgram.modules || [],
       }
     : null;
 
@@ -96,414 +102,387 @@ const ProgramDetail = () => {
     return <Navigate to="/technology/programs" replace />;
   }
 
+  const isCareerTrack = program.type === "career-track";
+
   return (
     <Layout>
-      {/* Header */}
-      <section className="relative py-16 lg:py-20 bg-gradient-to-br from-primary/5 via-card to-accent/5 overflow-hidden border-b border-border">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
-
+      {/* Hero */}
+      <section className="relative py-16 bg-gradient-to-b from-muted/40 to-background">
         <div className="container-padding mx-auto max-w-7xl relative">
           <Link
             to="/technology/programs"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6 transition-colors"
+            className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Programs
           </Link>
 
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                {program.featured && (
-                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Featured Program
-                  </Badge>
-                )}
-                <Badge
-                  className={
-                    program.enrollmentStatus === "open"
-                      ? "bg-accent text-accent-foreground"
-                      : ""
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="flex flex-wrap gap-2 mb-4">
+                <ProgramBadge
+                  variant={
+                    program.type === "career-track"
+                      ? "career-track"
+                      : "short-course"
                   }
                 >
-                  {program.enrollmentStatus === "open"
-                    ? "Enrollment Open"
-                    : "Start Date: TBD"}
-                </Badge>
+                  {program.type === "career-track"
+                    ? "Career Track"
+                    : "Short Course"}
+                </ProgramBadge>
+                <ProgramBadge variant={getLevelVariant(program.level)}>
+                  {program.level}
+                </ProgramBadge>
+                <ProgramBadge
+                  variant={getDeliveryVariant(program.deliveryMode)}
+                >
+                  {program.deliveryMode}
+                </ProgramBadge>
               </div>
-              <h1 className="text-3xl lg:text-5xl font-bold text-primary">
-                {program.name}
+
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+                {program.title}
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground max-w-3xl">
+              <p className="text-xl text-muted-foreground mb-4">
                 {program.description}
               </p>
 
-              {/* Quick stats row */}
-              <div className="mt-8 flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-primary" />
-                  </div>
+              {program.meta && program.meta.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {program.meta.map((item: string, i: number) => (
+                    <span
+                      key={i}
+                      className="text-sm px-3 py-1 rounded-full bg-muted text-muted-foreground"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Info Card */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-lg">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                   <div>
+                    <p className="text-sm text-muted-foreground">Duration</p>
                     <p className="font-semibold text-foreground">
                       {program.duration}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {program.hours.total} hours
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Start Date</p>
+                    <p className="font-semibold text-foreground">
+                      {program.startDate}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-accent" />
-                  </div>
+                <div className="flex items-center gap-3">
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-semibold text-foreground">
-                      {program.modality}
+                    <p className="text-sm text-muted-foreground">
+                      Weekly Commitment
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {program.location}
+                    <p className="font-semibold text-foreground">
+                      {program.weeklyHours}
                     </p>
                   </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Award className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Credential</p>
+                    <p className="font-semibold text-sm text-foreground">
+                      {program.credential}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-border">
+                  <p className="text-2xl font-bold text-foreground">
+                    ${Number(program.tuition).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Payment plans available
+                  </p>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <Button
+                    onClick={handleEnroll}
+                    disabled={program.enrollmentStatus !== "open"}
+                    className="w-full bg-secondary text-white hover:bg-secondary/90"
+                  >
+                    {program.enrollmentStatus === "open"
+                      ? "Apply Now"
+                      : "Enrollment Closed"}
+                  </Button>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/technology/tuition">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Syllabus
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="w-full" asChild>
+                    <Link to="/technology/contact">
+                      <Phone className="h-4 w-4 mr-2" />
+                      Book Advising Call
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </div>
-
-            <Card className="lg:w-80 shrink-0 shadow-xl border-t-4 border-t-primary">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <GraduationCap className="h-5 w-5 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">Program Quick Facts</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <DollarSign className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-lg font-bold text-foreground">
-                      ${program.tuition.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Total tuition
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <Calendar className="h-5 w-5 text-accent" />
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {program.enrollmentStatus === "open"
-                        ? `Starts ${program.startDate}`
-                        : "Check Schedule"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Next cohort</p>
-                  </div>
-                </div>
-                <Button
-                  onClick={handleEnroll}
-                  disabled={program.enrollmentStatus !== "open"}
-                  className="w-full shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
-                  size="lg"
-                >
-                  Access LMS
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
 
-      {/* Content */}
-      <section className="py-12 lg:py-16">
-        <div className="container-padding mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2 space-y-12">
-              {/* Career Pathways */}
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Award className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">Career Pathways</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Graduates of this program find employment in various
-                    Technology settings:
-                  </p>
-                  <ul className="grid sm:grid-cols-2 gap-3">
-                    {program.careerPathways.map((pathway: string) => (
-                      <li
-                        key={pathway}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
-                      >
-                        <CheckCircle className="h-4 w-4 text-accent shrink-0" />
-                        <span className="text-sm">{pathway}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Curriculum */}
-              {program.modules && program.modules.length > 0 ? (
-                <Card className="border-l-4 border-l-accent overflow-hidden">
-                  <CardHeader className="bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                        <BookOpen className="h-5 w-5 text-accent" />
-                      </div>
-                      <CardTitle className="text-xl">
-                        Program Curriculum
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                      {program.modules.map((module: any, idx: number) => (
-                        <div
-                          key={module.id}
-                          className="p-6 hover:bg-muted/20 transition-colors"
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <span className="text-xs font-bold text-accent uppercase tracking-wider mb-1 block">
-                                Module {idx + 1}
-                              </span>
-                              <h3 className="text-lg font-bold text-foreground">
-                                {module.title}
-                              </h3>
-                              {module.description && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {module.description}
-                                </p>
-                              )}
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className="ml-2 whitespace-nowrap"
-                            >
-                              {module.lessons?.length || 0} Lessons
-                            </Badge>
-                          </div>
-                          {module.lessons && module.lessons.length > 0 && (
-                            <div className="space-y-2">
-                              {module.lessons.map((lesson: any) => (
-                                <div
-                                  key={lesson.id}
-                                  className="flex items-center gap-3 text-sm text-muted-foreground bg-background/50 p-2 rounded border border-border/50"
-                                >
-                                  <div className="w-1.5 h-1.5 rounded-full bg-accent/50" />
-                                  <span>{lesson.title}</span>
-                                  <Badge
-                                    variant="secondary"
-                                    className="ml-auto text-[10px] px-1 h-4"
-                                  >
-                                    {lesson.type}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-l-4 border-l-accent">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                        <BookOpen className="h-5 w-5 text-accent" />
-                      </div>
-                      <CardTitle className="text-xl">
-                        Curriculum Overview
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-6">
-                      This program provides comprehensive training through a
-                      combination of theory, hands-on practice, and real-world
-                      projects.
-                    </p>
-                    <div className="grid sm:grid-cols-3 gap-4">
-                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                        <p className="text-3xl font-bold text-primary">
-                          {program.hours.theory}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Theory Hours
-                        </p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-accent/10 to-accent/5">
-                        <p className="text-3xl font-bold text-accent">
-                          {program.hours.lab}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Lab Hours
-                        </p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
-                        <p className="text-3xl font-bold text-primary">
-                          {program.hours.clinical}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Practical Hours
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Admission Requirements */}
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">
-                      Admission Requirements
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {program.requirements.map((req: string) => (
-                      <li key={req} className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <span>{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Certification */}
-              <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                      <GraduationCap className="h-5 w-5 text-accent" />
-                    </div>
-                    <CardTitle className="text-xl">
-                      Certification Pathway
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Upon successful completion of this program, you will be
-                    prepared to take:
-                  </p>
-                  <p className="mt-3 text-lg font-semibold text-foreground">
-                    {program.certification}
-                  </p>
-                </CardContent>
-              </Card>
+      {/* Content Sections */}
+      <section className="section-padding">
+        <div className="container-padding mx-auto max-w-7xl space-y-16">
+          {/* What You'll Learn */}
+          {program.outcomes && program.outcomes.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <Target className="h-6 w-6 text-secondary" />
+                <h2 className="text-2xl font-bold">What You'll Learn</h2>
+              </div>
+              <ul className="grid md:grid-cols-2 gap-4">
+                {program.outcomes.map((outcome: string, i: number) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl"
+                  >
+                    <CheckCircle className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                    <span>{outcome}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Tuition Card */}
-              <Card className="border-t-4 border-t-accent">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <DollarSign className="h-4 w-4 text-accent" />
+          {/* Curriculum */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <BookOpen className="h-6 w-6 text-accent" />
+              <h2 className="text-2xl font-bold">Curriculum</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              {program.duration} &bull; {program.weeklyHours} &bull;{" "}
+              {program.deliveryMode} learning
+            </p>
+            {program.modules && program.modules.length > 0 ? (
+              <Accordion type="single" collapsible className="space-y-4">
+                {program.modules.map((module: any, index: number) => (
+                  <AccordionItem
+                    key={module.id || index}
+                    value={`module-${index}`}
+                    className="border rounded-xl px-4"
+                  >
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-4 text-left">
+                        <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-semibold">{module.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {module.estimatedTime ||
+                              `${module.lessons?.length || 0} Lessons`}
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pl-12">
+                      {module.description && (
+                        <p className="text-muted-foreground mb-3">
+                          {module.description}
+                        </p>
+                      )}
+                      {module.lessons && module.lessons.length > 0 && (
+                        <ul className="space-y-2">
+                          {module.lessons.map((lesson: any) => (
+                            <li
+                              key={lesson.id}
+                              className="flex items-center gap-2 text-sm text-muted-foreground"
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-accent/50" />
+                              <span>{lesson.title}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="bg-muted/50 rounded-xl p-8 text-center">
+                <p className="text-muted-foreground">
+                  Curriculum details coming soon. Contact admissions for more
+                  information.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Skills & Tools */}
+          {((program.skills && program.skills.length > 0) ||
+            (program.tools && program.tools.length > 0)) && (
+            <div className="grid md:grid-cols-2 gap-8">
+              {program.skills && program.skills.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Skills You'll Learn</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {program.skills.map((skill: string) => (
+                      <span
+                        key={skill}
+                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {program.tools && program.tools.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">
+                    Tools & Technologies
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {program.tools.map((tool: string) => (
+                      <span
+                        key={tool}
+                        className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-sm"
+                      >
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Projects */}
+          {program.projects && program.projects.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Projects</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                {program.projects.map((project: string, index: number) => (
+                  <div
+                    key={project}
+                    className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold shrink-0">
+                      {index + 1}
                     </div>
-                    <CardTitle className="text-lg">Tuition & Fees</CardTitle>
+                    <p className="font-medium">{project}</p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b border-border">
-                    <span>Program Tuition</span>
-                    <span className="text-lg font-bold text-accent">
-                      ${program.tuition.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p className="mb-2 font-medium text-foreground">
-                      Tuition includes:
-                    </p>
-                    <ul className="space-y-2">
-                      {[
-                        "All course materials",
-                        "Virtual sandbox access",
-                        "Portfolio development",
-                        "Certification exam preparation",
-                      ].map((item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <CheckCircle className="h-3.5 w-3.5 text-accent" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to="/technology/tuition">View Payment Options</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                ))}
+              </div>
+            </div>
+          )}
 
-              {/* Start Date Card */}
-              <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="h-5 w-5 text-accent" />
-                    Next Start Date
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-foreground mb-3">
-                    {program.startDate}
-                  </p>
-                  <Badge
-                    className={
-                      program.enrollmentStatus === "open"
-                        ? "bg-accent text-accent-foreground"
-                        : ""
-                    }
-                  >
-                    {program.enrollmentStatus === "open"
-                      ? "Enrollment Open"
-                      : "Start Date: TBD"}
-                  </Badge>
-                  <Button
-                    onClick={handleEnroll}
-                    disabled={program.enrollmentStatus !== "open"}
-                    className="w-full mt-4 shadow-lg bg-accent text-accent-foreground hover:bg-accent/90"
-                  >
-                    Access LMS
-                  </Button>
-                </CardContent>
-              </Card>
+          {/* Who It's For */}
+          {program.whoItsFor && program.whoItsFor.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <Users className="h-6 w-6 text-accent" />
+                <h2 className="text-2xl font-bold">Who It's For</h2>
+              </div>
+              <ul className="space-y-3">
+                {program.whoItsFor.map((item: string, i: number) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-accent shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-              {/* Contact Card */}
-              <Card className="border-l-4 border-l-primary">
-                <CardHeader>
-                  <CardTitle className="text-lg">Questions?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Our admissions team is here to help you get started.
+          {/* Prerequisites */}
+          {program.prerequisites && program.prerequisites.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Prerequisites</h2>
+              <ul className="space-y-2">
+                {program.prerequisites.map((prereq: string) => (
+                  <li key={prereq} className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-accent" />
+                    <span>{prereq}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Mentorship */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Mentorship & Support</h2>
+            <div className="bg-muted/50 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {program.mentorship.cadence}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {program.mentorship.description}
                   </p>
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to="/technology/contact">Contact Admissions</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Career Services */}
+          {isCareerTrack && program.careerServices.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Career Services</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                {program.careerServices.map((service: string, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl"
+                  >
+                    <Briefcase className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+                    <span>{service}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CTA */}
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-8 text-center">
+            <h2 className="text-2xl font-bold mb-2">
+              Ready to Start Your Journey?
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              Join thousands of students who have launched their careers through
+              our programs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={handleEnroll}
+                disabled={program.enrollmentStatus !== "open"}
+                className="bg-secondary text-white hover:bg-secondary/90"
+              >
+                {program.enrollmentStatus === "open"
+                  ? "Apply Now"
+                  : "Enrollment Closed"}
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/technology/contact">Talk to Admissions</Link>
+              </Button>
             </div>
           </div>
         </div>

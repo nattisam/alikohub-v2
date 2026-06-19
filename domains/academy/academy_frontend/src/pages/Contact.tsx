@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
 import { useToast } from "@/hooks/use-toast";
+import { sendAcademyContact } from "@/services/academyContactService";
 import bgContactHero from "@/assets/bg-contact-hero.jpg";
 
 const Contact = () => {
@@ -38,18 +39,33 @@ const Contact = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await sendAcademyContact({
+        name: form.name,
+        email: form.email,
+        service_interest: form.subject || undefined,
+        message: form.message,
+        source_page: "contact",
+      });
       setSubmitted(true);
       toast({
         title: "Message sent!",
         description: "We'll get back to you shortly.",
       });
-    }, 1200);
+    } catch (err: any) {
+      console.error("EmailJS error:", err);
+      toast({
+        title: "Error",
+        description: err?.text ?? "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
