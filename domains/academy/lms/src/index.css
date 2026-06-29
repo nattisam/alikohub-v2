@@ -2,6 +2,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --font-roboto: "Roboto", sans-serif;
   --font-montserrat: "Montserrat", sans-serif;
@@ -87,6 +89,24 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  /* Material Design 3 Colors for User Template */
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f9fa;
+  --color-surface-container: #f1f4f6;
+  --color-surface-container-high: #eceff1;
+  --color-surface-container-highest: #e6e9ec;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #42474e;
+  --color-outline-variant: #c2c7cf;
+  --color-secondary-fixed: #cce5ff;
+  --color-on-secondary-fixed: #001d35;
+  --color-on-secondary-fixed-variant: #004a77;
+  --color-primary-container: #d2e4ff;
+  --color-on-primary-container: #001c37;
+  --color-secondary-container: #d6e3ff;
+  --color-on-secondary-container: #001b3e;
+
   --radius-xl: var(--radius);
   --radius-lg: calc(var(--radius) - 2px);
   --radius-md: calc(var(--radius) - 4px);

@@ -52,6 +52,8 @@ import Subscriptions from "@/pages/Account/Subscriptions";
 import CareerHub from "@/pages/Account/CareerHub";
 import TransactionsPage from "@/pages/Account/Transactions";
 
+import { ThemeProvider } from "@/context/ThemeContext";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -127,6 +129,7 @@ const AppInner = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -134,6 +137,7 @@ const App = () => (
           <AppInner />
         </BrowserRouter>
       </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

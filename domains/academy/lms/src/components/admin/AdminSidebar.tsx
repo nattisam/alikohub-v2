@@ -59,7 +59,7 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
       {/* Sidebar Container */}
       <div
         className={cn(
-          "bg-[#27272a] border-r border-[#3f3f46] transition-all duration-300 flex flex-col min-h-screen sticky top-0 z-50 shadow-xl shrink-0",
+          "bg-white dark:bg-[#27272a] border-r border-zinc-200 dark:border-[#3f3f46] transition-all duration-300 flex flex-col min-h-screen sticky top-0 z-50 shadow-xl shrink-0",
           // Desktop: Full width
           "lg:w-64",
           // Mobile: Toggleable icon-only sidebar (w-20)
@@ -68,7 +68,7 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
         )}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-center h-20 border-b border-[#3f3f46]">
+        <div className="flex items-center justify-center h-20 border-b border-zinc-200 dark:border-[#3f3f46] transition-colors duration-300">
           <Link to="/admin" className="flex items-center justify-center">
             <img
               src={logoLms}
@@ -98,11 +98,11 @@ export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
                   onClick={() => onToggle(false)}
                   title={item.label} // Tooltip is important since text is hidden on mobile
                   className={cn(
-                    "flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200",
+                    "flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300",
                     "text-sm font-semibold",
                     itemIsActive
                       ? "bg-[#3BC1A8] text-white shadow-lg shadow-[#3BC1A8]/20"
-                      : "text-zinc-400 hover:bg-[#3f3f46] hover:text-white",
+                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#3f3f46]/50 hover:text-zinc-900 dark:hover:text-white",
                     "justify-center lg:justify-start",
                   )}
                 >

@@ -1,20 +1,19 @@
-import { User, Loader2 } from "lucide-react";
+import React from "react";
 import StudentLayout from "@/components/StudentLayout";
+import { User, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useUser } from "@/hooks/useAuth";
 
 const Profile = () => {
   const { data: user, isLoading } = useUser();
 
-  const infoItemClass =
-    "bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col gap-1";
-  const labelClass =
-    "text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1";
-  const valueClass = "text-lg font-bold text-slate-900";
-
   if (isLoading) {
     return (
       <StudentLayout>
-        <div className="flex items-center justify-center py-20 font-medium">
+        <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       </StudentLayout>
@@ -23,45 +22,70 @@ const Profile = () => {
 
   return (
     <StudentLayout>
-      <div className="section-container max-w-2xl py-12 md:py-20">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/10 shadow-sm">
-            <User className="w-7 h-7 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-heading font-black text-slate-900 tracking-tight">
-              My Profile
-            </h1>
-            <p className="text-sm text-slate-500 font-medium">
-              Your account information.
-            </p>
-          </div>
+      <main className="section-container py-8 md:py-12">
+        <div className="mb-8">
+          <h1 className="text-2xl font-heading font-bold text-slate-900 border-none">
+            My Profile
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Manage your personal information and account details.
+          </p>
         </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className={infoItemClass}>
-              <span className={labelClass}>First Name</span>
-              <span className={valueClass}>{user?.firstname || "—"}</span>
-            </div>
-            <div className={infoItemClass}>
-              <span className={labelClass}>Last Name</span>
-              <span className={valueClass}>{user?.lastname || "—"}</span>
-            </div>
-          </div>
+        <div className="max-w-4xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Account Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    defaultValue={user?.firstname || ""}
+                    placeholder="e.g. John"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    defaultValue={user?.lastname || ""}
+                    placeholder="e.g. Doe"
+                  />
+                </div>
+              </div>
 
-          <div className={infoItemClass}>
-            <span className={labelClass}>Email Address</span>
-            <span className={valueClass}>{user?.email || "—"}</span>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  defaultValue={user?.email || ""}
+                  disabled
+                  className="bg-slate-50"
+                />
+              </div>
 
-          <div className="mt-8 p-6 rounded-2xl bg-blue-50/50 border border-blue-100/50">
-            <p className="text-xs font-bold text-blue-600/70 uppercase tracking-widest text-center">
-              Personal information is managed via your main account settings
-            </p>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Biography</Label>
+                <textarea
+                  id="bio"
+                  defaultValue={user?.bio || ""}
+                  className="w-full min-h-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button className="bg-primary hover:bg-primary/90 text-white font-medium">
+                  Save Changes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </main>
     </StudentLayout>
   );
 };

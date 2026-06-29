@@ -68,22 +68,22 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-[#27272a] w-full max-w-lg rounded-2xl border border-[#3f3f46] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-[#27272a] w-full max-w-lg rounded-2xl border border-zinc-200 dark:border-[#3f3f46] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 transition-colors duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 flex items-center justify-between border-b border-[#3f3f46]">
+        <div className="px-6 py-5 flex items-center justify-between border-b border-zinc-200 dark:border-[#3f3f46] transition-colors duration-300">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#3f3f46] border border-[#52525b]">
-              <CreditCard className="w-5 h-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-zinc-105 dark:bg-[#3f3f46] border border-zinc-200 dark:border-[#52525b] transition-colors duration-300">
+              <CreditCard className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">
+              <h2 className="text-base font-bold text-zinc-900 dark:text-white transition-colors duration-300">
                 Transaction Info
               </h2>
               <span
                 className={cn(
-                  "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                  "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border transition-colors duration-300",
                   getStatusStyles(transaction.status),
                 )}
               >
@@ -93,7 +93,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[#3f3f46] text-zinc-400 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-[#3f3f46] text-zinc-500 dark:text-zinc-400 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -103,20 +103,22 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         <div className="p-6 space-y-6">
           {/* Main Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#18181b] p-3 rounded-xl border border-[#3f3f46]">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase mb-1">
+            <div className="bg-zinc-50 dark:bg-[#18181b] p-3 rounded-xl border border-zinc-200 dark:border-[#3f3f46] transition-colors duration-300">
+              <p className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase mb-1">
                 Amount
               </p>
-              <p className="text-lg font-bold text-white">
+              <p className="text-lg font-bold text-zinc-900 dark:text-white transition-colors duration-300">
                 {transaction.currency || "USD"}{" "}
                 {Number(transaction.amount).toLocaleString()}
               </p>
             </div>
-            <div className="bg-[#18181b] p-3 rounded-xl border border-[#3f3f46]">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase mb-1">
+            <div className="bg-zinc-50 dark:bg-[#18181b] p-3 rounded-xl border border-zinc-200 dark:border-[#3f3f46] transition-colors duration-300">
+              <p className="text-[10px] font-bold text-zinc-450 dark:text-zinc-500 uppercase mb-1">
                 Date
               </p>
-              <p className="text-sm font-semibold text-zinc-300">{date}</p>
+              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 transition-colors duration-300">
+                {date}
+              </p>
             </div>
           </div>
 
@@ -125,11 +127,11 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-zinc-500" />
-                <span className="text-sm text-zinc-400 font-medium">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium transition-colors duration-300">
                   Customer
                 </span>
               </div>
-              <span className="text-sm font-semibold text-white text-right">
+              <span className="text-sm font-semibold text-zinc-900 dark:text-white text-right transition-colors duration-300">
                 {username}
               </span>
             </div>
@@ -137,12 +139,12 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-zinc-500" />
-                <span className="text-sm text-zinc-400 font-medium">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium transition-colors duration-300">
                   Course
                 </span>
               </div>
               <span
-                className="text-sm font-semibold text-white text-right max-w-[200px] truncate"
+                className="text-sm font-semibold text-zinc-900 dark:text-white text-right max-w-[200px] truncate transition-colors duration-300"
                 title={courseTitle}
               >
                 {courseTitle}
@@ -152,19 +154,19 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-zinc-500" />
-                <span className="text-sm text-zinc-400 font-medium">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium transition-colors duration-300">
                   Provider
                 </span>
               </div>
               <span
                 className={cn(
-                  "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+                  "px-2 py-0.5 rounded text-[10px] font-bold uppercase border transition-colors duration-300",
                   transaction.provider === "CHAPA" &&
-                    "bg-green-500/10 text-green-400 border-green-500/20",
+                    "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
                   transaction.provider === "STRIPE" &&
-                    "bg-violet-500/10 text-violet-400 border-violet-500/20",
+                    "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
                   !transaction.provider &&
-                    "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+                    "bg-zinc-500/10 text-zinc-650 dark:text-zinc-400 border-zinc-500/20",
                 )}
               >
                 {transaction.provider || "N/A"}
@@ -174,11 +176,11 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-zinc-500" />
-                <span className="text-sm text-zinc-400 font-medium">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 font-medium transition-colors duration-300">
                   Ref ID
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-zinc-500">
+              <span className="text-[11px] font-mono text-zinc-500 transition-colors duration-300">
                 {transaction.id}
               </span>
             </div>
@@ -186,10 +188,10 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-[#1f1f22] flex justify-end gap-3 border-t border-[#3f3f46]">
+        <div className="px-6 py-4 bg-zinc-50 dark:bg-[#1f1f22] flex justify-end gap-3 border-t border-zinc-200 dark:border-[#3f3f46] transition-colors duration-300">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-[#52525b] text-zinc-300 text-xs font-bold hover:bg-[#3f3f46] transition-colors"
+            className="px-4 py-2 rounded-xl border border-zinc-300 dark:border-[#52525b] text-zinc-700 dark:text-zinc-300 text-xs font-bold hover:bg-zinc-100 dark:hover:bg-[#3f3f46] transition-colors"
           >
             Close
           </button>

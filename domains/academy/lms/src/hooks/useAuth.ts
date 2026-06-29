@@ -144,6 +144,7 @@ export const useLogout = () => {
     authService.logout();
     queryClient.setQueryData(["user"], null);
     queryClient.removeQueries({ queryKey: ["user"] });
+    queryClient.clear();
     toast.success("Logged out successfully");
     navigate("/");
   };

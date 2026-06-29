@@ -54,12 +54,12 @@ const InstructorSidebar = ({
     const Icon = item.icon;
     const content = (
       <span
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 w-full
-          ${
-            active
-              ? "bg-accent/10 text-accent"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          }`}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 w-full border-l-2",
+          active
+            ? "bg-accent/10 text-accent font-semibold border-accent"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground font-medium border-transparent",
+        )}
       >
         <Icon className={`w-4 h-4 shrink-0 ${active ? "text-accent" : ""}`} />
         <span className="flex-1">{item.label}</span>
@@ -110,21 +110,21 @@ const InstructorSidebar = ({
         )}
       >
         {/* Logo + mobile close */}
-        <div className="flex items-center justify-between px-5 py-5 border-b border-border">
+        <div className="flex items-center justify-between px-4 py-5 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 flex items-center justify-center shrink-0">
               <img
                 src={logoLms}
                 alt="Aliko Academy"
-                className="w-6 h-6 object-contain"
+                className="w-8 h-8 object-contain"
               />
             </div>
             <div className="leading-tight">
-              <p className="text-[13px] font-bold text-foreground font-heading">
-                Instructor Console
-              </p>
-              <p className="text-[11px] text-accent font-semibold tracking-wide uppercase">
+              <p className="text-sm font-bold text-foreground font-heading">
                 Aliko Academy
+              </p>
+              <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
+                Instructor Console
               </p>
             </div>
           </div>
@@ -137,9 +137,9 @@ const InstructorSidebar = ({
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+        <nav className="flex-1 overflow-y-auto py-4 px-4 space-y-6">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide px-3 mb-2">
               Main Menu
             </p>
             <div className="space-y-0.5">
@@ -150,7 +150,7 @@ const InstructorSidebar = ({
           </div>
 
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide px-3 mb-2">
               Manage
             </p>
             <div className="space-y-0.5">

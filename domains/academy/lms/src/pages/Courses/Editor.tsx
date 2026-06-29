@@ -21,6 +21,8 @@ import {
   X,
   GripVertical,
   PlayCircle,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { Reorder } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -200,7 +202,10 @@ const InstructorCourseEditor = () => {
     data.append("shortDescription", formData.shortDescription);
     data.append("category", formData.category);
     data.append("price", formData.price ? formData.price.toString() : "0");
-    data.append("priceInUsd", formData.priceInUsd ? formData.priceInUsd.toString() : "0");
+    data.append(
+      "priceInUsd",
+      formData.priceInUsd ? formData.priceInUsd.toString() : "0",
+    );
     data.append("status", "DRAFT");
     if (formData.thumbnail) {
       data.append("thumbnail", formData.thumbnail);
@@ -469,12 +474,12 @@ const InstructorCourseEditor = () => {
     if (activeTab === "basic") {
       return (
         <div className="space-y-6">
-          <div className="flex items-center justify-between mb-8 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 font-heading">
-                Course Basics
+              <h2 className="text-xl font-semibold text-slate-900 font-heading tracking-tight">
+                Course basics
               </h2>
-              <p className="text-sm text-slate-500 font-medium">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Set up your course title, description, and pricing.
               </p>
             </div>
@@ -556,8 +561,8 @@ const InstructorCourseEditor = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Skeleton className="h-12 w-64 mx-auto" />
-          <p className="text-slate-500 animate-pulse">
+          <Loader2 className="w-10 h-10 text-[#7c6ef0] animate-spin mx-auto" />
+          <p className="text-slate-600 font-medium text-sm">
             Loading course details...
           </p>
         </div>
@@ -567,29 +572,71 @@ const InstructorCourseEditor = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col h-screen overflow-hidden text-slate-200">
-      <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200 z-50 bg-white text-slate-900 shrink-0">
-        <div className="flex items-center gap-4">
+      <header className="h-[68px] flex items-center justify-between px-6 border-b border-slate-200 z-50 bg-white text-slate-900 shrink-0">
+        <div className="flex items-center gap-5">
           <button
             onClick={() => navigate("/instructor/courses")}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium"
           >
-            <ArrowLeft className="w-4 h-4 text-slate-700" />
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
           </button>
-          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
-            <h1 className="text-[15px] font-bold text-slate-900 leading-none">
-              Curriculum builder
-            </h1>
-            <span className="text-[11px] text-slate-500 bg-slate-50 py-1 px-3 rounded-full border border-slate-200 truncate max-w-[150px] sm:max-w-xs block leading-none w-fit">
+          <div className="h-8 w-[1px] bg-slate-200" />
+          <div className="flex flex-col">
+            <h1 className="text-[15px] font-semibold text-slate-900 leading-tight tracking-tight">
               {isEdit ? course?.title : "New Course"}
+            </h1>
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">
+              Course editor
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
+
+        {/* Horizontal Navigation Tabs */}
+        <nav className="hidden lg:flex items-center bg-slate-100/60 p-1 rounded-xl border border-slate-200">
+          {[
+            { id: "basic", label: "Intro", icon: FileText },
+            { id: "curriculum", label: "Activities", icon: Layout },
+            { id: "settings", label: "Settings", icon: SettingsIcon },
+            ...(isEdit
+              ? [
+                  {
+                    id: "analytics",
+                    label: "Analytics",
+                    icon: BarChart3,
+                  },
+                  { id: "cohorts", label: "Cohorts", icon: Users },
+                  { id: "schedule", label: "Schedule", icon: Calendar },
+                ]
+              : []),
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2 rounded-lg text-[12.5px] font-medium tracking-tight transition-all",
+                activeTab === tab.id
+                  ? "bg-white text-[#7c6ef0] shadow-sm"
+                  : "text-slate-500 hover:text-slate-700",
+              )}
+            >
+              <tab.icon
+                className={cn(
+                  "w-3.5 h-3.5",
+                  activeTab === tab.id ? "text-[#7c6ef0]" : "text-slate-400",
+                )}
+              />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => {}}
-            className="gap-2 font-bold h-9 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+            className="gap-2 font-medium h-9 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <Eye className="w-4 h-4" /> Preview
           </Button>
@@ -599,10 +646,10 @@ const InstructorCourseEditor = () => {
               createCourseMutation.isPending || updateCourseMutation.isPending
             }
             size="sm"
-            className="gap-2 font-bold bg-[#7c6ef0] text-white hover:bg-[#6b5ee0] h-9 hidden sm:flex rounded-xl transition-all border-none"
+            className="gap-2 font-medium bg-[#7c6ef0] text-white hover:bg-[#6b5ee0] h-9 px-5 rounded-lg transition-all border-none shadow-sm shadow-[#7c6ef0]/20"
           >
             <Save className="w-4 h-4" />
-            {isEdit ? "Save draft" : "Create draft"}
+            {isEdit ? "Save change" : "Create draft"}
           </Button>
         </div>
       </header>
@@ -610,9 +657,9 @@ const InstructorCourseEditor = () => {
       <div className="flex flex-1 overflow-hidden relative">
         <aside
           className={cn(
-            "fixed lg:relative z-40 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 overflow-hidden h-[calc(100vh-64px)] shrink-0 text-slate-700",
+            "fixed lg:relative z-40 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 overflow-hidden h-full shrink-0 text-slate-700",
             isSidebarOpen
-              ? "w-[340px] translate-x-0"
+              ? "w-[320px] translate-x-0"
               : "w-0 -translate-x-full lg:w-0",
           )}
         >
@@ -629,45 +676,46 @@ const InstructorCourseEditor = () => {
             <div className="flex flex-col pb-4">
               {showCurriculum && (
                 <div className="flex flex-col border-b border-slate-200 pb-4">
-                  <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100 mb-2">
-                    <h2 className="text-sm font-bold text-slate-900">
-                      Course structure
+                  <div className="px-6 py-5 flex items-center justify-between">
+                    <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                      Course curriculum
                     </h2>
                   </div>
 
                   <div className="flex flex-col">
                     {course?.modules?.map((module, mIdx) => (
-                      <div
-                        key={module.id}
-                        className="flex flex-col border-b border-slate-100 last:border-0"
-                      >
+                      <div key={module.id} className="flex flex-col">
                         <div
                           onClick={() => {
                             toggleModule(module.id.toString());
                             setActiveTab("curriculum");
                           }}
-                          className={`flex items-center justify-between px-5 py-3 cursor-pointer transition-all ${
+                          className={`flex items-center gap-3 px-6 py-4 cursor-pointer transition-all border-b border-slate-100 ${
                             expandedModules[module.id]
-                              ? "bg-slate-50"
-                              : "hover:bg-slate-50/50"
+                              ? "bg-slate-50/50"
+                              : "hover:bg-slate-50/30"
                           }`}
                         >
+                          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-semibold text-slate-600 border border-slate-200 shrink-0">
+                            {mIdx + 1}
+                          </div>
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             <ChevronRight
-                              className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${
+                              className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${
                                 expandedModules[module.id] ? "rotate-90" : ""
                               }`}
                             />
-                            <span className="text-[13px] font-bold text-slate-800 break-words whitespace-normal line-clamp-2 leading-tight pr-2">
-                              {mIdx + 1}. {module.title}
+                            <span className="text-[13.5px] font-medium text-slate-900 break-words leading-snug">
+                              {module.title}
                             </span>
                           </div>
-                          <div className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500 shrink-0">
-                            {module.lessons?.length || 0}
-                          </div>
                         </div>
+
                         {expandedModules[module.id] && (
-                          <div className="flex flex-col bg-transparent pb-3">
+                          <div className="flex flex-col bg-white pt-2 pb-3 relative">
+                            {/* Vertical Connector Line */}
+                            <div className="absolute left-[2.25rem] top-0 bottom-12 w-[1.5px] bg-slate-100" />
+
                             <Reorder.Group
                               axis="y"
                               values={module.lessons || []}
@@ -677,21 +725,22 @@ const InstructorCourseEditor = () => {
                                   newLessons,
                                 )
                               }
-                              className="flex flex-col"
+                              className="flex flex-col space-y-0.5"
                             >
                               {module.lessons?.map((lesson) => (
                                 <Reorder.Item
                                   key={lesson.id}
                                   value={lesson}
-                                  className="relative"
+                                  className="relative px-3"
                                 >
                                   <div
-                                    className={`group flex items-center p-0 text-left transition-all relative cursor-pointer ${
+                                    className={cn(
+                                      "group flex items-center p-2 rounded-lg text-left transition-all relative cursor-pointer gap-3",
                                       selectedCurriculumItem?.lessonId ===
-                                      lesson.id
-                                        ? "bg-slate-50/80"
-                                        : "hover:bg-slate-50/50"
-                                    }`}
+                                        lesson.id
+                                        ? "bg-slate-100"
+                                        : "hover:bg-slate-50",
+                                    )}
                                     onClick={() => {
                                       handleLessonSelect(
                                         lesson,
@@ -701,58 +750,56 @@ const InstructorCourseEditor = () => {
                                         setIsSidebarOpen(false);
                                     }}
                                   >
-                                    <div
-                                      className={`absolute left-0 top-0 bottom-0 w-[2px] transition-all ${
-                                        selectedCurriculumItem?.lessonId ===
-                                        lesson.id
-                                          ? "bg-[#7c6ef0]"
-                                          : "bg-transparent"
-                                      }`}
-                                    />
-                                    <div className="pl-4 pr-2 opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing text-slate-400">
-                                      <GripVertical className="w-3.5 h-3.5" />
+                                    {/* Item Icon Node */}
+                                    <div className="relative z-10 flex items-center justify-center w-6 h-6 ml-1">
+                                      <div
+                                        className={cn(
+                                          "w-2.5 h-2.5 rounded-full ring-4 ring-white transition-all",
+                                          selectedCurriculumItem?.lessonId ===
+                                            lesson.id
+                                            ? "bg-[#7c6ef0] ring-[#7c6ef0]/20"
+                                            : "bg-slate-300",
+                                        )}
+                                      />
                                     </div>
 
-                                    <div className="flex-1 flex items-center justify-between py-2.5 pr-4 pl-1 min-w-0">
-                                      <div className="flex items-center gap-3 min-w-0">
-                                        <div
-                                          className={`w-6 h-6 rounded flex items-center justify-center shrink-0 transition-colors ${
-                                            selectedCurriculumItem?.lessonId ===
-                                            lesson.id
-                                              ? "bg-[#7c6ef0]/10 text-[#7c6ef0] border border-[#7c6ef0]/20"
-                                              : "bg-white text-slate-400 border border-slate-200"
-                                          }`}
-                                        >
-                                          {lesson.type === "VIDEO" ? (
-                                            <PlayCircle className="w-3 h-3" />
-                                          ) : (
-                                            <FileText className="w-3 h-3" />
-                                          )}
-                                        </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
                                         <span
-                                          className={`text-[12px] truncate transition-colors ${
+                                          className={cn(
+                                            "text-[13px] truncate transition-colors",
                                             selectedCurriculumItem?.lessonId ===
-                                            lesson.id
-                                              ? "font-bold text-[#7c6ef0]"
-                                              : "font-medium text-slate-600 group-hover:text-slate-900"
-                                          }`}
+                                              lesson.id
+                                              ? "font-medium text-slate-900"
+                                              : "font-normal text-slate-600 group-hover:text-slate-900",
+                                          )}
                                         >
                                           {lesson.title}
                                         </span>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto text-slate-400">
+                                          <GripVertical className="w-3 h-3" />
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
                                 </Reorder.Item>
                               ))}
                             </Reorder.Group>
-                            <button
-                              onClick={() =>
-                                handleAddLesson(module.id.toString())
-                              }
-                              className="flex items-center gap-2 pl-[3.25rem] pr-6 py-2.5 mt-1 text-[12px] font-medium text-slate-500 hover:text-slate-800 transition-colors"
-                            >
-                              <Plus className="w-3.5 h-3.5" /> Add lesson
-                            </button>
+
+                            <div className="px-5 mt-2">
+                              <button
+                                onClick={() =>
+                                  handleAddLesson(module.id.toString())
+                                }
+                                className="flex items-center justify-between w-full px-4 py-2 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-all group"
+                              >
+                                <div className="flex items-center gap-2 text-[12.5px] font-medium text-slate-700">
+                                  <Plus className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                                  <span>New activity</span>
+                                </div>
+                                <ChevronDown className="w-4 h-4 text-slate-300" />
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -761,8 +808,11 @@ const InstructorCourseEditor = () => {
                 </div>
               )}
 
-              <div className="px-4 py-6 space-y-2">
+              {/* Only Show Navigation Tabs here on Mobile */}
+              <div className="lg:hidden px-4 py-6 space-y-2 border-t border-slate-200 mt-4">
                 {[
+                  { id: "basic", label: "Intro", icon: FileText },
+                  { id: "curriculum", label: "Activities", icon: Layout },
                   { id: "settings", label: "Settings", icon: SettingsIcon },
                   ...(isEdit
                     ? [
@@ -782,20 +832,15 @@ const InstructorCourseEditor = () => {
                       setActiveTab(tab.id);
                       if (window.innerWidth < 1024) setIsSidebarOpen(false);
                     }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group ${
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
                       activeTab === tab.id
-                        ? "bg-slate-100 text-slate-900 border border-slate-200"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent"
-                    }`}
+                        ? "bg-white text-[#7c6ef0] shadow-sm border border-slate-200"
+                        : "text-slate-500 hover:bg-slate-100",
+                    )}
                   >
-                    <tab.icon
-                      className={`w-4 h-4 transition-colors ${
-                        activeTab === tab.id
-                          ? "text-slate-900"
-                          : "text-slate-400 group-hover:text-slate-600"
-                      }`}
-                    />
-                    <span className="flex-1 text-left">{tab.label}</span>
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
                   </button>
                 ))}
               </div>
@@ -805,9 +850,10 @@ const InstructorCourseEditor = () => {
           <div className="p-4 border-t border-slate-200 bg-white">
             <button
               onClick={handleAddModule}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm transition-all shadow-sm"
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-100 hover:border-slate-300 text-slate-600 font-medium text-sm transition-all group"
             >
-              <PlusSquare className="w-4 h-4" /> New module
+              <PlusCircle className="w-4 h-4 text-slate-400 group-hover:text-[#7c6ef0] transition-colors" />
+              <span>Add section</span>
             </button>
           </div>
         </aside>

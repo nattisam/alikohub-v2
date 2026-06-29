@@ -89,7 +89,7 @@ const InstructorLayout = ({ children }: { children: React.ReactNode }) => {
               size="sm"
               onClick={handleSwitchRole}
               disabled={isSwitching}
-              className="gap-2 text-accent border-accent/30 hover:bg-accent/5 text-xs h-9 hidden sm:flex"
+              className="gap-2 text-accent border-accent/20 hover:bg-accent/10 hover:text-accent text-xs h-9 hidden sm:flex transition-colors"
             >
               <Repeat className="w-3.5 h-3.5" />
               Student view
@@ -149,7 +149,7 @@ const InstructorLayout = ({ children }: { children: React.ReactNode }) => {
                         handleSwitchRole();
                         setProfileOpen(false);
                       }}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors w-full text-left"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-accent/10 hover:text-accent transition-colors w-full text-left"
                     >
                       <Repeat className="w-4 h-4" /> Student view
                     </button>

@@ -19,55 +19,42 @@ const InstructorSettings = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <nav className="flex flex-col gap-1">
-              <Button
-                variant="ghost"
-                className="justify-start gap-3 bg-white shadow-sm border text-accent"
-              >
-                <User className="w-4 h-4" /> Instructor Profile
-              </Button>
-            </nav>
-          </div>
-
-          <div className="lg:col-span-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Public Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Professional Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="e.g. Senior Software Engineer"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Website / Portfolio</Label>
-                    <Input id="website" placeholder="https://yourwebsite.com" />
-                  </div>
-                </div>
-
+        <div className="max-w-4xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Public Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Instructor Bio</Label>
-                  <textarea
-                    id="bio"
-                    className="w-full min-h-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Tell your students about your experience and teaching style..."
+                  <Label htmlFor="title">Professional Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g. Senior Software Engineer"
                   />
                 </div>
-
-                <div className="flex justify-end">
-                  <Button className="bg-accent hover:bg-amber-light text-slate-900">
-                    Save Profile Changes
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website / Portfolio</Label>
+                  <Input id="website" placeholder="https://yourwebsite.com" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Instructor Bio</Label>
+                <textarea
+                  id="bio"
+                  className="w-full min-h-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Tell your students about your experience and teaching style..."
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button className="bg-accent hover:bg-amber-light text-slate-900">
+                  Save Profile Changes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </InstructorLayout>
