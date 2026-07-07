@@ -1,0 +1,158 @@
+import { useEffect } from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+
+// Auth & Layout
+import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import AdminRoute from "@/components/shared/AdminRoute";
+import InstructorRoute from "@/components/shared/InstructorRoute";
+
+// Pages - Auth
+import LoginPage from "@/features/auth/pages/Login";
+import RegisterPage from "@/features/auth/pages/Register";
+
+import NotFound from "@/components/shared/NotFound";
+
+// Pages - Dashboard
+import StudentDashboard from "@/features/student/pages/Dashboard";
+import InstructorDashboard from "@/features/instructor/pages/Dashboard";
+import ApplyInstructor from "@/features/student/pages/ApplyInstructor";
+import PaymentSuccess from "@/features/student/pages/PaymentSuccess";
+
+// Pages - Courses
+import CourseDetails from "@/features/student/pages/CourseDetails";
+import CourseExplorer from "@/features/student/pages/CourseExplorer";
+import InstructorCourses from "@/features/instructor/courses/pages/InstructorCourses";
+import CreateCourse from "@/features/instructor/courses/pages/CreateCourse";
+import CourseEditor from "@/features/instructor/courses/pages/CourseEditor";
+
+// Pages - Lessons
+import LessonView from "@/features/student/lessons/LessonView";
+
+// Pages - Progress
+import StudentProgress from "@/features/student/pages/StudentProgress";
+import InstructorAnalytics from "@/features/instructor/analytics/InstructorAnalytics";
+import Submissions from "@/features/instructor/analytics/Submissions";
+
+// Pages - Instructor/Admin
+import AdminDashboard from "@/features/admin/pages/AdminDashboard";
+import Schedules from "@/features/instructor/pages/Schedules";
+import InstructorSettings from "@/features/instructor/pages/Settings";
+
+// Pages - Account
+import Profile from "@/features/student/account/Profile";
+import Settings from "@/features/student/account/Settings";
+import AccountSecurity from "@/features/student/account/AccountSecurity";
+import Certifications from "@/features/student/account/Certifications";
+import Notifications from "@/features/student/account/Notifications";
+import Photo from "@/features/student/account/Photo";
+import Subscriptions from "@/features/student/account/Subscriptions";
+import CareerHub from "@/features/student/account/CareerHub";
+import TransactionsPage from "@/features/student/account/Transactions";
+
+import { ThemeProvider, useTheme } from "@/context/ThemeContext";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+/** Runs inside BrowserRouter + QueryClientProvider so hooks work correctly */
+const AppInner = () => {
+  const location = useLocation();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const isAdminRoute = location.pathname.startsWith("/admin");
+    if (isAdminRoute && theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [location.pathname, theme]);
+
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* Default Redirect */}
+      <Route path="/" element={<LoginPage />} />
+
+      {/* Protected Portal Routes */}
+      <Route element={<ProtectedRoute />}>
+        {/* Student & Shared Protected Routes */}
+        <Route path="/dashboard" element={<StudentDashboard />} />
+        <Route path="/courses" element={<CourseExplorer />} />
+        <Route path="/courses/:id" element={<CourseDetails />} />
+        <Route path="/learning" element={<StudentProgress />} />
+        <Route path="/learn/:id" element={<LessonView />} />
+        <Route path="/instructor/apply" element={<ApplyInstructor />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+
+        {/* Account Routes */}
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/photo" element={<Photo />} />
+        <Route path="/account-security" element={<AccountSecurity />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+        <Route path="/certifications" element={<Certifications />} />
+        <Route path="/career-hub" element={<CareerHub />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
+
+        {/* Instructor Routes */}
+        <Route element={<InstructorRoute />}>
+          <Route path="/instructor" element={<InstructorDashboard />} />
+          <Route path="/instructor/courses" element={<InstructorCourses />} />
+          <Route path="/instructor/courses/new" element={<CreateCourse />} />
+          <Route path="/instructor/courses/:id" element={<CourseEditor />} />
+          <Route
+            path="/instructor/analytics"
+            element={<InstructorAnalytics />}
+          />
+          <Route path="/instructor/submissions" element={<Submissions />} />
+          <Route path="/instructor/schedules" element={<Schedules />} />
+          <Route path="/instructor/settings" element={<InstructorSettings />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/applications" element={<AdminDashboard />} />
+          <Route path="/admin/courses" element={<AdminDashboard />} />
+          <Route path="/admin/analytics" element={<AdminDashboard />} />
+          <Route path="/admin/transactions" element={<AdminDashboard />} />
+        </Route>
+      </Route>
+
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppInner />
+        </TooltipProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
+);
+
+export default App;

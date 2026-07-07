@@ -27,7 +27,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
+    const isAdminRoute =
+      typeof window !== "undefined" &&
+      window.location.pathname.startsWith("/admin");
+    if (theme === "dark" && isAdminRoute) {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");

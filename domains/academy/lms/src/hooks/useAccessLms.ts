@@ -5,7 +5,7 @@ import {
   useUser,
   useSelectAcademyRole,
   useSwitchAcademyRole,
-} from "@/hooks/useAuth";
+} from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 
 export const useAccessLms = () => {

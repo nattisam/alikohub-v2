@@ -1,0 +1,500 @@
+# Academy LMS — Feature-Based Restructuring Plan
+
+> [!IMPORTANT]
+> This plan analyzes every file in the current `src/` folder, proposes a domain-grouped structure, and lists each file's move + rationale. **No files will be moved until you approve.**
+
+---
+
+## 1. Current Structure (as-is)
+
+```
+src/
+├── App.tsx                              # Router + providers
+├── App.css
+├── main.tsx                             # Entry point
+├── index.css                            # Global styles
+│
+├── assets/                              # 30 images/SVGs
+│   ├── categories/                      # health/, stem/, technology/
+│   └── *.png / *.jpg / *.svg
+│
+├── components/
+│   ├── AdminNavbar.tsx                  ← loose in root
+│   ├── AdminRoute.tsx                   ← loose in root
+│   ├── DeleteConfirmationModal.tsx       ← loose in root
+│   ├── InstructorLayout.tsx             ← loose in root
+│   ├── InstructorNavbar.tsx             ← loose in root
+│   ├── InstructorRoute.tsx              ← loose in root
+│   ├── InstructorSidebar.tsx            ← loose in root
+│   ├── LmsNavbar.tsx                    ← loose in root
+│   ├── ProtectedRoute.tsx              ← loose in root
+│   ├── ReviewApplicationModal.tsx       ← loose in root
+│   ├── ReviewCourseModal.tsx            ← loose in root
+│   ├── StudentLayout.tsx               ← loose in root
+│   ├── StudentSidebar.tsx              ← loose in root
+│   ├── ThemeToggle.tsx                  ← loose in root
+│   ├── admin/
+│   │   ├── AdminHeader.tsx
+│   │   ├── AdminLayout.tsx
+│   │   ├── AdminSidebar.tsx
+│   │   └── TransactionDetailModal.tsx
+│   ├── auth/
+│   │   ├── AuthLayout.tsx
+│   │   ├── GoogleButton.tsx
+│   │   └── PasswordInput.tsx
+│   ├── instructor/                      ← EMPTY
+│   ├── shared/                          ← 10 course-editor tab components (mislabeled)
+│   │   ├── AnalyticsTab.tsx
+│   │   ├── BasicInfoTab.tsx
+│   │   ├── ContentModal.tsx
+│   │   ├── CurriculumTab.tsx
+│   │   ├── ExerciseModal.tsx
+│   │   ├── LessonModal.tsx
+│   │   ├── ModuleModal.tsx
+│   │   ├── PreviewModal.tsx
+│   │   ├── ScheduleTab.tsx
+│   │   └── SettingsTab.tsx
+│   └── ui/                              ← 49 shadcn/ui primitives
+│       └── (accordion, button, card, dialog, etc.)
+│
+├── context/
+│   └── ThemeContext.tsx
+│
+├── hooks/
+│   ├── use-mobile.tsx
+│   ├── use-toast.ts
+│   ├── useAcademy.ts                    ← 871 lines, mixed student+instructor hooks
+│   ├── useAccessLms.ts
+│   ├── useAuth.ts                       ← 323 lines, auth + admin hooks
+│   ├── useEnrollment.ts
+│   └── usePayment.ts
+│
+├── lib/
+│   ├── api.ts                           ← axios instance
+│   ├── firebase.ts
+│   └── utils.ts                         ← cn() helper
+│
+├── pages/
+│   ├── Login.tsx                         ← auth page
+│   ├── Register.tsx                      ← auth page
+│   ├── NotFound.tsx                      ← shared page
+│   ├── ApplyInstructor.tsx               ← instructor application
+│   ├── PaymentSuccess.tsx                ← payment page
+│   ├── Account/                          ← 9 student account pages
+│   ├── Admin/
+│   │   └── Index.tsx                     ← 61KB admin mega-page
+│   ├── Courses/
+│   │   ├── CreateCourse.tsx              ← instructor
+│   │   ├── Details.tsx                   ← student course view
+│   │   ├── Editor.tsx                    ← instructor course editor
+│   │   ├── Explorer.tsx                  ← student course browse
+│   │   ├── InstructorCourses.tsx         ← instructor course list
+│   │   └── components/                   ← 12 editor sub-components
+│   │       ├── AnalyticsTab.tsx
+│   │       ├── BasicInfoTab.tsx          ← DUPLICATE of shared/
+│   │       ├── CohortsTab.tsx
+│   │       ├── ContentModal.tsx          ← DUPLICATE of shared/
+│   │       ├── CreateCohortModal.tsx
+│   │       ├── CurriculumTab.tsx         ← DUPLICATE of shared/
+│   │       ├── ExerciseModal.tsx         ← DUPLICATE of shared/
+│   │       ├── LessonModal.tsx           ← DUPLICATE of shared/
+│   │       ├── ModuleModal.tsx           ← DUPLICATE of shared/
+│   │       ├── PreviewModal.tsx          ← DUPLICATE of shared/
+│   │       ├── ScheduleTab.tsx           ← DUPLICATE of shared/
+│   │       └── SettingsTab.tsx           ← DUPLICATE of shared/
+│   ├── Dashboard/
+│   │   ├── Instructor.tsx
+│   │   └── Student.tsx
+│   ├── Instructor/
+│   │   ├── Schedules.tsx
+│   │   └── Settings.tsx
+│   ├── Lessons/
+│   │   ├── Index.tsx                     ← student lesson viewer
+│   │   └── components/
+│   │       ├── CelebrationModal.tsx
+│   │       ├── InlinePdfViewer.tsx
+│   │       └── PdfViewer.tsx
+│   └── Progress/
+│       ├── InstructorAnalytics.tsx
+│       ├── Student.tsx
+│       └── Submissions.tsx
+│
+├── services/
+│   ├── academyService.ts                ← mixed student+instructor API calls
+│   ├── authService.ts
+│   └── paymentService.ts
+│
+└── types/
+    ├── academy.ts
+    └── auth.ts
+```
+
+---
+
+## 2. Key Problems Identified
+
+| # | Problem | Details |
+|---|---------|---------|
+| 1 | **Loose root components** | 14 files dumped directly in `components/` — layouts, navbars, modals, route guards mixed together |
+| 2 | **Mislabeled `shared/` folder** | Contains 10 instructor course-editor components — not shared at all |
+| 3 | **Duplicate files** | `components/shared/` and `pages/Courses/components/` have 9 overlapping files (BasicInfoTab, CurriculumTab, etc.). Only `pages/Courses/components/` versions are actually imported; `components/shared/` copies are **dead code** |
+| 4 | **Empty `components/instructor/`** | Unused directory |
+| 5 | **Flat pages directory** | Student, instructor, and admin pages mixed in one `pages/` tree with no domain separation |
+| 6 | **God hook files** | [useAcademy.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/useAcademy.ts) (871 lines) mixes student & instructor hooks; [useAuth.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/useAuth.ts) (323 lines) mixes auth & admin hooks |
+| 7 | **God service files** | [academyService.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/services/academyService.ts) (14KB) serves all domains |
+| 8 | **Missing context organization** | `context/` has only [ThemeContext.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/context/ThemeContext.tsx) — fine for now but should live in a clear location |
+
+---
+
+## 3. Proposed Structure (to-be)
+
+```
+src/
+├── app/
+│   ├── App.tsx                          # Router + providers
+│   ├── App.css
+│   └── routes.tsx                       # (future: extract routes from App.tsx)
+│
+├── features/
+│   ├── auth/
+│   │   ├── components/
+│   │   │   ├── AuthLayout.tsx
+│   │   │   ├── GoogleButton.tsx
+│   │   │   └── PasswordInput.tsx
+│   │   ├── pages/
+│   │   │   ├── Login.tsx
+│   │   │   └── Register.tsx
+│   │   ├── hooks/
+│   │   │   └── useAuth.ts              # auth-specific hooks only
+│   │   ├── services/
+│   │   │   └── authService.ts
+│   │   └── types/
+│   │       └── auth.ts
+│   │
+│   ├── student/
+│   │   ├── components/
+│   │   │   ├── StudentLayout.tsx
+│   │   │   ├── StudentSidebar.tsx
+│   │   │   └── LmsNavbar.tsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx            ← was Dashboard/Student.tsx
+│   │   │   ├── CourseExplorer.tsx        ← was Courses/Explorer.tsx
+│   │   │   ├── CourseDetails.tsx         ← was Courses/Details.tsx
+│   │   │   ├── StudentProgress.tsx      ← was Progress/Student.tsx
+│   │   │   ├── PaymentSuccess.tsx
+│   │   │   └── ApplyInstructor.tsx
+│   │   ├── lessons/
+│   │   │   ├── LessonView.tsx           ← was Lessons/Index.tsx
+│   │   │   └── components/
+│   │   │       ├── CelebrationModal.tsx
+│   │   │       ├── InlinePdfViewer.tsx
+│   │   │       └── PdfViewer.tsx
+│   │   ├── account/
+│   │   │   ├── Profile.tsx
+│   │   │   ├── Settings.tsx
+│   │   │   ├── AccountSecurity.tsx
+│   │   │   ├── Certifications.tsx
+│   │   │   ├── Notifications.tsx
+│   │   │   ├── Photo.tsx
+│   │   │   ├── Subscriptions.tsx
+│   │   │   ├── CareerHub.tsx
+│   │   │   └── Transactions.tsx
+│   │   └── hooks/
+│   │       ├── useEnrollment.ts
+│   │       └── usePayment.ts
+│   │
+│   ├── instructor/
+│   │   ├── components/
+│   │   │   ├── InstructorLayout.tsx
+│   │   │   ├── InstructorSidebar.tsx
+│   │   │   ├── InstructorNavbar.tsx
+│   │   │   └── DeleteConfirmationModal.tsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx            ← was Dashboard/Instructor.tsx
+│   │   │   ├── Schedules.tsx
+│   │   │   └── Settings.tsx
+│   │   ├── courses/
+│   │   │   ├── pages/
+│   │   │   │   ├── InstructorCourses.tsx
+│   │   │   │   ├── CreateCourse.tsx
+│   │   │   │   └── CourseEditor.tsx      ← was Editor.tsx
+│   │   │   └── components/
+│   │   │       ├── AnalyticsTab.tsx
+│   │   │       ├── BasicInfoTab.tsx
+│   │   │       ├── CohortsTab.tsx
+│   │   │       ├── ContentModal.tsx
+│   │   │       ├── CreateCohortModal.tsx
+│   │   │       ├── CurriculumTab.tsx
+│   │   │       ├── ExerciseModal.tsx
+│   │   │       ├── LessonModal.tsx
+│   │   │       ├── ModuleModal.tsx
+│   │   │       ├── PreviewModal.tsx
+│   │   │       ├── ScheduleTab.tsx
+│   │   │       └── SettingsTab.tsx
+│   │   ├── analytics/
+│   │   │   ├── InstructorAnalytics.tsx
+│   │   │   └── Submissions.tsx
+│   │   └── hooks/
+│   │       └── (future: instructor-specific hooks split from useAcademy.ts)
+│   │
+│   └── admin/
+│       ├── components/
+│       │   ├── AdminHeader.tsx
+│       │   ├── AdminLayout.tsx
+│       │   ├── AdminSidebar.tsx
+│       │   ├── ReviewApplicationModal.tsx
+│       │   ├── ReviewCourseModal.tsx
+│       │   ├── TransactionDetailModal.tsx
+│       │   └── ThemeToggle.tsx
+│       └── pages/
+│           └── AdminDashboard.tsx        ← was Admin/Index.tsx
+│
+├── components/
+│   ├── ui/                              # shadcn/ui primitives (unchanged)
+│   │   └── (49 files — no changes)
+│   └── shared/                          # truly shared components
+│       ├── ProtectedRoute.tsx
+│       ├── AdminRoute.tsx
+│       ├── InstructorRoute.tsx
+│       └── NotFound.tsx
+│
+├── hooks/                               # global hooks only
+│   ├── use-mobile.tsx
+│   ├── use-toast.ts
+│   └── useAccessLms.ts
+│
+├── services/                            # global/shared services
+│   ├── academyService.ts               # (keep for now; split later per-feature)
+│   └── paymentService.ts
+│
+├── context/
+│   └── ThemeContext.tsx
+│
+├── lib/
+│   ├── api.ts
+│   ├── firebase.ts
+│   └── utils.ts
+│
+├── types/
+│   └── academy.ts                       # shared academy types
+│
+├── assets/                              # unchanged
+│   └── (all images)
+│
+├── main.tsx
+└── index.css
+```
+
+---
+
+## 4. File Move Manifest
+
+### Batch 1 — App Shell & Route Guards (low risk)
+
+| Current Path | New Path | Reason |
+|---|---|---|
+| [src/App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx) | `src/app/App.tsx` | Isolate app shell |
+| [src/App.css](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.css) | `src/app/App.css` | Keep with App.tsx |
+| [src/components/ProtectedRoute.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/ProtectedRoute.tsx) | `src/components/shared/ProtectedRoute.tsx` | Route guard → shared |
+| [src/components/AdminRoute.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/AdminRoute.tsx) | `src/components/shared/AdminRoute.tsx` | Route guard → shared |
+| [src/components/InstructorRoute.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/InstructorRoute.tsx) | `src/components/shared/InstructorRoute.tsx` | Route guard → shared |
+| [src/pages/NotFound.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/NotFound.tsx) | `src/components/shared/NotFound.tsx` | Generic page → shared |
+
+**Import updates:** [main.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/main.tsx) (App import), [App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx) (route guard imports), all files importing `NotFound`.
+
+---
+
+### Batch 2 — Auth Feature (low risk)
+
+| Current Path | New Path | Reason |
+|---|---|---|
+| [src/components/auth/AuthLayout.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/auth/AuthLayout.tsx) | `src/features/auth/components/AuthLayout.tsx` | Auth-specific |
+| [src/components/auth/GoogleButton.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/auth/GoogleButton.tsx) | `src/features/auth/components/GoogleButton.tsx` | Auth-specific |
+| [src/components/auth/PasswordInput.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/auth/PasswordInput.tsx) | `src/features/auth/components/PasswordInput.tsx` | Auth-specific |
+| [src/pages/Login.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Login.tsx) | `src/features/auth/pages/Login.tsx` | Auth page |
+| [src/pages/Register.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Register.tsx) | `src/features/auth/pages/Register.tsx` | Auth page |
+| [src/hooks/useAuth.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/useAuth.ts) | `src/features/auth/hooks/useAuth.ts` | Auth hooks |
+| [src/services/authService.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/services/authService.ts) | `src/features/auth/services/authService.ts` | Auth API |
+| [src/types/auth.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/types/auth.ts) | `src/features/auth/types/auth.ts` | Auth types |
+
+**Import updates:** [App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx), [Login.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Login.tsx), [Register.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Register.tsx), all files importing `useAuth`, `authService`, or `auth` types.
+
+---
+
+### Batch 3 — Admin Feature (low risk)
+
+| Current Path | New Path | Reason |
+|---|---|---|
+| [src/components/admin/AdminHeader.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/admin/AdminHeader.tsx) | `src/features/admin/components/AdminHeader.tsx` | Admin-specific |
+| [src/components/admin/AdminLayout.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/admin/AdminLayout.tsx) | `src/features/admin/components/AdminLayout.tsx` | Admin-specific |
+| [src/components/admin/AdminSidebar.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/admin/AdminSidebar.tsx) | `src/features/admin/components/AdminSidebar.tsx` | Admin-specific |
+| [src/components/admin/TransactionDetailModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/admin/TransactionDetailModal.tsx) | `src/features/admin/components/TransactionDetailModal.tsx` | Admin-specific |
+| [src/components/ReviewApplicationModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/ReviewApplicationModal.tsx) | `src/features/admin/components/ReviewApplicationModal.tsx` | Used only by Admin |
+| [src/components/ReviewCourseModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/ReviewCourseModal.tsx) | `src/features/admin/components/ReviewCourseModal.tsx` | Used only by Admin |
+| [src/components/ThemeToggle.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/ThemeToggle.tsx) | `src/features/admin/components/ThemeToggle.tsx` | Only used in Admin |
+| [src/components/AdminNavbar.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/AdminNavbar.tsx) | `src/features/admin/components/AdminNavbar.tsx` | Admin-specific |
+| [src/pages/Admin/Index.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Admin/Index.tsx) | `src/features/admin/pages/AdminDashboard.tsx` | Admin page |
+
+**Import updates:** [App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx), [Admin/Index.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Admin/Index.tsx) (now `AdminDashboard.tsx`), [AdminHeader.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/admin/AdminHeader.tsx).
+
+---
+
+### Batch 4 — Instructor Feature (medium risk — most files)
+
+| Current Path | New Path | Reason |
+|---|---|---|
+| [src/components/InstructorLayout.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/InstructorLayout.tsx) | `src/features/instructor/components/InstructorLayout.tsx` | Instructor layout |
+| [src/components/InstructorSidebar.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/InstructorSidebar.tsx) | `src/features/instructor/components/InstructorSidebar.tsx` | Instructor sidebar |
+| [src/components/InstructorNavbar.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/InstructorNavbar.tsx) | `src/features/instructor/components/InstructorNavbar.tsx` | Instructor navbar |
+| [src/components/DeleteConfirmationModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/DeleteConfirmationModal.tsx) | `src/features/instructor/components/DeleteConfirmationModal.tsx` | Used only by instructor pages |
+| [src/pages/Dashboard/Instructor.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Dashboard/Instructor.tsx) | `src/features/instructor/pages/Dashboard.tsx` | Instructor dashboard |
+| [src/pages/Instructor/Schedules.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Instructor/Schedules.tsx) | `src/features/instructor/pages/Schedules.tsx` | Instructor page |
+| [src/pages/Instructor/Settings.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Instructor/Settings.tsx) | `src/features/instructor/pages/Settings.tsx` | Instructor page |
+| [src/pages/Courses/InstructorCourses.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/InstructorCourses.tsx) | `src/features/instructor/courses/pages/InstructorCourses.tsx` | Instructor course list |
+| [src/pages/Courses/CreateCourse.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/CreateCourse.tsx) | `src/features/instructor/courses/pages/CreateCourse.tsx` | Instructor page |
+| [src/pages/Courses/Editor.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/Editor.tsx) | `src/features/instructor/courses/pages/CourseEditor.tsx` | Instructor editor |
+| [src/pages/Courses/components/AnalyticsTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/AnalyticsTab.tsx) | `src/features/instructor/courses/components/AnalyticsTab.tsx` | Editor sub-component |
+| [src/pages/Courses/components/BasicInfoTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/BasicInfoTab.tsx) | `src/features/instructor/courses/components/BasicInfoTab.tsx` | Editor sub-component |
+| [src/pages/Courses/components/CohortsTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/CohortsTab.tsx) | `src/features/instructor/courses/components/CohortsTab.tsx` | Editor sub-component |
+| [src/pages/Courses/components/ContentModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/ContentModal.tsx) | `src/features/instructor/courses/components/ContentModal.tsx` | Editor sub-component |
+| [src/pages/Courses/components/CreateCohortModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/CreateCohortModal.tsx) | `src/features/instructor/courses/components/CreateCohortModal.tsx` | Editor sub-component |
+| [src/pages/Courses/components/CurriculumTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/CurriculumTab.tsx) | `src/features/instructor/courses/components/CurriculumTab.tsx` | Editor sub-component |
+| [src/pages/Courses/components/ExerciseModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/ExerciseModal.tsx) | `src/features/instructor/courses/components/ExerciseModal.tsx` | Editor sub-component |
+| [src/pages/Courses/components/LessonModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/LessonModal.tsx) | `src/features/instructor/courses/components/LessonModal.tsx` | Editor sub-component |
+| [src/pages/Courses/components/ModuleModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/ModuleModal.tsx) | `src/features/instructor/courses/components/ModuleModal.tsx` | Editor sub-component |
+| [src/pages/Courses/components/PreviewModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/PreviewModal.tsx) | `src/features/instructor/courses/components/PreviewModal.tsx` | Editor sub-component |
+| [src/pages/Courses/components/ScheduleTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/ScheduleTab.tsx) | `src/features/instructor/courses/components/ScheduleTab.tsx` | Editor sub-component |
+| [src/pages/Courses/components/SettingsTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/components/SettingsTab.tsx) | `src/features/instructor/courses/components/SettingsTab.tsx` | Editor sub-component |
+| [src/pages/Progress/InstructorAnalytics.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Progress/InstructorAnalytics.tsx) | `src/features/instructor/analytics/InstructorAnalytics.tsx` | Instructor analytics |
+| [src/pages/Progress/Submissions.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Progress/Submissions.tsx) | `src/features/instructor/analytics/Submissions.tsx` | Instructor submissions |
+
+**Import updates:** [App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx), [Editor.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/Editor.tsx), [InstructorCourses.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/InstructorCourses.tsx), [CreateCourse.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/CreateCourse.tsx), [InstructorLayout.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/InstructorLayout.tsx), all pages importing `InstructorLayout`.
+
+---
+
+### Batch 5 — Student Feature (medium risk)
+
+| Current Path | New Path | Reason |
+|---|---|---|
+| [src/components/StudentLayout.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/StudentLayout.tsx) | `src/features/student/components/StudentLayout.tsx` | Student layout |
+| [src/components/StudentSidebar.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/StudentSidebar.tsx) | `src/features/student/components/StudentSidebar.tsx` | Student sidebar |
+| [src/components/LmsNavbar.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/LmsNavbar.tsx) | `src/features/student/components/LmsNavbar.tsx` | Used by student pages |
+| [src/pages/Dashboard/Student.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Dashboard/Student.tsx) | `src/features/student/pages/Dashboard.tsx` | Student dashboard |
+| [src/pages/Courses/Explorer.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/Explorer.tsx) | `src/features/student/pages/CourseExplorer.tsx` | Student course browse |
+| [src/pages/Courses/Details.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Courses/Details.tsx) | `src/features/student/pages/CourseDetails.tsx` | Student course view |
+| [src/pages/Progress/Student.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Progress/Student.tsx) | `src/features/student/pages/StudentProgress.tsx` | Student progress |
+| [src/pages/PaymentSuccess.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/PaymentSuccess.tsx) | `src/features/student/pages/PaymentSuccess.tsx` | Student payment flow |
+| [src/pages/ApplyInstructor.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/ApplyInstructor.tsx) | `src/features/student/pages/ApplyInstructor.tsx` | Student applying to become instructor |
+| [src/pages/Lessons/Index.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Lessons/Index.tsx) | `src/features/student/lessons/LessonView.tsx` | Student lesson viewer |
+| [src/pages/Lessons/components/CelebrationModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Lessons/components/CelebrationModal.tsx) | `src/features/student/lessons/components/CelebrationModal.tsx` | Lesson sub-component |
+| [src/pages/Lessons/components/InlinePdfViewer.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Lessons/components/InlinePdfViewer.tsx) | `src/features/student/lessons/components/InlinePdfViewer.tsx` | Lesson sub-component |
+| [src/pages/Lessons/components/PdfViewer.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Lessons/components/PdfViewer.tsx) | `src/features/student/lessons/components/PdfViewer.tsx` | Lesson sub-component |
+| [src/pages/Account/Profile.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Profile.tsx) | `src/features/student/account/Profile.tsx` | Student account page |
+| [src/pages/Account/Settings.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Settings.tsx) | `src/features/student/account/Settings.tsx` | Student account page |
+| [src/pages/Account/AccountSecurity.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/AccountSecurity.tsx) | `src/features/student/account/AccountSecurity.tsx` | Student account page |
+| [src/pages/Account/Certifications.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Certifications.tsx) | `src/features/student/account/Certifications.tsx` | Student account page |
+| [src/pages/Account/Notifications.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Notifications.tsx) | `src/features/student/account/Notifications.tsx` | Student account page |
+| [src/pages/Account/Photo.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Photo.tsx) | `src/features/student/account/Photo.tsx` | Student account page |
+| [src/pages/Account/Subscriptions.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Subscriptions.tsx) | `src/features/student/account/Subscriptions.tsx` | Student account page |
+| [src/pages/Account/CareerHub.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/CareerHub.tsx) | `src/features/student/account/CareerHub.tsx` | Student account page |
+| [src/pages/Account/Transactions.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/pages/Account/Transactions.tsx) | `src/features/student/account/Transactions.tsx` | Student account page |
+| [src/hooks/useEnrollment.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/useEnrollment.ts) | `src/features/student/hooks/useEnrollment.ts` | Student-specific hook |
+| [src/hooks/usePayment.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/usePayment.ts) | `src/features/student/hooks/usePayment.ts` | Student-specific hook |
+
+**Import updates:** [App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx), all student pages importing `StudentLayout`, `LmsNavbar`, `StudentSidebar`, Lessons/Index imports.
+
+---
+
+### Batch 6 — Cleanup & Delete Dead Code
+
+| Action | Path | Reason |
+|---|---|---|
+| **DELETE** | [src/components/shared/AnalyticsTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/AnalyticsTab.tsx) | Dead code — never imported |
+| **DELETE** | [src/components/shared/BasicInfoTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/BasicInfoTab.tsx) | Dead code — duplicate of `pages/Courses/components/` |
+| **DELETE** | [src/components/shared/ContentModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/ContentModal.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/CurriculumTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/CurriculumTab.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/ExerciseModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/ExerciseModal.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/LessonModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/LessonModal.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/ModuleModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/ModuleModal.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/PreviewModal.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/PreviewModal.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/ScheduleTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/ScheduleTab.tsx) | Dead code — duplicate |
+| **DELETE** | [src/components/shared/SettingsTab.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/components/shared/SettingsTab.tsx) | Dead code — duplicate |
+| **DELETE** | `src/components/instructor/` | Empty directory |
+| **DELETE** | `src/pages/Courses/` | Empty after moves |
+| **DELETE** | `src/pages/Dashboard/` | Empty after moves |
+| **DELETE** | `src/pages/Instructor/` | Empty after moves |
+| **DELETE** | `src/pages/Lessons/` | Empty after moves |
+| **DELETE** | `src/pages/Progress/` | Empty after moves |
+| **DELETE** | `src/pages/Account/` | Empty after moves |
+| **DELETE** | `src/pages/Admin/` | Empty after moves |
+| **DELETE** | `src/components/auth/` | Empty after moves |
+| **DELETE** | `src/components/admin/` | Empty after moves |
+
+---
+
+## 5. What Stays in Place (No Move)
+
+| Path | Reason |
+|---|---|
+| [src/main.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/main.tsx) | App entry — update App import only |
+| [src/index.css](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/index.css) | Global styles |
+| `src/components/ui/*` (49 files) | shadcn/ui primitives — universally shared |
+| [src/lib/api.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/lib/api.ts) | Global axios instance |
+| [src/lib/firebase.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/lib/firebase.ts) | Global firebase config |
+| [src/lib/utils.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/lib/utils.ts) | `cn()` helper — universally used |
+| [src/context/ThemeContext.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/context/ThemeContext.tsx) | Global theme context |
+| [src/hooks/use-mobile.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/use-mobile.tsx) | Generic UI hook |
+| [src/hooks/use-toast.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/use-toast.ts) | Generic toast hook |
+| [src/hooks/useAccessLms.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/useAccessLms.ts) | General LMS access hook |
+| [src/hooks/useAcademy.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/hooks/useAcademy.ts) | Stays global for now (splitting a 871-line file has logic risk; can be done in a future phase) |
+| [src/services/academyService.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/services/academyService.ts) | Stays global for now (same reason as above) |
+| [src/services/paymentService.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/services/paymentService.ts) | Stays global for now |
+| [src/types/academy.ts](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/types/academy.ts) | Shared academy types |
+| `src/assets/*` | Static assets — no change needed |
+
+---
+
+## 6. Import Update Strategy
+
+All files use the `@/` path alias (mapped to `src/`) — no relative imports are broken by restructuring. The update approach:
+
+1. **Move file** → **update the file's own imports** (if it imports siblings that also moved)
+2. **Global find-and-replace** the old `@/` path with the new `@/features/...` path
+3. **[main.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/main.tsx)**: Update [App](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx#144-157) import from `@/App` → `@/app/App`
+4. **[App.tsx](file:///c:/Users/Administrator/Videos/alikohub-v2/domains/academy/lms/src/App.tsx)**: Most imports change since all pages are moving
+
+> [!TIP]
+> Because every import uses `@/` (absolute alias), moving files does NOT break sibling imports. Only the *import statements pointing to the moved file* need updating.
+
+---
+
+## 7. Risk Assessment
+
+| Batch | Risk | Reason |
+|---|---|---|
+| 1 — App Shell | 🟢 Low | Only 6 files, few importers |
+| 2 — Auth | 🟢 Low | Self-contained, clear boundaries |
+| 3 — Admin | 🟢 Low | Admin is a single mega-page with its own components |
+| 4 — Instructor | 🟡 Medium | Most files (24), heavily cross-referenced from App.tsx |
+| 5 — Student | 🟡 Medium | 24 files, many Account pages use LmsNavbar |
+| 6 — Cleanup | 🟢 Low | Deleting dead code and empty folders only |
+
+---
+
+## 8. Execution Plan
+
+> [!CAUTION]
+> I will **not** proceed until you reply with approval. Each batch pauses for your verification.
+
+1. ✅ You approve this plan
+2. 🔧 **Batch 1**: Move App shell + route guards → update imports → you verify
+3. 🔧 **Batch 2**: Move auth feature → update imports → you verify
+4. 🔧 **Batch 3**: Move admin feature → update imports → you verify
+5. 🔧 **Batch 4**: Move instructor feature → update imports → you verify
+6. 🔧 **Batch 5**: Move student feature → update imports → you verify
+7. 🧹 **Batch 6**: Delete dead code + empty folders → you verify
+8. ✅ Final build check
+
+---
+
+**Ready when you are. Reply with "approved" to start Batch 1, or let me know if you want any changes to the plan.**
