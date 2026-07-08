@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Award, CheckCircle2, MoreHorizontal, PlayCircle } from "lucide-react";
+import { Award, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import StudentLayout from "@/features/student/components/StudentLayout";
@@ -12,7 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const tabs = ["In Progress", "Completed", "Saved"];
+const tabs = ["In Progress", "Completed"];
 
 const LmsMyLearning = () => {
   const [activeTab, setActiveTab] = useState("In Progress");
@@ -39,9 +39,19 @@ const LmsMyLearning = () => {
     const hasCompletedTx = completedTxCourseIds.has(
       enrollment.courseId ?? enrollment.course?.id,
     );
+    // Check dashboard percentage for 100% completion
+    const pData =
+      dashboard && Array.isArray(dashboard)
+        ? dashboard.find((d: any) => d.courseId === Number(enrollment.courseId))
+        : null;
+    const isFullyComplete =
+      enrollment.status === "COMPLETED" || pData?.percentage === 100;
+
     if (activeTab === "In Progress")
-      return enrollment.status === "ACTIVE" || hasCompletedTx;
-    if (activeTab === "Completed") return enrollment.status === "COMPLETED";
+      return (
+        !isFullyComplete && (enrollment.status === "ACTIVE" || hasCompletedTx)
+      );
+    if (activeTab === "Completed") return isFullyComplete;
     return false;
   });
 
@@ -132,7 +142,6 @@ const LmsMyLearning = () => {
                 "You don't have any active courses yet."}
               {activeTab === "Completed" &&
                 "You haven't completed any courses yet."}
-              {activeTab === "Saved" && "You haven't saved any courses yet."}
             </p>
             <Button asChild variant="outline">
               <Link to="/explore">Browse Courses</Link>
@@ -197,10 +206,6 @@ const LmsMyLearning = () => {
                           </div>
                         </div>
                       </div>
-
-                      <button className="text-slate-400 hover:text-slate-600">
-                        <MoreHorizontal className="w-5 h-5" />
-                      </button>
                     </div>
 
                     {/* Progress Section - Shows only for active courses */}
@@ -243,14 +248,13 @@ const LmsMyLearning = () => {
                           </Button>
                         </div>
 
-                        <div className="space-y-1">
+                        <div className="space-y-1 max-w-xs">
                           <Progress
                             value={currentProgress}
                             className="h-1.5 bg-slate-100"
                           />
                           <p className="text-[11px] text-muted-foreground">
-                            {currentProgress}% complete • Estimated completion:
-                            Apr 8, 2026
+                            {currentProgress}% complete
                           </p>
                         </div>
                       </div>

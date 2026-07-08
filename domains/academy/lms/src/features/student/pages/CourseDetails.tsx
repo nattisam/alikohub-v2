@@ -602,12 +602,18 @@ const CourseDetails = () => {
                 Contact our team for bulk enrollment and custom training
                 options.
               </p>
-              <Button
-                variant="outline"
-                className="w-full border-white/30 hover:bg-white/10 text-white bg-transparent h-12 rounded-xl transition-all"
+              <a
+                href="https://academy.alikohub.com/contact"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Learn More
-              </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-white/30 hover:bg-white/10 text-white bg-transparent h-12 rounded-xl transition-all"
+                >
+                  Learn More
+                </Button>
+              </a>
             </div>
           </div>
         </div>

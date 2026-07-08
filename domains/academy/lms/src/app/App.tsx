@@ -36,6 +36,7 @@ import LessonView from "@/features/student/lessons/LessonView";
 import StudentProgress from "@/features/student/pages/StudentProgress";
 import InstructorAnalytics from "@/features/instructor/analytics/InstructorAnalytics";
 import Submissions from "@/features/instructor/analytics/Submissions";
+import SubmissionDetail from "@/features/instructor/analytics/SubmissionDetail";
 
 // Pages - Instructor/Admin
 import AdminDashboard from "@/features/admin/pages/AdminDashboard";
@@ -52,6 +53,8 @@ import Photo from "@/features/student/account/Photo";
 import Subscriptions from "@/features/student/account/Subscriptions";
 import CareerHub from "@/features/student/account/CareerHub";
 import TransactionsPage from "@/features/student/account/Transactions";
+import PeerGrading from "@/features/student/pages/PeerGrading";
+import PeerGradingDetail from "@/features/student/pages/PeerGradingDetail";
 
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 
@@ -109,6 +112,8 @@ const AppInner = () => {
         <Route path="/certifications" element={<Certifications />} />
         <Route path="/career-hub" element={<CareerHub />} />
         <Route path="/transactions" element={<TransactionsPage />} />
+        <Route path="/peer-grading" element={<PeerGrading />} />
+        <Route path="/peer-grading/:courseId" element={<PeerGradingDetail />} />
 
         {/* Instructor Routes */}
         <Route element={<InstructorRoute />}>
@@ -121,6 +126,10 @@ const AppInner = () => {
             element={<InstructorAnalytics />}
           />
           <Route path="/instructor/submissions" element={<Submissions />} />
+          <Route
+            path="/instructor/submissions/:submissionId"
+            element={<SubmissionDetail />}
+          />
           <Route path="/instructor/schedules" element={<Schedules />} />
           <Route path="/instructor/settings" element={<InstructorSettings />} />
         </Route>

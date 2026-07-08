@@ -7,6 +7,7 @@ import {
   Briefcase,
   X,
   Receipt,
+  MessageSquareText,
 } from "lucide-react";
 import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ const mainNav = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "My Learning", to: "/learning", icon: BookOpen, badge: 2 },
   { label: "Explore", to: "/courses", icon: Compass },
+  { label: "Peer Grading", to: "/peer-grading", icon: MessageSquareText },
 ];
 
 const achieveNav = [

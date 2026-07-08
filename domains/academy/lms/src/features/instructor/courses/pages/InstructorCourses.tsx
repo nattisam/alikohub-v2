@@ -206,9 +206,6 @@ const InstructorCourses = () => {
               <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 Platform Statistics
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">
-                Last updated just now
-              </span>
             </div>
 
             {/* Two metric cells */}

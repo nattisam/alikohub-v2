@@ -10,6 +10,7 @@ import {
   Repeat,
   Clock,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -82,6 +83,8 @@ const LmsNavbar = () => {
     user?.roleStatus?.instructor === "pending" ||
     user?.roleStatus?.instructor?.toUpperCase() === "PENDING";
 
+  const isOnApplyPage = location.pathname === "/instructor/apply";
+
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
       <div className="section-container flex items-center justify-between h-16 md:h-20 md:grid md:grid-cols-3">
@@ -133,7 +136,27 @@ const LmsNavbar = () => {
               className="gap-2 border-primary/20 text-primary cursor-pointer shadow-sm"
             >
               <Repeat className="w-4 h-4" />
-              Switch to Instructor
+              Instructor view
+            </Button>
+          ) : isOnApplyPage ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className="gap-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+            >
+              <GraduationCap className="w-4 h-4" />
+              Student view
+            </Button>
+          ) : isPending ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="gap-2 border-border text-muted-foreground shadow-sm"
+            >
+              <Clock className="w-4 h-4" />
+              Application pending
             </Button>
           ) : (
             <Button
@@ -143,17 +166,8 @@ const LmsNavbar = () => {
               className="gap-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
             >
               <Link to="/instructor/apply">
-                {isPending ? (
-                  <>
-                    <Clock className="w-4 h-4" />
-                    Application Pending
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Become an Instructor
-                  </>
-                )}
+                <Sparkles className="w-4 h-4" />
+                Apply for instructor
               </Link>
             </Button>
           )}
@@ -311,14 +325,35 @@ const LmsNavbar = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
-                  onClick={() => {
-                    handleSwitchRole();
-                    setOpen(false);
-                  }}
+                  onClick={() => { handleSwitchRole(); setOpen(false); }}
                   disabled={isSwitching}
                 >
                   <Repeat className="w-4 h-4" />
-                  Switch to Instructor
+                  Instructor view
+                </Button>
+              </div>
+            ) : isOnApplyPage ? (
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2 border-primary/20 text-primary"
+                  onClick={() => { navigate("/dashboard"); setOpen(false); }}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  Student view
+                </Button>
+              </div>
+            ) : isPending ? (
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2 border-border text-muted-foreground"
+                  disabled
+                >
+                  <Clock className="w-4 h-4" />
+                  Application pending
                 </Button>
               </div>
             ) : (
@@ -331,17 +366,8 @@ const LmsNavbar = () => {
                   onClick={() => setOpen(false)}
                 >
                   <Link to="/instructor/apply">
-                    {isPending ? (
-                      <>
-                        <Clock className="w-4 h-4" />
-                        Application Pending
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        Become an Instructor
-                      </>
-                    )}
+                    <Sparkles className="w-4 h-4" />
+                    Apply for instructor
                   </Link>
                 </Button>
               </div>

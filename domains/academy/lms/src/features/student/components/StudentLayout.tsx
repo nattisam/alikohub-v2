@@ -7,6 +7,7 @@ import {
   LogOut,
   ChevronDown,
   Menu,
+  GraduationCap,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,12 @@ import {
   useSwitchAcademyRole,
   useLogout,
 } from "@/features/auth/hooks/useAuth";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 const StudentLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: user } = useUser();
   const { mutate: switchRole, isPending: isSwitching } = useSwitchAcademyRole();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -57,6 +59,9 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
     instructorStatus === "PENDING" ||
     user?.roleStatus?.instructor === "pending" ||
     user?.roleStatus?.instructor?.toUpperCase() === "PENDING";
+
+  // Whether the user is currently on the apply-for-instructor page
+  const isOnApplyPage = location.pathname === "/instructor/apply";
 
   const userInitials = user
     ? `${user.firstname?.charAt(0) || ""}${user.lastname?.charAt(0) || ""}`.toUpperCase()
@@ -111,8 +116,9 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            {/* Instructor view / switch */}
+            {/* Role button — three states */}
             {isInstructor ? (
+              /* Approved instructor: switch to instructor dashboard */
               <Button
                 variant="outline"
                 size="sm"
@@ -123,7 +129,30 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
                 <Repeat className="w-3.5 h-3.5" />
                 Instructor view
               </Button>
+            ) : isOnApplyPage ? (
+              /* On the apply page: show "Student view" to go back to dashboard */
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard")}
+                className="gap-2 text-primary border-primary/20 hover:bg-primary/10 hover:text-primary text-xs h-9 hidden sm:flex transition-colors"
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                Student view
+              </Button>
+            ) : isPending ? (
+              /* Application submitted but not yet approved: disabled pending state */
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                className="gap-2 text-muted-foreground border-border text-xs h-9 hidden sm:flex"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Application pending
+              </Button>
             ) : (
+              /* New user: no application yet */
               <Button
                 variant="outline"
                 size="sm"
@@ -132,7 +161,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
               >
                 <Link to="/instructor/apply">
                   <Sparkles className="w-3.5 h-3.5" />
-                  {isPending ? "Application pending" : "Instructor view"}
+                  Apply for instructor
                 </Link>
               </Button>
             )}
@@ -184,7 +213,7 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                   </div>
 
-                  {/* Mobile-only: Instructor switch inside dropdown */}
+                  {/* Mobile-only: role button inside dropdown */}
                   <div className="sm:hidden py-1 border-b">
                     {isInstructor ? (
                       <button
@@ -196,14 +225,27 @@ const StudentLayout = ({ children }: { children: React.ReactNode }) => {
                       >
                         <Repeat className="w-4 h-4" /> Instructor view
                       </button>
+                    ) : isOnApplyPage ? (
+                      <button
+                        onClick={() => {
+                          navigate("/dashboard");
+                          setProfileOpen(false);
+                        }}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors w-full text-left"
+                      >
+                        <GraduationCap className="w-4 h-4" /> Student view
+                      </button>
+                    ) : isPending ? (
+                      <span className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground">
+                        <Sparkles className="w-4 h-4" /> Application pending
+                      </span>
                     ) : (
                       <Link
                         to="/instructor/apply"
                         onClick={() => setProfileOpen(false)}
                         className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
                       >
-                        <Sparkles className="w-4 h-4" />
-                        {isPending ? "Application pending" : "Instructor view"}
+                        <Sparkles className="w-4 h-4" /> Apply for instructor
                       </Link>
                     )}
                   </div>

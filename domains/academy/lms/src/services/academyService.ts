@@ -187,6 +187,17 @@ export const academyService = {
     return response.data;
   },
 
+  getMySubmissions: async (params?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+  }) => {
+    const response = await api.get("/academy/exercises/my-submissions", {
+      params,
+    });
+    return response.data;
+  },
+
   getCourseReport: async (courseId: string) => {
     const response = await api.get(
       `/academy/progress/course/${courseId}/report`,

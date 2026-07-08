@@ -1,26 +1,9 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import InstructorLayout from "@/features/instructor/components/InstructorLayout";
-import {
-  CheckCircle2,
-  X,
-  Inbox,
-  Search,
-  ArrowUpDown,
-  MoreVertical,
-  Mail,
-  ClipboardCheck,
-  Hourglass,
-  ListChecks,
-} from "lucide-react";
-import {
-  useInstructorSubmissions,
-  useGradeSubmission,
-} from "@/hooks/useAcademy";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Inbox, Search, MoreVertical } from "lucide-react";
+import { useInstructorSubmissions } from "@/hooks/useAcademy";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -30,14 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -46,6 +21,16 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 const cleanTitle = (raw: string | undefined | null) => {
@@ -71,20 +56,20 @@ const avatarPalette = (key: string) => {
   return AVATAR_PALETTES[hash];
 };
 
+// Grade distribution buckets
+const GRADE_BUCKETS = [
+  { label: "0-20", min: 0, max: 20 },
+  { label: "21-40", min: 21, max: 40 },
+  { label: "41-60", min: 41, max: 60 },
+  { label: "61-80", min: 61, max: 80 },
+  { label: "81-100", min: 81, max: 100 },
+];
+
 const InstructorSubmissions = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
-  const [selectedGroup, setSelectedGroup] = useState<any | null>(null);
-  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(
-    null,
-  );
-  const [gradingForm, setGradingForm] = useState({
-    score: 0,
-    feedback: "",
-    isCorrect: true,
-  });
 
   const { data: submissionsData, isLoading } = useInstructorSubmissions({
     page: 1,
@@ -92,7 +77,6 @@ const InstructorSubmissions = () => {
     status: statusFilter === "ALL" ? undefined : (statusFilter as any),
   });
 
-  const gradeMutation = useGradeSubmission();
   const rawSubmissions = submissionsData?.items ?? [];
 
   // ── Flatten & Group for Table View ─────────────────────────────────────
@@ -169,34 +153,53 @@ const InstructorSubmissions = () => {
     return Array.from(courses.entries()).map(([id, title]) => ({ id, title }));
   }, [rawSubmissions]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────
-  const openGradeModal = (sub: any) => {
-    setSelectedSubmission(sub);
-    setGradingForm({
-      score: sub.score ?? 0,
-      feedback: sub.feedback ?? "",
-      isCorrect: sub.isCorrect ?? true,
-    });
-  };
+  // ── Task 1: Grading & Submission Stats ─────────────────────────────────
+  const gradingStats = useMemo(() => {
+    const total = groupedSubmissions.length;
+    const returned = groupedSubmissions.filter(
+      (g: any) => g.status === "GRADED" && g.totalScore > 0,
+    ).length;
+    const draft = groupedSubmissions.filter(
+      (g: any) => g.status === "PENDING",
+    ).length;
+    const notGraded = groupedSubmissions.filter(
+      (g: any) => g.status === "GRADED" && g.totalScore === 0,
+    ).length;
+    return { total, returned, draft, notGraded };
+  }, [groupedSubmissions]);
 
-  const submitGrade = () => {
-    if (!selectedSubmission) return;
-    gradeMutation.mutate(
-      { submissionId: selectedSubmission.id, data: gradingForm },
-      {
-        onSuccess: (updatedSub) => {
-          setSelectedSubmission(null);
-          if (selectedGroup) {
-            const updatedSubs = selectedGroup.submissions.map((s: any) =>
-              s.id === selectedSubmission.id
-                ? { ...s, ...updatedSub, status: "GRADED" }
-                : s,
-            );
-            setSelectedGroup({ ...selectedGroup, submissions: updatedSubs });
-          }
-        },
-      },
-    );
+  const submissionStats = useMemo(() => {
+    const total = groupedSubmissions.length;
+    // "On Time" = graded submissions; "Late" = pending; "Missing" = no submission (0 score + no gradedAt)
+    const onTime = groupedSubmissions.filter(
+      (g: any) => g.status === "GRADED" && g.gradedAt,
+    ).length;
+    const late = groupedSubmissions.filter(
+      (g: any) => g.status === "PENDING",
+    ).length;
+    const missing = groupedSubmissions.filter(
+      (g: any) => g.maxPoints === 0,
+    ).length;
+    return { total, onTime, late, missing };
+  }, [groupedSubmissions]);
+
+  // ── Task 2: Grade Distribution Buckets ─────────────────────────────────
+  const gradeDistribution = useMemo(() => {
+    return GRADE_BUCKETS.map((bucket) => {
+      const count = groupedSubmissions.filter((g: any) => {
+        if (g.status === "PENDING" || g.maxPoints === 0) return false;
+        const pct = Math.round((g.totalScore / g.maxPoints) * 100);
+        return pct >= bucket.min && pct <= bucket.max;
+      }).length;
+      return { label: bucket.label, count };
+    });
+  }, [groupedSubmissions]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────
+  const viewSubmissionDetail = (sub: any) => {
+    navigate(`/instructor/submissions/${sub.id}`, {
+      state: { group: sub },
+    });
   };
 
   return (
@@ -224,43 +227,171 @@ const InstructorSubmissions = () => {
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
             </button>
           </div>
+        </div>
+      </div>
 
-          <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="relative group w-80">
+      {/* ── Main Content ── */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 py-6 space-y-6">
+          {/* ── Task 5: Course Filter (week-style) ── */}
+          <div className="flex items-center gap-3">
+            <Select value={courseFilter} onValueChange={setCourseFilter}>
+              <SelectTrigger className="h-9 w-[180px] rounded-lg border-slate-200 bg-white text-sm font-medium shadow-sm">
+                <SelectValue placeholder="All Courses" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg shadow-xl">
+                <SelectItem value="ALL">All Courses</SelectItem>
+                {uniqueCourses.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* ── Task 3: Stats + Chart Row ── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Card 1 – Grading Stat */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                Grading Stat
+              </p>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-4xl font-bold text-slate-900">
+                  {gradingStats.total}
+                </span>
+                <span className="text-sm text-slate-500 font-medium leading-tight">
+                  Total
+                  <br />
+                  Number
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Returned</span>
+                  <span className="font-semibold text-slate-700">
+                    {gradingStats.returned}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Draft</span>
+                  <span className="font-semibold text-slate-700">
+                    {gradingStats.draft}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-amber-500 font-medium">Not Graded</span>
+                  <span className="font-semibold text-amber-500">
+                    {gradingStats.notGraded}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2 – Submission Stat */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                Submission Stat
+              </p>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-4xl font-bold text-slate-900">
+                  {submissionStats.total}
+                </span>
+                <span className="text-sm text-slate-500 font-medium leading-tight">
+                  Total
+                  <br />
+                  Submission
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">On Time</span>
+                  <span className="font-semibold text-slate-700">
+                    {submissionStats.onTime}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-amber-500 font-medium">Late</span>
+                  <span className="font-semibold text-amber-500">
+                    {submissionStats.late}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-amber-500 font-medium">Missing</span>
+                  <span className="font-semibold text-amber-500">
+                    {submissionStats.missing}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3 – Grade Distribution Chart */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                Grade Distribution
+              </p>
+              <ResponsiveContainer width="100%" height={150}>
+                <BarChart
+                  data={gradeDistribution}
+                  margin={{ top: 10, right: 4, left: -28, bottom: 0 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid vertical={false} stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "#f8fafc" }}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid #e2e8f0",
+                      fontSize: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    }}
+                    formatter={(value: number) => [value, "Students"]}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {gradeDistribution.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.count > 0 ? "#f97316" : "#fed7aa"}
+                        fillOpacity={entry.count > 0 ? 0.85 : 0.4}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* ── Task 4: Search + Table ── */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Search bar inside table card */}
+            <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <div className="relative group w-72">
                 <Search
                   className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
-                  size={17}
+                  size={16}
                 />
                 <Input
                   placeholder="Search submissions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 rounded-lg border-slate-200 bg-slate-50/50 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 transition-all text-sm font-medium"
+                  className="pl-10 h-9 rounded-lg border-slate-200 bg-slate-50/50 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 transition-all text-sm font-medium"
                 />
               </div>
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="h-10 w-[200px] rounded-lg border-slate-200 bg-slate-50/50 text-sm font-medium">
-                  <SelectValue placeholder="All Courses" />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg shadow-xl">
-                  <SelectItem value="ALL">All Courses</SelectItem>
-                  {uniqueCourses.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* ── Table ── */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar bg-slate-50/10">
-        <div className="max-w-screen-2xl mx-auto">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow className="border-b border-slate-200/60">
@@ -290,7 +421,7 @@ const InstructorSubmissions = () => {
                   ? Array.from({ length: 8 }).map((_, i) => (
                       <TableRow key={i} className="animate-pulse">
                         <TableCell colSpan={7} className="py-6 px-6">
-                          <div className="h-4 bg-slate-50 rounded w-full" />
+                          <div className="h-4 bg-slate-100 rounded w-full" />
                         </TableCell>
                       </TableRow>
                     ))
@@ -309,7 +440,7 @@ const InstructorSubmissions = () => {
                           <div className="flex items-center gap-3">
                             <div
                               className={cn(
-                                "h-8 w-8 shrink-0 rounded-full flex items-center justify-center font-bold text-[10px] text-white",
+                                "h-8 w-8 shrink-0 rounded-full flex items-center justify-center font-bold text-[10px]",
                                 avatarPalette(sub.user?.email ?? sub.userId),
                               )}
                             >
@@ -347,232 +478,21 @@ const InstructorSubmissions = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right pr-6">
-                          <Sheet
-                            open={selectedGroup?.id === sub.id}
-                            onOpenChange={(o) => !o && setSelectedGroup(null)}
+                          <button
+                            onClick={() => viewSubmissionDetail(sub)}
+                            className="p-2 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                           >
-                            <SheetTrigger asChild>
-                              <button
-                                onClick={() => setSelectedGroup(sub)}
-                                className="p-2 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                              >
-                                <MoreVertical size={18} />
-                              </button>
-                            </SheetTrigger>
-
-                            {/* ── Submission Review Panel ── */}
-                            <SheetContent
-                              className={cn(
-                                "sm:max-w-[640px] p-0 border-l border-slate-200 shadow-2xl",
-                                "flex flex-col h-full bg-white overflow-hidden",
-                                // Smoother, GPU-accelerated slide transition
-                                "transform-gpu will-change-transform",
-                                "data-[state=open]:duration-300 data-[state=closed]:duration-200",
-                                "data-[state=open]:ease-out data-[state=closed]:ease-in",
-                              )}
-                            >
-                              <SheetHeader className="px-7 py-6 bg-white border-b border-slate-100 shrink-0 text-left space-y-0">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                                    Submission Review
-                                  </span>
-                                  <Badge
-                                    variant="secondary"
-                                    className={cn(
-                                      "border-none font-semibold text-[10px] tracking-wide px-2.5 py-1 rounded-full",
-                                      sub.status === "GRADED"
-                                        ? "bg-emerald-50 text-emerald-700"
-                                        : "bg-amber-50 text-amber-700",
-                                    )}
-                                  >
-                                    {sub.status === "GRADED"
-                                      ? "Graded"
-                                      : "Needs review"}
-                                  </Badge>
-                                </div>
-
-                                <SheetTitle className="text-xl font-bold text-slate-900 mt-2 leading-snug">
-                                  {sub.quizTitle}
-                                </SheetTitle>
-
-                                <SheetDescription asChild>
-                                  <div className="flex items-center gap-3 mt-4">
-                                    <div
-                                      className={cn(
-                                        "h-9 w-9 rounded-full flex items-center justify-center font-semibold text-xs text-white shrink-0",
-                                        avatarPalette(
-                                          sub.user?.email ?? sub.userId,
-                                        ),
-                                      )}
-                                    >
-                                      {initialsOf(
-                                        sub.user?.firstname,
-                                        sub.user?.lastname,
-                                      )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="font-semibold text-slate-800 text-sm leading-tight">
-                                        {sub.user?.firstname}{" "}
-                                        {sub.user?.lastname}
-                                      </span>
-                                      <span className="flex items-center gap-1 text-slate-400 text-xs leading-tight mt-0.5">
-                                        <Mail size={11} />
-                                        {sub.user?.email}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </SheetDescription>
-                              </SheetHeader>
-
-                              <div className="flex-1 overflow-y-auto custom-scrollbar text-left">
-                                {/* Stats strip */}
-                                <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
-                                  <div className="px-6 py-5">
-                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                      <ListChecks size={12} />
-                                      Score
-                                    </p>
-                                    <div className="flex items-baseline gap-1">
-                                      <span className="text-xl font-bold text-slate-900">
-                                        {sub.totalScore}
-                                      </span>
-                                      <span className="text-xs font-medium text-slate-400">
-                                        / {sub.maxPoints} pts
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="px-6 py-5">
-                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                      {sub.status === "GRADED" ? (
-                                        <ClipboardCheck size={12} />
-                                      ) : (
-                                        <Hourglass size={12} />
-                                      )}
-                                      Status
-                                    </p>
-                                    <div className="text-base font-bold text-slate-900">
-                                      {sub.status === "GRADED"
-                                        ? "Completed"
-                                        : "Action needed"}
-                                    </div>
-                                  </div>
-                                  <div className="px-6 py-5">
-                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                                      Questions
-                                    </p>
-                                    <div className="text-base font-bold text-slate-900">
-                                      {sub.submissions.length}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Responses */}
-                                <div className="px-7 py-6 space-y-4">
-                                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                                    <ArrowUpDown size={13} />
-                                    Detailed responses
-                                  </h3>
-
-                                  {sub.submissions.map(
-                                    (item: any, idx: number) => (
-                                      <div
-                                        key={item.id}
-                                        className="rounded-xl border border-slate-200 overflow-hidden"
-                                      >
-                                        <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                                          <div className="flex items-center gap-2.5">
-                                            <span className="h-5 w-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-semibold">
-                                              {idx + 1}
-                                            </span>
-                                            <span className="text-xs font-medium text-slate-500">
-                                              Question {idx + 1}
-                                            </span>
-                                          </div>
-                                          <Badge
-                                            className={cn(
-                                              "font-semibold text-[9px] uppercase tracking-wide px-2 py-0.5 rounded-full border-none",
-                                              item.status === "PENDING"
-                                                ? "bg-amber-50 text-amber-600"
-                                                : item.isCorrect
-                                                  ? "bg-emerald-50 text-emerald-700"
-                                                  : "bg-rose-50 text-rose-600",
-                                            )}
-                                          >
-                                            {item.status === "PENDING"
-                                              ? "Needs grading"
-                                              : item.isCorrect
-                                                ? "Correct"
-                                                : "Incorrect"}
-                                          </Badge>
-                                        </div>
-
-                                        <div className="p-5 space-y-4">
-                                          <p className="text-sm font-semibold text-slate-800 leading-relaxed">
-                                            {cleanTitle(item.exercise?.title)}
-                                          </p>
-
-                                          <div className="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
-                                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                                              Student response
-                                            </p>
-                                            <p className="text-sm text-slate-700 leading-relaxed">
-                                              {item.answer || (
-                                                <span className="italic text-slate-400">
-                                                  No response submitted
-                                                </span>
-                                              )}
-                                            </p>
-                                          </div>
-
-                                          {item.feedback && (
-                                            <div className="rounded-lg bg-blue-50/60 border border-blue-100 px-4 py-3">
-                                              <p className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider mb-1.5">
-                                                Your feedback
-                                              </p>
-                                              <p className="text-sm text-slate-700 leading-relaxed">
-                                                {item.feedback}
-                                              </p>
-                                            </div>
-                                          )}
-
-                                          <div className="flex items-center justify-between pt-1">
-                                            <div className="flex items-baseline gap-1">
-                                              <span className="text-lg font-bold text-slate-900">
-                                                {item.score}
-                                              </span>
-                                              <span className="text-xs font-medium text-slate-400">
-                                                / {item.exercise?.points} pts
-                                              </span>
-                                            </div>
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() =>
-                                                openGradeModal(item)
-                                              }
-                                              className="h-9 rounded-lg px-4 font-semibold text-xs border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                                            >
-                                              {item.status === "PENDING"
-                                                ? "Grade question"
-                                                : "Modify grade"}
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ),
-                                  )}
-                                </div>
-                              </div>
-                            </SheetContent>
-                          </Sheet>
+                            <MoreVertical size={18} />
+                          </button>
                         </TableCell>
                       </TableRow>
                     ))}
               </TableBody>
             </Table>
+
             {!isLoading && groupedSubmissions.length === 0 && (
               <div className="py-20 flex flex-col items-center justify-center gap-4">
-                <Inbox size={48} className="text-slate-100" />
+                <Inbox size={48} className="text-slate-200" />
                 <p className="font-bold text-slate-400">
                   No submissions found.
                 </p>
@@ -581,117 +501,6 @@ const InstructorSubmissions = () => {
           </div>
         </div>
       </div>
-
-      {/* ── Grading Overlay ── */}
-      <Dialog
-        open={!!selectedSubmission}
-        onOpenChange={(open) => !open && setSelectedSubmission(null)}
-      >
-        <DialogContent className="sm:max-w-[480px] bg-white rounded-2xl border border-slate-200 shadow-xl p-0 overflow-hidden flex flex-col max-h-[90vh] gap-0 text-left">
-          <div className="px-7 pt-6 pb-5 border-b border-slate-100 shrink-0">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-600">
-              Grade entry
-            </span>
-            <DialogTitle className="text-lg font-bold text-slate-900 mt-1">
-              {cleanTitle(selectedSubmission?.exercise?.title) ||
-                "Manual assessment"}
-            </DialogTitle>
-          </div>
-
-          <div className="px-7 py-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
-            <div>
-              <label className="text-xs font-semibold text-slate-500 mb-2 block">
-                Score
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min={0}
-                  max={selectedSubmission?.exercise?.points}
-                  value={gradingForm.score}
-                  onChange={(e) =>
-                    setGradingForm({
-                      ...gradingForm,
-                      score: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  className="h-11 w-24 rounded-lg border-slate-200 bg-white text-base font-semibold text-center"
-                />
-                <span className="text-sm text-slate-400 font-medium">
-                  out of {selectedSubmission?.exercise?.points} pts
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-500 mb-2 block">
-                Verdict
-              </label>
-              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 gap-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setGradingForm({ ...gradingForm, isCorrect: true })
-                  }
-                  className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-md px-4 h-9 font-medium text-sm transition-colors",
-                    gradingForm.isCorrect
-                      ? "bg-white text-emerald-600 shadow-sm"
-                      : "text-slate-400 hover:text-slate-600",
-                  )}
-                >
-                  <CheckCircle2 size={15} /> Correct
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setGradingForm({ ...gradingForm, isCorrect: false })
-                  }
-                  className={cn(
-                    "flex items-center justify-center gap-1.5 rounded-md px-4 h-9 font-medium text-sm transition-colors",
-                    !gradingForm.isCorrect
-                      ? "bg-white text-rose-600 shadow-sm"
-                      : "text-slate-400 hover:text-slate-600",
-                  )}
-                >
-                  <X size={15} /> Incorrect
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-500 mb-2 block">
-                Feedback for student
-              </label>
-              <Textarea
-                value={gradingForm.feedback}
-                onChange={(e) =>
-                  setGradingForm({ ...gradingForm, feedback: e.target.value })
-                }
-                placeholder="Tell the student how to improve..."
-                className="min-h-[110px] rounded-lg border-slate-200 bg-white p-3.5 text-sm resize-none focus-visible:ring-blue-500/20 focus-visible:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="px-7 py-4 flex justify-end gap-2.5 shrink-0 border-t border-slate-100 bg-slate-50/60">
-            <Button
-              variant="ghost"
-              onClick={() => setSelectedSubmission(null)}
-              className="h-9 px-4 rounded-lg font-medium text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={submitGrade}
-              disabled={gradeMutation.isPending}
-              className="h-9 px-5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700"
-            >
-              {gradeMutation.isPending ? "Saving..." : "Save grade"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }

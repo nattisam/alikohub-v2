@@ -17,9 +17,6 @@ const InstructorSchedules = () => {
               Manage your live sessions, cohorts, and upcoming deadlines.
             </p>
           </div>
-          <Button className="gap-2 bg-accent hover:bg-amber-light text-slate-900">
-            <PlusCircle className="w-4 h-4" /> Create Live Session
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

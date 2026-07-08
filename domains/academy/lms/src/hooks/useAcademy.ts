@@ -326,6 +326,19 @@ export const useCourseReport = (courseId: string) => {
   });
 };
 
+export const useMySubmissions = (params?: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+}) => {
+  return useQuery({
+    queryKey: ["my-submissions", params],
+    queryFn: () => academyService.getMySubmissions(params),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
 // Instructor Hooks
 export const useInstructorCourses = (params?: any) => {
   return useQuery({
