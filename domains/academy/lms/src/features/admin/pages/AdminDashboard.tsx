@@ -61,6 +61,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useTheme } from "@/context/ThemeContext";
 import { ThemeToggle } from "@/features/admin/components/ThemeToggle";
+import { AdminAnnouncements } from "@/features/admin/components/AdminAnnouncements";
 
 // Deterministic color assignment for applicant avatar circles
 const AVATAR_COLORS = [
@@ -122,6 +123,7 @@ const AdminDashboard = () => {
     if (path === "/admin/applications") return "applications";
     if (path === "/admin/analytics") return "analytics";
     if (path === "/admin/transactions") return "transactions";
+    if (path === "/admin/announcements") return "announcements";
     return "courses";
   };
 
@@ -351,7 +353,9 @@ const AdminDashboard = () => {
                 ? "Teacher Applications"
                 : activeTab === "transactions"
                   ? "Platform payments"
-                  : "Platform Analytics"
+                  : activeTab === "announcements"
+                    ? "Announcements Manager"
+                    : "Platform Analytics"
           }
           darkTheme={isDark}
         />
@@ -1118,6 +1122,8 @@ const AdminDashboard = () => {
               </div>
             </div>
           )}
+
+          {activeTab === "announcements" && <AdminAnnouncements />}
         </main>
 
         {selectedApp && (

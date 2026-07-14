@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import NotificationFCMProvider from "@/components/shared/NotificationFCMProvider";
 
 // Auth & Layout
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
@@ -13,6 +14,8 @@ import InstructorRoute from "@/components/shared/InstructorRoute";
 // Pages - Auth
 import LoginPage from "@/features/auth/pages/Login";
 import RegisterPage from "@/features/auth/pages/Register";
+import ForgotPasswordPage from "@/features/auth/pages/ForgotPassword";
+import ResetPasswordPage from "@/features/auth/pages/ResetPassword";
 
 import NotFound from "@/components/shared/NotFound";
 
@@ -55,6 +58,8 @@ import CareerHub from "@/features/student/account/CareerHub";
 import TransactionsPage from "@/features/student/account/Transactions";
 import PeerGrading from "@/features/student/pages/PeerGrading";
 import PeerGradingDetail from "@/features/student/pages/PeerGradingDetail";
+import StudentSchedules from "@/features/student/pages/StudentSchedules";
+import AnnouncementsPage from "@/features/student/pages/Announcements";
 
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 
@@ -87,6 +92,8 @@ const AppInner = () => {
       {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Default Redirect */}
       <Route path="/" element={<LoginPage />} />
@@ -101,6 +108,8 @@ const AppInner = () => {
         <Route path="/learn/:id" element={<LessonView />} />
         <Route path="/instructor/apply" element={<ApplyInstructor />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/schedules" element={<StudentSchedules />} />
+        <Route path="/announcements" element={<AnnouncementsPage />} />
 
         {/* Account Routes */}
         <Route path="/profile" element={<Profile />} />
@@ -141,6 +150,7 @@ const AppInner = () => {
           <Route path="/admin/courses" element={<AdminDashboard />} />
           <Route path="/admin/analytics" element={<AdminDashboard />} />
           <Route path="/admin/transactions" element={<AdminDashboard />} />
+          <Route path="/admin/announcements" element={<AdminDashboard />} />
         </Route>
       </Route>
 
@@ -157,7 +167,9 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <AppInner />
+          <NotificationFCMProvider>
+            <AppInner />
+          </NotificationFCMProvider>
         </TooltipProvider>
       </ThemeProvider>
     </BrowserRouter>

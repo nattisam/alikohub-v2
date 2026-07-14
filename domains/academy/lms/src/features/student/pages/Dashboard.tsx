@@ -24,6 +24,7 @@ import {
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import StudentLayout from "@/features/student/components/StudentLayout";
+import NotificationPromptBanner from "@/components/shared/NotificationPromptBanner";
 
 const upcomingWebinars = [
   {
@@ -240,6 +241,9 @@ const StudentDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* ── Push Notification Prompt ── */}
+        <NotificationPromptBanner />
 
         {/* ── Two-column layout ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

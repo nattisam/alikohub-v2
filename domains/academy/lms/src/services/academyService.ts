@@ -91,18 +91,22 @@ export const academyService = {
     };
   },
 
-  // Student Endpoints
+  // Student/Shared Endpoints
+  getCourseSchedules: async (courseId: string | number) => {
+    const response = await api.get(
+      `/academy/teaching-schedules/course/${courseId}`,
+    );
+    return response.data;
+  },
+
   enrollInCourse: async (
     courseId: string | number,
     paymentGateway?: string,
   ) => {
-    const response = await api.post<Enrollment>(
-      `/academy/enrollment`,
-      {
-        courseId: Number(courseId),
-        ...(paymentGateway && { paymentGateway }),
-      },
-    );
+    const response = await api.post<Enrollment>(`/academy/enrollment`, {
+      courseId: Number(courseId),
+      ...(paymentGateway && { paymentGateway }),
+    });
     return response.data;
   },
 
@@ -111,14 +115,11 @@ export const academyService = {
     courseId: string | number,
     paymentGateway?: string,
   ) => {
-    const response = await api.post<Enrollment>(
-      `/academy/enrollment`,
-      {
-        courseId: Number(courseId),
-        cohortId: Number(cohortId),
-        ...(paymentGateway && { paymentGateway }),
-      },
-    );
+    const response = await api.post<Enrollment>(`/academy/enrollment`, {
+      courseId: Number(courseId),
+      cohortId: Number(cohortId),
+      ...(paymentGateway && { paymentGateway }),
+    });
     return response.data;
   },
 
@@ -222,6 +223,37 @@ export const academyService = {
 
   deleteNotification: async (notifId: string) => {
     const response = await api.delete(`/academy/notifications/${notifId}`);
+    return response.data;
+  },
+
+  // Announcements
+  getAnnouncements: async (params?: { page?: number; pageSize?: number }) => {
+    const response = await api.get<{
+      items: {
+        id: string;
+        title: string;
+        content: string;
+        createdAt: string;
+        updatedAt: string;
+      }[];
+      page: number;
+      pageSize: number;
+      total: number;
+      totalPages: number;
+    }>("/academy/announcements", { params });
+    return response.data;
+  },
+
+  createAnnouncement: async (data: { title: string; content: string }) => {
+    const response = await api.post("/academy/announcements", data);
+    return response.data;
+  },
+
+  // FCM token registration
+  registerFcmToken: async (token: string) => {
+    const response = await api.post("/academy/notifications/fcm-token", {
+      token,
+    });
     return response.data;
   },
 

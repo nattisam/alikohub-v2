@@ -8,16 +8,13 @@ import {
   X,
   Receipt,
   MessageSquareText,
+  CalendarDays,
+  Bell,
+  Megaphone,
 } from "lucide-react";
 import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 import { cn } from "@/lib/utils";
-
-const mainNav = [
-  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { label: "My Learning", to: "/learning", icon: BookOpen, badge: 2 },
-  { label: "Explore", to: "/courses", icon: Compass },
-  { label: "Peer Grading", to: "/peer-grading", icon: MessageSquareText },
-];
+import { useNotifications } from "@/hooks/useAcademy";
 
 const achieveNav = [
   { label: "Certifications", to: "/certifications", icon: Award },
@@ -40,6 +37,25 @@ interface StudentSidebarProps {
 
 const StudentSidebar = ({ isOpen = false, onClose }: StudentSidebarProps) => {
   const location = useLocation();
+  const { data: notifications } = useNotifications();
+
+  const unreadNotificationsCount =
+    notifications?.filter((n: any) => !n.isRead).length || 0;
+
+  const mainNav = [
+    { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+    { label: "My Learning", to: "/learning", icon: BookOpen, badge: 2 },
+    { label: "My Schedule", to: "/schedules", icon: CalendarDays },
+    { label: "Announcements", to: "/announcements", icon: Megaphone },
+    {
+      label: "Notifications",
+      to: "/notifications",
+      icon: Bell,
+      badge: unreadNotificationsCount,
+    },
+    { label: "Explore", to: "/courses", icon: Compass },
+    { label: "Peer Grading", to: "/peer-grading", icon: MessageSquareText },
+  ];
 
   const isActive = (to: string) => location.pathname === to;
 

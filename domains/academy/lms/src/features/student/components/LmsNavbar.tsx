@@ -325,7 +325,10 @@ const LmsNavbar = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start gap-2 border-primary/20 text-primary shadow-sm"
-                  onClick={() => { handleSwitchRole(); setOpen(false); }}
+                  onClick={() => {
+                    handleSwitchRole();
+                    setOpen(false);
+                  }}
                   disabled={isSwitching}
                 >
                   <Repeat className="w-4 h-4" />
@@ -338,7 +341,10 @@ const LmsNavbar = () => {
                   variant="outline"
                   size="sm"
                   className="w-full justify-start gap-2 border-primary/20 text-primary"
-                  onClick={() => { navigate("/dashboard"); setOpen(false); }}
+                  onClick={() => {
+                    navigate("/dashboard");
+                    setOpen(false);
+                  }}
                 >
                   <GraduationCap className="w-4 h-4" />
                   Student view

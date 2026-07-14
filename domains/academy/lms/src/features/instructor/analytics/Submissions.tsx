@@ -358,7 +358,7 @@ const InstructorSubmissions = () => {
                       fontSize: "12px",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                     }}
-                    formatter={(value: number) => [value, "Students"]}
+                    formatter={(value) => [value, "Students"]}
                   />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {gradeDistribution.map((entry, index) => (

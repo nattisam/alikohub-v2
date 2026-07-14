@@ -30,7 +30,9 @@ const parseOptions = (opts: any): string[] => {
   if (typeof opts === "string") {
     try {
       const p = JSON.parse(opts);
-      return Array.isArray(p) ? p : opts.split(",").map((o: string) => o.trim());
+      return Array.isArray(p)
+        ? p
+        : opts.split(",").map((o: string) => o.trim());
     } catch {
       return opts.split(",").map((o: string) => o.trim());
     }
@@ -67,21 +69,21 @@ const useCourseSubmissions = (courseTitleParam: string) => {
     if (!enrollments || !courseTitleParam) return "";
     const match = enrollments.find(
       (e: any) =>
-        (e.course?.title ?? "").toLowerCase() === courseTitleParam.toLowerCase(),
+        (e.course?.title ?? "").toLowerCase() ===
+        courseTitleParam.toLowerCase(),
     );
     return match ? String(match.courseId ?? match.course?.id ?? "") : "";
   }, [enrollments, courseTitleParam]);
 
   const reportQuery = useQueries({
-    queries: courseId
-      ? [
-          {
-            queryKey: ["course-report", courseId],
-            queryFn: () => academyService.getCourseReport(courseId),
-            staleTime: 2 * 60 * 1000,
-          },
-        ]
-      : [],
+    queries: [
+      {
+        queryKey: ["course-report", courseId],
+        queryFn: () => academyService.getCourseReport(courseId),
+        staleTime: 2 * 60 * 1000,
+        enabled: !!courseId,
+      },
+    ],
   });
 
   const report = reportQuery[0]?.data;
@@ -96,9 +98,17 @@ const useCourseSubmissions = (courseTitleParam: string) => {
   }, [enrollments, courseId]);
 
   // Collect submitted exercise ids from report
-  const submittedItems: Array<{ exerciseId: string; lessonTitle: string; reportEx: any }> = useMemo(() => {
+  const submittedItems: Array<{
+    exerciseId: string;
+    lessonTitle: string;
+    reportEx: any;
+  }> = useMemo(() => {
     if (!report || !Array.isArray(report)) return [];
-    const result: Array<{ exerciseId: string; lessonTitle: string; reportEx: any }> = [];
+    const result: Array<{
+      exerciseId: string;
+      lessonTitle: string;
+      reportEx: any;
+    }> = [];
     report.forEach((moduleObj: any) => {
       (moduleObj.lessons || []).forEach((lesson: any) => {
         const lessonTitle = lesson.title || lesson.lessonTitle || "";
@@ -197,7 +207,9 @@ const useCourseSubmissions = (courseTitleParam: string) => {
         const aRank = (a.feedback ? 2 : 0) + (a.status === "GRADED" ? 1 : 0);
         const bRank = (b.feedback ? 2 : 0) + (b.status === "GRADED" ? 1 : 0);
         if (aRank !== bRank) return bRank - aRank;
-        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+        return (
+          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+        );
       });
   }, [submittedItems, detailQueries, detailsLoading, courseTitle]);
 
@@ -217,14 +229,18 @@ const SubmissionCard = ({ sub }: { sub: FlatSubmission }) => {
             {sub.exerciseTitle}
           </p>
           {sub.question && sub.question !== sub.exerciseTitle && (
-            <p className="text-sm text-slate-500 mt-1 leading-relaxed">{sub.question}</p>
+            <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+              {sub.question}
+            </p>
           )}
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           {isGraded && (
             <span className="text-base font-bold text-slate-900">
               {sub.score ?? 0}
-              <span className="text-xs font-medium text-slate-400">/{sub.maxPoints}</span>
+              <span className="text-xs font-medium text-slate-400">
+                /{sub.maxPoints}
+              </span>
             </span>
           )}
           <Badge
@@ -253,7 +269,8 @@ const SubmissionCard = ({ sub }: { sub: FlatSubmission }) => {
             <div className="space-y-1.5">
               {sub.options.map((opt, i) => {
                 const isChosen = sub.answer === opt;
-                const isCorrectOpt = sub.correctAnswer !== null && sub.correctAnswer === opt;
+                const isCorrectOpt =
+                  sub.correctAnswer !== null && sub.correctAnswer === opt;
                 const isWrong = isChosen && sub.isCorrect === false;
                 return (
                   <div
@@ -272,11 +289,17 @@ const SubmissionCard = ({ sub }: { sub: FlatSubmission }) => {
                     )}
                   >
                     {isChosen && sub.isCorrect === true ? (
-                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                      <CheckCircle2
+                        size={14}
+                        className="text-emerald-500 shrink-0"
+                      />
                     ) : isWrong ? (
                       <XCircle size={14} className="text-rose-500 shrink-0" />
                     ) : isCorrectOpt && !isChosen ? (
-                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                      <CheckCircle2
+                        size={14}
+                        className="text-emerald-400 shrink-0"
+                      />
                     ) : (
                       <div className="w-3 h-3 rounded-full border-2 border-current shrink-0 opacity-40" />
                     )}
@@ -293,7 +316,9 @@ const SubmissionCard = ({ sub }: { sub: FlatSubmission }) => {
           ) : (
             <div className="rounded-lg bg-white border border-slate-200 px-4 py-3 text-sm text-slate-700 leading-relaxed">
               {sub.answer || (
-                <span className="italic text-slate-400">No response recorded</span>
+                <span className="italic text-slate-400">
+                  No response recorded
+                </span>
               )}
             </div>
           )}
@@ -305,12 +330,16 @@ const SubmissionCard = ({ sub }: { sub: FlatSubmission }) => {
             {sub.isCorrect ? (
               <>
                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                <span className="text-sm font-semibold text-emerald-700">Correct</span>
+                <span className="text-sm font-semibold text-emerald-700">
+                  Correct
+                </span>
               </>
             ) : (
               <>
                 <XCircle size={14} className="text-rose-500 shrink-0" />
-                <span className="text-sm font-semibold text-rose-700">Incorrect</span>
+                <span className="text-sm font-semibold text-rose-700">
+                  Incorrect
+                </span>
               </>
             )}
           </div>
@@ -328,7 +357,9 @@ const SubmissionCard = ({ sub }: { sub: FlatSubmission }) => {
             </div>
           </div>
         ) : isGraded ? (
-          <p className="text-xs text-slate-400 italic">No written feedback provided.</p>
+          <p className="text-xs text-slate-400 italic">
+            No written feedback provided.
+          </p>
         ) : (
           <div className="flex items-center gap-2 text-sm text-amber-600">
             <Clock size={13} />
@@ -348,8 +379,11 @@ const PeerGradingDetail = () => {
   const location = useLocation();
   const stateTitle = (location.state as any)?.courseTitle as string | undefined;
 
-  const decodedTitle = courseTitleEncoded ? decodeURIComponent(courseTitleEncoded) : "";
-  const { submissions, isLoading, courseTitle } = useCourseSubmissions(decodedTitle);
+  const decodedTitle = courseTitleEncoded
+    ? decodeURIComponent(courseTitleEncoded)
+    : "";
+  const { submissions, isLoading, courseTitle } =
+    useCourseSubmissions(decodedTitle);
 
   const graded = submissions.filter((s) => s.status === "GRADED").length;
   const pending = submissions.filter((s) => s.status === "PENDING").length;
@@ -381,7 +415,9 @@ const PeerGradingDetail = () => {
         {!isLoading && submissions.length > 0 && (
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-2 text-sm shadow-sm">
-              <span className="font-bold text-slate-800">{submissions.length}</span>
+              <span className="font-bold text-slate-800">
+                {submissions.length}
+              </span>
               <span className="text-slate-500">Total submissions</span>
             </div>
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2 text-sm">
@@ -410,7 +446,10 @@ const PeerGradingDetail = () => {
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-32 bg-white border border-slate-200 rounded-xl animate-pulse" />
+              <div
+                key={i}
+                className="h-32 bg-white border border-slate-200 rounded-xl animate-pulse"
+              />
             ))}
             <div className="flex items-center justify-center gap-2 text-sm text-slate-400 py-2">
               <Loader2 size={14} className="animate-spin" />
@@ -420,7 +459,9 @@ const PeerGradingDetail = () => {
         ) : submissions.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
             <Inbox size={40} className="text-slate-200" />
-            <p className="text-sm font-semibold text-slate-400">No submissions found for this course.</p>
+            <p className="text-sm font-semibold text-slate-400">
+              No submissions found for this course.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

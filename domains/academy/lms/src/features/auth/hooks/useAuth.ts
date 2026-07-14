@@ -320,3 +320,36 @@ export const useAllUsers = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: (data: { email: string }) => authService.forgotPassword(data),
+    onSuccess: () => {
+      toast.success(
+        "If the email exists, a password reset link has been sent.",
+      );
+    },
+    onError: (error: ApiError) => {
+      const message =
+        error.response?.data?.message ||
+        "Failed to request password reset. Please try again.";
+      toast.error(message);
+    },
+  });
+};
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: (data: { email: string; newPassword: string }) =>
+      authService.resetPassword(data),
+    onSuccess: () => {
+      toast.success("Password reset successful!");
+    },
+    onError: (error: ApiError) => {
+      const message =
+        error.response?.data?.message ||
+        "Failed to reset password. Please try again.";
+      toast.error(message);
+    },
+  });
+};

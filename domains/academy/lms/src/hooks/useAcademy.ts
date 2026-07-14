@@ -465,6 +465,16 @@ export const useCreateTeachingSchedule = () => {
   });
 };
 
+export const useCourseSchedules = (courseId: string | number) => {
+  return useQuery({
+    queryKey: ["course-schedules", courseId],
+    queryFn: () => academyService.getCourseSchedules(courseId),
+    enabled: !!courseId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
 export const useCreateCourse = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -788,6 +798,36 @@ export const useDeleteLesson = () => {
         queryKey: ["course", variables.courseId],
       });
       toast.success("Lesson deleted!");
+    },
+  });
+};
+
+// Announcement Hooks
+export const useAnnouncements = (params?: {
+  page?: number;
+  pageSize?: number;
+}) => {
+  return useQuery({
+    queryKey: ["announcements", params],
+    queryFn: () => academyService.getAnnouncements(params),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
+export const useCreateAnnouncement = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { title: string; content: string }) =>
+      academyService.createAnnouncement(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      toast.success("Announcement published successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to publish announcement",
+      );
     },
   });
 };

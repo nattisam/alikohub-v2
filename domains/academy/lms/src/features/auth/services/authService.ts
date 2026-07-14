@@ -103,4 +103,17 @@ export const authService = {
     const response = await api.get<any[]>("/users/all");
     return response.data;
   },
+
+  forgotPassword: async (data: { email: string }): Promise<any> => {
+    const response = await api.post("/academy/forgot-password", data);
+    return response.data;
+  },
+
+  resetPassword: async (data: {
+    email: string;
+    newPassword: string;
+  }): Promise<any> => {
+    const response = await api.post("/academy/reset-password", data);
+    return response.data;
+  },
 };

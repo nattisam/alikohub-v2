@@ -1,6 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Users, BookOpen, CreditCard } from "lucide-react";
+import {
+  BarChart3,
+  Users,
+  BookOpen,
+  CreditCard,
+  Megaphone,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoLms from "@/assets/Aliko Academy LMS Icon.png";
 
@@ -20,7 +26,12 @@ const mainNavItems: NavItem[] = [
   {
     label: "Teacher Applications",
     href: "/admin/applications",
-    icon: <Users className="w-5 h-5" />,
+    icon: <Users className="w-5 h-5 text-[#3070f6]" />,
+  },
+  {
+    label: "Announcements",
+    href: "/admin/announcements",
+    icon: <Megaphone className="w-5 h-5 text-[#f59e0b]" />,
   },
   {
     label: "Platform Analytics",
